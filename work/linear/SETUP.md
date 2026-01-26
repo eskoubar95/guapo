@@ -56,6 +56,12 @@ Labels can be created automatically when missing, but you can also create them m
    - `AUTO_CREATE_PROJECTS=true`
    - `AUTO_CREATE_DOCUMENTS=true`
 
+### Sprint / cycle strategy (Guapo)
+
+- We use Linear **Cycles** as sprints.
+- **Sprint 1 = Cycle #1** (Cycle numbering is the sprint numbering).
+- `ACTIVE_CYCLE_ID` in `work/linear/sync-config.md` should point at the current sprint/cycle when you want automation to attach new issues to the active sprint.
+
 ## Step 5: Tag-driven label mapping (recommended)
 
 Use `**Tags:**` in `work/backlog/tasks.local.md` to drive labels:
