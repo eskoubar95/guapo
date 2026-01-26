@@ -112,7 +112,7 @@ DECIDED: Supabase Storage.
 - Workflows: TBD
 - CI checks: TBD
 - Deployment: TBD
-- PR requirements: TBD
+- PR requirements: TBD (we will define required checks once CI exists; until then, PRs rely on review + local checks).
 
 ## Environment Variables
 

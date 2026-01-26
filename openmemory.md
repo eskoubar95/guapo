@@ -12,6 +12,7 @@ This file is a lightweight index of project facts and conventions that are usefu
   - `apps/cms` (Payload CMS as its own Next.js app/service; Payload v3+ is Next.js-native)
 - **Package manager (DECIDED)**: pnpm (via Corepack); commit `pnpm-lock.yaml` and treat it as the single source of truth.
 - **Env var inventory**: `env.example` (names only; no secrets).
+- **GitHub repo**: `https://github.com/eskoubar95/guapo` (git remote `origin` uses HTTPS)
 - **Task management + MCP**: Linear is the source of truth for tasks during execution (MCP: `guapo-linear`). Supabase ops use MCP: `supabase`.
 - **Sprint context**: We use Linear **Cycles** as sprints (Guapo team cycles enabled).
 - **Spec set**: root + PRD + architecture + acceptance + sitemap are now created in `spec/`
