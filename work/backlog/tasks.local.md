@@ -10,7 +10,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** .
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** documentation, infrastructure
 
