@@ -1,0 +1,23 @@
+{
+  "branch": {
+    "name": "task/gua-5-repo-layout",
+    "exists": true,
+    "pushed": false,
+    "commits": 0,
+    "last_commit": null
+  },
+  "pr": {
+    "exists": false,
+    "number": null,
+    "url": null,
+    "status": null,
+    "merged": false
+  },
+  "deployment": {
+    "provider": null,
+    "preview_url": null,
+    "status": null
+  },
+  "validated": false,
+  "last_updated": "2026-01-26T22:53:40Z"
+}

@@ -19,9 +19,8 @@ This is the **source of truth** for technologies, frameworks, and tooling used i
 
 ## Monorepo / Workspaces (if applicable)
 
-TBD — repository layout not finalized yet.
+DECIDED: monorepo with `apps/*` workspaces (see `spec/05-decisions.md`).
 
-Recommended once known:
 - Workspace: `apps/storefront`
   - Frontend Framework: Next.js
   - Language: TypeScript
@@ -32,9 +31,9 @@ Recommended once known:
   - Language: TypeScript
   - Notes: orders, carts, subscriptions, payment integration
 - Workspace: `apps/cms`
-  - CMS: Payload CMS
+  - CMS: Payload CMS (Next.js-native in v3+)
   - Language: TypeScript
-  - Notes: content pages + blog + SEO fields
+  - Notes: content pages + blog + SEO fields + admin UI. Runs as a separate Next.js service from the customer storefront.
 
 ## Hosting
 - Provider: Railway (compute)

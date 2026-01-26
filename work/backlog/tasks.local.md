@@ -8,6 +8,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Description:** Decide repo layout (monorepo `apps/*` vs single app) and document the decision.
 
+**Workspace:** .
+
 **Status:** backlog
 
 **Tags:** documentation, infrastructure
@@ -23,6 +25,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 ## Task: t1.2
 
 **Description:** Decide package manager (npm vs pnpm) and lockfile policy.
+
+**Workspace:** .
 
 **Status:** backlog
 
@@ -40,6 +44,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Description:** Define local env baseline + env var inventory (names only, no secrets).
 
+**Workspace:** .
+
 **Status:** backlog
 
 **Tags:** infrastructure, security, documentation
@@ -55,6 +61,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 ## Task: t1.4
 
 **Description:** Linear sync readiness: confirm mapping + labels + cycles strategy are documented and consistent.
+
+**Workspace:** .
 
 **Status:** backlog
 
@@ -75,6 +83,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Description:** Scaffold Payload app and connect to Supabase Postgres using schema `payload`.
 
+**Workspace:** apps/cms
+
 **Status:** backlog
 
 **Tags:** cms, backend, infrastructure
@@ -92,6 +102,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 ## Task: t2.2
 
 **Description:** Define CMS content types: pages, blog/articles, navigation/footer.
+
+**Workspace:** apps/cms
 
 **Status:** backlog
 
@@ -111,6 +123,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Description:** Define PDP guidance fields in CMS (skin types/concerns/ingredients/how-to/AM-PM/pair-with).
 
+**Workspace:** apps/cms
+
 **Status:** backlog
 
 **Tags:** cms, seo
@@ -128,6 +142,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 ## Task: t2.4
 
 **Description:** Implement homepage builder in CMS: predefined section types, ordering, max 10.
+
+**Workspace:** apps/cms
 
 **Status:** backlog
 
@@ -150,6 +166,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Description:** Scaffold Medusa server + worker and wire Redis.
 
+**Workspace:** apps/commerce
+
 **Status:** backlog
 
 **Tags:** commerce, backend, infrastructure
@@ -169,6 +187,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Description:** Validate Supabase schema separation locally: create/use schema `medusa` and ensure migrations run cleanly.
 
+**Workspace:** apps/commerce
+
 **Status:** backlog
 
 **Tags:** commerce, database, infrastructure, gate
@@ -186,6 +206,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 ## Task: t3.3
 
 **Description:** Implement core commerce flows (backend): products, cart, checkout creates order (no Adyen yet).
+
+**Workspace:** apps/commerce
 
 **Status:** backlog
 
@@ -205,6 +227,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 ## Task: t3.4
 
 **Description:** Accounts baseline: guest checkout for one-time purchases; subscriptions require an account.
+
+**Workspace:** apps/commerce
 
 **Status:** backlog
 
@@ -226,6 +250,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Description:** Scaffold Next.js storefront and implement `/da` + `/en` routing baseline.
 
+**Workspace:** apps/storefront
+
 **Status:** backlog
 
 **Tags:** storefront, frontend, seo
@@ -243,6 +269,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 ## Task: t4.2
 
 **Description:** Implement PLP (category/brand/concern) + search + filters + canonical rules.
+
+**Workspace:** apps/storefront
 
 **Status:** backlog
 
@@ -263,6 +291,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Description:** Implement PDP: merge Medusa product data + Payload guidance; add subscription selector UI.
 
+**Workspace:** apps/storefront
+
 **Status:** backlog
 
 **Tags:** storefront, frontend, cms, subscriptions
@@ -282,6 +312,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Description:** Implement cart + checkout shell (parcel shop selection placeholder).
 
+**Workspace:** apps/storefront
+
 **Status:** backlog
 
 **Tags:** storefront, frontend, shipping
@@ -299,6 +331,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 ## Task: t4.5
 
 **Description:** Implement account area shell: orders + subscriptions list/detail.
+
+**Workspace:** apps/storefront
 
 **Status:** backlog
 
@@ -318,6 +352,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 ## Task: t4.6
 
 **Description:** Implement content pages: blog/article + policies + support/FAQ/contact.
+
+**Workspace:** apps/storefront
 
 **Status:** backlog
 
@@ -340,6 +376,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Description:** Adyen integration baseline + method availability gate plan (cards + MobilePay + Klarna + wallets).
 
+**Workspace:** .
+
 **Status:** backlog
 
 **Tags:** payments, integration, gate
@@ -357,6 +395,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 ## Task: t5.2
 
 **Description:** Subscriptions recurring billing validation plan + renewal simulation in staging (staging gate).
+
+**Workspace:** .
 
 **Status:** backlog
 
@@ -376,6 +416,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Description:** Shipmondo integration: parcel shop + GLS/DAO + 39 DKK flat rate.
 
+**Workspace:** .
+
 **Status:** backlog
 
 **Tags:** shipping, integration
@@ -394,6 +436,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Description:** Plunk transactional emails: order + subscription notifications.
 
+**Workspace:** .
+
 **Status:** backlog
 
 **Tags:** integration
@@ -411,6 +455,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 ## Task: t5.5
 
 **Description:** Consent manager + PostHog + pixels (consent-gated) + UTM storage in order metadata.
+
+**Workspace:** .
 
 **Status:** backlog
 
@@ -432,6 +478,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Description:** SEO: `sitemap.xml` + structured data (Product, BreadcrumbList, Organization, WebSite+SearchAction, Article, FAQPage).
 
+**Workspace:** apps/storefront
+
 **Status:** backlog
 
 **Tags:** seo, storefront
@@ -450,6 +498,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Description:** Observability baseline: Sentry + payment/subscription alerting plan.
 
+**Workspace:** .
+
 **Status:** backlog
 
 **Tags:** observability, infrastructure, gate
@@ -467,6 +517,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 ## Task: t5.8
 
 **Description:** Sprint 1 research gate: Qogita investigation (deadline end of Sprint 1).
+
+**Workspace:** .
 
 **Status:** backlog
 
@@ -488,6 +540,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 ## Task: t5.9
 
 **Description:** Launch gate: DK subscription compliance review (copy/policies).
+
+**Workspace:** .
 
 **Status:** backlog
 
