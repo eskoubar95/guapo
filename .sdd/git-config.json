@@ -1,0 +1,5 @@
+{
+  "default_branch": "staging",
+  "development_branch": "staging",
+  "production_branch": "main"
+}
