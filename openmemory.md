@@ -13,6 +13,7 @@ This file is a lightweight index of project facts and conventions that are usefu
 - **Package manager (DECIDED)**: pnpm (via Corepack); commit `pnpm-lock.yaml` and treat it as the single source of truth.
 - **Env var inventory**: `env.example` (names only; no secrets).
 - **GitHub repo**: `https://github.com/eskoubar95/guapo` (git remote `origin` uses HTTPS)
+- **Branch strategy (DECIDED)**: `staging` = staging, `main` = production. PRs go to `staging`; releases are `staging` → `main`. Config: `.sdd/git-config.json`.
 - **Task management + MCP**: Linear is the source of truth for tasks during execution (MCP: `guapo-linear`). Supabase ops use MCP: `supabase`.
 - **Sprint context**: We use Linear **Cycles** as sprints (Guapo team cycles enabled).
 - **Spec set**: root + PRD + architecture + acceptance + sitemap are now created in `spec/`

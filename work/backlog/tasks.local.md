@@ -97,6 +97,24 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** S
 
+## Task: t1.6
+
+**Description:** Define branch strategy: `staging` branch for staging environment; `main` is production.
+
+**Workspace:** .
+
+**Status:** done
+
+**Tags:** infrastructure, documentation
+
+**Milestone:** M1
+
+**Acceptance:**
+- `staging` branch exists on GitHub.
+- Branch strategy is documented (PRs go to `staging`; releases are `staging` → `main`).
+
+**Estimate:** S
+
 ## M2 — CMS (Payload)
 
 ## Task: t2.1

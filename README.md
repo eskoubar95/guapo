@@ -41,7 +41,9 @@ For more information, see the POS documentation in `.cursor/rules/`.
 2. Push the branch:
    - `git push -u origin HEAD`
 3. Create a PR (CLI):
-   - `gh pr create --base main --head HEAD`
+   - `gh pr create --base staging --head HEAD`
+4. After staging validation, promote to production:
+   - Create PR: `staging` → `main`
 
 CI-required checks are TBD until we add GitHub Actions.
 

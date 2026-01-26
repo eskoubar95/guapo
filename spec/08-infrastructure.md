@@ -106,7 +106,11 @@ DECIDED: Supabase Storage.
 ## CI/CD
 - Provider: TBD
 - Deployment strategy: TBD (automatic vs manual approvals)
-- Branch strategy: TBD (default: main)
+- Branch strategy:
+  - `staging` → staging environment (development/testing)
+  - `main` → production environment
+  - Promotion: PR/merge `staging` → `main`
+  - **Config:** `.sdd/git-config.json` (tells all commands to use `staging` as default PR target)
 
 ## GitHub Actions (if using GitHub)
 - Workflows: TBD
