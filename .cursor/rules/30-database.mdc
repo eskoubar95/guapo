@@ -1,0 +1,183 @@
+---
+title: Database Patterns
+description: Database patterns - applies when database is detected
+owner: sdd-system
+severity: warn
+globs: "**/migrations/**, **/supabase/**, **/prisma/**"
+alwaysApply: false
+activation:
+  projectTypes: [web-app, api-service]
+  projectSizes: [small, medium, large, enterprise]
+  projectPhases: [initialization, expansion, maintenance, migration, legacy]
+  technologies: [postgres, mysql, mongodb, supabase, prisma]
+  requires: [10-engineering]
+---
+
+# Database Patterns
+
+## Purpose
+
+Database patterns for schema design, migrations, queries, ORM patterns, and raw SQL patterns. Applies when database work is detected (PostgreSQL, MySQL, MongoDB, Supabase, Prisma, etc.).
+
+## Principles
+
+- **Schema-First**: Design schema before writing queries
+- **Migration-Based**: All schema changes via migrations
+- **Index Hot Paths**: Index frequently queried columns
+- **RLS (Row Level Security)**: Enable RLS on user-facing tables
+- **Backup Strategy**: Regular backups, tested restore process
+
+## Schema Design
+
+**Table Organization:**
+- Group related tables
+- Use consistent naming (snake_case or camelCase)
+- Document table purposes
+- Define relationships explicitly
+
+**Column Design:**
+- Use appropriate data types
+- Set NOT NULL where appropriate
+- Use defaults where sensible
+- Add indexes for foreign keys
+
+**Relationships:**
+- One-to-many: Foreign key in child table
+- Many-to-many: Junction table
+- One-to-one: Foreign key in either table
+
+## Migrations
+
+**Migration Best Practices:**
+- All schema changes via migrations
+- Versioned migrations (timestamped)
+- Never edit existing migrations
+- Test migrations on staging first
+- Include rollback strategy
+
+**Migration Structure:**
+```
+migrations/
+  20240101000000_create_users_table.sql
+  20240102000000_add_email_to_users.sql
+  20240103000000_create_posts_table.sql
+```
+
+**Migration Guidelines:**
+- One logical change per migration
+- Include both up and down migrations
+- Test migrations on sample data
+- Document breaking changes
+
+## Queries
+
+**Query Patterns:**
+- Use parameterized queries (prevent SQL injection)
+- Select only needed columns (avoid SELECT *)
+- Use JOINs instead of N+1 queries
+- Batch related queries when possible
+
+**Performance:**
+- Index frequently queried columns
+- Use EXPLAIN ANALYZE to optimize
+- Avoid full table scans
+- Use pagination for large result sets
+
+## ORM Patterns
+
+**If Using ORM (Prisma, TypeORM, etc.):**
+- Use ORM query builder for type safety
+- Keep queries simple and readable
+- Use raw SQL only when necessary
+- Leverage ORM relationships
+
+**If Using Raw SQL:**
+- Use parameterized queries
+- Centralize query logic
+- Document complex queries
+- Test queries with sample data
+
+## Row Level Security (RLS)
+
+**RLS Best Practices:**
+- Enable RLS on all user-facing tables
+- Policies check `auth.uid()` for ownership
+- Service role bypasses RLS (server-side only)
+- Test RLS policies thoroughly
+
+**RLS Patterns:**
+- Users can only access their own data
+- Public data accessible to all
+- Admin data accessible to admins only
+- Complex policies for shared resources
+
+## Indexing
+
+**Index Strategy:**
+- Index foreign keys
+- Index frequently queried columns
+- Index columns used in WHERE clauses
+- Index columns used in JOINs
+- Don't over-index (writes become slower)
+
+**Index Types:**
+- B-tree indexes (default, most common)
+- GIN indexes (for arrays, full-text search)
+- GiST indexes (for geometric data)
+- Partial indexes (for filtered queries)
+
+## Transactions
+
+**Transaction Patterns:**
+- Use transactions for multi-step operations
+- Keep transactions short
+- Handle transaction errors
+- Rollback on errors
+
+**Transaction Guidelines:**
+- Start transaction
+- Perform operations
+- Commit on success
+- Rollback on error
+
+## Backup and Recovery
+
+**Backup Strategy:**
+- Regular automated backups
+- Test restore process
+- Document backup schedule
+- Store backups securely
+
+**Recovery:**
+- Test restore on staging
+- Document recovery procedure
+- Have rollback plan
+- Monitor backup success
+
+## Database-Specific Patterns
+
+**PostgreSQL:**
+- Use JSONB for flexible schemas
+- Use arrays for simple lists
+- Use enums for fixed sets
+- Use full-text search (tsvector)
+
+**MySQL:**
+- Use appropriate storage engines
+- Optimize for InnoDB
+- Use proper charset (utf8mb4)
+
+**MongoDB:**
+- Design documents for queries
+- Use indexes effectively
+- Avoid deep nesting
+- Use aggregation pipeline
+
+## Supabase-Specific
+
+**If Supabase Detected:**
+- Server-side: Use service role (bypasses RLS)
+- Client-side: Use anon key (respects RLS)
+- Never expose service role key
+- Use Supabase query builder
+- Generate TypeScript types

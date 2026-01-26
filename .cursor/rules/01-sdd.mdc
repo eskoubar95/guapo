@@ -1,0 +1,61 @@
+---
+alwaysApply: true
+---
+
+# Spec-Driven Development (SDD)
+
+This project follows Spec-Driven Development.
+Specifications are living artifacts that drive planning, execution, and validation.
+
+## Core SDD rules
+- The specification defines intent; code implements intent.
+- Specs evolve continuously throughout the project lifecycle.
+- No work may proceed on assumptions that are not reflected in the spec.
+
+## Spec lifecycle
+SDD operates through explicit transitions:
+- Idea → Specification (`/spec/init`)
+- Specification → Clarity (`/spec/refine`)
+- Specification → Plan (`/spec/plan`)
+- Plan → Execution (`/task/start`)
+- Execution → Confidence (`/task/validate`)
+
+Each transition must leave the specification more precise than before.
+
+## What the spec must capture
+The spec must always make explicit:
+- What problem is being solved
+- Who it is for
+- What is in scope and out of scope
+- What success means
+
+If any of these are unclear, they must be surfaced as open questions.
+
+## Handling change
+Change is expected.
+When change occurs:
+- Update the spec before updating code
+- Re-evaluate risks and assumptions
+- Ensure tasks remain traceable to spec intent
+
+Never allow the spec and implementation to diverge silently.
+
+## Decisions
+- Decisions are explicit moments of commitment
+- Only record real decisions (not ideas or suggestions)
+- Decisions must explain: what was decided, why, and consequences
+
+## Anti-patterns (strictly avoid)
+- Writing code to discover requirements
+- Planning before understanding
+- Expanding scope during task execution
+- Treating specs as documentation-only artifacts
+
+## Agent responsibility
+- Treat the spec as the authoritative truth
+- Prefer updating the spec over guessing
+- Stop and ask when intent is ambiguous
+- Keep specs concise, readable, and actionable
+
+## Goal
+Enable disciplined, professional development by making intent explicit before implementation.

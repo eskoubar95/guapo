@@ -1,0 +1,146 @@
+---
+title: Next.js Patterns
+description: Next.js App Router patterns - applies when Next.js is detected
+owner: sdd-system
+severity: warn
+globs: "app/**, src/app/**"
+alwaysApply: false
+activation:
+  projectTypes: [web-app]
+  projectSizes: [small, medium, large, enterprise]
+  projectPhases: [initialization, expansion, maintenance, migration, legacy]
+  technologies: [nextjs]
+  requires: [10-engineering]
+---
+
+# Next.js Patterns
+
+## Purpose
+
+Next.js App Router patterns for server components, Server Actions, API routes, file structure, routing, and data fetching. Only activates when Next.js is detected.
+
+## Component Types
+
+**Server Components (Default):**
+- Server components by default
+- No "use client" directive needed
+- Can use async/await for data fetching
+- Cannot use browser APIs or hooks
+
+**Client Components:**
+- Use "use client" directive only when interactivity required
+- Can use browser APIs, hooks, event handlers
+- Keep business logic out of client components
+- Prefer server components when possible
+
+## Data Fetching
+
+**Server Components:**
+- Use async/await for data fetching
+- Fetch data in server components
+- Pass data as props to client components
+- Centralize API calls in `lib/services/*`
+
+**Server Actions:**
+- Handle mutations via Server Actions
+- Return `{ ok: true, data? }` or `{ ok: false, error: { code, message } }`
+- Validate input server-side
+- Handle errors gracefully
+
+**API Routes:**
+- API routes in `app/api/v1/...`
+- Use Next.js route handlers
+- Return standard JSON responses
+- Handle authentication server-side
+
+## Caching and Revalidation
+
+**Cache Strategy:**
+- `cache` for public, slow-changing data
+- `revalidate` for ISR (Incremental Static Regeneration)
+- `no-store` for user/checkout data
+- Avoid double-fetch
+
+**Revalidation:**
+- Use `export const revalidate = <seconds>` for ISR
+- Revalidate on-demand when needed
+- Cache public data, don't cache user-specific data
+
+## Routing and Structure
+
+**App Router Structure:**
+- Organize by features/segments
+- Keep nesting shallow
+- Use `next/link` for internal navigation
+- Route groups with `(groupName)` for organization
+
+**API Routes:**
+- `app/api/v1/jerseys/route.ts` for GET/POST
+- `app/api/v1/jerseys/[id]/route.ts` for GET/PATCH/DELETE
+- Use standard HTTP methods
+- Follow RESTful conventions
+
+## File Structure
+
+**Recommended Structure:**
+```
+app/
+  (app)/              # Route group
+    page.tsx          # Home page
+    layout.tsx        # App layout
+    blog/
+      page.tsx        # Blog listing
+      [slug]/
+        page.tsx      # Blog post
+  api/
+    v1/
+      jerseys/
+        route.ts      # API routes
+lib/
+  services/           # Business logic
+  repositories/       # Data access
+  utils/              # Utilities
+components/           # Shared components
+```
+
+## Performance
+
+**Optimizations:**
+- Prefer streamed SSR
+- Lazy-load large components with `Suspense`
+- Keep client bundle slim
+- Use dynamic imports for heavy modules
+- Optimize images with `next/image`
+
+## Integrations
+
+**Supabase:**
+- Server-side: `lib/supabase-server.ts` with service role
+- Client-side: `lib/supabase-client.ts` with anon key
+- Never expose service role key to client
+
+**Auth (Clerk/NextAuth):**
+- Use `@clerk/nextjs` for frontend auth
+- Use `@clerk/backend` for API route verification
+- Protect routes with middleware
+
+## State Management
+
+**Server State:**
+- TanStack Query for client-side data management
+- Server components for initial data
+- Server Actions for mutations
+
+**Client State:**
+- React Hook Form + Zod for forms
+- Context API for minimal global UI state
+- Avoid global state when possible
+
+## DoD (Definition of Done)
+
+- No client-only secrets
+- Server Actions/API routes for mutations
+- No duplicate fetch
+- LCP (Largest Contentful Paint) optimized
+- Accessibility checks pass
+- API routes follow RESTful patterns

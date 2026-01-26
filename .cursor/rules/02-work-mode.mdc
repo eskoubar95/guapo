@@ -1,0 +1,136 @@
+---
+alwaysApply: true
+---
+
+# Work Mode (Execution Discipline)
+
+This rule governs how work is executed once planning has occurred.
+It ensures tasks are handled with engineering discipline, traceability, and quality control.
+
+## Purpose
+Work Mode exists to:
+- Prevent ad-hoc implementation
+- Enforce task focus and scope control
+- Ensure validation before integration
+
+## Entry conditions
+Work Mode is active whenever a `/task/*` command is used.
+
+Before any implementation work:
+- A task must be explicitly selected or confirmed
+- The task must align with the current specification
+- Acceptance or validation criteria must be known
+
+If these conditions are not met, stop and ask for clarification.
+
+## Task handling rules
+- Work on one task at a time
+- Do not introduce new requirements during execution
+- Do not expand scope without updating the spec
+- If unexpected complexity appears, pause and surface it
+
+## Engineering discipline
+During task execution:
+- Prefer small, reviewable changes
+- Keep changes localized to the task scope
+- Be explicit about what files or components are affected
+
+Do not refactor or optimize unrelated code unless explicitly required.
+
+## Testing and validation
+- Every task must have a validation signal
+- Validation may be automated or manual, depending on context
+- Lack of testing must be explicitly acknowledged
+
+Validation happens through `/task/validate`.
+
+## Documentation and traceability
+- Meaningful decisions made during work must be recorded
+- If behavior changes, ensure the spec remains accurate
+- Avoid undocumented behavior or silent changes
+
+## Completion rules
+A task is only considered complete when:
+- Validation has passed
+- Scope boundaries are respected
+- The work is safe to integrate
+
+## Agent behavior
+- Do not rush execution
+- Stop when ambiguity is encountered
+- Prefer correctness over speed
+- Enforce process without being verbose
+
+## Goal
+Enable focused, professional execution that aligns implementation with intent.
+
+## Error recovery automation
+**Common error patterns and automatic recovery:**
+- If build fails with undefined property errors → automatically suggest: "Try cleaning build cache and rebuilding"
+- If lockfile outdated → automatically suggest: "Run package manager install to sync lockfile"
+- If dependency missing → automatically suggest: "Add to package.json (or equivalent) and run install"
+- If config error → check against known patterns for the framework/library and suggest fix
+- Document solutions in openmemory.md for future reference
+
+**Error recovery workflow:**
+1. Identify error type (build, dependency, config, runtime)
+2. Check openmemory.md for known solutions
+3. If known solution exists → apply automatically (with user confirmation)
+4. If unknown → document in openmemory.md after solving
+
+## Memory storage automation
+**Automatic memory storage triggers:**
+- Before task completion → automatically check if memory should be stored
+- If 3+ files changed OR new component created → store memory
+- If design pattern emerges → store in spec/05-decisions.md AND memory
+- If infrastructure decision made → store in spec/05-decisions.md AND memory
+
+**Memory storage checklist (before task completion):**
+- [ ] Memory stored? (if applicable)
+- [ ] openmemory.md updated? (if memory stored)
+- [ ] Spec updated? (if decision/pattern emerged)
+- [ ] Decisions documented in spec/05-decisions.md? (if applicable)
+
+**Always update openmemory.md before storing memory:**
+- Review content → check namespaces → assign namespace if applicable
+- Update Components section if new component
+- Update Patterns section if new pattern
+- Update Architecture section if architecture change
+
+## Spec update automation
+**Automatic spec update triggers:**
+- If design pattern emerges → update spec/05-decisions.md
+- If infrastructure decision made → update spec/05-decisions.md
+- If new risk discovered → update spec/03-risks.md
+- If new question emerges → update spec/04-open-questions.md
+
+**Spec update checklist (before task completion):**
+- [ ] Design pattern documented? (if applicable)
+- [ ] Infrastructure decision documented? (if applicable)
+- [ ] New risk added? (if applicable)
+- [ ] New question added? (if applicable)
+- [ ] Spec still accurate? (verify and update if needed)
+
+## Spec health checks
+**Automatic spec health monitoring:**
+- Detect spec-code divergence (features in code not in spec, features in spec not in code)
+- Warn when spec is outdated (spec not updated recently, implementation changed significantly)
+- Suggest spec updates when discrepancies found
+- Track spec evolution (spec age, update frequency, completeness)
+
+**Spec health check triggers:**
+- Before task start → check if spec is up-to-date
+- After task completion → check if spec needs update
+- Periodically → suggest spec sync if divergence detected
+
+**Spec health indicators:**
+- Spec age: How long since last update
+- Spec completeness: Are all features documented?
+- Spec accuracy: Does spec match implementation?
+- Spec traceability: Can requirements be traced to code?
+
+**When spec health issues detected:**
+- Suggest `/spec/sync` if divergence found
+- Suggest `/spec/evolve` if spec needs updating
+- Suggest `/spec/audit` if compliance check needed
+- Warn user about outdated spec

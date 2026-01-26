@@ -1,0 +1,129 @@
+---
+title: Design Foundations
+description: Framework-agnostic design system and UI patterns - applies to design tasks
+owner: sdd-system
+severity: warn
+globs: "**/*"
+alwaysApply: false
+activation:
+  projectTypes: [web-app, mobile-app]
+  projectSizes: [small, medium, large, enterprise]
+  projectPhases: [initialization, expansion, maintenance, migration, legacy]
+  technologies: []
+  requires: []
+---
+
+# Design Foundations
+
+## Purpose
+
+Framework-agnostic design system patterns, UI components, and visual consistency guidelines. These patterns apply to all design tasks regardless of styling framework.
+
+## Design System Reference
+
+**Always reference project design system if it exists:**
+- Check for `spec/07-design-system.md`
+- Follow established color, typography, spacing systems
+- Maintain visual consistency with existing design
+
+## Principles
+
+- **Consistency**: Visual consistency across all UI
+- **Accessibility First**: WCAG AA minimum, aim for AAA
+- **Responsive by Default**: Mobile-first approach
+- **Clear Visual Hierarchy**: Guide user attention effectively
+
+## Component Design
+
+**Reusable, Composable UI Components:**
+- Build components from primitives
+- Components are self-contained
+- Components are composable
+- Components follow design system tokens
+
+**Accessibility Requirements:**
+- Semantic HTML elements
+- Correct ARIA roles and labels
+- Visible focus states
+- Keyboard navigation support
+- Screen reader support
+- Color contrast (WCAG AA minimum)
+
+**Responsive Design:**
+- Mobile-first approach
+- Breakpoints: mobile (320px+), tablet (768px+), desktop (1024px+)
+- Fluid typography and spacing
+- Flexible layouts (flexbox, grid)
+
+## Visual Consistency
+
+**Color System:**
+- Use design system color tokens
+- Semantic colors (success, error, warning, info)
+- Consistent color usage across components
+
+**Typography:**
+- Use design system typography scale
+- Consistent font families, weights, sizes
+- Proper line heights and spacing
+
+**Spacing:**
+- Use design system spacing scale
+- Consistent margins and padding
+- Visual rhythm and alignment
+
+## UI Patterns
+
+**Card Layouts:**
+- Consistent card styling
+- Proper spacing and shadows
+- Responsive card grids
+
+**Button Styles:**
+- Primary, secondary, outline variants
+- Consistent sizing and spacing
+- Proper disabled states
+- Loading states
+
+**Form Inputs:**
+- Consistent input styling
+- Proper labels and placeholders
+- Error states and validation feedback
+- Accessible form controls
+
+**Navigation Patterns:**
+- Consistent navigation structure
+- Clear active states
+- Mobile-friendly navigation
+- Breadcrumbs where appropriate
+
+## Framework-Specific Extensions
+
+This rule provides foundation patterns. For framework-specific patterns, see:
+- Tailwind CSS: `[tailwind]-*.mdc` (if Tailwind detected)
+- CSS Modules: `[css-modules]-*.mdc` (if CSS Modules detected)
+- Styled Components: `[styled-components]-*.mdc` (if detected)
+- Other styling: `[styling]-*.mdc` (if detected)
+
+## Accessibility Checklist
+
+- [ ] Semantic HTML elements used
+- [ ] ARIA roles and labels correct
+- [ ] Visible focus states
+- [ ] Keyboard navigation works
+- [ ] Screen reader tested
+- [ ] Color contrast meets WCAG AA
+- [ ] Images have meaningful alt text
+- [ ] Forms are accessible
+- [ ] Interactive elements are keyboard accessible
+
+## Responsive Design Checklist
+
+- [ ] Mobile layout tested (320px+)
+- [ ] Tablet layout tested (768px+)
+- [ ] Desktop layout tested (1024px+)
+- [ ] No horizontal scrolling
+- [ ] Touch targets are adequate size (44x44px minimum)
+- [ ] Typography scales appropriately
+- [ ] Images are responsive
+- [ ] Navigation works on all screen sizes

@@ -1,0 +1,191 @@
+---
+title: Testing Patterns
+description: Testing patterns - applies when testing framework is detected
+owner: sdd-system
+severity: warn
+globs: "**/*.test.ts, **/*.test.tsx, **/*.spec.ts, **/*.spec.tsx, **/__tests__/**"
+alwaysApply: false
+activation:
+  projectTypes: [web-app, cli-tool, library, api-service, mobile-app]
+  projectSizes: [small, medium, large, enterprise]
+  projectPhases: [initialization, expansion, maintenance, migration, legacy]
+  technologies: [jest, vitest, playwright, cypress, testing-library]
+  requires: [10-engineering]
+---
+
+# Testing Patterns
+
+## Purpose
+
+Testing patterns for unit, integration, and e2e testing. Applies when testing framework is detected (Jest, Vitest, Playwright, Cypress, Testing Library, etc.).
+
+## Principles
+
+- **Test Behavior, Not Implementation**: Test what the code does, not how
+- **AAA Pattern**: Arrange-Act-Assert
+- **Cover Critical Paths**: Happy path, failure paths, edge cases
+- **Fast Feedback**: Tests should run quickly
+- **Maintainable Tests**: Tests should be easy to read and update
+
+## Test Structure
+
+**Test Organization:**
+- Co-locate tests with source files
+- OR: Mirror structure under `__tests__/`
+- Group related tests with `describe` blocks
+- Use intention-revealing test names
+
+**Test File Naming:**
+- `*.test.ts` or `*.test.tsx` for component tests
+- `*.spec.ts` or `*.spec.tsx` for specification tests
+- Match source file name
+
+## Unit Testing
+
+**What to Test:**
+- Individual functions and methods
+- Business logic
+- Utility functions
+- Pure functions
+
+**Unit Test Pattern:**
+```typescript
+describe('functionName', () => {
+  it('should do something specific', () => {
+    // Arrange
+    const input = { ... };
+    
+    // Act
+    const result = functionName(input);
+    
+    // Assert
+    expect(result).toEqual({ ... });
+  });
+});
+```
+
+**Best Practices:**
+- Test one thing per test
+- Use descriptive test names
+- Test edge cases
+- Test error cases
+- Avoid testing implementation details
+
+## Integration Testing
+
+**What to Test:**
+- Component interactions
+- API endpoint behavior
+- Database operations
+- Service layer integration
+
+**Integration Test Pattern:**
+```typescript
+describe('API endpoint', () => {
+  it('should handle request correctly', async () => {
+    // Arrange
+    const request = { ... };
+    
+    // Act
+    const response = await fetch('/api/v1/endpoint', {
+      method: 'POST',
+      body: JSON.stringify(request)
+    });
+    
+    // Assert
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ ... });
+  });
+});
+```
+
+## E2E Testing
+
+**What to Test:**
+- User workflows
+- Critical user paths
+- Cross-browser compatibility
+- Real user scenarios
+
+**E2E Test Pattern:**
+```typescript
+describe('User workflow', () => {
+  it('should complete user journey', async () => {
+    // Navigate to page
+    await page.goto('/');
+    
+    // Interact with page
+    await page.click('button[data-testid="submit"]');
+    
+    // Verify result
+    await expect(page.locator('.success')).toBeVisible();
+  });
+});
+```
+
+## Test Data and Fixtures
+
+**Fixtures:**
+- Create reusable test data
+- Use factories for complex objects
+- Keep fixtures realistic
+- Avoid hard-coded test data in tests
+
+**Mocking:**
+- Mock external dependencies
+- Mock API calls
+- Mock database operations
+- Keep mocks simple and focused
+
+## Test Coverage
+
+**Coverage Goals:**
+- Critical paths: 100% coverage
+- Business logic: High coverage
+- UI components: Moderate coverage
+- Utilities: High coverage
+
+**What Not to Test:**
+- Third-party library code
+- Framework code
+- Trivial getters/setters
+- Implementation details
+
+## Testing Best Practices
+
+**Fast Tests:**
+- Unit tests should be fast (< 100ms)
+- Integration tests moderate speed
+- E2E tests can be slower
+
+**Reliable Tests:**
+- Tests should be deterministic
+- Avoid flaky tests
+- Use proper cleanup
+- Isolate tests from each other
+
+**Maintainable Tests:**
+- Tests should be readable
+- Use helper functions
+- Avoid duplication
+- Keep tests focused
+
+## Framework-Specific
+
+**Jest/Vitest:**
+- Use `describe` and `it` blocks
+- Use `beforeEach`/`afterEach` for setup
+- Use `mock` for mocking
+- Use `expect` for assertions
+
+**Testing Library:**
+- Query by role, label, test id
+- Avoid querying by implementation details
+- Test user-visible behavior
+- Use `screen` for queries
+
+**Playwright/Cypress:**
+- Test real user interactions
+- Use page object pattern
+- Keep tests independent
+- Use proper waits

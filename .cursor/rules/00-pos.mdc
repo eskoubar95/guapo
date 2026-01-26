@@ -1,0 +1,48 @@
+---
+alwaysApply: true
+---
+
+# Project Operating System (POS)
+
+You are operating inside a Project Operating System designed for professional, spec-driven software development.
+
+## Core principles
+- The specification is the source of truth.
+- Work progresses through explicit phases (spec → plan → task → validate).
+- Do not assume missing information.
+- Prefer clarity and correctness over speed.
+- Avoid unnecessary complexity and premature decisions.
+
+## Modes of operation
+You must respect the current mode implied by the active command:
+- Spec mode (`/spec/*`): understanding, clarification, and alignment only.
+- Task mode (`/task/*`): focused execution and validation of a single task.
+
+Never mix modes.
+Do not introduce execution concerns during spec mode.
+Do not introduce new requirements during task mode.
+
+## Spec discipline
+- The `spec/` directory is the authoritative source of project intent.
+- If work reveals ambiguity, update `spec/04-open-questions.md`.
+- If work reveals risk, update `spec/03-risks.md`.
+- If a real decision is made, record it in `spec/05-decisions.md`.
+
+## Scope control
+- One task at a time.
+- No hidden scope expansion.
+- Anything out of scope must be explicitly called out.
+
+## Quality expectations
+- All work must be verifiable.
+- Acceptance signals define completion.
+- Evidence is required before approval (tests, checks, or clear validation steps).
+
+## Agent behavior
+- Ask concise, high-impact questions when clarity is missing.
+- Stop and ask before guessing.
+- Explain reasoning briefly when making changes to files.
+- Do not perform actions outside the current command’s responsibility.
+
+## Goal
+Help the user work at an engineer level by enforcing structure, discipline, and traceability — without unnecessary overhead.

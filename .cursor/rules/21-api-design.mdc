@@ -1,0 +1,176 @@
+---
+title: API Design Patterns
+description: API design patterns - applies when API work is detected
+owner: sdd-system
+severity: warn
+globs: "app/api/**, src/api/**, routes/**, api/**"
+alwaysApply: false
+activation:
+  projectTypes: [web-app, api-service]
+  projectSizes: [small, medium, large, enterprise]
+  projectPhases: [initialization, expansion, maintenance, migration, legacy]
+  technologies: [nextjs, express, fastapi, flask]
+  requires: [10-engineering]
+---
+
+# API Design Patterns
+
+## Purpose
+
+API design patterns for REST, GraphQL, RPC patterns, error handling, pagination, and versioning. Applies when API work is detected (API routes, Express, FastAPI, etc.).
+
+## Principles
+
+- **Resource-First Design**: Design around resources, not actions
+- **Stable IDs**: Use stable, predictable resource IDs
+- **Explicit Versioning**: Version APIs explicitly (`/api/v1`)
+- **Consistent Errors**: Standard error format across all endpoints
+- **Idempotency**: Mutations should be idempotent where applicable
+
+## API Structure
+
+**RESTful Endpoints:**
+- `GET /api/v1/jerseys` - List resources
+- `GET /api/v1/jerseys/:id` - Get single resource
+- `POST /api/v1/jerseys` - Create resource
+- `PATCH /api/v1/jerseys/:id` - Update resource
+- `DELETE /api/v1/jerseys/:id` - Delete resource
+
+**Route Organization:**
+- Group by resource type
+- Use nested routes for relationships
+- Keep routes shallow (max 2-3 levels)
+
+## Error Handling
+
+**Standard Error Format:**
+```json
+{
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "Jersey not found",
+    "details": null
+  }
+}
+```
+
+**Error Codes:**
+- `NOT_FOUND` - Resource doesn't exist
+- `VALIDATION_ERROR` - Input validation failed
+- `UNAUTHORIZED` - Authentication required
+- `FORBIDDEN` - Insufficient permissions
+- `CONFLICT` - Resource conflict
+- `INTERNAL_ERROR` - Server error
+
+**Status Codes:**
+- `200` - Success
+- `201` - Created
+- `204` - No Content
+- `400` - Bad Request
+- `401` - Unauthorized
+- `403` - Forbidden
+- `404` - Not Found
+- `409` - Conflict
+- `500` - Internal Server Error
+
+## Pagination
+
+**Cursor-Based Pagination (Preferred):**
+```
+GET /api/v1/jerseys?limit=20&cursor=abc123
+
+Response:
+{
+  "items": [...],
+  "nextCursor": "def456",
+  "hasMore": true
+}
+```
+
+**Offset Pagination (If Needed):**
+```
+GET /api/v1/jerseys?limit=20&offset=40
+
+Response:
+{
+  "items": [...],
+  "total": 100,
+  "limit": 20,
+  "offset": 40
+}
+```
+
+**Why Cursor-Based:**
+- Stable under concurrent writes
+- Better performance
+- No duplicate/missing items
+
+## Authentication
+
+**Protected Routes:**
+- Verify authentication in all protected routes
+- Extract user ID from token
+- Check permissions before operations
+- Return 401 if unauthenticated, 403 if unauthorized
+
+**Token Verification:**
+- Verify JWT tokens server-side
+- Never trust client-provided user IDs
+- Check token expiration
+- Validate token signature
+
+## Authorization
+
+**Ownership Checks:**
+- Verify user owns resource before operations
+- Check `owner_id === currentUserId`
+- Enforce at service layer, not just API layer
+
+**Permission Checks:**
+- Role-based access control (RBAC) if needed
+- Permission-based access control (PBAC) if needed
+- Document permission requirements
+
+## Response Formats
+
+**Success Responses:**
+- Direct JSON object (no envelope for simplicity)
+- Include all relevant resource data
+- Consistent field naming
+
+**Error Responses:**
+- Standard error format
+- Never leak internal errors
+- Include helpful error messages
+- No stack traces in production
+
+## Versioning
+
+**URL Versioning:**
+- `/api/v1/...` for version 1
+- `/api/v2/...` for version 2
+- Maintain backward compatibility when possible
+- Document breaking changes
+
+## Idempotency
+
+**Idempotent Operations:**
+- Use idempotency keys for mutations
+- Return same result for duplicate requests
+- Handle idempotency at service layer
+
+## Rate Limiting
+
+**Implement Rate Limiting:**
+- Per-user rate limits
+- Per-IP rate limits
+- Return 429 (Too Many Requests) when exceeded
+- Include rate limit headers
+
+## Documentation
+
+**API Documentation:**
+- Document all endpoints
+- Include request/response examples
+- Document error codes
+- Include authentication requirements

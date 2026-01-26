@@ -1,0 +1,149 @@
+---
+title: Engineering Foundations
+description: Framework-agnostic engineering patterns - applies to all engineering tasks
+owner: sdd-system
+severity: warn
+globs: "**/*"
+alwaysApply: false
+activation:
+  projectTypes: [web-app, cli-tool, library, api-service, mobile-app, monorepo]
+  projectSizes: [small, medium, large, enterprise]
+  projectPhases: [initialization, expansion, maintenance, migration, legacy]
+  technologies: []
+  requires: []
+---
+
+# Engineering Foundations
+
+## Purpose
+
+Framework-agnostic engineering patterns for code structure, components, models, and services. These patterns apply to all engineering tasks regardless of framework or technology.
+
+## Principles
+
+- **Single Responsibility**: One clear responsibility per file/component/function
+- **Composition over Inheritance**: Prefer composition, dependency injection, and interfaces
+- **Small Files**: Aim for < 500 LOC per file; refactor around 400 LOC
+- **Determinism**: Favor pure functions; minimize global state and side effects
+- **Make it Obvious**: Avoid opaque magic; write intent explicitly
+
+## File Structure Patterns
+
+**Organize by domain first, then by technology:**
+- `lib/domain/*` - Domain models and business logic
+- `lib/services/*` - Business logic services
+- `lib/repositories/*` - Data access layer
+- `components/*` - UI components (if applicable)
+- `utils/*` - Shared utilities
+- `types/*` - Type definitions
+
+**Keep business logic out of UI components:**
+- UI components should be presentational
+- Business logic belongs in services
+- Data fetching belongs in repositories or services
+
+**Export small public APIs:**
+- Use index files for public exports
+- Avoid deep relative-import chains
+- Prefer small, reusable utilities over copy-paste
+
+## Component Patterns
+
+**Single Responsibility:**
+- Each component has one clear purpose
+- Components are small and focused
+- Components are composable
+
+**Composition over Inheritance:**
+- Build complex components from simple ones
+- Use dependency injection for dependencies
+- Prefer interfaces over concrete implementations
+
+**Clear Props Interface:**
+- Explicit prop types/interfaces
+- Document prop purposes
+- Use default props where appropriate
+
+## Model Patterns
+
+**Domain Models:**
+- Represent business entities
+- Contain business logic (if applicable)
+- Are framework-agnostic
+
+**DTOs (Data Transfer Objects):**
+- Used for data transfer between layers
+- No business logic
+- Clear serialization/deserialization
+
+**Types:**
+- Type safety at boundaries
+- Shared type definitions
+- Avoid type duplication
+
+## Service Patterns
+
+**Business Logic in Services:**
+- Services contain business logic
+- Services call repositories/data layer
+- Services handle orchestration
+
+**Error Handling at Boundaries:**
+- Services handle errors
+- Return consistent result shapes
+- Never swallow errors silently
+
+**Consistent Result Shapes:**
+- Success: `{ ok: true, data: ... }`
+- Error: `{ ok: false, error: { code, message, details? } }`
+- Or project-specific consistent shape
+
+## Framework-Specific Extensions
+
+This rule provides foundation patterns. For framework-specific patterns, see:
+- Next.js: `20-nextjs.mdc` (if Next.js detected)
+- React: `[react]-*.mdc` (if React detected)
+- Other frameworks: `[framework]-*.mdc` (if detected)
+
+## Naming Conventions
+
+- **Files/folders**: kebab-case (e.g., `user-service.ts`)
+- **Components**: PascalCase (e.g., `<UserCard/>`)
+- **Hooks**: `useXxx` (e.g., `useUserData`)
+- **Variables/functions**: camelCase (e.g., `getUserData`)
+- **Domain models**: PascalCase (e.g., `User`, `Order`)
+- **DTOs**: PascalCase with `DTO` suffix (e.g., `UserDTO`)
+- **Tests**: Same name as target + `.test.ts(x)`
+
+## Error Handling
+
+- Fail fast near the source
+- Throw meaningful errors with context (no PII)
+- Differentiate user vs system errors
+- Never swallow errors silently
+- UI: Show clear, neutral error messages
+
+## Testing Basics
+
+- Cover critical paths: happy path, failure paths, edge cases
+- AAA pattern (Arrange-Act-Assert)
+- Intention-revealing test names
+- Avoid large snapshots
+- Test behavior, not implementation details
+- Co-locate tests or mirror structure under `__tests__/`
+
+## Performance
+
+- Avoid needless allocations in hot paths
+- Lazy-load heavy modules
+- Use memoization only where profiling shows impact
+- Remove micro-optimizations with no effect
+
+## Security Basics
+
+- Never commit secrets
+- Validate all external input
+- Sanitize strings
+- Assume hostile boundaries
+- No PII in logs
+- Keep dependencies up to date

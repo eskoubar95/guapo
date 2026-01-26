@@ -1,0 +1,132 @@
+---
+title: Business Analysis Foundations
+description: Business analysis patterns - applies to business and requirements tasks
+owner: sdd-system
+severity: warn
+globs: "**/*"
+alwaysApply: false
+activation:
+  projectTypes: [web-app, api-service, mobile-app]
+  projectSizes: [small, medium, large, enterprise]
+  projectPhases: [initialization, expansion]
+  technologies: []
+  requires: []
+---
+
+# Business Analysis Foundations
+
+## Purpose
+
+Business analysis patterns for requirements gathering, user stories, business logic, and domain models. These patterns apply to business-focused tasks and requirements definition.
+
+## Principles
+
+- **User-Centric**: Focus on user value and outcomes
+- **Clear Requirements**: Explicit, testable requirements
+- **Domain-Driven**: Business logic reflects domain understanding
+- **Value-Focused**: Prioritize features by business value
+
+## Requirements Gathering
+
+**Ask the Right Questions:**
+- What problem are we solving?
+- Who is the user?
+- What value does this deliver?
+- What does success look like?
+- What are the constraints?
+
+**Document Requirements:**
+- User stories with acceptance criteria
+- Business rules and logic
+- Success metrics
+- Constraints and limitations
+
+## User Stories
+
+**Format:**
+- As a [user type]
+- I want [goal]
+- So that [benefit]
+
+**Acceptance Criteria:**
+- Given [context]
+- When [action]
+- Then [outcome]
+
+**Example:**
+```
+As a customer
+I want to save items to my wishlist
+So that I can purchase them later
+
+Acceptance Criteria:
+- Given I am logged in
+- When I click "Save to Wishlist" on a product
+- Then the product is added to my wishlist
+- And I can view my wishlist later
+- And I can remove items from my wishlist
+```
+
+## Business Logic
+
+**Domain Models:**
+- Represent business entities
+- Contain business rules
+- Are framework-agnostic
+- Reflect real-world concepts
+
+**Business Rules:**
+- Explicit rules, not implicit
+- Documented in spec or code
+- Testable and verifiable
+- Can be changed as business evolves
+
+**Value Proposition:**
+- Clear value to users
+- Measurable outcomes
+- Business impact
+- Success metrics
+
+## Domain-Driven Design
+
+**Domain Models:**
+- Entities: Things with identity (User, Order, Product)
+- Value Objects: Things without identity (Money, Address)
+- Aggregates: Clusters of entities (Order with OrderItems)
+- Services: Operations that don't fit entities
+
+**Business Logic Location:**
+- Domain models contain business rules
+- Services orchestrate business operations
+- Repositories handle data access
+- Keep business logic out of UI/API layers
+
+## Success Metrics
+
+**Define Measurable Outcomes:**
+- User engagement metrics
+- Business value metrics
+- Performance metrics
+- Quality metrics
+
+**Track Progress:**
+- Baseline measurements
+- Target goals
+- Current status
+- Improvement over time
+
+## Requirements Traceability
+
+**Link Requirements to Implementation:**
+- Requirements → Spec → Plan → Tasks → Code
+- Track which code implements which requirement
+- Verify requirements are met
+- Update requirements as needed
+
+## Business Rules Documentation
+
+**Document Business Rules:**
+- In spec files (spec/05-decisions.md)
+- In code comments (for complex logic)
+- In domain model documentation
+- Keep rules explicit and testable
