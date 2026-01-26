@@ -1,2 +1,5 @@
 # Supabase CLI local temp/state
 supabase/.temp/
+
+# Local SDD state tracking
+.sdd/git-state.json
