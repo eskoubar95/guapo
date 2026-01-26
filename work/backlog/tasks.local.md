@@ -77,6 +77,26 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** S
 
+## Task: t1.5
+
+**Description:** Set up GitHub remote (`origin`) and PR-ready workflow baseline (push branches + create PRs).
+
+**Workspace:** .
+
+**Status:** backlog
+
+**Tags:** infrastructure, documentation
+
+**Milestone:** M1
+
+**Acceptance:**
+- A GitHub repository exists for this project and `origin` is configured.
+- `main` is pushed to `origin`.
+- Task branches can be pushed and used to open PRs.
+- A minimal PR workflow is documented (how to create PRs; where required checks will live once CI is added).
+
+**Estimate:** S
+
 ## M2 — CMS (Payload)
 
 ## Task: t2.1
