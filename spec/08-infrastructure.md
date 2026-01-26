@@ -118,6 +118,8 @@ DECIDED: Supabase Storage.
 
 Do not commit secrets. Names below are placeholders.
 
+Env var inventory file (names only): `env.example`.
+
 - Required (expected):
   - `ADYEN_MERCHANT_ACCOUNT`
   - `ADYEN_API_KEY`
