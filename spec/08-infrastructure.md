@@ -9,7 +9,7 @@ This is the **source of truth** for technologies, frameworks, and tooling used i
 - CMS: Payload CMS
 - Database: PostgreSQL (Supabase)
 - Cache/Queue: Redis (Railway)
-- Build Tool: npm/pnpm (decide during scaffold; lockfile is source of truth)
+- Build Tool: pnpm (via Corepack; lockfile is source of truth)
 - Language: TypeScript (expected for this stack)
 - Other:
   - Payment: Adyen
@@ -24,7 +24,7 @@ DECIDED: monorepo with `apps/*` workspaces (see `spec/05-decisions.md`).
 - Workspace: `apps/storefront`
   - Frontend Framework: Next.js
   - Language: TypeScript
-  - Build Tool: TBD (pnpm/npm)
+  - Build Tool: pnpm
   - Notes: storefront UI, SEO, customer flows
 - Workspace: `apps/commerce`
   - Backend Framework: Medusa
@@ -96,7 +96,7 @@ Goal: avoid manual dependency drift and keep versions consistent.
 - Bootstrap via official CLIs:
   - Medusa: `npx create-medusa-app@latest` (optionally installs Next.js starter storefront).
   - Payload: `npx create-payload-app` (template TBD).
-- Pin exact versions in source control via lockfile (package-lock / pnpm-lock / yarn.lock).
+- Pin exact versions in source control via lockfile (`pnpm-lock.yaml`).
 - Minimum Node version: follow Medusa requirements (Node 20+ per Medusa docs at time of writing).
 
 ## Media storage (Payload uploads)

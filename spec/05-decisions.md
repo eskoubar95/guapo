@@ -14,6 +14,17 @@ This log captures **actual decisions** made during specification and delivery. K
   - Payload is Next.js-native (v3+); we still deploy it separately from the storefront for operational and security separation.
 - **Where**: `spec/08-infrastructure.md`, `work/backlog/tasks.local.md`
 
+## 2026-01-26 — Package manager + lockfile policy
+- **Decision**:
+  - Package manager: **pnpm** (via Corepack)
+  - Lockfile: **commit `pnpm-lock.yaml`** and treat it as the single source of truth for exact dependency versions
+- **Why**: Monorepo-friendly workspace tooling with fast installs and predictable dependency resolution.
+- **Consequences**:
+  - Local installs use `pnpm install` (Corepack-enabled).
+  - CI will use `pnpm install --frozen-lockfile` once CI is introduced.
+  - No `package-lock.json` / `yarn.lock` in this repo; pnpm is the standard.
+- **Where**: `spec/08-infrastructure.md`
+
 ## 2026-01-26 — Focus indicator (no focus rings)
 - **Decision**: Do not use focus rings. Use a clear **active/focus border** as the focus indicator (especially on inputs).
 - **Why**: Visual preference for a cleaner, less “glowy” UI.
