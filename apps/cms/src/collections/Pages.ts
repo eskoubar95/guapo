@@ -4,7 +4,7 @@ export const Pages: CollectionConfig = {
   slug: 'pages',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', 'status', 'updatedAt'],
+    defaultColumns: ['title', 'slug', '_status', 'updatedAt'],
     group: 'Content',
   },
   versions: {
@@ -41,18 +41,6 @@ export const Pages: CollectionConfig = {
             return value
           },
         ],
-      },
-    },
-    {
-      name: 'status',
-      type: 'select',
-      defaultValue: 'draft',
-      options: [
-        { label: 'Draft', value: 'draft' },
-        { label: 'Published', value: 'published' },
-      ],
-      admin: {
-        position: 'sidebar',
       },
     },
     {

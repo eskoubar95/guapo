@@ -32,7 +32,12 @@ export default buildConfig({
 
   editor: lexicalEditor(),
 
-  secret: process.env.PAYLOAD_SECRET || 'CHANGE_ME_IN_PRODUCTION',
+  secret: process.env.PAYLOAD_SECRET || (() => {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('PAYLOAD_SECRET environment variable is required in production')
+    }
+    return 'DEV_SECRET_CHANGE_ME'
+  })(),
 
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
