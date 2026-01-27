@@ -123,7 +123,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/cms
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** cms, backend, infrastructure
 
@@ -143,7 +143,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/cms
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** cms
 
@@ -163,7 +163,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/cms
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** cms, seo
 
@@ -183,7 +183,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/cms
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** cms, design
 
