@@ -133,6 +133,14 @@ Step 1 — Select the task
      - “Started `<task-id>` via SDD. Branch: `<branch>`. Plan: `<1–3 bullets>`.”
    - If task-level spec exists → add a second comment with a short spec summary + acceptance focus
 
+**Step 1.2) Cloud Agent Delegation (optional, Linear only):**
+
+If the user wants to delegate this task to Cursor Cloud Agent **or** the Linear issue already has label `agent-ok`:
+
+- Use skill: `/sdd-linear-delegate-cloud-agent`
+- HARD STOP if the issue is not “agent-ok” eligible (missing Scope/Out of scope/Acceptance/Workspace)
+- After delegation: **do not implement locally**. Wait for the agent to produce a draft PR targeting `staging`.
+
 **Error Handling:**
 - If Linear MCP unavailable → continue with local mode only
 - If Linear operation fails → log error, continue with local mode

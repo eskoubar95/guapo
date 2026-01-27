@@ -19,6 +19,12 @@ This file is a lightweight index of project facts and conventions that are usefu
   - Branch protection on `staging` and `main`: requires PR, approvals, status checks
   - CI checks validate SDD metadata and spec files
   - Commands (`/task/start`, `/task/validate`, `/task/promote`) use `.sdd/git-config.json` for branch resolution
+- **Cloud Agent pilot (Cursor Cloud Agents via Linear)**:
+  - Linear label: `agent-ok` (Guapo team)
+  - Use only for small, isolated tasks (docs, narrow refactors, small scripts, workflow tweaks)
+  - Issue must include: Scope + Out of scope + Acceptance + Workspace
+  - Delegation constraint: agent opens **draft PR to `staging`** only; no feature PRs directly to `main`
+  - Delegation trigger: post a comment starting with `@cursor` + the strict SDD Cloud Agent prompt
 - **Task management + MCP**: Linear is the source of truth for tasks during execution (MCP: `guapo-linear`). Supabase ops use MCP: `supabase`.
 - **Sprint context**: We use Linear **Cycles** as sprints (Guapo team cycles enabled).
 - **Spec set**: root + PRD + architecture + acceptance + sitemap are now created in `spec/`

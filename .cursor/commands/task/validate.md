@@ -214,6 +214,11 @@ Conclude with one of the following outcomes:
 - Requires fixes (clearly listed)
 - Requires spec refinement (`/spec/refine`)
 
+**If the task was delegated to a Cloud Agent (label `agent-ok`):**
+- Validation is primarily **PR review + evidence review** (diff, checks, manual spot-check).
+- Ensure the PR targets `staging` (feature work) and not `main`.
+- Then proceed with Linear updates as normal.
+
 **Step 7.1) Linear Issue Update (if Linear task and Linear mode enabled):**
 
 **ONLY READ IF Linear mode enabled AND task is Linear issue:**

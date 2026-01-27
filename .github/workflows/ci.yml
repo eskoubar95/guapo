@@ -62,12 +62,25 @@ jobs:
 
       - name: Check Spec Files Exist
         run: |
+          # For PRs, GITHUB_REF_NAME is the head branch; use base ref when available.
+          TARGET_BRANCH="${GITHUB_BASE_REF:-$GITHUB_REF_NAME}"
+
           REQUIRED_SPECS=(
             "spec/00-root-spec.md"
             "spec/08-infrastructure.md"
-            "work/backlog/milestones.md"
-            "work/backlog/tasks.local.md"
           )
+
+          # work/backlog is development-only (kept on staging). Require it only when:
+          # - targeting staging, OR
+          # - the files exist in the checked-out ref.
+          if [ "$TARGET_BRANCH" = "staging" ] || [ -f "work/backlog/milestones.md" ]; then
+            REQUIRED_SPECS+=(
+              "work/backlog/milestones.md"
+              "work/backlog/tasks.local.md"
+            )
+          else
+            echo "ℹ️  Skipping work/backlog spec checks on non-staging branch ($TARGET_BRANCH)."
+          fi
           
           MISSING=0
           for spec in "${REQUIRED_SPECS[@]}"; do

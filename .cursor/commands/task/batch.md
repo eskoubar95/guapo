@@ -94,6 +94,16 @@ Set the following policies before execution:
   - Preferred: skill `/sdd-pr-create-or-update` (with correct base branch)
   - Or: manual PR creation after the batch
 
+- **Cloud Agent delegation (optional, Linear pilot)**:
+  - Only for tasks explicitly marked safe to delegate:
+    - Linear label: `agent-ok` (Guapo team)
+    - OR local task tags include `agent-ok`
+  - Delegate only **small + isolated** tasks (docs, narrow refactors, small scripts, workflow tweaks)
+  - Delegation rule:
+    - Agent must open a **draft PR targeting `staging`**
+    - No “process invention” or broad refactors
+  - Use skill: `/sdd-linear-delegate-cloud-agent` for consistent prompting + labeling
+
 ## Step 3 — Batch execution method (choose one)
 
 ### Option A (recommended): Use the `batch-runner` subagent with worktree support
@@ -148,6 +158,26 @@ For each task in order:
 5. Record outcomes (what changed + evidence + next blocker)
 
 **Note:** This option does not use worktrees or parallel execution. Use Option A for dynamic scheduling.
+
+### Option C (pilot): Delegate eligible tasks to Cursor Cloud Agent via Linear
+
+Use this option when you want the batch runner to **delegate** some tasks instead of implementing them locally.
+
+Rules:
+- Only delegate tasks with Linear label `agent-ok` (or tasks.local tag `agent-ok`)
+- HARD STOP if the issue lacks: Scope + Out of scope + Acceptance + Workspace
+- Delegation must create **draft PRs targeting `staging`**
+
+Flow:
+1. For each eligible task:
+   - Run `/sdd-linear-delegate-cloud-agent`
+   - Record `issueId`, `commentId`, and expected PR target (`staging`)
+2. For non-eligible tasks:
+   - Use Option A or B as normal
+3. Monitor delegated tasks:
+   - Wait for draft PRs
+   - Run `/task/validate` as PR review/evidence review
+   - Merge to `staging` sequentially (as usual)
 
 ---
 

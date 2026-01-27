@@ -37,14 +37,26 @@ This checklist should be used **before starting any milestone tasks** to ensure 
   - Create promotion PR: `staging` → `main`
   - **Use only when ready to release** (can include multiple milestones/features)
 
+### 4.1 Cloud Agent Pilot (Cursor Cloud Agents via Linear)
+- [ ] Linear label **`agent-ok`** exists (Guapo team label)
+- [ ] Only mark tasks `agent-ok` when they are **small + isolated** (docs, narrow refactor, small script, workflow tweak)
+- [ ] Each `agent-ok` issue must include:
+  - **Scope** (1–3 bullets)
+  - **Out of scope** (1–3 bullets)
+  - **Acceptance** (checklist)
+  - **Workspace** (monorepo scope)
+- [ ] Delegation rule: agent must open a **draft PR to `staging`** (never direct to `main`)
+- [ ] Use skill: `/sdd-linear-delegate-cloud-agent` for consistent prompt + labeling
+  - Delegation comment should include `@cursor` so the Linear integration triggers the Cloud Agent
+
 ### 5. GitHub Workflow Understanding
 - [ ] Feature PRs → base = `staging` (development)
 - [ ] Release PRs → base = `main`, head = `staging` (production)
 - [ ] Direct feature → `main` PRs are **blocked by PR Policy workflow**
 - [ ] **Release strategy**: You can accumulate multiple milestones/features in `staging` before promoting to `main`
 - [ ] Required checks:
-  - `CI / SDD Sanity Checks` (must pass)
-  - `PR Policy / Enforce Branch Policy` (must pass)
+  - `SDD Sanity Checks` (must pass)
+  - `Enforce Branch Policy` (must pass)
 
 ### 6. Branch Protection (if not yet set up)
 - [ ] Review `.github/BRANCH-PROTECTION.md` for setup instructions
@@ -73,6 +85,16 @@ git pull origin staging
 # - Resolve base=staging from git-config.json
 # - Create branch: task/<task-id>-<description>
 # - Checkout new branch
+```
+
+### Delegating a Small Linear Task to Cloud Agent (pilot)
+```bash
+# For small, isolated Linear tasks only (label: agent-ok)
+/task/delegate <LINEAR-ISSUE-ID>
+# Command will:
+# - Apply label agent-ok (if eligible)
+# - Post a strict @cursor delegation comment
+# - Set status to In Progress
 ```
 
 ### After Task Completion

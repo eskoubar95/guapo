@@ -50,6 +50,13 @@ You are a specialized subagent that executes **long-running batch workflows** wi
   - commit in small logical units (when requested)
   - run validation (scoped to workspace if monorepo)
   - report a concise summary (what changed, evidence, next risk)
+
+- **Cloud Agent delegation (pilot, optional):**
+  - If a task is a Linear issue and has label `agent-ok` (or the batch explicitly requests delegation):
+    - Use skill `/sdd-linear-delegate-cloud-agent`
+    - Do **not** implement locally
+    - Wait for the agent’s draft PR targeting `staging`, then validate via PR review/evidence
+    - Merge to `staging` remains sequential (as usual)
 - **After each batch completes:**
   - **Sequentially merge** completed tasks to `staging` (one at a time, with verifier gate if available)
   - Clean up worktrees: `git worktree remove .sdd/worktrees/task-<task-id>` (if used)
