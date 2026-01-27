@@ -44,8 +44,8 @@ Use a structured PR body:
 1. Resolve branches from `.sdd/git-config.json`:
    - `default_branch` (typically `staging`) → head branch
    - `production_branch` (typically `main`) → base branch
-2. Verify `developmentBranch` is up-to-date and contains all features to release
-3. Create PR: head=`developmentBranch`, base=`productionBranch`
+2. Verify `default_branch` is up-to-date and contains all features to release
+3. Create PR: head=`default_branch`, base=`production_branch`
 4. PR title: `Release: [milestone/version]` or `Promote staging to main`
 5. PR body should include:
    - Summary of changes since last production release
