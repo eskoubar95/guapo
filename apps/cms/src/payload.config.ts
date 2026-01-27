@@ -8,6 +8,12 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
+import { Pages } from './collections/Pages'
+import { Articles } from './collections/Articles'
+import { ProductGuidance } from './collections/ProductGuidance'
+import { Navigation } from './globals/Navigation'
+import { Footer } from './globals/Footer'
+import { Homepage } from './globals/Homepage'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -20,7 +26,9 @@ export default buildConfig({
     },
   },
 
-  collections: [Users, Media],
+  collections: [Users, Media, Pages, Articles, ProductGuidance],
+
+  globals: [Navigation, Footer, Homepage],
 
   editor: lexicalEditor(),
 
