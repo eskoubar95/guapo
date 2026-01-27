@@ -2,42 +2,78 @@
 
 This guide explains how to set up branch protection rules for `staging` and `main` branches to enforce the SDD workflow.
 
-## Required Setup
+## Required Setup (GitHub UI - Rulesets)
 
-### For `staging` branch (development)
+**Navigation:** Settings → Rules → Rulesets → Create ruleset
 
-**Settings → Branches → Add rule → Branch name pattern: `staging`**
+### Step 1: Create Ruleset for `staging` branch
 
-Enable:
-- ✅ Require a pull request before merging
-  - Required number of approvals: **1**
-  - Dismiss stale pull request approvals when new commits are pushed: ✅
-- ✅ Require status checks to pass before merging
-  - Required status checks:
-    - `CI / SDD Sanity Checks`
-    - `PR Policy / Enforce Branch Policy`
-  - Require branches to be up to date before merging: ✅
-- ✅ Require conversation resolution before merging: ✅
+1. **Ruleset Name:** `staging-protection` (or any descriptive name)
+2. **Enforcement status:** Set to **"Active"** (not "Disabled")
+3. **Target branches:**
+   - Click "Add target"
+   - Select "Branch name pattern"
+   - Enter: `staging`
+4. **Rules → Branch rules:**
+   - ✅ **Restrict updates:** "Only allow users with bypass permission to update matching refs" (prevents direct pushes)
+   - ✅ **Restrict deletions:** "Only allow users with bypass permissions to delete matching refs"
+   - ✅ **Require a pull request before merging:**
+     - Required number of approvals: **1**
+     - Dismiss stale pull request approvals when new commits are pushed: ✅
+   - ✅ **Require status checks to pass:**
+     - Required status checks:
+       - `CI / SDD Sanity Checks`
+       - `PR Policy / Enforce Branch Policy`
+     - Require branches to be up to date before merging: ✅
+   - ✅ **Require conversation resolution before merging:** ✅
+5. **Bypass list:** (optional) Add specific users/teams that can bypass (leave empty for strict enforcement)
+6. Click **"Create"**
+
+### Step 2: Create Ruleset for `main` branch (production)
+
+1. **Ruleset Name:** `main-protection` (or any descriptive name)
+2. **Enforcement status:** Set to **"Active"**
+3. **Target branches:**
+   - Click "Add target"
+   - Select "Branch name pattern"
+   - Enter: `main`
+4. **Rules → Branch rules:**
+   - ✅ **Restrict updates:** "Only allow users with bypass permission to update matching refs" (prevents direct pushes)
+   - ✅ **Restrict deletions:** "Only allow users with bypass permissions to delete matching refs"
+   - ✅ **Require a pull request before merging:**
+     - Required number of approvals: **1** (or more, per team preference)
+     - Dismiss stale pull request approvals when new commits are pushed: ✅
+   - ✅ **Require status checks to pass:**
+     - Required status checks:
+       - `CI / SDD Sanity Checks`
+       - `PR Policy / Enforce Branch Policy`
+     - Require branches to be up to date before merging: ✅
+   - ✅ **Require conversation resolution before merging:** ✅
+   - ✅ **Block force pushes:** "Prevent users with push access from force pushing to refs"
+5. **Bypass list:** (recommended) Leave empty or restrict to admins only
+6. Click **"Create"**
+
+**Note:** If you see the old "Branch protection rules" UI instead of Rulesets, use the alternative method below.
+
+## Alternative Method: Legacy Branch Protection Rules (if Rulesets not available)
+
+If your repository uses the older "Branch protection rules" interface:
+
+**Settings → Branches → Add rule → Branch name pattern**
+
+### For `staging` branch:
+- ✅ Require a pull request before merging (1 approval)
+- ✅ Require status checks to pass (`CI / SDD Sanity Checks`, `PR Policy / Enforce Branch Policy`)
+- ✅ Require conversation resolution before merging
 - ✅ Do not allow bypassing the above settings
-- ✅ Restrict who can push to matching branches: (optional, restrict to specific teams/users)
 
-### For `main` branch (production)
-
-**Settings → Branches → Add rule → Branch name pattern: `main`**
-
-Enable:
-- ✅ Require a pull request before merging
-  - Required number of approvals: **1** (or more, per team preference)
-  - Dismiss stale pull request approvals when new commits are pushed: ✅
-- ✅ Require status checks to pass before merging
-  - Required status checks:
-    - `CI / SDD Sanity Checks`
-    - `PR Policy / Enforce Branch Policy`
-  - Require branches to be up to date before merging: ✅
-- ✅ Require conversation resolution before merging: ✅
+### For `main` branch:
+- ✅ Require a pull request before merging (1 approval)
+- ✅ Require status checks to pass (`CI / SDD Sanity Checks`, `PR Policy / Enforce Branch Policy`)
+- ✅ Require conversation resolution before merging
+- ✅ Block force pushes
 - ✅ Do not allow bypassing the above settings
-- ✅ Restrict who can push to matching branches: (recommended: restrict to admins only)
-- ✅ Include administrators: ❌ (recommended: admins must also follow rules)
+- ❌ Include administrators (recommended: admins must also follow rules)
 
 ## Alternative: Using GitHub CLI
 
