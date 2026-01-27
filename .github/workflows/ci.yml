@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [staging, main]
+  pull_request:
+    branches: [staging, main]
+
+jobs:
+  sdd-sanity:
+    name: SDD Sanity Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate git-config.json
+        run: |
+          if [ ! -f .sdd/git-config.json ]; then
+            echo "❌ .sdd/git-config.json is missing"
+            exit 1
+          fi
+          
+          # Validate JSON syntax
+          node -e "JSON.parse(require('fs').readFileSync('.sdd/git-config.json', 'utf8'))" || {
+            echo "❌ .sdd/git-config.json is not valid JSON"
+            exit 1
+          }
+          
+          # Validate required fields
+          DEFAULT_BRANCH=$(node -e "console.log(JSON.parse(require('fs').readFileSync('.sdd/git-config.json', 'utf8')).default_branch || '')")
+          PROD_BRANCH=$(node -e "console.log(JSON.parse(require('fs').readFileSync('.sdd/git-config.json', 'utf8')).production_branch || '')")
+          
+          if [ -z "$DEFAULT_BRANCH" ]; then
+            echo "❌ .sdd/git-config.json missing 'default_branch' field"
+            exit 1
+          fi
+          
+          if [ -z "$PROD_BRANCH" ]; then
+            echo "❌ .sdd/git-config.json missing 'production_branch' field"
+            exit 1
+          fi
+          
+          echo "✅ .sdd/git-config.json is valid"
+          echo "   default_branch: $DEFAULT_BRANCH"
+          echo "   production_branch: $PROD_BRANCH"
+
+      - name: Validate Helper Metadata
+        run: |
+          if [ -f .cursor/scripts/validate-helpers.cjs ]; then
+            node .cursor/scripts/validate-helpers.cjs || {
+              echo "❌ Helper metadata validation failed"
+              exit 1
+            }
+          else
+            echo "⚠️  validate-helpers.cjs not found, skipping"
+          fi
+
+      - name: Check Spec Files Exist
+        run: |
+          REQUIRED_SPECS=(
+            "spec/00-root-spec.md"
+            "spec/08-infrastructure.md"
+          )
+          
+          MISSING=0
+          for spec in "${REQUIRED_SPECS[@]}"; do
+            if [ ! -f "$spec" ]; then
+              echo "❌ Missing required spec file: $spec"
+              MISSING=1
+            fi
+          done
+          
+          if [ $MISSING -eq 1 ]; then
+            exit 1
+          fi
+          
+          echo "✅ All required spec files present"
+          echo "ℹ️  Note: work/backlog/ files are development-only and not required in main branch"

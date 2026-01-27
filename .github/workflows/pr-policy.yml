@@ -1,0 +1,81 @@
+name: PR Policy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  enforce-branch-policy:
+    name: Enforce Branch Policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Read git-config.json
+        id: config
+        run: |
+          if [ ! -f .sdd/git-config.json ]; then
+            echo "❌ .sdd/git-config.json is missing"
+            exit 1
+          fi
+          
+          DEFAULT_BRANCH=$(node -e "console.log(JSON.parse(require('fs').readFileSync('.sdd/git-config.json', 'utf8')).default_branch || '')")
+          PROD_BRANCH=$(node -e "console.log(JSON.parse(require('fs').readFileSync('.sdd/git-config.json', 'utf8')).production_branch || '')")
+          
+          if [ -z "$DEFAULT_BRANCH" ] || [ -z "$PROD_BRANCH" ]; then
+            echo "❌ .sdd/git-config.json missing required fields: default_branch / production_branch"
+            exit 1
+          fi
+          
+          echo "default_branch=$DEFAULT_BRANCH" >> $GITHUB_OUTPUT
+          echo "prod_branch=$PROD_BRANCH" >> $GITHUB_OUTPUT
+          
+          echo "📋 Branch configuration:"
+          echo "   default_branch: $DEFAULT_BRANCH"
+          echo "   production_branch: $PROD_BRANCH"
+
+      - name: Check PR base and head
+        id: pr_check
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+          DEFAULT_BRANCH: ${{ steps.config.outputs.default_branch }}
+          PROD_BRANCH: ${{ steps.config.outputs.prod_branch }}
+        run: |
+          echo "PR base: $BASE_BRANCH"
+          echo "PR head: $HEAD_BRANCH"
+          
+          # Policy: PRs to production (main) must come from staging
+          if [ "$BASE_BRANCH" = "$PROD_BRANCH" ]; then
+            if [ "$HEAD_BRANCH" != "$DEFAULT_BRANCH" ]; then
+              echo "❌ PR Policy Violation: PRs to $PROD_BRANCH (production) must come from $DEFAULT_BRANCH (staging)"
+              echo "   Current PR: $HEAD_BRANCH → $BASE_BRANCH"
+              echo "   Expected: $DEFAULT_BRANCH → $BASE_BRANCH"
+              echo ""
+              echo "💡 To release to production:"
+              echo "   1. Merge your feature branch into $DEFAULT_BRANCH first"
+              echo "   2. Create a promotion PR: $DEFAULT_BRANCH → $PROD_BRANCH"
+              exit 1
+            else
+              echo "✅ Promotion PR detected: $DEFAULT_BRANCH → $PROD_BRANCH (allowed)"
+            fi
+          else
+            echo "✅ Feature PR: $HEAD_BRANCH → $BASE_BRANCH (allowed)"
+          fi
+
+      - name: Validate PR description
+        run: |
+          PR_BODY="${{ github.event.pull_request.body }}"
+          
+          if [ -z "$PR_BODY" ] || [ "$PR_BODY" = "null" ]; then
+            echo "⚠️  PR description is empty"
+            echo "   Please add a description with summary, testing notes, and acceptance criteria"
+            # Don't fail, just warn
+          else
+            echo "✅ PR description present"
+          fi
