@@ -362,6 +362,7 @@ Conclude with one of the following outcomes:
    - Resolve `defaultBranch` using `/sdd-git-default-branch` or `branch-detection.md`
    - **This is the development branch (typically `staging`) and is the correct target for feature PRs.**
    - **Do NOT create PRs directly to `main` (production) from feature branches.**
+   - **If `defaultBranch` resolves to `main` → STOP and instruct user to fix config (`.sdd/git-config.json` should have `default_branch=staging`) or use `/task/promote` for production releases.**
    
    **4.2) Generate PR Description:**
    - Use pr-description.md helper:

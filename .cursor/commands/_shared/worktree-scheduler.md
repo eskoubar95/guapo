@@ -103,8 +103,8 @@ The scheduler outputs a JSON plan:
     },
     {
       "taskIds": ["t2.2", "t2.3"],
-      "workspaces": ["apps/cms", "apps/cms"],
-      "reason": "Parallel: both depend on t2.1, different concerns",
+      "workspaces": ["apps/cms", "apps/commerce"],
+      "reason": "Parallel: different workspaces (disjoint) and deps satisfied",
       "canRunParallel": true
     },
     {
@@ -134,7 +134,7 @@ The scheduler outputs a JSON plan:
 When tasks run in parallel, each task gets its own git worktree:
 
 **Worktree structure:**
-```
+```text
 .sdd/worktrees/
   task-t2.1/
     [isolated working directory for t2.1]

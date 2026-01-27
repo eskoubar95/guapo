@@ -42,8 +42,8 @@ Use a structured PR body:
 
 **Process:**
 1. Resolve branches from `.sdd/git-config.json`:
-   - `developmentBranch` (typically `staging`) → head branch
-   - `productionBranch` (typically `main`) → base branch
+   - `default_branch` (typically `staging`) → head branch
+   - `production_branch` (typically `main`) → base branch
 2. Verify `developmentBranch` is up-to-date and contains all features to release
 3. Create PR: head=`developmentBranch`, base=`productionBranch`
 4. PR title: `Release: [milestone/version]` or `Promote staging to main`
@@ -57,7 +57,7 @@ Use a structured PR body:
 
 ## Rules
 
-- Never assume base is `main` for feature PRs (use `defaultBranch` from config).
-- For promotion PRs, use `developmentBranch` → `productionBranch` from config.
+- Never assume base is `main` for feature PRs (use `default_branch` from config).
+- For promotion PRs, use `default_branch` → `production_branch` from config.
 - Prefer updating an existing PR over creating duplicates.
 - Do not push unless user asked to push (or the workflow explicitly requires it).

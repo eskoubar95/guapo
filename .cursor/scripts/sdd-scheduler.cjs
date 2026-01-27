@@ -223,17 +223,25 @@ function topologicalSort(graph, inDegree) {
 
 /**
  * Checks if a task touches global lock paths (must run sequentially).
- * @param {Object} task - Task object with workspace and description
+ * Uses heuristics: workspace check, tags, and description keywords.
+ * Note: Actual file path checking would require git diff, which isn't available at scheduling time.
+ * @param {Object} task - Task object with workspace, tags, and description
  * @returns {boolean} True if task touches global lock paths
  */
 function touchesGlobalLock(task) {
-  // Heuristic: if task description mentions global paths or task has no workspace (root-level)
+  // Root-level tasks (no workspace or workspace = '.') always touch global paths
   if (!task.workspace || task.workspace === '.') {
     return true;
   }
 
+  // Check for explicit global-lock tag
+  if (task.tags && task.tags.some((t) => t.toLowerCase() === 'global-lock' || t.toLowerCase() === 'infrastructure')) {
+    return true;
+  }
+
+  // Heuristic: check description for global path keywords
   const desc = (task.description || '').toLowerCase();
-  const globalKeywords = ['spec', 'readme', 'github', 'infrastructure', 'documentation', 'config'];
+  const globalKeywords = ['spec', 'readme', 'github', 'infrastructure', 'documentation', 'config', '.sdd', '.cursor'];
   return globalKeywords.some((keyword) => desc.includes(keyword));
 }
 
@@ -384,6 +392,16 @@ function main() {
 
   // Topological sort
   const sortedTaskIds = topologicalSort(graph, inDegree);
+
+  // Validate: detect dependency cycles
+  if (sortedTaskIds.length !== taskIds.length) {
+    const missing = taskIds.filter((id) => !sortedTaskIds.includes(id));
+    console.error(
+      `❌ Dependency cycle detected in milestone ${milestoneId}. Unscheduled tasks: ${missing.join(', ')}`
+    );
+    console.error('Please fix task dependencies to remove cycles.');
+    process.exit(1);
+  }
 
   // Create parallel batches
   const batches = createParallelBatches(allTasks, sortedTaskIds, MAX_CONCURRENT);

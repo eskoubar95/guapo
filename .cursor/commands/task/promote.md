@@ -37,22 +37,22 @@ Run detection and activation first (same as `/task/start`):
 
 **Read `.sdd/git-config.json`:**
 1. Verify file exists
-2. Read `development_branch` (typically `staging`)
+2. Read `default_branch` (typically `staging`) as the development branch
 3. Read `production_branch` (typically `main`)
-4. If fields missing → error: "`.sdd/git-config.json` missing required fields"
+4. If fields missing → error: "`.sdd/git-config.json` missing required fields: `default_branch` / `production_branch`"
 
 **Output:**
-- Development branch: `<development_branch>`
+- Development branch: `<default_branch>`
 - Production branch: `<production_branch>`
 
 ## Step 2 — Verify Staging Readiness
 
 **Check development branch status:**
-1. Checkout development branch: `git checkout <development_branch>`
-2. Pull latest: `git pull origin <development_branch>`
+1. Checkout development branch: `git checkout <default_branch>`
+2. Pull latest: `git pull origin <default_branch>`
 3. Verify branch is clean (no uncommitted changes)
 4. Check if there are commits ahead of production branch:
-   - `git log <production_branch>..<development_branch> --oneline`
+   - `git log <production_branch>..<default_branch> --oneline`
    - If no commits → warn: "No new commits to promote. Staging is up-to-date with production."
 
 **Check for unmerged PRs:**
@@ -71,7 +71,7 @@ Run detection and activation first (same as `/task/start`):
 ## Step 3 — Generate Promotion PR Details
 
 **PR Title:**
-- Format: `Release: [milestone/version/date]` or `Promote <development_branch> to <production_branch>`
+- Format: `Release: [milestone/version/date]` or `Promote <default_branch> to <production_branch>`
 - Include milestones/features included if multiple (e.g., "Release: M2 + M3 features")
 - Include date or version if applicable
 
@@ -80,7 +80,7 @@ Run detection and activation first (same as `/task/start`):
 ## Release: [milestone/version/date]
 
 ### Changes Since Last Production Release
-[Auto-generated from git log: `git log <production_branch>..<development_branch> --oneline`]
+[Auto-generated from git log: `git log <production_branch>..<default_branch> --oneline`]
 
 ### Milestones/Features Included
 [List milestones or major features included in this release]
@@ -108,14 +108,14 @@ Run detection and activation first (same as `/task/start`):
 ## Step 4 — Create Promotion PR
 
 **Before creating PR:**
-1. Verify you're creating PR: head=`<development_branch>`, base=`<production_branch>`
+1. Verify you're creating PR: head=`<default_branch>`, base=`<production_branch>`
 2. Confirm this is intentional (not a feature PR to main)
 
 **Create PR:**
 1. Use GitHub helpers (MCP → CLI → Local fallback)
 2. Create PR with:
    - Base: `<production_branch>`
-   - Head: `<development_branch>`
+   - Head: `<default_branch>`
    - Title: [from Step 3]
    - Body: [from Step 3]
 3. Get PR number and URL
@@ -137,7 +137,7 @@ Run detection and activation first (same as `/task/start`):
 - Wait for CI checks to pass
 - Get required approvals
 - Merge when ready (squash or merge commit, per team preference)
-- **Note:** You can accumulate multiple milestones/features in staging before releasing. This promotion PR includes all changes since the last production release.
+- **Note:** You can accumulate multiple milestones/features in `<default_branch>` (staging) before releasing. This promotion PR includes all changes since the last production release.
 
 ---
 
