@@ -37,14 +37,24 @@
     "subtotal": "Subtotal",
     "shipping": "Fragt",
     "total": "Total",
+    "summary": "Ordreoversigt",
     "remove": "Fjern"
   },
   "checkout": {
     "title": "Kassen",
+    "contact": "Kontakt",
     "shipping": "Levering",
     "payment": "Betaling",
     "review": "Gennemse ordre",
     "placeOrder": "Bekræft ordre"
+  },
+  "account": {
+    "title": "Min konto",
+    "orders": "Ordrer",
+    "subscriptions": "Abonnementer",
+    "profile": "Profil",
+    "addresses": "Adresser",
+    "signOut": "Log ud"
   },
   "footer": {
     "support": "Support",

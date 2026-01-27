@@ -37,14 +37,24 @@
     "subtotal": "Subtotal",
     "shipping": "Shipping",
     "total": "Total",
+    "summary": "Order summary",
     "remove": "Remove"
   },
   "checkout": {
     "title": "Checkout",
+    "contact": "Contact",
     "shipping": "Shipping",
     "payment": "Payment",
     "review": "Review order",
     "placeOrder": "Place order"
+  },
+  "account": {
+    "title": "My Account",
+    "orders": "Orders",
+    "subscriptions": "Subscriptions",
+    "profile": "Profile",
+    "addresses": "Addresses",
+    "signOut": "Sign out"
   },
   "footer": {
     "support": "Support",

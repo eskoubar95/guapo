@@ -40,14 +40,24 @@ export interface Dictionary {
     subtotal: string;
     shipping: string;
     total: string;
+    summary: string;
     remove: string;
   };
   checkout: {
     title: string;
+    contact: string;
     shipping: string;
     payment: string;
     review: string;
     placeOrder: string;
+  };
+  account: {
+    title: string;
+    orders: string;
+    subscriptions: string;
+    profile: string;
+    addresses: string;
+    signOut: string;
   };
   footer: {
     support: string;
