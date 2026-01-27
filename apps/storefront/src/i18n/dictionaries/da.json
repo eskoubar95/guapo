@@ -1,0 +1,57 @@
+{
+  "common": {
+    "brand": "Guapo",
+    "search": "Søg",
+    "cart": "Kurv",
+    "account": "Konto",
+    "signIn": "Log ind",
+    "signOut": "Log ud",
+    "language": "Sprog"
+  },
+  "home": {
+    "hero": {
+      "title": "Din hud fortjener det bedste",
+      "subtitle": "Udforsk vores kuraterede udvalg af premium hudplejeprodukter til alle hudtyper.",
+      "cta": "Shop nu"
+    },
+    "featured": {
+      "title": "Bestsellers"
+    },
+    "newArrivals": {
+      "title": "Nyheder"
+    }
+  },
+  "products": {
+    "addToCart": "Læg i kurv",
+    "outOfStock": "Ikke på lager",
+    "viewDetails": "Se detaljer",
+    "filters": "Filtre",
+    "sort": "Sorter",
+    "noResults": "Ingen produkter fundet"
+  },
+  "cart": {
+    "title": "Din kurv",
+    "empty": "Din kurv er tom",
+    "continueShopping": "Fortsæt med at shoppe",
+    "checkout": "Gå til kassen",
+    "subtotal": "Subtotal",
+    "shipping": "Fragt",
+    "total": "Total",
+    "remove": "Fjern"
+  },
+  "checkout": {
+    "title": "Kassen",
+    "shipping": "Levering",
+    "payment": "Betaling",
+    "review": "Gennemse ordre",
+    "placeOrder": "Bekræft ordre"
+  },
+  "footer": {
+    "support": "Support",
+    "policies": "Vilkår",
+    "followUs": "Følg os",
+    "newsletter": "Nyhedsbrev",
+    "subscribe": "Tilmeld",
+    "copyright": "© 2026 Guapo. Alle rettigheder forbeholdes."
+  }
+}

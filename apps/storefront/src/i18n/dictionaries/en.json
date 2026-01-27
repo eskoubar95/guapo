@@ -1,0 +1,57 @@
+{
+  "common": {
+    "brand": "Guapo",
+    "search": "Search",
+    "cart": "Cart",
+    "account": "Account",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "language": "Language"
+  },
+  "home": {
+    "hero": {
+      "title": "Your skin deserves the best",
+      "subtitle": "Explore our curated selection of premium skincare products for all skin types.",
+      "cta": "Shop now"
+    },
+    "featured": {
+      "title": "Bestsellers"
+    },
+    "newArrivals": {
+      "title": "New arrivals"
+    }
+  },
+  "products": {
+    "addToCart": "Add to cart",
+    "outOfStock": "Out of stock",
+    "viewDetails": "View details",
+    "filters": "Filters",
+    "sort": "Sort",
+    "noResults": "No products found"
+  },
+  "cart": {
+    "title": "Your cart",
+    "empty": "Your cart is empty",
+    "continueShopping": "Continue shopping",
+    "checkout": "Checkout",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "total": "Total",
+    "remove": "Remove"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "shipping": "Shipping",
+    "payment": "Payment",
+    "review": "Review order",
+    "placeOrder": "Place order"
+  },
+  "footer": {
+    "support": "Support",
+    "policies": "Policies",
+    "followUs": "Follow us",
+    "newsletter": "Newsletter",
+    "subscribe": "Subscribe",
+    "copyright": "© 2026 Guapo. All rights reserved."
+  }
+}
