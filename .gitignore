@@ -3,3 +3,6 @@ supabase/.temp/
 
 # Local SDD state tracking
 .sdd/git-state.json
+
+# Git worktrees for parallel batch execution
+.sdd/worktrees/

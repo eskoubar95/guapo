@@ -5,7 +5,7 @@ You are an **Implementation Engineer** using Spec-Driven Development (SDD).
 **Your context:** Batch task execution (milestone or task list)
 
 MODE: Execution / Batch
-GOAL: Execute a batch of tasks sequentially while maintaining SDD discipline (one task at a time), Git hygiene, and validation evidence.
+GOAL: Execute a batch of tasks with dynamic scheduling (parallel when safe, sequential when required) while maintaining SDD discipline, Git hygiene, and validation evidence. Uses git worktrees for parallel isolation.
 
 ---
 
@@ -21,8 +21,8 @@ GOAL: Execute a batch of tasks sequentially while maintaining SDD discipline (on
 - **Active Rule Sets:** [Will be populated after activation]
 - **Implementation:** BLOCKED (until Step 3 confirmation)
 - **Boundaries:**
-  - WILL: Execute tasks sequentially, validate each task, keep scope tight to the selected tasks
-  - WILL NOT: Expand scope beyond selected tasks, perform unrelated refactors, merge without validation evidence
+  - WILL: Execute tasks with dynamic scheduling (parallel when safe via worktrees, sequential when required), validate each task, keep scope tight to the selected tasks
+  - WILL NOT: Expand scope beyond selected tasks, perform unrelated refactors, merge without validation evidence, run more than 2 tasks in parallel
 
 ---
 
@@ -37,6 +37,31 @@ Run detection and activation first (same as `/task/start`):
 - Each task must have `**Workspace:** <path>` in `work/backlog/tasks.local.md`.
 - If any selected task is missing `**Workspace:**` → **HARD STOP** before execution.
 - Validate and build **per workspace**, not repo-wide.
+
+## Step 0.5 — Scheduler Phase (Dynamic Planning)
+
+**ONLY READ IF milestone batch:**
+- Read `.cursor/commands/_shared/worktree-scheduler.md` ONLY IF milestone batch selected
+- Read sections: "Scheduler Rules" (lines 1-100), "Output Format" (lines 101-200)
+- Skip if: Task list batch (not milestone) → skip scheduler, use provided order
+
+**Run scheduler analysis:**
+1. Execute scheduler script: `node .cursor/scripts/sdd-scheduler.cjs <milestone-id>`
+2. Parse JSON output to get:
+   - Execution order (topologically sorted)
+   - Parallel batches (which tasks can run together)
+   - Reasons for parallel/sequential decisions
+3. Display execution plan to user:
+   - Show total tasks and batches
+   - Show which tasks run in parallel (max 2) and why
+   - Show which tasks run sequentially and why
+4. Ask for confirmation: "Proceed with this execution plan?"
+
+**Scheduler output interpretation:**
+- `batches`: Array of execution batches
+  - If `canRunParallel: true` → tasks will run in parallel via worktrees
+  - If `canRunParallel: false` → tasks run sequentially
+- `executionOrder`: Topologically sorted task IDs (respects dependencies)
 
 ## Step 1 — Select batch scope
 
@@ -71,11 +96,12 @@ Set the following policies before execution:
 
 ## Step 3 — Batch execution method (choose one)
 
-### Option A (recommended): Use the `batch-runner` subagent
+### Option A (recommended): Use the `batch-runner` subagent with worktree support
 
 Launch the `batch-runner` subagent with:
 
 - Batch scope (milestone ID or task list)
+- Execution plan from scheduler (if milestone batch) OR task list order (if task list batch)
 - Source-of-truth paths:
   - `work/backlog/milestones.md`
   - `work/backlog/tasks.local.md`
@@ -85,14 +111,34 @@ Launch the `batch-runner` subagent with:
   - branch naming rules
   - commit policy
 - Validation + PR policies
+- Worktree configuration:
+  - Worktree root: `.sdd/worktrees/`
+  - Max concurrent: 2 tasks
+  - Parallel execution: only when scheduler says `canRunParallel: true`
+
+**Worktree execution flow:**
+1. For each batch in execution plan:
+   - If batch `canRunParallel: true`:
+     - Create worktree for each task: `git worktree add .sdd/worktrees/task-<task-id> -b task/<task-id>-<description>`
+     - Execute tasks in parallel (max 2) within their worktrees
+     - Validate each task independently
+     - Create/update PRs for each task (targeting `staging`)
+   - If batch `canRunParallel: false`:
+     - Execute tasks sequentially (one at a time)
+     - Use standard branch workflow (no worktree needed)
+2. After batch completes:
+   - **Sequentially merge** completed tasks to `staging` (one at a time, with verifier gate)
+   - Clean up worktrees: `git worktree remove .sdd/worktrees/task-<task-id>`
+3. Continue to next batch
 
 The subagent must return:
 - completed task IDs
 - blocked task IDs + reasons
 - evidence (what ran; pass/fail)
 - notes (risks/open questions discovered)
+- parallel execution summary (which tasks ran in parallel)
 
-### Option B: Manual sequential execution (no subagent)
+### Option B: Manual sequential execution (no subagent, no worktrees)
 
 For each task in order:
 1. Run `/task/start` for the task (preflight + branch)
@@ -100,6 +146,8 @@ For each task in order:
 3. Commit (per policy)
 4. Run `/task/validate` for the task (per policy)
 5. Record outcomes (what changed + evidence + next blocker)
+
+**Note:** This option does not use worktrees or parallel execution. Use Option A for dynamic scheduling.
 
 ---
 

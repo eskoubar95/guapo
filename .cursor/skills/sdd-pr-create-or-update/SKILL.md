@@ -34,8 +34,30 @@ Use a structured PR body:
 - **Test plan**: checklist
 - **Notes / risks**: optional
 
+## Promotion PR (Release to Production)
+
+**When to use:**
+- After feature work has been merged to `staging` and tested
+- When ready to release to production (`main`)
+
+**Process:**
+1. Resolve branches from `.sdd/git-config.json`:
+   - `developmentBranch` (typically `staging`) → head branch
+   - `productionBranch` (typically `main`) → base branch
+2. Verify `developmentBranch` is up-to-date and contains all features to release
+3. Create PR: head=`developmentBranch`, base=`productionBranch`
+4. PR title: `Release: [milestone/version]` or `Promote staging to main`
+5. PR body should include:
+   - Summary of changes since last production release
+   - Testing evidence from staging
+   - Deployment checklist
+   - Rollback plan (if applicable)
+
+**Note:** Use `/task/promote` command for promotion PRs (see command documentation).
+
 ## Rules
 
-- Never assume base is `main`.
+- Never assume base is `main` for feature PRs (use `defaultBranch` from config).
+- For promotion PRs, use `developmentBranch` → `productionBranch` from config.
 - Prefer updating an existing PR over creating duplicates.
 - Do not push unless user asked to push (or the workflow explicitly requires it).

@@ -104,19 +104,36 @@ Goal: avoid manual dependency drift and keep versions consistent.
 DECIDED: Supabase Storage.
 
 ## CI/CD
-- Provider: TBD
+- Provider: GitHub Actions
 - Deployment strategy: TBD (automatic vs manual approvals)
 - Branch strategy:
   - `staging` → staging environment (development/testing)
   - `main` → production environment
   - Promotion: PR/merge `staging` → `main`
   - **Config:** `.sdd/git-config.json` (tells all commands to use `staging` as default PR target)
+- **Release strategy:**
+  - Feature PRs merge to `staging` (development)
+  - Multiple milestones/features can accumulate in `staging` for integrated testing
+  - Production releases happen via promotion PR (`staging` → `main`) when ready
+  - Use `/task/promote` command to create promotion PRs (includes all changes since last production release)
 
-## GitHub Actions (if using GitHub)
-- Workflows: TBD
-- CI checks: TBD
-- Deployment: TBD
-- PR requirements: TBD (we will define required checks once CI exists; until then, PRs rely on review + local checks).
+## GitHub Actions
+- **CI workflow** (`.github/workflows/ci.yml`):
+  - Runs on push/PR to `staging` and `main`
+  - Validates `.sdd/git-config.json` (JSON syntax + required fields)
+  - Validates helper metadata (`.cursor/scripts/validate-helpers.cjs`)
+  - Checks required spec files exist
+- **PR Policy workflow** (`.github/workflows/pr-policy.yml`):
+  - Enforces branch policy: PRs to `main` must come from `staging`
+  - Blocks direct feature → `main` PRs
+  - Validates PR descriptions
+- **Required checks** (for branch protection):
+  - `CI / SDD Sanity Checks`
+  - `PR Policy / Enforce Branch Policy`
+- **Branch protection** (see `.github/BRANCH-PROTECTION.md`):
+  - `staging`: Requires PR, 1 approval, status checks
+  - `main`: Requires PR, 1 approval, status checks, no direct pushes
+- **PR template** (`.github/pull_request_template.md`): Standardizes PR descriptions with summary, testing, acceptance criteria
 
 ## Environment Variables
 
