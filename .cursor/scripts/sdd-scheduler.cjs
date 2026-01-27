@@ -32,6 +32,11 @@ const GLOBAL_LOCK_PATHS = [
 // Max concurrent tasks
 const MAX_CONCURRENT = 2;
 
+/**
+ * Parses tasks from tasks.local.md file.
+ * @param {string} tasksFile - Path to tasks.local.md file
+ * @returns {Object<string, Object>} Map of task ID to task object with id, description, workspace, milestone, dependencies, status, tags
+ */
 function parseTasks(tasksFile) {
   const content = fs.readFileSync(tasksFile, 'utf-8');
   const tasks = {};
@@ -114,6 +119,12 @@ function parseTasks(tasksFile) {
   return tasks;
 }
 
+/**
+ * Extracts task IDs mentioned in a milestone section.
+ * @param {string} milestonesFile - Path to milestones.md file
+ * @param {string} milestoneId - Milestone ID (e.g., "M2")
+ * @returns {string[]} Array of task IDs found in the milestone
+ */
 function getMilestoneTasks(milestonesFile, milestoneId) {
   const content = fs.readFileSync(milestonesFile, 'utf-8');
   const lines = content.split('\n');
@@ -144,6 +155,12 @@ function getMilestoneTasks(milestonesFile, milestoneId) {
   return taskIds;
 }
 
+/**
+ * Builds a dependency graph (DAG) from task dependencies.
+ * @param {Object<string, Object>} tasks - Map of all tasks
+ * @param {string[]} taskIds - Array of task IDs to include in DAG
+ * @returns {{graph: Object<string, string[]>, inDegree: Object<string, number>}} Graph structure and in-degree counts
+ */
 function buildDAG(tasks, taskIds) {
   const graph = {};
   const inDegree = {};
@@ -171,6 +188,12 @@ function buildDAG(tasks, taskIds) {
   return { graph, inDegree };
 }
 
+/**
+ * Performs topological sort on the dependency graph.
+ * @param {Object<string, string[]>} graph - Dependency graph (node -> array of dependent nodes)
+ * @param {Object<string, number>} inDegree - In-degree count for each node
+ * @returns {string[]} Topologically sorted array of task IDs
+ */
 function topologicalSort(graph, inDegree) {
   const queue = [];
   const result = [];
@@ -198,6 +221,11 @@ function topologicalSort(graph, inDegree) {
   return result;
 }
 
+/**
+ * Checks if a task touches global lock paths (must run sequentially).
+ * @param {Object} task - Task object with workspace and description
+ * @returns {boolean} True if task touches global lock paths
+ */
 function touchesGlobalLock(task) {
   // Heuristic: if task description mentions global paths or task has no workspace (root-level)
   if (!task.workspace || task.workspace === '.') {
@@ -209,6 +237,12 @@ function touchesGlobalLock(task) {
   return globalKeywords.some((keyword) => desc.includes(keyword));
 }
 
+/**
+ * Determines if two tasks can run in parallel.
+ * @param {Object} task1 - First task object
+ * @param {Object} task2 - Second task object
+ * @returns {boolean} True if tasks can run in parallel (different workspaces, no global lock touch)
+ */
 function canRunParallel(task1, task2) {
   // Must have different workspaces
   if (!task1.workspace || !task2.workspace) {
@@ -226,6 +260,13 @@ function canRunParallel(task1, task2) {
   return true;
 }
 
+/**
+ * Creates execution batches with parallel sets where safe.
+ * @param {Object<string, Object>} tasks - Map of all tasks
+ * @param {string[]} sortedTaskIds - Topologically sorted task IDs
+ * @param {number} maxConcurrent - Maximum concurrent tasks (default: 2)
+ * @returns {Array<{tasks: Object[], taskIds: string[], reason: string}>} Array of execution batches
+ */
 function createParallelBatches(tasks, sortedTaskIds, maxConcurrent) {
   const batches = [];
   const remaining = [...sortedTaskIds];
@@ -296,6 +337,10 @@ function createParallelBatches(tasks, sortedTaskIds, maxConcurrent) {
   return batches;
 }
 
+/**
+ * Main entry point: generates execution plan for a milestone.
+ * Reads tasks, builds DAG, creates parallel batches, outputs JSON plan.
+ */
 function main() {
   const args = process.argv.slice(2);
   if (args.length === 0) {
