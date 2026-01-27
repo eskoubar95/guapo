@@ -22,9 +22,10 @@ This guide explains how to set up branch protection rules for `staging` and `mai
      - Dismiss stale pull request approvals when new commits are pushed: ✅
    - ✅ **Require status checks to pass:**
      - Required status checks:
-       - `CI / SDD Sanity Checks`
-       - `PR Policy / Enforce Branch Policy`
+       - `SDD Sanity Checks` (from `ci.yml` workflow)
+       - `Enforce Branch Policy` (from `pr-policy.yml` workflow)
      - Require branches to be up to date before merging: ✅
+     - **Note:** Checks only appear in dropdown after workflows have run at least once
    - ✅ **Require conversation resolution before merging:** ✅
 5. **Bypass list:** (optional) Add specific users/teams that can bypass (leave empty for strict enforcement)
 6. Click **"Create"**
@@ -45,9 +46,10 @@ This guide explains how to set up branch protection rules for `staging` and `mai
      - Dismiss stale pull request approvals when new commits are pushed: ✅
    - ✅ **Require status checks to pass:**
      - Required status checks:
-       - `CI / SDD Sanity Checks`
-       - `PR Policy / Enforce Branch Policy`
+       - `SDD Sanity Checks` (from `ci.yml` workflow)
+       - `Enforce Branch Policy` (from `pr-policy.yml` workflow)
      - Require branches to be up to date before merging: ✅
+     - **Note:** Checks only appear in dropdown after workflows have run at least once
    - ✅ **Require conversation resolution before merging:** ✅
    - ✅ **Block force pushes:** "Prevent users with push access from force pushing to refs"
 5. **Bypass list:** (recommended) Leave empty or restrict to admins only
@@ -63,13 +65,13 @@ If your repository uses the older "Branch protection rules" interface:
 
 ### For `staging` branch:
 - ✅ Require a pull request before merging (1 approval)
-- ✅ Require status checks to pass (`CI / SDD Sanity Checks`, `PR Policy / Enforce Branch Policy`)
+- ✅ Require status checks to pass (`SDD Sanity Checks`, `Enforce Branch Policy`)
 - ✅ Require conversation resolution before merging
 - ✅ Do not allow bypassing the above settings
 
 ### For `main` branch:
 - ✅ Require a pull request before merging (1 approval)
-- ✅ Require status checks to pass (`CI / SDD Sanity Checks`, `PR Policy / Enforce Branch Policy`)
+- ✅ Require status checks to pass (`SDD Sanity Checks`, `Enforce Branch Policy`)
 - ✅ Require conversation resolution before merging
 - ✅ Block force pushes
 - ✅ Do not allow bypassing the above settings
@@ -83,7 +85,7 @@ If you prefer using `gh` CLI:
 # Protect staging branch
 gh api repos/:owner/:repo/branches/staging/protection \
   --method PUT \
-  --field required_status_checks='{"strict":true,"contexts":["CI / SDD Sanity Checks","PR Policy / Enforce Branch Policy"]}' \
+  --field required_status_checks='{"strict":true,"contexts":["SDD Sanity Checks","Enforce Branch Policy"]}' \
   --field enforce_admins=true \
   --field required_pull_request_reviews='{"required_approving_review_count":1,"dismiss_stale_reviews":true}' \
   --field restrictions=null
@@ -91,7 +93,7 @@ gh api repos/:owner/:repo/branches/staging/protection \
 # Protect main branch
 gh api repos/:owner/:repo/branches/main/protection \
   --method PUT \
-  --field required_status_checks='{"strict":true,"contexts":["CI / SDD Sanity Checks","PR Policy / Enforce Branch Policy"]}' \
+  --field required_status_checks='{"strict":true,"contexts":["SDD Sanity Checks","Enforce Branch Policy"]}' \
   --field enforce_admins=true \
   --field required_pull_request_reviews='{"required_approving_review_count":1,"dismiss_stale_reviews":true}' \
   --field restrictions=null
