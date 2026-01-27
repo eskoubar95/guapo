@@ -1,0 +1,16 @@
+# CodeRabbit Configuration
+# Enables automatic code reviews on both default branch (main) and staging branch
+
+reviews:
+  auto_review:
+    enabled: true
+    base_branches:
+      - "main"      # Production branch (default)
+      - "staging"   # Staging/development branch
+    auto_incremental_review: true
+    drafts: false
+
+# Review settings
+review_status: true
+review_details: true
+high_level_summary: true
