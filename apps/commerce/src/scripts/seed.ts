@@ -2,6 +2,7 @@
  * Seed script for Guapo Commerce
  * 
  * This script seeds the database with initial data for development and testing.
+ * It is IDEMPOTENT - safe to run multiple times without creating duplicates.
  * Run with: pnpm seed
  */
 
@@ -14,7 +15,6 @@ import {
   createShippingProfilesWorkflow,
   createProductsWorkflow,
   createProductCategoriesWorkflow,
-  createInventoryItemsWorkflow,
 } from "@medusajs/medusa/core-flows";
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
 
@@ -22,297 +22,300 @@ export default async function seed({ container }: ExecArgs) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER);
   const link = container.resolve(ContainerRegistrationKeys.LINK);
 
-  logger.info("🌱 Starting Guapo seed script...");
+  logger.info("🌱 Starting Guapo seed script (idempotent)...");
 
-  // 1. Create default sales channel
-  logger.info("Creating sales channel...");
-  const { result: salesChannelResult } = await createSalesChannelsWorkflow(container).run({
-    input: {
-      salesChannelsData: [
-        {
-          name: "Guapo Webshop",
-          description: "Guapo online storefront",
-        },
-      ],
-    },
+  // Resolve modules for checking existing data
+  const salesChannelModule = container.resolve(Modules.SALES_CHANNEL);
+  const stockLocationModule = container.resolve(Modules.STOCK_LOCATION);
+  const fulfillmentModule = container.resolve(Modules.FULFILLMENT);
+  const regionModule = container.resolve(Modules.REGION);
+  // Product categories are accessed via the product module
+  const productModule = container.resolve(Modules.PRODUCT);
+  const inventoryModule = container.resolve(Modules.INVENTORY);
+
+  // 1. Get or create sales channel
+  logger.info("Checking sales channel...");
+  let salesChannel;
+  const existingSalesChannels = await salesChannelModule.listSalesChannels({
+    name: "Guapo Webshop",
   });
-  const salesChannel = salesChannelResult[0];
-  logger.info(`✅ Created sales channel: ${salesChannel.id}`);
-
-  // 2. Create stock location
-  logger.info("Creating stock location...");
-  const { result: stockLocationResult } = await createStockLocationsWorkflow(container).run({
-    input: {
-      locations: [
-        {
-          name: "European Warehouse",
-          address: {
-            city: "Copenhagen",
-            country_code: "DK",
-            address_1: "Warehouse Street 1",
-          },
-        },
-      ],
-    },
-  });
-  const stockLocation = stockLocationResult[0];
-  logger.info(`✅ Created stock location: ${stockLocation.id}`);
-
-  // Link sales channel to stock location
-  await linkSalesChannelsToStockLocationWorkflow(container).run({
-    input: {
-      id: stockLocation.id,
-      add: [salesChannel.id],
-    },
-  });
-  logger.info("✅ Linked sales channel to stock location");
-
-  // 3. Create shipping profile
-  logger.info("Creating shipping profile...");
-  const { result: shippingProfileResult } = await createShippingProfilesWorkflow(container).run({
-    input: {
-      data: [
-        {
-          name: "Default Shipping Profile",
-          type: "default",
-        },
-      ],
-    },
-  });
-  const shippingProfile = shippingProfileResult[0];
-  logger.info(`✅ Created shipping profile: ${shippingProfile.id}`);
-
-  // 4. Create regions
-  logger.info("Creating regions...");
-  const { result: regionResult } = await createRegionsWorkflow(container).run({
-    input: {
-      regions: [
-        {
-          name: "Denmark",
-          currency_code: "dkk",
-          countries: ["dk"],
-          payment_providers: [], // Will be configured with Adyen later
-        },
-        {
-          name: "Europe (EUR)",
-          currency_code: "eur",
-          countries: ["de", "se", "no", "fi", "nl", "be", "at"],
-          payment_providers: [],
-        },
-      ],
-    },
-  });
-  const dkRegion = regionResult.find(r => r.currency_code === "dkk");
-  logger.info(`✅ Created ${regionResult.length} regions`);
-
-  // 5. Create product categories
-  logger.info("Creating product categories...");
-  const { result: categoryResult } = await createProductCategoriesWorkflow(container).run({
-    input: {
-      product_categories: [
-        {
-          name: "Skincare",
-          handle: "skincare",
-          is_active: true,
-          is_internal: false,
-        },
-        {
-          name: "Cleansers",
-          handle: "cleansers",
-          is_active: true,
-          is_internal: false,
-          parent_category_id: undefined, // Will be updated after first create
-        },
-        {
-          name: "Serums",
-          handle: "serums",
-          is_active: true,
-          is_internal: false,
-        },
-        {
-          name: "Moisturizers",
-          handle: "moisturizers",
-          is_active: true,
-          is_internal: false,
-        },
-        {
-          name: "SPF",
-          handle: "spf",
-          is_active: true,
-          is_internal: false,
-        },
-      ],
-    },
-  });
-  logger.info(`✅ Created ${categoryResult.length} product categories`);
-
-  // 6. Create test products
-  logger.info("Creating test products...");
   
+  if (existingSalesChannels.length > 0) {
+    salesChannel = existingSalesChannels[0];
+    logger.info(`✅ Using existing sales channel: ${salesChannel.id}`);
+  } else {
+    const { result: salesChannelResult } = await createSalesChannelsWorkflow(container).run({
+      input: {
+        salesChannelsData: [
+          {
+            name: "Guapo Webshop",
+            description: "Guapo online storefront",
+          },
+        ],
+      },
+    });
+    salesChannel = salesChannelResult[0];
+    logger.info(`✅ Created sales channel: ${salesChannel.id}`);
+  }
+
+  // 2. Get or create stock location
+  logger.info("Checking stock location...");
+  let stockLocation;
+  const existingLocations = await stockLocationModule.listStockLocations({
+    name: "European Warehouse",
+  });
+  
+  if (existingLocations.length > 0) {
+    stockLocation = existingLocations[0];
+    logger.info(`✅ Using existing stock location: ${stockLocation.id}`);
+  } else {
+    const { result: stockLocationResult } = await createStockLocationsWorkflow(container).run({
+      input: {
+        locations: [
+          {
+            name: "European Warehouse",
+            address: {
+              city: "Copenhagen",
+              country_code: "DK",
+              address_1: "Warehouse Street 1",
+            },
+          },
+        ],
+      },
+    });
+    stockLocation = stockLocationResult[0];
+    logger.info(`✅ Created stock location: ${stockLocation.id}`);
+
+    // Link sales channel to stock location (only when creating new)
+    await linkSalesChannelsToStockLocationWorkflow(container).run({
+      input: {
+        id: stockLocation.id,
+        add: [salesChannel.id],
+      },
+    });
+    logger.info("✅ Linked sales channel to stock location");
+  }
+
+  // 3. Get or create shipping profile
+  logger.info("Checking shipping profile...");
+  let shippingProfile;
+  const existingProfiles = await fulfillmentModule.listShippingProfiles({
+    name: "Default Shipping Profile",
+  });
+  
+  if (existingProfiles.length > 0) {
+    shippingProfile = existingProfiles[0];
+    logger.info(`✅ Using existing shipping profile: ${shippingProfile.id}`);
+  } else {
+    const { result: shippingProfileResult } = await createShippingProfilesWorkflow(container).run({
+      input: {
+        data: [
+          {
+            name: "Default Shipping Profile",
+            type: "default",
+          },
+        ],
+      },
+    });
+    shippingProfile = shippingProfileResult[0];
+    logger.info(`✅ Created shipping profile: ${shippingProfile.id}`);
+  }
+
+  // 4. Get or create regions
+  logger.info("Checking regions...");
+  let regionsCreated = 0;
+  
+  // Check Denmark region
+  const existingDkRegion = await regionModule.listRegions({ currency_code: "dkk" });
+  if (existingDkRegion.length === 0) {
+    await createRegionsWorkflow(container).run({
+      input: {
+        regions: [
+          {
+            name: "Denmark",
+            currency_code: "dkk",
+            countries: ["dk"],
+            payment_providers: [],
+          },
+        ],
+      },
+    });
+    regionsCreated++;
+    logger.info("✅ Created Denmark region");
+  } else {
+    logger.info("✅ Denmark region already exists");
+  }
+
+  // Check Europe region
+  const existingEurRegion = await regionModule.listRegions({ currency_code: "eur" });
+  if (existingEurRegion.length === 0) {
+    await createRegionsWorkflow(container).run({
+      input: {
+        regions: [
+          {
+            name: "Europe (EUR)",
+            currency_code: "eur",
+            countries: ["de", "se", "no", "fi", "nl", "be", "at"],
+            payment_providers: [],
+          },
+        ],
+      },
+    });
+    regionsCreated++;
+    logger.info("✅ Created Europe region");
+  } else {
+    logger.info("✅ Europe region already exists");
+  }
+
+  // 5. Get or create product categories
+  logger.info("Checking product categories...");
+  const categoryNames = ["Skincare", "Cleansers", "Serums", "Moisturizers", "SPF"];
+  let categoriesCreated = 0;
+
+  for (const name of categoryNames) {
+    const existing = await productModule.listProductCategories({ name });
+    if (existing.length === 0) {
+      await createProductCategoriesWorkflow(container).run({
+        input: {
+          product_categories: [
+            {
+              name,
+              handle: name.toLowerCase(),
+              is_active: true,
+              is_internal: false,
+            },
+          ],
+        },
+      });
+      categoriesCreated++;
+    }
+  }
+  logger.info(`✅ Categories: ${categoriesCreated} created, ${categoryNames.length - categoriesCreated} already exist`);
+
+  // 6. Get or create test products
+  logger.info("Checking test products...");
   const testProducts = [
     {
       title: "Gentle Cleanser",
       handle: "gentle-cleanser",
-      description: "A mild, pH-balanced cleanser suitable for all skin types. Removes impurities without stripping the skin's natural moisture barrier.",
-      status: "published" as const,
-      options: [
-        { title: "Size", values: ["150ml", "300ml"] }
+      description: "A mild, pH-balanced cleanser suitable for all skin types.",
+      sku_prefix: "CLNS",
+      sizes: [
+        { size: "150ml", dkk: 18900, eur: 2500 },
+        { size: "300ml", dkk: 29900, eur: 3900 },
       ],
-      variants: [
-        {
-          title: "150ml",
-          sku: "CLNS-150",
-          manage_inventory: true,
-          prices: [
-            { amount: 18900, currency_code: "dkk" }, // 189 DKK
-            { amount: 2500, currency_code: "eur" }, // 25 EUR
-          ],
-          options: { Size: "150ml" },
-        },
-        {
-          title: "300ml",
-          sku: "CLNS-300",
-          manage_inventory: true,
-          prices: [
-            { amount: 29900, currency_code: "dkk" }, // 299 DKK
-            { amount: 3900, currency_code: "eur" }, // 39 EUR
-          ],
-          options: { Size: "300ml" },
-        },
-      ],
-      sales_channels: [{ id: salesChannel.id }],
     },
     {
       title: "Niacinamide Serum",
       handle: "niacinamide-serum",
-      description: "10% Niacinamide serum for minimizing pores, reducing redness, and evening out skin tone. Suitable for all skin types.",
-      status: "published" as const,
-      options: [
-        { title: "Size", values: ["30ml"] }
-      ],
-      variants: [
-        {
-          title: "30ml",
-          sku: "NIAC-30",
-          manage_inventory: true,
-          prices: [
-            { amount: 24900, currency_code: "dkk" }, // 249 DKK
-            { amount: 3300, currency_code: "eur" }, // 33 EUR
-          ],
-          options: { Size: "30ml" },
-        },
-      ],
-      sales_channels: [{ id: salesChannel.id }],
+      description: "10% Niacinamide serum for minimizing pores and evening skin tone.",
+      sku_prefix: "NIAC",
+      sizes: [{ size: "30ml", dkk: 24900, eur: 3300 }],
     },
     {
       title: "Hydrating Moisturizer",
       handle: "hydrating-moisturizer",
-      description: "Lightweight, fast-absorbing moisturizer with hyaluronic acid. Perfect for daily use, morning and evening.",
-      status: "published" as const,
-      options: [
-        { title: "Size", values: ["50ml", "100ml"] }
+      description: "Lightweight moisturizer with hyaluronic acid.",
+      sku_prefix: "MOIST",
+      sizes: [
+        { size: "50ml", dkk: 32900, eur: 4400 },
+        { size: "100ml", dkk: 54900, eur: 7300 },
       ],
-      variants: [
-        {
-          title: "50ml",
-          sku: "MOIST-50",
-          manage_inventory: true,
-          prices: [
-            { amount: 32900, currency_code: "dkk" }, // 329 DKK
-            { amount: 4400, currency_code: "eur" }, // 44 EUR
-          ],
-          options: { Size: "50ml" },
-        },
-        {
-          title: "100ml",
-          sku: "MOIST-100",
-          manage_inventory: true,
-          prices: [
-            { amount: 54900, currency_code: "dkk" }, // 549 DKK
-            { amount: 7300, currency_code: "eur" }, // 73 EUR
-          ],
-          options: { Size: "100ml" },
-        },
-      ],
-      sales_channels: [{ id: salesChannel.id }],
     },
     {
       title: "Daily SPF 50",
       handle: "daily-spf-50",
-      description: "Broad spectrum SPF 50 sunscreen with a lightweight, non-greasy formula. No white cast. Suitable for daily wear.",
-      status: "published" as const,
-      options: [
-        { title: "Size", values: ["50ml"] }
-      ],
-      variants: [
-        {
-          title: "50ml",
-          sku: "SPF-50",
-          manage_inventory: true,
-          prices: [
-            { amount: 27900, currency_code: "dkk" }, // 279 DKK
-            { amount: 3700, currency_code: "eur" }, // 37 EUR
-          ],
-          options: { Size: "50ml" },
-        },
-      ],
-      sales_channels: [{ id: salesChannel.id }],
+      description: "Broad spectrum SPF 50 with no white cast.",
+      sku_prefix: "SPF",
+      sizes: [{ size: "50ml", dkk: 27900, eur: 3700 }],
     },
   ];
 
-  const { result: productsResult } = await createProductsWorkflow(container).run({
-    input: {
-      products: testProducts,
-    },
-  });
-  logger.info(`✅ Created ${productsResult.length} test products`);
+  let productsCreated = 0;
+  const createdProducts: any[] = [];
 
-  // 7. Create inventory for products
-  logger.info("Creating inventory items...");
-  const inventoryModule = container.resolve(Modules.INVENTORY);
-  const productModule = container.resolve(Modules.PRODUCT);
+  for (const productData of testProducts) {
+    const existing = await productModule.listProducts({ handle: productData.handle });
+    
+    if (existing.length === 0) {
+      const variants = productData.sizes.map((s) => ({
+        title: s.size,
+        sku: `${productData.sku_prefix}-${s.size.replace("ml", "")}`,
+        manage_inventory: true,
+        prices: [
+          { amount: s.dkk, currency_code: "dkk" },
+          { amount: s.eur, currency_code: "eur" },
+        ],
+        options: { Size: s.size },
+      }));
 
-  // Get all variants
-  const variants = await productModule.listProductVariants({});
-  
-  for (const variant of variants) {
-    if (variant.manage_inventory) {
-      // Create inventory item
-      const inventoryItem = await inventoryModule.createInventoryItems({
-        sku: variant.sku,
-        title: variant.title,
-      });
-
-      // Link variant to inventory item
-      await link.create({
-        [Modules.PRODUCT]: {
-          variant_id: variant.id,
+      const { result } = await createProductsWorkflow(container).run({
+        input: {
+          products: [
+            {
+              title: productData.title,
+              handle: productData.handle,
+              description: productData.description,
+              status: "published" as const,
+              options: [{ title: "Size", values: productData.sizes.map((s) => s.size) }],
+              variants,
+              sales_channels: [{ id: salesChannel.id }],
+            },
+          ],
         },
-        [Modules.INVENTORY]: {
-          inventory_item_id: inventoryItem.id,
-        },
       });
-
-      // Create inventory level at stock location
-      await inventoryModule.createInventoryLevels({
-        inventory_item_id: inventoryItem.id,
-        location_id: stockLocation.id,
-        stocked_quantity: 100, // Initial stock
-      });
+      createdProducts.push(result[0]);
+      productsCreated++;
     }
   }
-  logger.info(`✅ Created inventory for ${variants.length} variants`);
+  logger.info(`✅ Products: ${productsCreated} created, ${testProducts.length - productsCreated} already exist`);
+
+  // 7. Create inventory for newly created products
+  if (createdProducts.length > 0) {
+    logger.info("Creating inventory items...");
+    let inventoryCreatedCount = 0;
+
+    for (const product of createdProducts) {
+      const productVariants = await productModule.listProductVariants({ product_id: product.id });
+
+      for (const variant of productVariants) {
+        if (variant.manage_inventory && variant.sku) {
+          const existingItems = await inventoryModule.listInventoryItems({ sku: variant.sku });
+
+          if (existingItems.length === 0) {
+            const inventoryItem = await inventoryModule.createInventoryItems({
+              sku: variant.sku,
+              title: variant.title,
+            });
+
+            await link.create({
+              [Modules.PRODUCT]: { variant_id: variant.id },
+              [Modules.INVENTORY]: { inventory_item_id: inventoryItem.id },
+            });
+
+            await inventoryModule.createInventoryLevels({
+              inventory_item_id: inventoryItem.id,
+              location_id: stockLocation.id,
+              stocked_quantity: 100,
+            });
+
+            inventoryCreatedCount++;
+          }
+        }
+      }
+    }
+    logger.info(`✅ Created inventory for ${inventoryCreatedCount} variants`);
+  }
 
   logger.info("");
   logger.info("🎉 Seed script completed successfully!");
   logger.info("");
   logger.info("📝 Summary:");
-  logger.info(`   - 1 Sales Channel: ${salesChannel.name}`);
-  logger.info(`   - 1 Stock Location: ${stockLocation.name}`);
-  logger.info(`   - ${regionResult.length} Regions`);
-  logger.info(`   - ${categoryResult.length} Product Categories`);
-  logger.info(`   - ${productsResult.length} Products`);
-  logger.info(`   - ${variants.length} Product Variants (with inventory)`);
+  logger.info(`   - Sales Channel: ${salesChannel.name}`);
+  logger.info(`   - Stock Location: ${stockLocation.name}`);
+  logger.info(`   - Regions: Denmark (DKK), Europe (EUR)`);
+  logger.info(`   - Categories: ${categoryNames.length}`);
+  logger.info(`   - Products: ${testProducts.length} total, ${productsCreated} newly created`);
   logger.info("");
   logger.info("🚀 You can now test the Store API:");
   logger.info("   GET  http://localhost:9000/store/products");

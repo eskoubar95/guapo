@@ -40,7 +40,7 @@ if (useRedis) {
 export default defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
-    databaseSchema: "medusa",
+    databaseSchema: process.env.DATABASE_SCHEMA || "medusa",
     redisUrl: process.env.REDIS_URL, // Optional in development
     http: {
       storeCors: process.env.STORE_CORS || "http://localhost:3000",

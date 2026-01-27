@@ -18,13 +18,14 @@
   },
   "dependencies": {
     "@medusajs/admin-sdk": "latest",
+    "@medusajs/admin-shared": "^2.13.1",
     "@medusajs/cli": "latest",
-    "@medusajs/framework": "latest",
-    "@medusajs/medusa": "latest",
     "@medusajs/dashboard": "latest",
-    "@medusajs/icons": "latest",
-    "@medusajs/types": "latest",
     "@medusajs/draft-order": "latest",
+    "@medusajs/framework": "latest",
+    "@medusajs/icons": "latest",
+    "@medusajs/medusa": "latest",
+    "@medusajs/types": "latest",
     "@medusajs/ui": "latest"
   },
   "devDependencies": {
