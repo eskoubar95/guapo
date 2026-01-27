@@ -69,9 +69,9 @@ jobs:
           fi
 
       - name: Validate PR description
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          PR_BODY="${{ github.event.pull_request.body }}"
-          
           if [ -z "$PR_BODY" ] || [ "$PR_BODY" = "null" ]; then
             echo "⚠️  PR description is empty"
             echo "   Please add a description with summary, testing notes, and acceptance criteria"
