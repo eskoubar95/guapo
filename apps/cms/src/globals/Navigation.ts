@@ -51,6 +51,8 @@ export const Navigation: GlobalConfig = {
               admin: {
                 condition: (_, siblingData) => siblingData?.type === 'internal',
               },
+              validate: (val: unknown, { siblingData }: { siblingData: Record<string, unknown> }) =>
+                siblingData?.type === 'internal' && !val ? 'Page is required' : true,
             },
             {
               name: 'url',
@@ -58,6 +60,8 @@ export const Navigation: GlobalConfig = {
               admin: {
                 condition: (_, siblingData) => siblingData?.type === 'external',
               },
+              validate: (val: unknown, { siblingData }: { siblingData: Record<string, unknown> }) =>
+                siblingData?.type === 'external' && !val ? 'URL is required' : true,
             },
             {
               name: 'newTab',
@@ -96,6 +100,8 @@ export const Navigation: GlobalConfig = {
               admin: {
                 condition: (_, siblingData) => siblingData?.type === 'internal',
               },
+              validate: (val: unknown, { siblingData }: { siblingData: Record<string, unknown> }) =>
+                siblingData?.type === 'internal' && !val ? 'Page is required' : true,
             },
             {
               name: 'url',
@@ -103,6 +109,8 @@ export const Navigation: GlobalConfig = {
               admin: {
                 condition: (_, siblingData) => siblingData?.type === 'external',
               },
+              validate: (val: unknown, { siblingData }: { siblingData: Record<string, unknown> }) =>
+                siblingData?.type === 'external' && !val ? 'URL is required' : true,
             },
             {
               name: 'newTab',
