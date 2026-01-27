@@ -123,7 +123,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/cms
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** cms, backend, infrastructure
 

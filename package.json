@@ -1,0 +1,14 @@
+{
+  "name": "guapo",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev:cms": "pnpm --filter @guapo/cms dev",
+    "build:cms": "pnpm --filter @guapo/cms build",
+    "lint:cms": "pnpm --filter @guapo/cms lint"
+  }
+}
