@@ -186,13 +186,15 @@ Assess whether the task is:
    - Verify all changes are committed
    - Run build/test (if applicable)
    - Resolve `defaultBranch` (do not assume `main`) using `/sdd-git-default-branch` or `branch-detection.md`
+     - **Note:** For feature PRs, `defaultBranch` is typically `staging` (development branch). This is the correct target for feature work.
    - Check for merge conflicts with base: `git fetch origin <default-branch> && git merge-base HEAD origin/<default-branch>`
 
-2. Merge to base branch:
+2. Merge to base branch (feature PR workflow):
    - Checkout base (default branch): `git checkout <default-branch>`
    - Pull latest (if remote exists): `git pull origin <default-branch>`
    - Merge task branch: `git merge task/{task-id}-{short-description}`
    - Push to remote (if configured): `git push origin <default-branch>`
+   - **Note:** This merges into the development branch (`staging`). You can accumulate multiple milestones/features in `staging` before releasing. When ready, use `/task/promote` to create a promotion PR from `staging` → `main` (includes all changes since last production release).
 
 3. Post-merge cleanup:
    - Delete local task branch (optional, ask first): `git branch -d task/{task-id}-{short-description}`
@@ -354,9 +356,15 @@ Conclude with one of the following outcomes:
    - If yes → commit with generated message
    - Update state: increment commit count
 
-4. **Create PR (if no PR exists and validated):**
+4. **Create Feature PR (if no PR exists and validated):**
    
-   **4.1) Generate PR Description:**
+   **4.1) Resolve PR Base Branch:**
+   - Resolve `defaultBranch` using `/sdd-git-default-branch` or `branch-detection.md`
+   - **This is the development branch (typically `staging`) and is the correct target for feature PRs.**
+   - **Do NOT create PRs directly to `main` (production) from feature branches.**
+   - **If `defaultBranch` resolves to `main` → STOP and instruct user to fix config (`.sdd/git-config.json` should have `default_branch=staging`) or use `/task/promote` for production releases.**
+   
+   **4.2) Generate PR Description:**
    - Use pr-description.md helper:
      - Read task spec (from `work/backlog/tasks.local.md` or task-level spec)
      - Generate changes summary from git diff and commit history
@@ -365,18 +373,19 @@ Conclude with one of the following outcomes:
      - Reference related Linear issues (if Linear enabled)
    - Generate PR description using template
 
-   **4.2) Push Branch (if not pushed):**
+   **4.3) Push Branch (if not pushed):**
    - Check if branch is pushed to remote
    - If not pushed → push branch: `git push -u origin <branch-name>`
    - Update state: `branch.pushed: true`
 
-   **4.3) Create PR:**
+   **4.4) Create PR:**
    - Use GitHub helpers (MCP → CLI → Local fallback)
-   - Create PR with generated description
+   - Create PR with base=`defaultBranch` (development branch, typically `staging`)
    - Set PR title: `[task-id] [task description]`
    - Link to Linear issue (if Linear enabled and task is Linear issue)
    - Get PR number and URL
-   - Update state: `pr: {exists: true, number: X, url: Y, status: 'open'}`
+   - Update state: `pr: {exists: true, number: X, url: Y, status: 'open', base: '<defaultBranch>'}`
+   - **Remind user:** "Feature PR created targeting `staging`. You can accumulate multiple milestones/features in staging before releasing. When ready, use `/task/promote` to create a promotion PR to `main` (includes all changes since last production release)."
 
 5. **Handle Deployment (if PR created):**
    

@@ -14,6 +14,11 @@ This file is a lightweight index of project facts and conventions that are usefu
 - **Env var inventory**: `env.example` (names only; no secrets).
 - **GitHub repo**: `https://github.com/eskoubar95/guapo` (git remote `origin` uses HTTPS)
 - **Branch strategy (DECIDED)**: `staging` = staging, `main` = production. PRs go to `staging`; releases are `staging` → `main`. Config: `.sdd/git-config.json`.
+- **Guardrails (TECHNICALLY ENFORCED)**:
+  - GitHub Actions PR Policy workflow blocks direct feature → `main` PRs (must come from `staging`)
+  - Branch protection on `staging` and `main`: requires PR, approvals, status checks
+  - CI checks validate SDD metadata and spec files
+  - Commands (`/task/start`, `/task/validate`, `/task/promote`) use `.sdd/git-config.json` for branch resolution
 - **Task management + MCP**: Linear is the source of truth for tasks during execution (MCP: `guapo-linear`). Supabase ops use MCP: `supabase`.
 - **Sprint context**: We use Linear **Cycles** as sprints (Guapo team cycles enabled).
 - **Spec set**: root + PRD + architecture + acceptance + sitemap are now created in `spec/`

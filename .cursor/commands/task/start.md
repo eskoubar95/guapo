@@ -253,6 +253,7 @@ Before implementation, ensure:
    - Resolve `defaultBranch` (do not assume `main`) using one of:
      - Skill (Cursor 2.4+): `/sdd-git-default-branch`
      - Helper: `.cursor/commands/_shared/branch-detection.md` (if present in the project)
+   - **Note:** For feature work, `defaultBranch` is typically `staging` (development branch). This is the target for feature PRs.
    - Checkout base branch: `git checkout <default-branch>`
    - Pull latest changes (if remote exists): `git pull origin <default-branch>`
    - Verify base is clean (no uncommitted changes)

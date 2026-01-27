@@ -40,6 +40,8 @@ Milestones are the execution backbone for the MVP. Each milestone has a clear ob
 - Draft → Review → Publish workflow is usable
 - Media storage strategy is applied (Supabase Storage)
 
+**Note:** Before starting M2 (or any milestone), review the [Milestone Ready Checklist](MILESTONE-READY-CHECKLIST.md) to ensure SDD workflow is configured correctly.
+
 ## M3 — Commerce (Medusa): core domain + DB wiring
 
 **Objective:** Medusa server + worker run with Supabase + Redis and cover products, carts, orders, and accounts.
