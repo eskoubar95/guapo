@@ -169,10 +169,35 @@ export default async function seed({ container }: ExecArgs) {
 
   // 5. Get or create product categories
   logger.info("Checking product categories...");
-  const categoryNames = ["Skincare", "Cleansers", "Serums", "Moisturizers", "SPF"];
-  let categoriesCreated = 0;
+  
+  // First, create or get parent category "Skincare"
+  let parentCategory;
+  const existingParent = await productModule.listProductCategories({ name: "Skincare" });
+  if (existingParent.length === 0) {
+    const { result: parentResult } = await createProductCategoriesWorkflow(container).run({
+      input: {
+        product_categories: [
+          {
+            name: "Skincare",
+            handle: "skincare",
+            is_active: true,
+            is_internal: false,
+          },
+        ],
+      },
+    });
+    parentCategory = parentResult[0];
+    logger.info(`✅ Created parent category: Skincare (${parentCategory.id})`);
+  } else {
+    parentCategory = existingParent[0];
+    logger.info(`✅ Using existing parent category: Skincare (${parentCategory.id})`);
+  }
 
-  for (const name of categoryNames) {
+  // Then create child categories
+  const childCategoryNames = ["Cleansers", "Serums", "Moisturizers", "SPF"];
+  let childCategoriesCreated = 0;
+
+  for (const name of childCategoryNames) {
     const existing = await productModule.listProductCategories({ name });
     if (existing.length === 0) {
       await createProductCategoriesWorkflow(container).run({
@@ -183,14 +208,15 @@ export default async function seed({ container }: ExecArgs) {
               handle: name.toLowerCase(),
               is_active: true,
               is_internal: false,
+              parent_category_id: parentCategory.id,
             },
           ],
         },
       });
-      categoriesCreated++;
+      childCategoriesCreated++;
     }
   }
-  logger.info(`✅ Categories: ${categoriesCreated} created, ${categoryNames.length - categoriesCreated} already exist`);
+  logger.info(`✅ Child categories: ${childCategoriesCreated} created, ${childCategoryNames.length - childCategoriesCreated} already exist`);
 
   // 6. Get or create test products
   logger.info("Checking test products...");

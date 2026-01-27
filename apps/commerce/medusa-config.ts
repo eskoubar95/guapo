@@ -7,6 +7,26 @@ import { defineConfig } from "@medusajs/framework/utils";
  * Production: Requires Redis for event bus, workflow engine, caching, locking
  */
 
+// Production guard: Ensure required env vars are present
+if (process.env.NODE_ENV === "production") {
+  const requiredEnvVars = {
+    REDIS_URL: process.env.REDIS_URL,
+    JWT_SECRET: process.env.JWT_SECRET,
+    COOKIE_SECRET: process.env.COOKIE_SECRET,
+  };
+
+  const missing = Object.entries(requiredEnvVars)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key);
+
+  if (missing.length > 0) {
+    console.error("❌ Production environment requires the following environment variables:");
+    missing.forEach((key) => console.error(`   - ${key}`));
+    console.error("\nPlease set these variables before starting the application in production.");
+    process.exit(1);
+  }
+}
+
 // Check if Redis is available
 const useRedis = !!process.env.REDIS_URL;
 

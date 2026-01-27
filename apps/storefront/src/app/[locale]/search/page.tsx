@@ -103,7 +103,7 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
         {/* Category filter */}
         <div className="mb-6 flex flex-wrap gap-2">
           <Link
-            href={`/${locale}/search${query ? `?q=${query}` : ""}`}
+            href={`/${locale}/search${query ? `?q=${encodeURIComponent(query)}` : ""}`}
             className={`rounded-full px-4 py-2 text-sm ${
               !category ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
@@ -113,7 +113,7 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
           {["cleansers", "serums", "moisturizers", "spf"].map((cat) => (
             <Link
               key={cat}
-              href={`/${locale}/search?${query ? `q=${query}&` : ""}category=${cat}`}
+              href={`/${locale}/search?${query ? `q=${encodeURIComponent(query)}&` : ""}category=${cat}`}
               className={`rounded-full px-4 py-2 text-sm capitalize ${
                 category === cat ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}

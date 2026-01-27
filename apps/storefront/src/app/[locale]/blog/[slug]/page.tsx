@@ -94,7 +94,7 @@ Reacts easily to products, may become red or irritated.`,
   "ingredient-spotlight-niacinamide": {
     title: { da: "Ingrediens i fokus: Niacinamid", en: "Ingredient Spotlight: Niacinamide" },
     content: {
-      da: `Niacinamid (B3-vitamin) er en af de mest alsidige hudplejeingredienserper.
+      da: `Niacinamid (B3-vitamin) er en af de mest alsidige hudplejeingredienser.
 
 ## Fordele ved niacinamid
 

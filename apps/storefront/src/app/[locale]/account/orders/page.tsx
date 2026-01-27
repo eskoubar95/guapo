@@ -1,5 +1,6 @@
 import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
+import { localeCurrencies } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -55,15 +56,18 @@ const statusLabels: Record<string, { da: string; en: string; color: string }> = 
   cancelled: { da: "Annulleret", en: "Cancelled", color: "bg-red-100 text-red-800" },
 };
 
+const defaultStatusLabel = { da: "Ukendt", en: "Unknown", color: "bg-gray-200 text-gray-700" };
+
 export default async function OrdersPage({ params }: OrdersPageProps) {
   const { locale } = await params;
   const dict = await getDictionary(locale as Locale);
   const localeKey = locale as "da" | "en";
 
-  const formatPrice = (amount: number) => {
+  const formatPrice = (amount: number, orderCurrency?: string) => {
+    const currency = orderCurrency || localeCurrencies[locale as Locale] || "DKK";
     return new Intl.NumberFormat(locale, {
       style: "currency",
-      currency: "DKK",
+      currency,
       minimumFractionDigits: 0,
     }).format(amount / 100);
   };
@@ -116,8 +120,8 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
                     <p className="font-medium text-gray-900">{order.id}</p>
                     <p className="text-sm text-gray-500">{formatDate(order.date)}</p>
                   </div>
-                  <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusLabels[order.status].color}`}>
-                    {statusLabels[order.status][localeKey]}
+                  <span className={`rounded-full px-3 py-1 text-xs font-medium ${(statusLabels[order.status] ?? defaultStatusLabel).color}`}>
+                    {(statusLabels[order.status] ?? defaultStatusLabel)[localeKey]}
                   </span>
                 </div>
                 

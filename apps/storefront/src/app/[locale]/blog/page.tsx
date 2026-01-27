@@ -87,11 +87,16 @@ export default async function BlogPage({ params }: BlogPageProps) {
                 </span>
                 <span>·</span>
                 <time dateTime={article.publishedAt}>
-                  {new Date(article.publishedAt).toLocaleDateString(locale, {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+                  {(() => {
+                    const [year, month, day] = article.publishedAt.split("-").map(Number);
+                    const date = new Date(Date.UTC(year, month - 1, day));
+                    return date.toLocaleDateString(locale, {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      timeZone: "UTC",
+                    });
+                  })()}
                 </time>
               </div>
               <h2 className="mt-4 text-2xl font-bold text-gray-900">

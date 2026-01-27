@@ -33,11 +33,11 @@ export default async function CookiesPage({ params }: PolicyPageProps) {
       },
       {
         title: "Analytics cookies",
-        content: "Disse cookies hjælper os med at forstå, hvordan besøgende interagerer med vores hjemmeside. Vi bruger PostHog til analytics. Disse cookies kræver dit samtykke.",
+        content: "Disse cookies hjælper os med at forstå, hvordan besøgende interagerer med vores hjemmeside. Analytics cookies kræver dit samtykke. (Ikke implementeret endnu)",
       },
       {
         title: "Marketing cookies",
-        content: "Disse cookies bruges til at vise relevante annoncer. Vi bruger Meta og Google Ads. Disse cookies kræver dit samtykke.",
+        content: "Disse cookies bruges til at vise relevante annoncer. Marketing cookies kræver dit samtykke. (Ikke implementeret endnu)",
       },
       {
         title: "Administrer dine præferencer",
@@ -59,11 +59,11 @@ export default async function CookiesPage({ params }: PolicyPageProps) {
       },
       {
         title: "Analytics cookies",
-        content: "These cookies help us understand how visitors interact with our website. We use PostHog for analytics. These cookies require your consent.",
+        content: "These cookies help us understand how visitors interact with our website. Analytics cookies require your consent. (Not yet implemented)",
       },
       {
         title: "Marketing cookies",
-        content: "These cookies are used to show relevant advertisements. We use Meta and Google Ads. These cookies require your consent.",
+        content: "These cookies are used to show relevant advertisements. Marketing cookies require your consent. (Not yet implemented)",
       },
       {
         title: "Manage your preferences",

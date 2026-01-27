@@ -17,15 +17,15 @@
     "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit"
   },
   "dependencies": {
-    "@medusajs/admin-sdk": "latest",
-    "@medusajs/admin-shared": "^2.13.1",
-    "@medusajs/cli": "latest",
-    "@medusajs/dashboard": "latest",
-    "@medusajs/draft-order": "latest",
-    "@medusajs/framework": "latest",
-    "@medusajs/icons": "latest",
-    "@medusajs/medusa": "latest",
-    "@medusajs/types": "latest",
+    "@medusajs/admin-sdk": "2.13.1",
+    "@medusajs/admin-shared": "2.13.1",
+    "@medusajs/cli": "2.13.1",
+    "@medusajs/dashboard": "2.13.1",
+    "@medusajs/draft-order": "2.13.1",
+    "@medusajs/framework": "2.13.1",
+    "@medusajs/icons": "2.13.1",
+    "@medusajs/medusa": "2.13.1",
+    "@medusajs/types": "2.13.1",
     "@medusajs/ui": "latest"
   },
   "devDependencies": {

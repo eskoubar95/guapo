@@ -140,13 +140,6 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             </Link>
           ))}
         </div>
-
-        {/* Empty state */}
-        {placeholderProducts.length === 0 && (
-          <div className="mt-12 text-center">
-            <p className="text-gray-500">{dict.products.noResults}</p>
-          </div>
-        )}
       </main>
     </div>
   );

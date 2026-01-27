@@ -134,7 +134,11 @@ export default async function AccountPage({ params }: AccountPageProps) {
                 {locale === "da" ? "Næste levering" : "Next delivery"}
               </p>
               <p className="mt-1 text-sm text-green-700">
-                Niacinamide Serum - 12. februar 2026
+                Niacinamide Serum - {new Date("2026-02-12").toLocaleDateString(locale === "da" ? "da-DK" : "en-US", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
               </p>
               <Link
                 href={`/${locale}/account/subscriptions`}
