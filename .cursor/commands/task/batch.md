@@ -38,6 +38,33 @@ Run detection and activation first (same as `/task/start`):
 - If any selected task is missing `**Workspace:**` → **HARD STOP** before execution.
 - Validate and build **per workspace**, not repo-wide.
 
+## Step 0.25 — Pre-flight Validation
+
+Before running scheduler, perform pre-flight checks:
+
+1. **Milestone Ready Checklist (if milestone batch):**
+   - Reference `work/backlog/MILESTONE-READY-CHECKLIST.md`
+   - Verify key items: git config (`.sdd/git-config.json`), branch status, task configuration
+   - Report any missing checklist items (do not block, but inform user)
+
+2. **Environment Variables:**
+   - Check if `env.example` exists and is up-to-date
+   - Verify required environment variables are documented
+   - Report any missing or undocumented variables
+
+3. **Git State:**
+   - Verify working tree is clean: `git status` (no uncommitted changes)
+   - Verify base branch exists and is up-to-date
+   - Check for any existing task branches that might conflict
+
+4. **Dependencies:**
+   - Verify dependencies are installed (check `node_modules` exists if applicable)
+   - Suggest `pnpm install` if needed
+
+**Error Handling:**
+- If pre-flight checks fail: report warnings, ask user if they want to proceed anyway
+- Never block execution due to pre-flight check failures (graceful degradation)
+
 ## Step 0.5 — Scheduler Phase (Dynamic Planning)
 
 **ONLY READ IF milestone batch:**
@@ -55,7 +82,9 @@ Run detection and activation first (same as `/task/start`):
    - Show total tasks and batches
    - Show which tasks run in parallel (max 2) and why
    - Show which tasks run sequentially and why
-4. Ask for confirmation: "Proceed with this execution plan?"
+4. **WAIT for user confirmation:** "Proceed with this execution plan?"
+   - Do NOT start batch-runner until user confirms
+   - If user says no: ask what they want to change, adjust plan if possible
 
 **Scheduler output interpretation:**
 - `batches`: Array of execution batches
@@ -83,7 +112,11 @@ Set the following policies before execution:
   - Preferred: skill `/sdd-git-default-branch`
   - Fallback: helper `_shared/branch-detection.md`
 - **Branching**:
-  - One branch per task: `task/<task-id>-<short-description>`
+  - **Confirmation required:** "Use one branch for entire batch (task/m2-cms) or separate branches per task?"
+  - Default: separate branches for better isolation (unless milestone batch with single workspace)
+  - For milestone batches: option to use `task/<milestone-id>-<primary-tag>` format
+  - For task list batches: always use `task/<task-id>-<description>` per task
+  - One branch per task: `task/<task-id>-<short-description>` (if separate branches)
 - **Commit granularity**:
   - Small logical units (recommended): skill `/sdd-commit-unit`
   - Or: commit at task completion only
@@ -91,8 +124,15 @@ Set the following policies before execution:
   - Preferred: skill `/sdd-validation-suite`
   - Or: project-specific scripts (lint/typecheck/tests/build) if present
 - **PR strategy (optional)**:
+  - **Confirmation required:** "Create one PR for entire batch, or separate PRs per task?"
+  - Default: one PR for sequential batches, separate PRs for parallel batches
   - Preferred: skill `/sdd-pr-create-or-update` (with correct base branch)
   - Or: manual PR creation after the batch
+- **Merge strategy (optional):**
+  - **Confirmation required:** "Auto-merge to staging after each task, or wait for manual merge?"
+  - Default: wait for manual merge (safer)
+  - If auto-merge: merge each task to staging sequentially after validation passes
+  - If manual merge: create PRs and wait for user to merge
 
 - **Cloud Agent delegation (optional, Linear pilot)**:
   - Only for tasks explicitly marked safe to delegate:
@@ -107,6 +147,30 @@ Set the following policies before execution:
 ## Step 3 — Batch execution method (choose one)
 
 ### Option A (recommended): Use the `batch-runner` subagent with worktree support
+
+**Error Handling Instructions for batch-runner:**
+
+The batch-runner subagent should handle errors as follows:
+
+- **Task Failures:**
+  - Report error immediately with details
+  - Ask user: "Task [task-id] failed. Should I retry, skip this task, or abort the entire batch?"
+  - If retry: attempt once more, then ask again if it fails
+  - If skip: mark task as blocked with reason, continue with next task
+  - If abort: cleanup branches/worktrees, report partial completion, exit batch
+
+- **Linear MCP Errors:**
+  - If Linear MCP is unavailable or fails: log warning, continue execution
+  - Queue Linear updates (status changes, comments) for retry at batch completion
+  - Never block task execution due to Linear errors
+  - Report all queued Linear updates in final summary
+
+- **Validation Failures:**
+  - Report failure with evidence (lint errors, test failures, etc.)
+  - Ask user: "Validation failed for [task-id]. Should I fix issues, skip this task, or abort batch?"
+  - If fix: attempt to fix issues, re-run validation
+  - If skip: mark task as blocked, continue with next task
+  - If abort: cleanup, report partial completion
 
 Launch the `batch-runner` subagent with:
 
