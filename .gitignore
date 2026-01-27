@@ -6,3 +6,7 @@ supabase/.temp/
 
 # Git worktrees for parallel batch execution
 .sdd/worktrees/
+
+# OpenMemory - IDE/Assistant specific rules
+.cursor/rules/openmemory.mdc
+node_modules
