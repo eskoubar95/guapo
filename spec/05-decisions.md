@@ -25,6 +25,18 @@ This log captures **actual decisions** made during specification and delivery. K
   - No `package-lock.json` / `yarn.lock` in this repo; pnpm is the standard.
 - **Where**: `spec/08-infrastructure.md`
 
+## 2026-01-26 — Branch strategy: `main` = production, `staging` = pre-prod
+- **Decision**:
+  - `main` represents **production**
+  - `staging` represents the shared **staging** environment for testing
+  - Feature work merges into `staging` first; releases happen by merging `staging` → `main`
+- **Why**: Lets us test on a shared staging environment before promoting changes to production.
+- **Consequences**:
+  - PRs should target `staging` by default.
+  - Promotions to production are explicit (PR/merge from `staging` to `main`).
+  - We should later add branch protection for both branches and required checks once CI exists.
+- **Where**: `spec/08-infrastructure.md`, `README.md`
+
 ## 2026-01-26 — Focus indicator (no focus rings)
 - **Decision**: Do not use focus rings. Use a clear **active/focus border** as the focus indicator (especially on inputs).
 - **Why**: Visual preference for a cleaner, less “glowy” UI.

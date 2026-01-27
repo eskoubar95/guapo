@@ -65,6 +65,8 @@ jobs:
           REQUIRED_SPECS=(
             "spec/00-root-spec.md"
             "spec/08-infrastructure.md"
+            "work/backlog/milestones.md"
+            "work/backlog/tasks.local.md"
           )
           
           MISSING=0
@@ -80,4 +82,3 @@ jobs:
           fi
           
           echo "✅ All required spec files present"
-          echo "ℹ️  Note: work/backlog/ files are development-only and not required in main branch"
