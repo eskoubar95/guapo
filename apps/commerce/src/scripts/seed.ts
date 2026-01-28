@@ -340,7 +340,7 @@ export default async function seed({ container }: ExecArgs) {
   logger.info(`   - Sales Channel: ${salesChannel.name}`);
   logger.info(`   - Stock Location: ${stockLocation.name}`);
   logger.info(`   - Regions: Denmark (DKK), Europe (EUR)`);
-  logger.info(`   - Categories: ${categoryNames.length}`);
+  logger.info(`   - Categories: 1 parent + ${childCategoryNames.length} children (Skincare tree)`);
   logger.info(`   - Products: ${testProducts.length} total, ${productsCreated} newly created`);
   logger.info("");
   logger.info("🚀 You can now test the Store API:");
