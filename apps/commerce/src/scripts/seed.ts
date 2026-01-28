@@ -85,16 +85,16 @@ export default async function seed({ container }: ExecArgs) {
     });
     stockLocation = stockLocationResult[0];
     logger.info(`✅ Created stock location: ${stockLocation.id}`);
-
-    // Link sales channel to stock location (only when creating new)
-    await linkSalesChannelsToStockLocationWorkflow(container).run({
-      input: {
-        id: stockLocation.id,
-        add: [salesChannel.id],
-      },
-    });
-    logger.info("✅ Linked sales channel to stock location");
   }
+
+  // Always ensure sales channel is linked to stock location (idempotent; safe if already linked)
+  await linkSalesChannelsToStockLocationWorkflow(container).run({
+    input: {
+      id: stockLocation.id,
+      add: [salesChannel.id],
+    },
+  });
+  logger.info("✅ Linked sales channel to stock location");
 
   // 3. Get or create shipping profile
   logger.info("Checking shipping profile...");
@@ -259,6 +259,7 @@ export default async function seed({ container }: ExecArgs) {
 
   let productsCreated = 0;
   const createdProducts: any[] = [];
+  const existingProducts: any[] = [];
 
   for (const productData of testProducts) {
     const existing = await productModule.listProducts({ handle: productData.handle });
@@ -292,16 +293,19 @@ export default async function seed({ container }: ExecArgs) {
       });
       createdProducts.push(result[0]);
       productsCreated++;
+    } else {
+      existingProducts.push(existing[0]);
     }
   }
   logger.info(`✅ Products: ${productsCreated} created, ${testProducts.length - productsCreated} already exist`);
 
-  // 7. Create inventory for newly created products
-  if (createdProducts.length > 0) {
-    logger.info("Creating inventory items...");
+  // 7. Ensure inventory for all test products (created + existing) – idempotent and self-healing
+  const productsToEnsureInventory = [...createdProducts, ...existingProducts];
+  if (productsToEnsureInventory.length > 0) {
+    logger.info("Ensuring inventory items for all test products...");
     let inventoryCreatedCount = 0;
 
-    for (const product of createdProducts) {
+    for (const product of productsToEnsureInventory) {
       const productVariants = await productModule.listProductVariants({ product_id: product.id });
 
       for (const variant of productVariants) {
