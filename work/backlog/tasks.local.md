@@ -206,7 +206,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/commerce
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** commerce, backend, infrastructure
 
@@ -227,7 +227,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/commerce
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** commerce, database, infrastructure, gate
 
@@ -247,7 +247,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/commerce
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** commerce, backend
 
@@ -268,7 +268,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/commerce
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** commerce, backend, security
 
@@ -290,7 +290,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** storefront, frontend, seo
 
@@ -310,7 +310,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** storefront, frontend, seo
 
@@ -331,7 +331,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** storefront, frontend, cms, subscriptions
 
@@ -352,7 +352,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** storefront, frontend, shipping
 
@@ -372,7 +372,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** storefront, frontend, subscriptions
 
@@ -393,7 +393,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** storefront, frontend, cms, legal
 
