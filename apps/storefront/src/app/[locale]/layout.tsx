@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { notFound } from "next/navigation";
-import { locales, type Locale, localeNames } from "@/i18n/config";
+import { locales, type Locale } from "@/i18n/config";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import "../globals.css";
 
 const inter = Inter({
@@ -39,8 +41,10 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
-        {children}
+      <body className={`${inter.variable} font-sans antialiased bg-background text-foreground flex min-h-screen flex-col`}>
+        <Header locale={locale} />
+        <main className="flex-1">{children}</main>
+        <Footer locale={locale} />
       </body>
     </html>
   );
