@@ -2,6 +2,12 @@
 
 This log captures **actual decisions** made during specification and delivery. Keep entries short and unambiguous.
 
+## 2026-01-31 — Design source: Figma export in separate repo
+- **Decision**: Storefront UI is sourced from Figma design exported to code and maintained in the repository `eskoubar95/Ecommercestorefrontdesign`. Design is implemented in Guapo by pulling/merging from that repo and refactoring to the project’s design system and architecture.
+- **Why**: Design was built in Figma (~90–95% complete); implementation is done in Guapo storefront with refactoring for tokens, modularity, and dynamic data.
+- **Consequences**: When Figma is updated, export flows to the design repo; Guapo storefront is updated via pull/merge followed by refactor and mapping to tokens and data.
+- **Where**: `spec/07-design-system.md`, `spec/03-risks.md`
+
 ## 2026-01-26 — Repo layout: monorepo with `apps/*`
 - **Decision**: Use a monorepo with workspaces:
   - `apps/storefront` (Next.js customer storefront)

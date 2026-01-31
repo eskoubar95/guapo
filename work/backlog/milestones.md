@@ -102,3 +102,28 @@ Milestones are the execution backbone for the MVP. Each milestone has a clear ob
 - Gates from `spec/04-open-questions.md` are represented as tasks with acceptance signals
 - Staging validation approach is documented and executable
 - MVP ship checklist in `spec/06-acceptance.md` can be run against the system
+
+## M6 — Storefront design system-integration
+
+**Objective:** Integrate Figma design from the Ecommercestorefrontdesign repo into Guapo storefront with refactoring to design tokens, reusable components, and dynamic data (Medusa/CMS).
+
+**In scope:**
+- Access to and placement of design repo in monorepo (clone/copy/submodule; decision documented)
+- Analysis of design repo (structure, components, tokens, mockup data)
+- Tokens/theme: map to spec/07, base layout
+- Refactor and integration of UI components (header, footer, buttons, cards, inputs) in `apps/storefront`
+- Page-by-page integration (Home, PLP, PDP, Cart, Checkout, Account, Content/Support/Policies) with refactor and data-wiring
+- Replacement of mockup data with Medusa/Payload
+- Fixes and touch-ups (build/runtime, focus states, responsiveness)
+
+**Out of scope:**
+- New functionality beyond what the design covers; full M5 integration (Adyen, Shipmondo, etc.) remains in M5
+
+**Exit criteria:**
+- Design repo is accessible and placement decision is documented in spec/05-decisions.md (if new decision)
+- Guapo tokens and conventions from spec/07 are applied; no raw hex ad hoc
+- Primary sitemap pages are covered with refactored UI and dynamic data where relevant
+- Loading/empty/error states are implemented for core flows (per spec/07)
+- Focus states use active border (no focus ring)
+
+**Traceability:** spec/05-decisions.md (design source), spec/07-design-system.md, spec/03-risks.md (Figma risk), spec/09-sitemap.md

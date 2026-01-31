@@ -11,6 +11,9 @@ It is intended to reduce “design babysitting” by making decisions explicit e
 ## References
 - Matas (layout inspiration; exact pages TBD)
 
+## Design implementation source
+- **Repository**: [Ecommercestorefrontdesign](https://github.com/eskoubar95/Ecommercestorefrontdesign) — Figma-exported components and layout are pulled from here; they are refactored to Guapo tokens and conventions when implemented in `apps/storefront`.
+
 ## Style direction
 - **Adjectives**: clean, calm, premium-but-approachable, unisex, modern, light
 - **Do**:

@@ -32,3 +32,4 @@ This document lists risks that are already visible at the /spec/init stage. It i
 ## Delivery risks
 - **Time-to-market**: 1–2 months leaves limited slack for unknowns (Adyen subscription setup, CMS modeling, SEO rules, Qogita investigation).
 - **Integration surface area**: Multiple systems (commerce backend + CMS + payment provider) increases integration failure modes early.
+- **Figma export code quality**: Figma-generated code often has redundancy, weak modularization, and hardcoded values. Mitigation: dedicated refactoring toward `spec/07-design-system.md` (tokens, component rules) and reuse of existing storefront data flows (Medusa/CMS).

@@ -593,3 +593,161 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** S
 
+## M6 — Storefront design system-integration
+
+## Task: t6.1
+
+**Description:** Verify access to design repo (Ecommercestorefrontdesign) and decide placement in monorepo (copy vs submodule). Document decision in spec/05 if new.
+
+**Workspace:** .
+
+**Status:** backlog
+
+**Tags:** storefront, design, infrastructure
+
+**Milestone:** M6
+
+**Acceptance:**
+- Repo is cloneable; placement decided and documented; design files available under chosen path.
+
+**Estimate:** S
+
+## Task: t6.2
+
+**Description:** Analyse design-repo: map file structure, layout/side templates, components, tokens/theme, mockup data and static copy. Map to spec/09 sitemap.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** storefront, design
+
+**Milestone:** M6
+
+**Dependencies:** t6.1
+
+**Acceptance:**
+- Written short analysis (e.g. in task note or doc): structure, component list, token/theme usage, mockup locations, page mapping.
+
+**Estimate:** M
+
+## Task: t6.3
+
+**Description:** Define theme/tokens from design and map to spec/07; implement base layout (e.g. root layout) using tokens.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** storefront, design
+
+**Milestone:** M6
+
+**Dependencies:** t6.2, t4.1
+
+**Acceptance:**
+- Theme/tokens implemented (CSS vars or Tailwind); root layout uses tokens; no ad-hoc hex in layout.
+
+**Estimate:** M
+
+## Task: t6.4
+
+**Description:** Refactor and integrate core UI components (header, footer, buttons, cards, inputs) into storefront; align with spec/07 Phase 1 and focus-border rule.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** storefront, design
+
+**Milestone:** M6
+
+**Dependencies:** t6.3
+
+**Acceptance:**
+- Shared components live in storefront; token-driven; focus state = active border; responsive 320/768/1024.
+
+**Estimate:** L
+
+## Task: t6.5
+
+**Description:** **Discovery:** Integrate Home, PLP, PDP — refactor layout and wire data (Medusa/CMS) where applicable. Loading/empty/error per spec/07.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** storefront, design, cms, commerce
+
+**Milestone:** M6
+
+**Dependencies:** t6.4, t4.1
+
+**Acceptance:**
+- Home, category/brand/concern PLP, and PDP implemented with design; mockup replaced by real or stubbed data where available.
+
+**Estimate:** L
+
+**Notes:** Partial dependency on t3.x/t2.x for live data when available.
+
+## Task: t6.6
+
+**Description:** **Purchase:** Integrate Cart and Checkout — refactor layout and wire cart/checkout data.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** storefront, design, commerce
+
+**Milestone:** M6
+
+**Dependencies:** t6.4, t4.1
+
+**Acceptance:**
+- Cart and Checkout pages implemented with design; add/remove/update quantities and checkout steps work (placeholder shipping OK).
+
+**Estimate:** L
+
+**Notes:** Partial dependency on t3.3 for cart/order.
+
+## Task: t6.7
+
+**Description:** **Account & content:** Integrate Account (orders, subscriptions), blog/article, policies, support/FAQ/contact.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** storefront, design, cms, commerce
+
+**Milestone:** M6
+
+**Dependencies:** t6.4, t4.1
+
+**Acceptance:**
+- Account area, blog, policies, support pages implemented with design; auth-gating and CMS content wiring where applicable.
+
+**Estimate:** L
+
+**Notes:** Partial dependency on t2.2/t3.4 for data.
+
+## Task: t6.8
+
+**Description:** Replace remaining mockup data with Medusa (products, cart, checkout) and Payload (content, guidance); fix build/runtime and UI touch-ups.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** storefront, design, cms, commerce
+
+**Milestone:** M6
+
+**Dependencies:** t6.5, t6.6, t6.7
+
+**Acceptance:**
+- No mock product/copy where live data exists; build green; key flows have required states (loading/empty/error).
+
+**Estimate:** M
+
