@@ -39,21 +39,14 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Link href={`/${locale}`} className="text-xl font-semibold text-gray-900">
-              {dict.common.brand}
-            </Link>
-            <Link href={`/${locale}/cart`} className="text-sm text-gray-600 hover:text-gray-900">
-              {locale === "da" ? "← Tilbage til kurv" : "← Back to cart"}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-full">
+      <main className="container mx-auto px-4 py-8">
+        <Link
+          href={`/${locale}/cart`}
+          className="mb-6 inline-block text-sm text-muted-foreground hover:text-primary"
+        >
+          {locale === "da" ? "← Tilbage til kurv" : "← Back to cart"}
+        </Link>
         <div className="lg:grid lg:grid-cols-12 lg:gap-12">
           {/* Checkout form */}
           <div className="lg:col-span-7">

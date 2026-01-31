@@ -601,7 +601,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** .
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** storefront, design, infrastructure
 
@@ -618,7 +618,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** storefront, design
 
@@ -637,7 +637,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** storefront, design
 
@@ -656,7 +656,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** storefront, design
 
@@ -675,7 +675,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** storefront, design, cms, commerce
 
@@ -696,7 +696,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** storefront, design, commerce
 
@@ -717,7 +717,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** storefront, design, cms, commerce
 
@@ -738,7 +738,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** storefront, design, cms, commerce
 

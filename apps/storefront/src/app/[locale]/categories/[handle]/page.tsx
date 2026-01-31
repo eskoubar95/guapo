@@ -51,67 +51,57 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Link href={`/${locale}`} className="text-xl font-semibold text-gray-900">
-              {dict.common.brand}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-full">
+      <main className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <nav className="mb-6">
-          <ol className="flex items-center gap-2 text-sm text-gray-500">
+        <nav className="mb-6" aria-label="Breadcrumb">
+          <ol className="flex items-center gap-2 text-sm text-muted-foreground">
             <li>
-              <Link href={`/${locale}`} className="hover:text-gray-900">
+              <Link href={`/${locale}`} className="hover:text-primary">
                 {dict.common.brand}
               </Link>
             </li>
             <li>/</li>
             <li>
-              <Link href={`/${locale}/categories`} className="hover:text-gray-900">
+              <Link href={`/${locale}/categories`} className="hover:text-primary">
                 {locale === "da" ? "Kategorier" : "Categories"}
               </Link>
             </li>
             <li>/</li>
-            <li className="text-gray-900">{categoryName}</li>
+            <li className="text-foreground">{categoryName}</li>
           </ol>
         </nav>
 
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">{categoryName}</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-foreground">{categoryName}</h1>
+          <p className="text-sm text-muted-foreground">
             {placeholderProducts.length} {locale === "da" ? "produkter" : "products"}
           </p>
         </div>
 
         {/* Filters and Sort */}
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 pb-6">
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-6">
           <div className="flex items-center gap-4">
-            <button className="flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50">
+            <button
+              type="button"
+              className="flex items-center gap-2 rounded-lg border-2 border-border bg-background px-4 py-2 text-sm hover:bg-surface focus-visible:border-primary focus-visible:outline-none"
+            >
               {dict.products.filters}
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-            
-            {/* Active filters */}
             {activeFilters.skinType && (
-              <span className="flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm">
+              <span className="flex items-center gap-1 rounded-full bg-surface-muted px-3 py-1 text-sm text-foreground">
                 {activeFilters.skinType}
-                <button className="ml-1 text-gray-500 hover:text-gray-900">×</button>
+                <button type="button" className="ml-1 text-muted-foreground hover:text-primary">×</button>
               </span>
             )}
           </div>
-
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">{dict.products.sort}:</span>
-            <select 
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            <span className="text-sm text-muted-foreground">{dict.products.sort}:</span>
+            <select
+              className="rounded-lg border-2 border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
               defaultValue={activeFilters.sort}
             >
               <option value="featured">{locale === "da" ? "Anbefalet" : "Featured"}</option>
@@ -128,14 +118,14 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             <Link
               key={product.id}
               href={`/${locale}/products/${product.id}`}
-              className="group"
+              className="group rounded-lg border border-border bg-card overflow-hidden hover:border-primary transition-colors focus-visible:border-primary focus-visible:outline-none"
             >
-              <div className="aspect-square w-full rounded-lg bg-gray-100 transition-colors group-hover:bg-gray-200" />
-              <div className="mt-3">
-                <h3 className="text-sm font-medium text-gray-900 group-hover:text-gray-600">
+              <div className="aspect-square w-full bg-surface-muted transition-colors group-hover:bg-surface" />
+              <div className="p-3">
+                <h3 className="text-sm font-medium text-foreground group-hover:text-primary">
                   {product.title}
                 </h3>
-                <p className="mt-1 text-sm text-gray-500">{product.price} DKK</p>
+                <p className="mt-1 text-sm text-muted-foreground">{product.price} DKK</p>
               </div>
             </Link>
           ))}
