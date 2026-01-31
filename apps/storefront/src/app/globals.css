@@ -1,15 +1,113 @@
 @import "tailwindcss";
 
+/* Guapo design tokens (spec/07 + design/Ecommercestorefrontdesign) — no ad-hoc hex in layout/components */
 :root {
+  --font-size: 16px;
+
+  /* Neutral */
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0a0e1a;
+  --surface: #f8f9fb;
+  --surface-muted: #eff1f5;
+  --border: #e8ecf2;
+  --text-primary: #0a0e1a;
+  --text-secondary: #4a5568;
+  --text-muted: #7b8599;
+
+  /* Brand (Guapo logo dark navy) */
+  --primary: #051537;
+  --primary-hover: #0a2452;
+  --primary-foreground: #ffffff;
+  --secondary: #eff4f9;
+  --secondary-foreground: #051537;
+
+  /* Semantic */
+  --success: #4caf93;
+  --warning: #f4b860;
+  --error: #e07b7b;
+  --info: #6ba4d6;
+  --muted: #eff1f5;
+  --muted-foreground: #7b8599;
+  --card: #ffffff;
+  --card-foreground: #0a0e1a;
+  --accent: #eff4f9;
+  --accent-foreground: #051537;
+  --destructive: #d64045;
+  --destructive-foreground: #ffffff;
+  --input: transparent;
+  --input-background: #f8f9fb;
+  --ring: #051537;
+
+  /* Radius (spec/07) */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius: 6px;
+
+  /* Spacing (base 4px) */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+
+  /* Typography */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius: var(--radius);
+}
+
+/* Focus: active border only, no focus ring (spec/07) */
+*:focus {
+  outline: none;
+}
+*:focus-visible {
+  outline: none;
+}
+input:focus,
+textarea:focus,
+select:focus,
+button:focus-visible {
+  border: 2px solid var(--primary);
+  outline: none;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-size: var(--font-size);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -17,10 +115,4 @@
     --background: #0a0a0a;
     --foreground: #ededed;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }

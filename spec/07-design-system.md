@@ -54,7 +54,7 @@ Hex values below are **initial direction** and can be adjusted once the final lo
 - `textMuted`: #64748B
 
 #### Brand / accent
-- `primary`: TBD (Guapo logo dark navy)
+- `primary`: #051537 (Guapo logo dark navy; confirmed from design repo)
 - `primaryForeground`: #FFFFFF
 - `secondary`: #E6F0FF (soft, unisex pastel-blue; optional)
 - `secondaryForeground`: #0F172A
