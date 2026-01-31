@@ -2,6 +2,12 @@
 
 This log captures **actual decisions** made during specification and delivery. Keep entries short and unambiguous.
 
+## 2026-01-31 — Design repo placement: submodule at `design/Ecommercestorefrontdesign`
+- **Decision**: The design repo `eskoubar95/Ecommercestorefrontdesign` is included in the monorepo as a **git submodule** at path `design/Ecommercestorefrontdesign`. Design files are available there; Guapo storefront references and refactors from this path.
+- **Why**: Submodule keeps design source traceable and updatable (`git submodule update`); avoids copying large export history into the main repo.
+- **Consequences**: After clone, run `git submodule update --init` to fetch design files. CI and local setup must init submodule if storefront build depends on design assets.
+- **Where**: This file; `spec/07-design-system.md`
+
 ## 2026-01-31 — Design source: Figma export in separate repo
 - **Decision**: Storefront UI is sourced from Figma design exported to code and maintained in the repository `eskoubar95/Ecommercestorefrontdesign`. Design is implemented in Guapo by pulling/merging from that repo and refactoring to the project’s design system and architecture.
 - **Why**: Design was built in Figma (~90–95% complete); implementation is done in Guapo storefront with refactoring for tokens, modularity, and dynamic data.
