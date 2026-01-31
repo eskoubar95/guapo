@@ -95,54 +95,44 @@ export default async function ContactPage({ params }: SupportPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Link href={`/${locale}`} className="text-xl font-semibold text-gray-900">
-              {dict.common.brand}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
+    <div className="min-h-full">
+      <main className="container mx-auto max-w-4xl px-4 py-12">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">{content.title}</h1>
-          <p className="mt-4 text-lg text-gray-600">{content.subtitle}</p>
+          <h1 className="text-3xl font-bold text-foreground">{content.title}</h1>
+          <p className="mt-4 text-lg text-muted-foreground">{content.subtitle}</p>
         </div>
 
         <div className="mt-16 grid gap-8 lg:grid-cols-2">
           {/* Contact methods */}
           <div className="space-y-8">
             {/* Email */}
-            <div className="rounded-lg border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-900">{content.email.title}</h2>
-              <p className="mt-2 text-gray-600">{content.email.description}</p>
+            <div className="rounded-lg border border-border p-6">
+              <h2 className="text-lg font-semibold text-foreground">{content.email.title}</h2>
+              <p className="mt-2 text-muted-foreground">{content.email.description}</p>
               <a
                 href={`mailto:${content.email.address}`}
-                className="mt-2 block text-lg font-medium text-gray-900 hover:text-gray-600"
+                className="mt-2 block text-lg font-medium text-foreground hover:text-muted-foreground"
               >
                 {content.email.address}
               </a>
-              <p className="mt-2 text-sm text-gray-500">{content.email.response}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{content.email.response}</p>
             </div>
 
             {/* Phone */}
-            <div className="rounded-lg border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-900">{content.phone.title}</h2>
-              <p className="mt-2 text-gray-600">{content.phone.description}</p>
-              <p className="mt-2 text-lg font-medium text-gray-900">{content.phone.number}</p>
-              <p className="mt-2 text-sm text-gray-500">{content.phone.hours}</p>
+            <div className="rounded-lg border border-border p-6">
+              <h2 className="text-lg font-semibold text-foreground">{content.phone.title}</h2>
+              <p className="mt-2 text-muted-foreground">{content.phone.description}</p>
+              <p className="mt-2 text-lg font-medium text-foreground">{content.phone.number}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{content.phone.hours}</p>
             </div>
 
             {/* FAQ link */}
-            <div className="rounded-lg bg-gray-50 p-6">
-              <h2 className="text-lg font-semibold text-gray-900">{content.faq.title}</h2>
-              <p className="mt-2 text-gray-600">{content.faq.description}</p>
+            <div className="rounded-lg bg-surface p-6">
+              <h2 className="text-lg font-semibold text-foreground">{content.faq.title}</h2>
+              <p className="mt-2 text-muted-foreground">{content.faq.description}</p>
               <Link
                 href={`/${locale}/support/faq`}
-                className="mt-4 inline-flex text-sm font-medium text-gray-900 hover:text-gray-600"
+                className="mt-4 inline-flex text-sm font-medium text-foreground hover:text-muted-foreground"
               >
                 {content.faq.link} →
               </Link>
@@ -150,11 +140,11 @@ export default async function ContactPage({ params }: SupportPageProps) {
           </div>
 
           {/* Contact form */}
-          <div className="rounded-lg border border-gray-100 p-6">
-            <h2 className="text-lg font-semibold text-gray-900">{content.form.title}</h2>
+          <div className="rounded-lg border border-border p-6">
+            <h2 className="text-lg font-semibold text-foreground">{content.form.title}</h2>
             <form className="mt-6 space-y-6">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="name" className="block text-sm font-medium text-foreground">
                   {content.form.name}
                 </label>
                 <input
@@ -162,12 +152,12 @@ export default async function ContactPage({ params }: SupportPageProps) {
                   id="name"
                   name="name"
                   required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  className="mt-1 block w-full rounded-md border border-border px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                 />
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="block text-sm font-medium text-foreground">
                   {content.form.email}
                 </label>
                 <input
@@ -175,31 +165,31 @@ export default async function ContactPage({ params }: SupportPageProps) {
                   id="email"
                   name="email"
                   required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  className="mt-1 block w-full rounded-md border border-border px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                 />
               </div>
 
               <div>
-                <label htmlFor="orderNumber" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="orderNumber" className="block text-sm font-medium text-foreground">
                   {content.form.orderNumber}
                 </label>
                 <input
                   type="text"
                   id="orderNumber"
                   name="orderNumber"
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  className="mt-1 block w-full rounded-md border border-border px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                 />
               </div>
 
               <div>
-                <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="subject" className="block text-sm font-medium text-foreground">
                   {content.form.subject}
                 </label>
                 <select
                   id="subject"
                   name="subject"
                   required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  className="mt-1 block w-full rounded-md border border-border px-3 py-2 text-foreground focus:border-primary focus:outline-none"
                 >
                   {content.form.subjectOptions.map((option) => (
                     <option key={option} value={option}>
@@ -210,7 +200,7 @@ export default async function ContactPage({ params }: SupportPageProps) {
               </div>
 
               <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="message" className="block text-sm font-medium text-foreground">
                   {content.form.message}
                 </label>
                 <textarea
@@ -218,13 +208,13 @@ export default async function ContactPage({ params }: SupportPageProps) {
                   name="message"
                   rows={5}
                   required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  className="mt-1 block w-full rounded-md border border-border px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full rounded-full bg-gray-900 px-6 py-3 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
+                className="w-full rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:opacity-90 focus-visible:border-2 focus-visible:border-primary focus-visible:outline-none"
               >
                 {content.form.submit}
               </button>

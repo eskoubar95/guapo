@@ -124,28 +124,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const { guidance } = product;
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Link href={`/${locale}`} className="text-xl font-semibold text-gray-900">
-              {dict.common.brand}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-full">
+      <main className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <nav className="mb-6">
-          <ol className="flex items-center gap-2 text-sm text-gray-500">
+          <ol className="flex items-center gap-2 text-sm text-muted-foreground">
             <li>
-              <Link href={`/${locale}`} className="hover:text-gray-900">
+              <Link href={`/${locale}`} className="hover:text-primary">
                 {dict.common.brand}
               </Link>
             </li>
             <li>/</li>
-            <li className="text-gray-900">{product.title}</li>
+            <li className="text-foreground">{product.title}</li>
           </ol>
         </nav>
 
@@ -163,13 +153,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
           {/* Product info */}
           <div className="mt-8 lg:mt-0">
-            <h1 className="text-3xl font-bold text-gray-900">{product.title}</h1>
-            <p className="mt-4 text-gray-600">{product.description}</p>
+            <h1 className="text-3xl font-bold text-foreground">{product.title}</h1>
+            <p className="mt-4 text-muted-foreground">{product.description}</p>
 
             {/* Variant selector */}
             {product.variants.length > 1 && (
               <div className="mt-6">
-                <p className="text-sm font-medium text-gray-900 mb-2">
+                <p className="text-sm font-medium text-foreground mb-2">
                   {locale === "da" ? "Størrelse" : "Size"}
                 </p>
                 <div className="flex gap-2">
@@ -204,13 +194,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             {/* Product guidance (from Payload CMS) */}
             <div className="mt-12 border-t border-gray-100 pt-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+              <h2 className="text-lg font-semibold text-foreground mb-6">
                 {locale === "da" ? "Produktguide" : "Product Guide"}
               </h2>
 
               {/* Skin types */}
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-900 mb-2">
+                <h3 className="text-sm font-medium text-foreground mb-2">
                   {locale === "da" ? "Hudtyper" : "Skin Types"}
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -224,7 +214,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
               {/* Concerns */}
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-900 mb-2">
+                <h3 className="text-sm font-medium text-foreground mb-2">
                   {locale === "da" ? "Målretter" : "Targets"}
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -238,14 +228,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
               {/* Key ingredients */}
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-900 mb-2">
+                <h3 className="text-sm font-medium text-foreground mb-2">
                   {locale === "da" ? "Nøgleingredienser" : "Key Ingredients"}
                 </h3>
                 <ul className="space-y-2">
                   {guidance.keyIngredients.map((ingredient, i) => (
                     <li key={i} className="text-sm">
-                      <span className="font-medium text-gray-900">{ingredient.name}</span>
-                      <span className="text-gray-500"> — {ingredient.benefit[localeKey]}</span>
+                      <span className="font-medium text-foreground">{ingredient.name}</span>
+                      <span className="text-muted-foreground"> — {ingredient.benefit[localeKey]}</span>
                     </li>
                   ))}
                 </ul>
@@ -253,15 +243,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
               {/* How to use */}
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-900 mb-2">
+                <h3 className="text-sm font-medium text-foreground mb-2">
                   {locale === "da" ? "Sådan bruger du det" : "How to Use"}
                 </h3>
-                <p className="text-sm text-gray-600">{guidance.howToUse[localeKey]}</p>
+                <p className="text-sm text-muted-foreground">{guidance.howToUse[localeKey]}</p>
               </div>
 
               {/* When to use */}
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-900 mb-2">
+                <h3 className="text-sm font-medium text-foreground mb-2">
                   {locale === "da" ? "Hvornår" : "When"}
                 </h3>
                 <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
@@ -272,7 +262,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               {/* Pair with */}
               {guidance.pairWith.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-2">
+                  <h3 className="text-sm font-medium text-foreground mb-2">
                     {locale === "da" ? "Kombiner med" : "Pair With"}
                   </h3>
                   <div className="flex gap-4">
@@ -283,7 +273,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                         className="group flex items-center gap-2"
                       >
                         <div className="h-12 w-12 rounded-lg bg-gray-100" />
-                        <span className="text-sm text-gray-600 group-hover:text-gray-900">
+                        <span className="text-sm text-muted-foreground group-hover:text-primary">
                           {products[productHandle]?.title || productHandle}
                         </span>
                       </Link>

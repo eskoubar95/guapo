@@ -87,26 +87,15 @@ export default async function TermsPage({ params }: PolicyPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Link href={`/${locale}`} className="text-xl font-semibold text-gray-900">
-              {dict.common.brand}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900">{content.title}</h1>
-        <p className="mt-2 text-sm text-gray-500">{content.lastUpdated}</p>
-
+    <div className="min-h-full">
+      <main className="container mx-auto max-w-3xl px-4 py-12">
+        <h1 className="text-3xl font-bold text-foreground">{content.title}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{content.lastUpdated}</p>
         <div className="mt-12 space-y-8">
           {content.sections.map((section, i) => (
             <div key={i}>
-              <h2 className="text-xl font-semibold text-gray-900">{section.title}</h2>
-              <p className="mt-3 text-gray-600">{section.content}</p>
+              <h2 className="text-xl font-semibold text-foreground">{section.title}</h2>
+              <p className="mt-3 text-muted-foreground">{section.content}</p>
             </div>
           ))}
         </div>

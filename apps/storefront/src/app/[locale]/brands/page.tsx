@@ -17,7 +17,6 @@ export async function generateMetadata({ params }: BrandsPageProps): Promise<Met
   };
 }
 
-// Placeholder brands (will come from Medusa/CMS)
 const brands = [
   { handle: "the-ordinary", name: "The Ordinary", productCount: 24 },
   { handle: "cerave", name: "CeraVe", productCount: 18 },
@@ -32,39 +31,25 @@ export default async function BrandsPage({ params }: BrandsPageProps) {
   const dict = await getDictionary(locale as Locale);
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Link href={`/${locale}`} className="text-xl font-semibold text-gray-900">
-              {dict.common.brand}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900">
+    <div className="min-h-full">
+      <main className="container mx-auto px-4 py-12">
+        <h1 className="text-3xl font-bold text-foreground">
           {locale === "da" ? "Mærker" : "Brands"}
         </h1>
-        <p className="mt-4 text-lg text-gray-600">
+        <p className="mt-4 text-lg text-muted-foreground">
           {locale === "da"
             ? "Vi har kurateret de bedste hudplejemærker til dig."
             : "We've curated the best skincare brands for you."}
         </p>
-
-        {/* Alphabetical brand list */}
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {brands.map((brand) => (
             <Link
               key={brand.handle}
               href={`/${locale}/brands/${brand.handle}`}
-              className="group flex items-center justify-between rounded-lg border border-gray-100 p-4 transition-colors hover:border-gray-200 hover:bg-gray-50"
+              className="flex items-center justify-between rounded-lg border-2 border-border bg-card p-4 transition-colors hover:border-primary hover:bg-surface focus-visible:border-primary focus-visible:outline-none"
             >
-              <span className="font-medium text-gray-900 group-hover:text-gray-600">
-                {brand.name}
-              </span>
-              <span className="text-sm text-gray-500">
+              <span className="font-medium text-foreground">{brand.name}</span>
+              <span className="text-sm text-muted-foreground">
                 {brand.productCount} {locale === "da" ? "produkter" : "products"}
               </span>
             </Link>
