@@ -28,8 +28,7 @@ export default async function AccountPage({ params }: AccountPageProps) {
   ];
 
   return (
-    <div className="min-h-full">
-      <main className="container mx-auto max-w-3xl px-4 py-8">
+    <div className="max-w-3xl">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">{dict.account.title}</h1>
           <button type="button" className="text-sm text-muted-foreground hover:text-primary">
@@ -73,7 +72,6 @@ export default async function AccountPage({ params }: AccountPageProps) {
             </Link>
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }

@@ -14,11 +14,76 @@
       "subtitle": "Udforsk vores kuraterede udvalg af premium hudplejeprodukter til alle hudtyper.",
       "cta": "Shop nu"
     },
+    "announcement": {
+      "text": "Fri fragt over 299 kr.",
+      "subtext": "30 dages returret"
+    },
+    "promoBars": {
+      "bar1": {
+        "text": "Spar 20% på hudpleje ✨",
+        "subtext": "CeraVe, La Roche-Posay, The Ordinary og mange flere*"
+      },
+      "bar2": {
+        "text": "Spar 20% på dermatologisk specialpleje 🧴",
+        "subtext": "Gælder online og i butik"
+      }
+    },
+    "promoSlider": {
+      "slide1": {
+        "badge": "Gælder 26. - 29. jan.",
+        "title": "25%",
+        "subtitle": "på Shiseido og Filorga*",
+        "disclaimer": "*Se vilkår på produkt",
+        "ctaText": "Shop nu"
+      },
+      "slide2": {
+        "title": "Favorit Skincare",
+        "subtitle": "Op til 30% rabat på udvalgte brands",
+        "ctaText": "Shop nu"
+      },
+      "slide3": {
+        "title": "Nyheder i Hudpleje",
+        "subtitle": "Få de nyeste launches fra verdens bedste brands",
+        "ctaText": "Udforsk",
+        "ctaVariant": "outline"
+      }
+    },
+    "promo": {
+      "badge": "Gælder 26. - 29. jan.",
+      "title": "25%",
+      "subtitle": "på Shiseido og Filorga*",
+      "disclaimer": "*Se vilkår på produkt",
+      "ctaText": "Shop nu"
+    },
+    "campaign": {
+      "title": "Vinter hudpleje 2025",
+      "description": "Beskyt og plej din hud mod kulde og vind. Find de bedste produkter til vinterens tørre vejr.",
+      "ctaText": "Shop vinter kollektionen"
+    },
     "featured": {
       "title": "Bestsellers"
     },
+    "editorPicks": "Redaktørens favoritter",
     "newArrivals": {
       "title": "Nyheder"
+    },
+    "routine": {
+      "title": "Find din rutine",
+      "subtitle": "Skræddersyet hudpleje til dit behov"
+    },
+    "content": {
+      "title": "Inspiration & Guides",
+      "subtitle": "Lær mere om hudpleje"
+    },
+    "brandSpotlight": {
+      "description": "Klinisk formulerede hudplejeprodukter med integritet. Vores mission er at bringe højtydende ingredienser til alle til fair priser.",
+      "cta": "Se alle produkter fra"
+    },
+    "newsletter": {
+      "title": "Få 10% rabat på din første ordre",
+      "description": "Tilmeld dig vores nyhedsbrev og modtag eksklusive tilbud",
+      "placeholder": "Din email",
+      "submitLabel": "Tilmeld"
     }
   },
   "products": {
@@ -26,8 +91,27 @@
     "outOfStock": "Ikke på lager",
     "viewDetails": "Se detaljer",
     "filters": "Filtre",
+    "clearFilters": "Ryd alle filtre",
+    "activeFilters": "Aktive filtre",
     "sort": "Sorter",
-    "noResults": "Ingen produkter fundet"
+    "noResults": "Ingen produkter fundet",
+    "tabs": {
+      "description": "Beskrivelse",
+      "ingredients": "Ingredienser",
+      "reviews": "Anmeldelser"
+    },
+    "skinTypes": "Hudtyper",
+    "targets": "Målretter",
+    "keyIngredients": "Nøgleingredienser",
+    "howToUse": "Sådan bruger du det",
+    "when": "Hvornår",
+    "pairWith": "Kombiner med",
+    "noReviews": "Ingen anmeldelser endnu. Vær den første til at anmelde.",
+    "trustStrip": {
+      "freeShipping": "Fri fragt over 299 kr.",
+      "returns": "30 dages returret",
+      "securePayment": "Sikker betaling"
+    }
   },
   "cart": {
     "title": "Din kurv",
@@ -38,23 +122,73 @@
     "shipping": "Fragt",
     "total": "Total",
     "summary": "Ordreoversigt",
-    "remove": "Fjern"
+    "remove": "Fjern",
+    "oneTimePurchase": "Engangskøb",
+    "subscribe": "Abonnement",
+    "discountCodeLabel": "Har du en rabatkode?",
+    "discountCodePlaceholder": "Rabatkode",
+    "apply": "Tilføj",
+    "discountApplied": "Tilføjet",
+    "continueShoppingTitle": "Fortsæt med at shoppe"
   },
   "checkout": {
     "title": "Kassen",
     "contact": "Kontakt",
     "shipping": "Levering",
     "payment": "Betaling",
-    "review": "Gennemse ordre",
-    "placeOrder": "Bekræft ordre"
+    "review": "Oversigt",
+    "placeOrder": "Bekræft ordre",
+    "backToCart": "Tilbage til kurv",
+    "deliveryMethod": "Leveringsmetode",
+    "homeDelivery": "Hjemmelevering",
+    "homeDeliverySub": "2-4 hverdage",
+    "parcelShop": "Pakkeshop",
+    "parcelShopSub": "1-3 hverdage",
+    "expressDelivery": "Ekspreslevering",
+    "expressDeliverySub": "1-2 hverdage",
+    "freeLabel": "Gratis",
+    "continueToPayment": "Fortsæt til betaling",
+    "nextStep": "Fortsæt",
+    "previousStep": "Tilbage"
   },
   "account": {
     "title": "Min konto",
+    "overview": "Oversigt",
     "orders": "Ordrer",
     "subscriptions": "Abonnementer",
     "profile": "Profil",
     "addresses": "Adresser",
     "signOut": "Log ud"
+  },
+  "orderConfirmation": {
+    "title": "Tak for din ordre!",
+    "subtitle": "Vi har modtaget din ordre og sender dig en bekræftelse på email snart.",
+    "orderNumber": "Ordrenummer",
+    "viewOrder": "Se ordre",
+    "continueShopping": "Fortsæt med at shoppe",
+    "summary": "Ordreoversigt",
+    "subtotal": "Subtotal",
+    "shipping": "Fragt",
+    "total": "Total"
+  },
+  "subscriptionDetail": {
+    "title": "Abonnementsdetaljer",
+    "price": "Pris",
+    "frequency": "Frekvens",
+    "nextDelivery": "Næste levering",
+    "deliveries": "Leveringer",
+    "skipNext": "Skip næste levering",
+    "pause": "Pause abonnement",
+    "changeFrequency": "Ændr frekvens",
+    "resume": "Genoptag abonnement",
+    "cancel": "Annuller abonnement",
+    "cancelAfter": "Kan annulleres efter {{count}} leveringer mere",
+    "benefitsTitle": "Fordele ved abonnement",
+    "benefitSave": "Spar 5% på alle fornyelser",
+    "benefitShipping": "Gratis levering på alle abonnementsordrer",
+    "benefitFlexible": "Fleksibel levering - pause, skip eller annuller",
+    "backToSubscriptions": "Tilbage til abonnementer",
+    "viewDetails": "Se detaljer"
   },
   "footer": {
     "support": "Support",

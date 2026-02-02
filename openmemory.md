@@ -65,7 +65,7 @@ This file is a lightweight index of project facts and conventions that are usefu
 - **Observability (MVP)**: Sentry + structured logs + uptime + alerts for payment failures and subscriptions on hold.
 
 ## Components
-- (TBD)
+- **Home sections**: HomePromoBars, CategoryStrip (colored circles), PromotionSlider (3 slides), FeaturedProducts, CampaignSection, RoutineBlock, ContentGrid, BrandSpotlight, CtaStrip, ServiceStrip, Newsletter. Design source: `design/Ecommercestorefrontdesign/src/app/pages/home.tsx` + `src/app/components/sections/`.
 
 ## User Defined Namespaces
 - [Leave blank - user populates]

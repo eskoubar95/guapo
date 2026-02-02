@@ -3,6 +3,10 @@ import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { SubscriptionSelector } from "@/components/SubscriptionSelector";
+import { ProductGallery } from "@/components/ProductGallery";
+import { ProductPageTabs } from "@/components/ProductPageTabs";
+import { KeyInformationCard } from "@/components/KeyInformationCard";
+import { PDPTrustStrip } from "@/components/PDPTrustStrip";
 
 interface ProductPageProps {
   params: Promise<{ locale: string; handle: string }>;
@@ -142,13 +146,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="lg:grid lg:grid-cols-2 lg:gap-12">
           {/* Product images */}
           <div>
-            <div className="aspect-square w-full rounded-lg bg-gray-100" />
-            {/* Thumbnail gallery placeholder */}
-            <div className="mt-4 grid grid-cols-4 gap-2">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="aspect-square rounded-lg bg-gray-100" />
-              ))}
-            </div>
+            <ProductGallery images={product.images} alt={product.title} />
           </div>
 
           {/* Product info */}
@@ -187,101 +185,54 @@ export default async function ProductPage({ params }: ProductPageProps) {
               />
             </div>
 
+            {/* Key info: ingredients, skin type, benefits */}
+            <KeyInformationCard
+              className="mt-6"
+              ingredients={guidance.keyIngredients.map((ing) => ({
+                name: ing.name,
+                description: ing.benefit[localeKey],
+              }))}
+              skinType={guidance.skinTypes.map((t) => t[localeKey]).join(", ")}
+              benefits={guidance.concerns.map((c) => c[localeKey]).join(", ")}
+              ingredientsLabel={dict.products.keyIngredients}
+              skinTypeLabel={dict.products.skinTypes}
+              benefitsLabel={dict.products.targets}
+            />
+
             {/* Add to cart button */}
-            <button className="mt-6 w-full rounded-full bg-gray-900 px-8 py-4 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2">
+            <button className="mt-6 w-full rounded-full bg-primary px-8 py-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
               {dict.products.addToCart}
             </button>
 
-            {/* Product guidance (from Payload CMS) */}
-            <div className="mt-12 border-t border-gray-100 pt-8">
-              <h2 className="text-lg font-semibold text-foreground mb-6">
-                {locale === "da" ? "Produktguide" : "Product Guide"}
-              </h2>
+            {/* Trust strip: delivery, returns, secure payment */}
+            <PDPTrustStrip labels={dict.products.trustStrip} />
 
-              {/* Skin types */}
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-foreground mb-2">
-                  {locale === "da" ? "Hudtyper" : "Skin Types"}
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {guidance.skinTypes.map((type, i) => (
-                    <span key={i} className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                      {type[localeKey]}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Concerns */}
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-foreground mb-2">
-                  {locale === "da" ? "Målretter" : "Targets"}
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {guidance.concerns.map((concern, i) => (
-                    <span key={i} className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                      {concern[localeKey]}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Key ingredients */}
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-foreground mb-2">
-                  {locale === "da" ? "Nøgleingredienser" : "Key Ingredients"}
-                </h3>
-                <ul className="space-y-2">
-                  {guidance.keyIngredients.map((ingredient, i) => (
-                    <li key={i} className="text-sm">
-                      <span className="font-medium text-foreground">{ingredient.name}</span>
-                      <span className="text-muted-foreground"> — {ingredient.benefit[localeKey]}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* How to use */}
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-foreground mb-2">
-                  {locale === "da" ? "Sådan bruger du det" : "How to Use"}
-                </h3>
-                <p className="text-sm text-muted-foreground">{guidance.howToUse[localeKey]}</p>
-              </div>
-
-              {/* When to use */}
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-foreground mb-2">
-                  {locale === "da" ? "Hvornår" : "When"}
-                </h3>
-                <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
-                  {guidance.whenToUse}
-                </span>
-              </div>
-
-              {/* Pair with */}
-              {guidance.pairWith.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-medium text-foreground mb-2">
-                    {locale === "da" ? "Kombiner med" : "Pair With"}
-                  </h3>
-                  <div className="flex gap-4">
-                    {guidance.pairWith.slice(0, 2).map((productHandle) => (
-                      <Link
-                        key={productHandle}
-                        href={`/${locale}/products/${productHandle}`}
-                        className="group flex items-center gap-2"
-                      >
-                        <div className="h-12 w-12 rounded-lg bg-gray-100" />
-                        <span className="text-sm text-muted-foreground group-hover:text-primary">
-                          {products[productHandle]?.title || productHandle}
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Product tabs: Description / Ingredients / Reviews */}
+            <ProductPageTabs
+              locale={locale}
+              labels={{
+                description: dict.products.tabs.description,
+                ingredients: dict.products.tabs.ingredients,
+                reviews: dict.products.tabs.reviews,
+              }}
+              description={product.description}
+              skinTypes={guidance.skinTypes}
+              concerns={guidance.concerns}
+              keyIngredients={guidance.keyIngredients}
+              howToUse={guidance.howToUse}
+              whenToUse={guidance.whenToUse}
+              pairWith={guidance.pairWith.slice(0, 2).map((handle) => ({
+                handle,
+                title: products[handle]?.title ?? handle,
+              }))}
+              whenLabel={dict.products.when}
+              howToUseLabel={dict.products.howToUse}
+              keyIngredientsLabel={dict.products.keyIngredients}
+              skinTypesLabel={dict.products.skinTypes}
+              targetsLabel={dict.products.targets}
+              pairWithLabel={dict.products.pairWith}
+              noReviewsLabel={dict.products.noReviews}
+            />
           </div>
         </div>
       </main>

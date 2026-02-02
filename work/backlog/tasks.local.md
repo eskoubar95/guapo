@@ -751,3 +751,185 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** M
 
+---
+
+## M6 — Design 1:1 gap (completed)
+
+*Traceability: `apps/storefront/docs/DESIGN-TO-STOREFRONT-GAP-ANALYSIS.md` — prioriteret handlingsliste Fase 1–6. Linear: GUA-47 (t6.g1), GUA-42 (t6.g2), GUA-43 (t6.g3), GUA-44 (t6.g4), GUA-46 (t6.g5), GUA-45 (t6.g6).*
+
+### Task: t6.g1 — Manglende sider (GUA-47)
+
+**Description:** Order confirmation page + Subscription detail page (design 1:1).
+
+**Workspace:** apps/storefront
+
+**Status:** done
+
+**Tags:** storefront, design
+
+**Milestone:** M6
+
+**Acceptance:**
+- `/[locale]/order-confirmation/[orderId]` med takke, ordrenummer, oversigt, handlingsknapper.
+- `/[locale]/account/subscriptions/[id]` med abonnementsdetaljer, breadcrumbs, tilbage-link.
+
+**Estimate:** S
+
+### Task: t6.g2 — AccountLayout (GUA-42)
+
+**Description:** Account layout med sidebar (Oversigt, Ordrer, Abonnementer), aktiv state.
+
+**Workspace:** apps/storefront
+
+**Status:** done
+
+**Tags:** storefront, design
+
+**Milestone:** M6
+
+**Acceptance:**
+- AccountLayout.tsx + account/layout.tsx; sidebar med links; kun én `<main>`.
+
+**Estimate:** S
+
+### Task: t6.g3 — Kritiske komponenter (GUA-43)
+
+**Description:** FilterSystem, ProductGallery, CartItemCard, Accordion (FAQ).
+
+**Workspace:** apps/storefront
+
+**Status:** done
+
+**Tags:** storefront, design
+
+**Milestone:** M6
+
+**Acceptance:**
+- FilterSystem: slide-out, URL-sync. ProductGallery: thumbnail-vælger. CartItemCard: quantity, fjern, subscription-badge. Accordion i FAQ.
+
+**Estimate:** L
+
+### Task: t6.g4 — UI-primitiver (GUA-44)
+
+**Description:** Tabs, RadioGroup, Label, Checkbox, Textarea (PDP, Checkout, Contact, FilterSystem).
+
+**Workspace:** apps/storefront
+
+**Status:** done
+
+**Tags:** storefront, design
+
+**Milestone:** M6
+
+**Acceptance:**
+- ui/tabs, radio-group, label, checkbox, textarea bruges på PDP, checkout, contact, FilterSystem.
+
+**Estimate:** M
+
+### Task: t6.g5 — PDP/Cart/Checkout alignment (GUA-46)
+
+**Description:** KeyInformationCard, PDPTrustStrip, CartItemList subscription-toggle, CartDiscountCode, CheckoutSteps (step-flow 1→2→3), leveringsvalg-UI.
+
+**Workspace:** apps/storefront
+
+**Status:** done
+
+**Tags:** storefront, design, commerce
+
+**Milestone:** M6
+
+**Acceptance:**
+- PDP: KeyInformationCard + trust-strip. Cart: subscription-toggle per linje (Engangskøb/Abonnement), rabatkode, fortsæt med at shoppe. Checkout: CheckoutSteps med Levering → Oversigt → Betaling, leveringsvalg (hjem/pakkeshop/express).
+
+**Estimate:** L
+
+### Task: t6.g6 — Support/Policy 1:1 (GUA-45)
+
+**Description:** FAQ Accordion, Contact form + kontaktinfo (Mail, Phone, MapPin, Clock).
+
+**Workspace:** apps/storefront
+
+**Status:** done
+
+**Tags:** storefront, design
+
+**Milestone:** M6
+
+**Acceptance:**
+- FAQ bruger Accordion. Contact: form (fornavn, efternavn, email, emne, besked) + kontaktinfo-boks 1:1.
+
+**Estimate:** M
+
+---
+
+**M6 checkpoint (branch `task/m6-design-system-integration`):** Design 1:1 (t6.1–t6.8 + t6.g1–t6.g6) er færdig. Storefront bruger placeholder/mock data. Næste fase: backend data-opstilling (Medusa + Payload) og wiring af rigtig data i storefront — se M6 data/wiring tasks nedenfor.
+
+---
+
+## M6 — Backend data + storefront wiring (næste fase)
+
+*Ikke påbegyndt i denne branch. Spec: `apps/storefront/docs/CMS-COMMERCE-SYNERGY-RESEARCH.md`, `spec/09-sitemap.md`. Linear: GUA-48 (t6.d1), GUA-49 (t6.d2), GUA-50 (t6.d3).*
+
+### Task: t6.d1 — Medusa data-opstilling (types, kategorier, tags, produkter) (GUA-48)
+
+**Description:** Sæt Medusa-katalog op: product_type (Cleanser, Serum, Moisturizer, SPF, …), product_category (hierarki), product_tag (skin types, concerns), product_collection (brands/kampagner), produkter med handle + metadata. Seed script så kataloget er realistisk.
+
+**Workspace:** apps/commerce
+
+**Status:** backlog
+
+**Tags:** commerce, backend, storefront
+
+**Milestone:** M6
+
+**Dependencies:** t6.8
+
+**Acceptance:**
+- product_type, product_category (mpath), product_tag, product_collection fyldt ud.
+- Produkter har handle, type_id, category, tags, collection_id/metadata.
+- Seed script kører og giver realistisk katalog til PLP/PDP.
+
+**Estimate:** L
+
+### Task: t6.d2 — Payload data-opstilling (ProductGuidance + homepage handles) (GUA-49)
+
+**Description:** ProductGuidance entries keyet af Medusa `product.handle`; homepage sections med `productHandles` der matcher rigtige handles.
+
+**Workspace:** apps/cms
+
+**Status:** backlog
+
+**Tags:** cms, storefront
+
+**Milestone:** M6
+
+**Dependencies:** t6.d1
+
+**Acceptance:**
+- ProductGuidance.productIdentifier = Medusa product.handle for relevante produkter.
+- Homepage featured/categories/brands bruger handles der findes i Medusa.
+
+**Estimate:** M
+
+### Task: t6.d3 — Storefront wiring (Medusa + Payload) (GUA-50)
+
+**Description:** Erstat homeMockProducts, placeholderProducts og hardcoded PDP med kald til Medusa (produkter, kategorier, collections) og Payload (ProductGuidance, homepage). PDP/PLP/homepage viser rigtig data.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** storefront, cms, commerce
+
+**Milestone:** M6
+
+**Dependencies:** t6.d1, t6.d2
+
+**Acceptance:**
+- Homepage hentes fra Payload sections + Medusa produkter via handles.
+- PLP (categories, concerns, brands) henter lister fra Medusa.
+- PDP henter produkt fra Medusa + guidance fra Payload (handle som nøgle).
+- Loading/empty/error states bevaret.
+
+**Estimate:** L
+

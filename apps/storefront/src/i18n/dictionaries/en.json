@@ -14,11 +14,76 @@
       "subtitle": "Explore our curated selection of premium skincare products for all skin types.",
       "cta": "Shop now"
     },
+    "announcement": {
+      "text": "Free shipping over 299 DKK",
+      "subtext": "30-day return policy"
+    },
+    "promoBars": {
+      "bar1": {
+        "text": "Save 20% on skincare ✨",
+        "subtext": "CeraVe, La Roche-Posay, The Ordinary and more*"
+      },
+      "bar2": {
+        "text": "Save 20% on dermatological special care 🧴",
+        "subtext": "Valid online and in-store"
+      }
+    },
+    "promoSlider": {
+      "slide1": {
+        "badge": "Valid 26–29 Jan",
+        "title": "25%",
+        "subtitle": "on Shiseido and Filorga*",
+        "disclaimer": "*See product terms",
+        "ctaText": "Shop now"
+      },
+      "slide2": {
+        "title": "Favorite Skincare",
+        "subtitle": "Up to 30% off selected brands",
+        "ctaText": "Shop now"
+      },
+      "slide3": {
+        "title": "New in Skincare",
+        "subtitle": "Get the latest launches from the world's best brands",
+        "ctaText": "Explore",
+        "ctaVariant": "outline"
+      }
+    },
+    "promo": {
+      "badge": "Valid 26–29 Jan",
+      "title": "25%",
+      "subtitle": "on Shiseido and Filorga*",
+      "disclaimer": "*See product terms",
+      "ctaText": "Shop now"
+    },
+    "campaign": {
+      "title": "Winter skincare 2025",
+      "description": "Protect and nourish your skin against cold and wind. Find the best products for winter's dry weather.",
+      "ctaText": "Shop winter collection"
+    },
     "featured": {
       "title": "Bestsellers"
     },
+    "editorPicks": "Editor's picks",
     "newArrivals": {
       "title": "New arrivals"
+    },
+    "routine": {
+      "title": "Find your routine",
+      "subtitle": "Tailored skincare for your needs"
+    },
+    "content": {
+      "title": "Inspiration & Guides",
+      "subtitle": "Learn more about skincare"
+    },
+    "brandSpotlight": {
+      "description": "Clinically formulated skincare with integrity. Our mission is to bring high-performance ingredients to everyone at fair prices.",
+      "cta": "See all products from"
+    },
+    "newsletter": {
+      "title": "Get 10% off your first order",
+      "description": "Subscribe to our newsletter for exclusive offers",
+      "placeholder": "Your email",
+      "submitLabel": "Subscribe"
     }
   },
   "products": {
@@ -26,8 +91,27 @@
     "outOfStock": "Out of stock",
     "viewDetails": "View details",
     "filters": "Filters",
+    "clearFilters": "Clear all filters",
+    "activeFilters": "Active filters",
     "sort": "Sort",
-    "noResults": "No products found"
+    "noResults": "No products found",
+    "tabs": {
+      "description": "Description",
+      "ingredients": "Ingredients",
+      "reviews": "Reviews"
+    },
+    "skinTypes": "Skin Types",
+    "targets": "Targets",
+    "keyIngredients": "Key Ingredients",
+    "howToUse": "How to Use",
+    "when": "When",
+    "pairWith": "Pair With",
+    "noReviews": "No reviews yet. Be the first to leave one.",
+    "trustStrip": {
+      "freeShipping": "Free shipping over 299 DKK",
+      "returns": "30-day return policy",
+      "securePayment": "Secure payment"
+    }
   },
   "cart": {
     "title": "Your cart",
@@ -38,7 +122,14 @@
     "shipping": "Shipping",
     "total": "Total",
     "summary": "Order summary",
-    "remove": "Remove"
+    "remove": "Remove",
+    "oneTimePurchase": "One-time",
+    "subscribe": "Subscribe",
+    "discountCodeLabel": "Have a discount code?",
+    "discountCodePlaceholder": "Discount code",
+    "apply": "Apply",
+    "discountApplied": "Applied",
+    "continueShoppingTitle": "Continue shopping"
   },
   "checkout": {
     "title": "Checkout",
@@ -46,15 +137,58 @@
     "shipping": "Shipping",
     "payment": "Payment",
     "review": "Review order",
-    "placeOrder": "Place order"
+    "placeOrder": "Place order",
+    "backToCart": "Back to cart",
+    "deliveryMethod": "Delivery method",
+    "homeDelivery": "Home delivery",
+    "homeDeliverySub": "2-4 business days",
+    "parcelShop": "Parcel shop",
+    "parcelShopSub": "1-3 business days",
+    "expressDelivery": "Express delivery",
+    "expressDeliverySub": "1-2 business days",
+    "freeLabel": "Free",
+    "continueToPayment": "Continue to payment",
+    "nextStep": "Continue",
+    "previousStep": "Back"
   },
   "account": {
     "title": "My Account",
+    "overview": "Overview",
     "orders": "Orders",
     "subscriptions": "Subscriptions",
     "profile": "Profile",
     "addresses": "Addresses",
     "signOut": "Sign out"
+  },
+  "orderConfirmation": {
+    "title": "Thank you for your order!",
+    "subtitle": "We have received your order and will send you a confirmation email shortly.",
+    "orderNumber": "Order number",
+    "viewOrder": "View order",
+    "continueShopping": "Continue shopping",
+    "summary": "Order summary",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "total": "Total"
+  },
+  "subscriptionDetail": {
+    "title": "Subscription details",
+    "price": "Price",
+    "frequency": "Frequency",
+    "nextDelivery": "Next delivery",
+    "deliveries": "Deliveries",
+    "skipNext": "Skip next delivery",
+    "pause": "Pause subscription",
+    "changeFrequency": "Change frequency",
+    "resume": "Resume subscription",
+    "cancel": "Cancel subscription",
+    "cancelAfter": "Can cancel after {{count}} more deliveries",
+    "benefitsTitle": "Subscription benefits",
+    "benefitSave": "Save 5% on all renewals",
+    "benefitShipping": "Free shipping on all subscription orders",
+    "benefitFlexible": "Flexible delivery - pause, skip, or cancel",
+    "backToSubscriptions": "Back to subscriptions",
+    "viewDetails": "View details"
   },
   "footer": {
     "support": "Support",

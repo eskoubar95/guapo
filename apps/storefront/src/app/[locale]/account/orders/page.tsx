@@ -81,8 +81,7 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
   };
 
   return (
-    <div className="min-h-full">
-      <main className="container mx-auto max-w-3xl px-4 py-8">
+    <div className="max-w-3xl">
         {/* Breadcrumb */}
         <nav className="mb-6">
           <ol className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -151,7 +150,6 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
             </Link>
           </div>
         )}
-      </main>
     </div>
   );
 }

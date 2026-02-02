@@ -58,8 +58,7 @@ export default async function SubscriptionsPage({ params }: SubscriptionsPagePro
   };
 
   return (
-    <div className="min-h-full">
-      <main className="container mx-auto max-w-3xl px-4 py-8">
+    <div className="max-w-3xl">
         {/* Breadcrumb */}
         <nav className="mb-6">
           <ol className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -83,7 +82,7 @@ export default async function SubscriptionsPage({ params }: SubscriptionsPagePro
                 className="rounded-lg border border-border overflow-hidden"
               >
                 {/* Header */}
-                <div className="flex items-center justify-between bg-gray-50 p-4">
+                <div className="flex items-center justify-between bg-muted/50 p-4">
                   <div className="flex items-center gap-4">
                     <div className="h-16 w-16 rounded-lg bg-gray-200" />
                     <div>
@@ -130,9 +129,15 @@ export default async function SubscriptionsPage({ params }: SubscriptionsPagePro
 
                 {/* Actions */}
                 <div className="flex flex-wrap items-center gap-4 border-t border-border p-4">
+                  <Link
+                    href={`/${locale}/account/subscriptions/${sub.id}`}
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
+                    {dict.subscriptionDetail.viewDetails}
+                  </Link>
                   {sub.status === "active" && (
                     <>
-                      <button className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                      <button className="rounded-lg border border-input px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground">
                         {locale === "da" ? "Skip næste levering" : "Skip next delivery"}
                       </button>
                       <button className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
@@ -204,7 +209,6 @@ export default async function SubscriptionsPage({ params }: SubscriptionsPagePro
             </li>
           </ul>
         </div>
-      </main>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { FAQAccordion } from "@/components/FAQAccordion";
 
 interface SupportPageProps {
   params: Promise<{ locale: string }>;
@@ -172,23 +173,7 @@ export default async function FAQPage({ params }: SupportPageProps) {
     <div className="min-h-full">
       <main className="container mx-auto max-w-3xl px-4 py-12">
         <h1 className="text-3xl font-bold text-foreground">{content.title}</h1>
-        <div className="mt-12 space-y-12">
-          {content.categories.map((category, i) => (
-            <div key={i}>
-              <h2 className="text-xl font-semibold text-foreground border-b border-border pb-3">
-                {category.name}
-              </h2>
-              <dl className="mt-6 space-y-6">
-                {category.faqs.map((faq, j) => (
-                  <div key={j}>
-                    <dt className="font-medium text-foreground">{faq.question}</dt>
-                    <dd className="mt-2 text-muted-foreground">{faq.answer}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          ))}
-        </div>
+        <FAQAccordion categories={content.categories} />
         <div className="mt-16 border-t border-border pt-8">
           <p className="text-muted-foreground">
             {locale === "da" ? "Fandt du ikke svar på dit spørgsmål?" : "Didn't find the answer to your question?"}

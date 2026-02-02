@@ -63,6 +63,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
   --color-surface: var(--surface);
   --color-surface-muted: var(--surface-muted);
   --color-border: var(--border);
@@ -104,15 +107,24 @@ button:focus-visible {
   outline: none;
 }
 
+html {
+  color-scheme: light;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-size: var(--font-size);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Hide scrollbar for carousels (keep scroll behavior) */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Design is light-only: no prefers-color-scheme override.
+   Design repo uses .dark class only when explicitly added, never auto. */
