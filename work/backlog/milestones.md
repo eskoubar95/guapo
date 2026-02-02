@@ -127,3 +127,27 @@ Milestones are the execution backbone for the MVP. Each milestone has a clear ob
 - Focus states use active border (no focus ring)
 
 **Traceability:** spec/05-decisions.md (design source), spec/07-design-system.md, spec/03-risks.md (Figma risk), spec/09-sitemap.md
+
+## M7 — Backend-optimering: Payload CMS + Medusa alignment
+
+**Objective:** Payload CMS kører fejlfrit mod Supabase; redaktører kan logge ind, oprette og redigere indhold; lokalisation og SEO er planlagt/implementeret i CMS; Payload-plugins er undersøgt og valgt. Medusa-kataloget er opdateret med korrekte produkttyper, kategorier, tags og brand-metadata, så alt er klart til senere storefront-integration (ingen storefront-ændringer i M7).
+
+**In scope:**
+- Diagnostik og fix af Payload (opstart, login, DB, migrations) så admin kan åbnes og bruges uden fejl
+- Verifikation af end-to-end CMS: login, opret/rediger pages, articles, media, product-guidance; database og schema `payload` fungerer
+- Lokalisation (flere sprog) og SEO i CMS: behov dokumenteret og evt. felter/struktur tilføjet (da/en, meta/SEO) uden at røre storefront
+- Research af Payload CMS-plugins (i18n, SEO, storage, etc.) og anbefaling til MVP
+- Medusa: rette produkttyper (cleanser, serum, moisturizer, SPF, toner, etc.), kategorier (hierarki), tags (skin type + concern), product metadata (brand, primary_skin_type, primary_concern) og evt. product_collection til brands — i tråd med synergy-research
+- Dokumentation af CMS–Commerce-synergy og canonical nøgle (product.handle) så storefront senere kan forbinde uden tvetydighed
+
+**Out of scope:**
+- Ændringer i apps/storefront
+- Adyen, Shipmondo, Plunk, consent/analytics (M5)
+- Nye features ud over det, der er nødvendigt for at få Payload + Medusa "klar" til storefront
+
+**Exit criteria:**
+- Payload admin åbnes og bruges uden fejl; login og CRUD på relevante collections virker
+- Schema `payload` eksisterer i Supabase og migrations kører cleanly
+- Lokalisation/SEO i CMS er besluttet og (hvis relevant) implementeret eller dokumenteret med konkrete tasks
+- Payload-plugins er undersøgt og anbefaling er skrevet ned (evt. i spec eller work/backlog)
+- Medusa har korrekte product_type, kategorier, tags og metadata (brand + primary tags); dokumentation for handle-baserede links mellem CMS og Medusa findes

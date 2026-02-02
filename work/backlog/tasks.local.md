@@ -751,3 +751,135 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** M
 
+## M7 — Backend-optimering: Payload CMS + Medusa alignment
+
+## Task: t7.1
+
+**Description:** Diagnostiker og fix Payload-opstart: fejl ved åbning af admin (DB, migrations, env).
+
+**Workspace:** apps/cms
+
+**Status:** done
+
+**Tags:** cms, backend, infrastructure
+
+**Milestone:** M7
+
+**Acceptance:**
+- Payload dev-server starter; admin kan åbnes uden runtime-fejl.
+- DATABASE_URL og schema `payload` dokumenteret/verificeret; migrations-mappe og migreringsstatus klar.
+
+**Estimate:** M
+
+**Notes:** Fixes: root layout (ingen nested html/body); (site)-gruppe til public pages; `@payloadcms/next/css` + custom.scss; DATABASE_URL-check + env.template; migrations-mappe + payload CLI scripts; PAYLOAD_SECRET build-placeholder; @payloadcms/ui direkte dependency. Verificeret mod Supabase (schema payload).
+
+## Task: t7.2
+
+**Description:** Verificer Payload end-to-end: login, opret/rediger Pages, Articles, Media, ProductGuidance; globals (Navigation, Footer, Homepage).
+
+**Workspace:** apps/cms
+
+**Status:** backlog
+
+**Tags:** cms, backend
+
+**Milestone:** M7
+
+**Dependencies:** t7.1
+
+**Acceptance:**
+- Redaktør kan logge ind og oprette/redigere indhold i alle relevante collections og globals; data persisteres korrekt i Supabase (schema payload).
+
+**Estimate:** M
+
+## Task: t7.3
+
+**Description:** Lokalisation og SEO i CMS: dokumentér behov (da/en, meta, structured data) og tilføj/udvid felter eller struktur i Payload efter behov (ingen storefront-ændringer).
+
+**Workspace:** apps/cms
+
+**Status:** backlog
+
+**Tags:** cms, seo
+
+**Milestone:** M7
+
+**Acceptance:**
+- Krav til i18n og SEO i CMS er skrevet ned; evt. nye felter/globals tilføjet i Payload så content er klar til da/en og SEO.
+
+**Estimate:** M
+
+## Task: t7.4
+
+**Description:** Research Payload CMS v3-plugins: i18n, SEO, storage (Supabase S3), andre relevante. Dokumentér anbefaling til MVP.
+
+**Workspace:** apps/cms
+
+**Status:** backlog
+
+**Tags:** cms, research
+
+**Milestone:** M7
+
+**Acceptance:**
+- Kort rapport eller note: hvilke plugins anbefales, hvad de løser, og om de skal aktiveres i M7 eller senere.
+
+**Estimate:** S
+
+## Task: t7.5
+
+**Description:** Medusa: opret korrekte product_type (cleanser, toner, serum, moisturizer, SPF, eye cream, face mask); ret kategorier (rank/hierarki); opret product_tag (skin types + concerns) og knyt til produkter.
+
+**Workspace:** apps/commerce
+
+**Status:** backlog
+
+**Tags:** commerce, backend
+
+**Milestone:** M7
+
+**Dependencies:** t7.1, t7.2
+
+**Acceptance:**
+- product_type bruges til produktart; kategorier har entydig rank; tags findes og er knyttet til produkter via product_tags.
+
+**Estimate:** M
+
+## Task: t7.6
+
+**Description:** Medusa: indfør brand og primary-tags (product.metadata: brand, primary_skin_type, primary_concern); beslut og evt. implementer brand via metadata eller product_collection.
+
+**Workspace:** apps/commerce
+
+**Status:** backlog
+
+**Tags:** commerce, backend
+
+**Milestone:** M7
+
+**Dependencies:** t7.5
+
+**Acceptance:**
+- Alle produkter har konsistent metadata for brand og (hvor relevant) primary skin type/concern; beslutning dokumenteret.
+
+**Estimate:** M
+
+## Task: t7.7
+
+**Description:** Dokumentér CMS–Commerce-synergy: canonical nøgle (product.handle), hvad der bor i Payload vs Medusa, og hvordan storefront senere henter data. Opdater evt. eksisterende research-doc eller spec.
+
+**Workspace:** .
+
+**Status:** backlog
+
+**Tags:** documentation, cms, commerce
+
+**Milestone:** M7
+
+**Dependencies:** t7.5, t7.6
+
+**Acceptance:**
+- En kort, præcis dokumentation findes (i repo eller spec) så udviklere ved, hvordan Payload og Medusa hænger sammen og hvad der skal trackes.
+
+**Estimate:** S
+

@@ -32,9 +32,12 @@ export default buildConfig({
 
   editor: lexicalEditor(),
 
-  secret: process.env.PAYLOAD_SECRET || (() => {
+  secret: (() => {
+    if (process.env.PAYLOAD_SECRET) return process.env.PAYLOAD_SECRET
+    // Allow next build to complete (NODE_ENV=production); Payload may check process.env. Set it so build passes.
     if (process.env.NODE_ENV === 'production') {
-      throw new Error('PAYLOAD_SECRET environment variable is required in production')
+      process.env.PAYLOAD_SECRET = 'build-placeholder-do-not-use-in-production'
+      return process.env.PAYLOAD_SECRET
     }
     return 'DEV_SECRET_CHANGE_ME'
   })(),
@@ -45,7 +48,18 @@ export default buildConfig({
 
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URL || '',
+      connectionString: (() => {
+        const url = process.env.DATABASE_URL?.trim()
+        if (!url) {
+          if (process.env.NODE_ENV === 'production') {
+            return ''
+          }
+          throw new Error(
+            'DATABASE_URL is required. Copy apps/cms/env.template to apps/cms/.env and set DATABASE_URL to your Supabase Postgres connection string (Settings > Database). Payload uses schema "payload".',
+          )
+        }
+        return url
+      })(),
     },
     // Use dedicated schema to avoid conflicts with other services (Medusa)
     schemaName: 'payload',

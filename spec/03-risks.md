@@ -26,6 +26,7 @@ This document lists risks that are already visible at the /spec/init stage. It i
 - **Multi-service deployment complexity**: Railway project with multiple services (storefront, Medusa server, Medusa worker, Payload, Redis) increases operational coordination (env vars, networking, deploy order).
 - **Redis dependency risk**: Medusa relies on Redis-backed capabilities in production; misconfiguration can break background jobs, eventing, or workflows.
 - **Shared Postgres schema separation risk**: Running Medusa + Payload on the same Supabase Postgres instance requires careful schema separation; schema misconfig can cause migration failures or cross-service coupling.
+- **Payload admin stability**: Errors when opening or running Payload admin can block CMS work until DATABASE_URL, schema `payload`, and migrations are validated; M7 task t7.1 addresses this.
 - **Media storage risk**: Using Supabase Storage requires correct bucket policies/URLs; misconfig can cause broken images or accidental exposure.
 - **Observability gaps**: Without Sentry + alerting, payment/subscription issues can go unnoticed and hurt revenue and trust.
 
