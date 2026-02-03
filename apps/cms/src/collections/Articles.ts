@@ -121,14 +121,31 @@ export const Articles: CollectionConfig = {
     {
       name: 'meta',
       type: 'group',
+      admin: {
+        description: 'SEO and social sharing (Article structured data, OG tags)',
+      },
       fields: [
         {
           name: 'title',
           type: 'text',
+          admin: {
+            description: 'SEO title (defaults to article title if empty)',
+          },
         },
         {
           name: 'description',
           type: 'textarea',
+          admin: {
+            description: 'SEO meta description',
+          },
+        },
+        {
+          name: 'image',
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            description: 'Social share / OG image (defaults to featured image if empty)',
+          },
         },
       ],
     },

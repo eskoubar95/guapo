@@ -800,7 +800,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/cms
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** cms, seo
 
@@ -810,6 +810,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Krav til i18n og SEO i CMS er skrevet ned; evt. nye felter/globals tilføjet i Payload så content er klar til da/en og SEO.
 
 **Estimate:** M
+
+**Notes:** Krav dokumenteret i `apps/cms/docs/i18n-seo-requirements.md` (i18n da/en, SEO meta + structured data). Articles: tilføjet `meta.image` (upload) for social/OG og Article structured data.
 
 ## Task: t7.4
 
