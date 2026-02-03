@@ -311,6 +311,7 @@ export default async function seed({ container }: ExecArgs) {
       product_type: "cleanser",
       category_name: "Cleansers",
       tag_values: ["normal", "combination", "hydration", "all-skin-types"],
+      metadata: { brand: "Guapo", primary_skin_type: "normal", primary_concern: "hydration" },
       sizes: [
         { size: "150ml", dkk: 18900, eur: 2500 },
         { size: "300ml", dkk: 29900, eur: 3900 },
@@ -324,6 +325,7 @@ export default async function seed({ container }: ExecArgs) {
       product_type: "serum",
       category_name: "Serums",
       tag_values: ["oily", "acne", "pigmentation"],
+      metadata: { brand: "Guapo", primary_skin_type: "oily", primary_concern: "acne" },
       sizes: [{ size: "30ml", dkk: 24900, eur: 3300 }],
     },
     {
@@ -334,6 +336,7 @@ export default async function seed({ container }: ExecArgs) {
       product_type: "moisturizer",
       category_name: "Moisturizers",
       tag_values: ["dry", "hydration", "all-skin-types"],
+      metadata: { brand: "Guapo", primary_skin_type: "dry", primary_concern: "hydration" },
       sizes: [
         { size: "50ml", dkk: 32900, eur: 4400 },
         { size: "100ml", dkk: 54900, eur: 7300 },
@@ -347,6 +350,7 @@ export default async function seed({ container }: ExecArgs) {
       product_type: "SPF",
       category_name: "SPF",
       tag_values: ["sensitive", "all-skin-types"],
+      metadata: { brand: "Guapo", primary_skin_type: "sensitive" },
       sizes: [{ size: "50ml", dkk: 27900, eur: 3700 }],
     },
   ];
@@ -386,6 +390,7 @@ export default async function seed({ container }: ExecArgs) {
               sales_channels: [{ id: salesChannel.id }],
               ...(typeId && { product_type_id: typeId }),
               ...(categoryId && { categories: [{ id: categoryId }] }),
+              ...(productData.metadata && Object.keys(productData.metadata).length > 0 && { metadata: productData.metadata }),
             },
           ],
         },
@@ -418,12 +423,13 @@ export default async function seed({ container }: ExecArgs) {
             ...(typeId && { product_type_id: typeId }),
             ...(categoryId && { categories: [{ id: categoryId }] }),
             ...(tagIds.length > 0 && { tags: tagIds.map((id) => ({ id })) }),
+            ...(productData.metadata && Object.keys(productData.metadata).length > 0 && { metadata: productData.metadata }),
           },
         ],
       },
     });
   }
-  logger.info(`✅ Products: ${productsCreated} created, ${testProducts.length - productsCreated} already exist (type/category/tags applied)`);
+  logger.info(`✅ Products: ${productsCreated} created, ${testProducts.length - productsCreated} already exist (type/category/tags/metadata applied)`);
 
   // 9. Ensure inventory for all test products (created + existing) – idempotent and self-healing
   const productsToEnsureInventory = [...createdProducts, ...existingProducts];
