@@ -819,7 +819,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/cms
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** cms, research
 
@@ -829,6 +829,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Kort rapport eller note: hvilke plugins anbefales, hvad de løser, og om de skal aktiveres i M7 eller senere.
 
 **Estimate:** S
+
+**Notes:** Rapport i `apps/cms/docs/payload-plugins-research.md`: SEO-plugin (M7 eller kort efter), Localization built-in (når da/en), storage-s3/Supabase (når media i Supabase; dep allerede).
 
 ## Task: t7.5
 
