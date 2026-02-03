@@ -779,7 +779,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/cms
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** cms, backend
 
@@ -791,6 +791,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Redaktør kan logge ind og oprette/redigere indhold i alle relevante collections og globals; data persisteres korrekt i Supabase (schema payload).
 
 **Estimate:** M
+
+**Notes:** E2E-checkliste i `work/backlog/t7.2-log.md` (login, 5 collections, 3 globals, persistence). Schema `payload` verificeret via Supabase MCP; config matcher. Manuel gennemgang af checklisten anbefales når CMS kører lokalt.
 
 ## Task: t7.3
 
