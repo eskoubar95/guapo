@@ -11,6 +11,12 @@ import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Articles } from './collections/Articles'
 import { ProductGuidance } from './collections/ProductGuidance'
+import { Ingredients } from './collections/Ingredients'
+import { Routines } from './collections/Routines'
+import { Beneficials } from './collections/Beneficials'
+import { Products } from './collections/Products'
+import { Categories } from './collections/Categories'
+import { Brands } from './collections/Brands'
 import { Navigation } from './globals/Navigation'
 import { Footer } from './globals/Footer'
 import { Homepage } from './globals/Homepage'
@@ -26,7 +32,19 @@ export default buildConfig({
     },
   },
 
-  collections: [Users, Media, Pages, Articles, ProductGuidance],
+  collections: [
+    Users,
+    Media,
+    Pages,
+    Articles,
+    ProductGuidance,
+    Ingredients,
+    Routines,
+    Beneficials,
+    Products,
+    Categories,
+    Brands,
+  ],
 
   globals: [Navigation, Footer, Homepage],
 

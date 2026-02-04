@@ -876,7 +876,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** .
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** documentation, cms, commerce
 
@@ -888,4 +888,124 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - En kort, præcis dokumentation findes (i repo eller spec) så udviklere ved, hvordan Payload og Medusa hænger sammen og hvad der skal trackes.
 
 **Estimate:** S
+
+## Task: t7.8
+
+**Description:** Env + CMS API-ruter: MEDUSA_STORE_URL i env.template; Next.js API routes /api/medusa/products, /api/medusa/categories, /api/medusa/product-types, /api/medusa/brands der kalder Medusa Store API og returnerer forenklede lister til admin dropdowns. Fejlhåndtering: tom array ved fejl.
+
+**Workspace:** apps/cms
+
+**Status:** done
+
+**Tags:** cms, backend, infrastructure
+
+**Milestone:** M7
+
+**Acceptance:**
+- MEDUSA_STORE_URL dokumenteret i env.template.
+- GET /api/medusa/products, /categories, /product-types, /brands returnerer forventet format; kort cache OK.
+
+**Estimate:** M
+
+**Notes:** Env i apps/cms/env.template. Proxy: apps/cms/src/lib/medusa.ts (5 min cache). API-ruter: apps/cms/src/app/api/medusa/products, categories, product-types, brands. Tomme arrays ved fejl. Linear: GUA-63.
+
+## Task: t7.9
+
+**Description:** Commerce: GET /store/brands endpoint der returnerer { brands: string[] } (distinct product.metadata.brand).
+
+**Workspace:** apps/commerce
+
+**Status:** done
+
+**Tags:** commerce, backend
+
+**Milestone:** M7
+
+**Acceptance:**
+- GET /store/brands returnerer brands-array; CMS proxy kan bruge det.
+
+**Estimate:** S
+
+**Notes:** apps/commerce/src/api/store/brands/route.ts (GET). Returnerer { brands: string[] } fra distinct product.metadata.brand. Linear: GUA-60.
+
+## Task: t7.10
+
+**Description:** Products-collection (handle fra Medusa) + Ingredients, Routines, Beneficials collections. Products har relationships til Ingredients, Routines, Beneficials; how-to, routineTime, pair-with (til andre Products), precautions. ProductGuidance beholdes; ny indhold anbefales via Products.
+
+**Workspace:** apps/cms
+
+**Status:** done
+
+**Tags:** cms, backend
+
+**Milestone:** M7
+
+**Dependencies:** t7.8
+
+**Acceptance:**
+- Collections Products, Ingredients, Routines, Beneficials findes; Products har alle planlagte felter og relationships.
+- Payload build kører.
+
+**Estimate:** L
+
+**Notes:** Ingredients, Routines, Beneficials, Products collections i apps/cms/src/collections/; Products med handle, title, howTo, routineTime, pairWithRecommended/Avoid, precautions, relationships til Ingredients/Routines/Beneficials. Alle i payload.config.ts. ProductGuidance beholdt. Linear: GUA-61.
+
+## Task: t7.11
+
+**Description:** Categories- og Brands-collections: handle/brandKey (fra Medusa) + CMS-felter (hero, SEO, body). Registreret i payload.config.
+
+**Workspace:** apps/cms
+
+**Status:** done
+
+**Tags:** cms, backend
+
+**Milestone:** M7
+
+**Acceptance:**
+- Categories og Brands collections findes; redaktør kan oprette dokumenter med handle/brandKey.
+
+**Estimate:** M
+
+**Notes:** Categories.ts (handle + CMS-felter), Brands.ts (brandKey + CMS-felter) i apps/cms/src/collections/; begge i payload.config.ts. Linear: GUA-62.
+
+## Task: t7.12
+
+**Description:** Homepage: featured products (relationship til Products + fallback productHandles), categories section (relationship til Category pr. item), testimonials (product relationship + productHandle fallback), brands banner (relationship til Brand pr. item). Ingen storefront-ændringer.
+
+**Workspace:** apps/cms
+
+**Status:** done
+
+**Tags:** cms
+
+**Milestone:** M7
+
+**Dependencies:** t7.10, t7.11
+
+**Acceptance:**
+- Homepage globals har relationship-felter til Products, Categories, Brands hvor planlagt; bagudkompatibilitet med handles/tekst hvor relevant.
+
+**Estimate:** M
+
+**Notes:** Homepage.ts: featured-products (products + productHandles), categories (category), testimonials (product + productHandle), brands-banner (brand + fallback). Kun CMS; ingen storefront-ændringer. Linear: GUA-59.
+
+## Task: t7.13
+
+**Description:** Dokumentation: opdater spec/10-cms-commerce-synergy.md (resolved/follow-ups, references); tilføj apps/cms/docs/medusa-proxy.md; opdater work/backlog/tasks.local.md med t7.8–t7.13.
+
+**Workspace:** .
+
+**Status:** done
+
+**Tags:** documentation, cms, commerce
+
+**Milestone:** M7
+
+**Acceptance:**
+- spec/10 opdateret; medusa-proxy.md beskriver env og API-ruter; tasks.local.md indeholder nye M7-tasks.
+
+**Estimate:** S
+
+**Notes:** spec/10-cms-commerce-synergy.md sektion 5 (Resolved/follow-ups). apps/cms/docs/medusa-proxy.md (env, ruter, cache). tasks.local.md med t7.8–t7.13. Linear: GUA-58.
 

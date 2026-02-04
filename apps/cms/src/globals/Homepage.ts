@@ -157,18 +157,28 @@ export const Homepage: GlobalConfig = {
               ],
             },
             {
+              name: 'products',
+              type: 'relationship',
+              relationTo: 'products',
+              hasMany: true,
+              maxRows: 8,
+              admin: {
+                description: 'Pick from Product content (synced from Medusa)',
+              },
+            },
+            {
               name: 'productHandles',
               type: 'array',
-              label: 'Products',
+              label: 'Or by handle (fallback)',
               maxRows: 8,
+              admin: {
+                description: 'Medusa product handles if not using Products above',
+              },
               fields: [
                 {
                   name: 'handle',
                   type: 'text',
                   required: true,
-                  admin: {
-                    description: 'Medusa product handle',
-                  },
                 },
               ],
             },
@@ -232,6 +242,14 @@ export const Homepage: GlobalConfig = {
               maxRows: 6,
               fields: [
                 {
+                  name: 'category',
+                  type: 'relationship',
+                  relationTo: 'categories',
+                  admin: {
+                    description: 'Link to Category (url defaults to /shop/category/{handle})',
+                  },
+                },
+                {
                   name: 'title',
                   type: 'text',
                   required: true,
@@ -245,9 +263,8 @@ export const Homepage: GlobalConfig = {
                 {
                   name: 'url',
                   type: 'text',
-                  required: true,
                   admin: {
-                    placeholder: '/shop/category-slug',
+                    placeholder: '/shop/category-slug (or leave empty when using Category link)',
                   },
                 },
                 {
@@ -308,10 +325,18 @@ export const Homepage: GlobalConfig = {
                   defaultValue: 5,
                 },
                 {
+                  name: 'product',
+                  type: 'relationship',
+                  relationTo: 'products',
+                  admin: {
+                    description: 'Optional: Link to reviewed product (from Product content)',
+                  },
+                },
+                {
                   name: 'productHandle',
                   type: 'text',
                   admin: {
-                    description: 'Optional: Link to reviewed product',
+                    description: 'Or Medusa product handle (fallback)',
                   },
                 },
                 {
@@ -555,15 +580,27 @@ export const Homepage: GlobalConfig = {
               maxRows: 12,
               fields: [
                 {
+                  name: 'brand',
+                  type: 'relationship',
+                  relationTo: 'brands',
+                  admin: {
+                    description: 'Link to Brand (url from brandKey)',
+                  },
+                },
+                {
                   name: 'name',
                   type: 'text',
-                  required: true,
+                  admin: {
+                    description: 'Override display name (or from Brand)',
+                  },
                 },
                 {
                   name: 'logo',
                   type: 'upload',
                   relationTo: 'media',
-                  required: true,
+                  admin: {
+                    description: 'Override logo (or from Brand)',
+                  },
                 },
                 {
                   name: 'url',
