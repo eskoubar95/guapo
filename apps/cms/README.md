@@ -17,7 +17,8 @@ Payload CMS for Guapo: pages, blog/articles, navigation/footer, homepage builder
 
 ## Scripts
 
-- `pnpm dev` – Start Next.js + Payload (port 3001)
+- `pnpm dev` – Start Next.js + Payload (port 3001, Turbopack)
+- `pnpm dev:webpack` – Same without Turbopack (use if you see hydration mismatch in admin list views)
 - `pnpm build` / `pnpm start` – Production build and start
 - `pnpm payload` – Payload CLI (migrate, etc.)
 - `pnpm migrate` – Apply pending migrations
@@ -49,3 +50,13 @@ This error comes from Supabase’s pooler when the tenant (project) or credentia
    postgresql://postgres:[YOUR_PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres
    ```
    Replace `[YOUR_PASSWORD]` and `[PROJECT_REF]` with your database password and Reference ID. If this works, the pooler was the issue; you can keep using direct for local dev or fix the pooler URL (Session mode) using the same password and ref.
+
+## Troubleshooting: Hydration mismatch i Admin (list view)
+
+Hvis du får "hydration mismatch" i konsollen når du åbner eller genindlæser en collection list (fx Products) – typisk `aria-describedby` eller `id` forskellige mellem server og client – er det ofte relateret til Turbopack + Payload UI. **Workaround:** Kør CMS uden Turbopack:
+
+```bash
+pnpm dev:webpack
+```
+
+Så bruges Webpack i stedet for Turbopack; det kan fjerne fejlen. Produktionsbuild (`pnpm build`) er uændret.

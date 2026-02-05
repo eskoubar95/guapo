@@ -17,6 +17,7 @@ import { Beneficials } from './collections/Beneficials'
 import { Products } from './collections/Products'
 import { Categories } from './collections/Categories'
 import { Brands } from './collections/Brands'
+import { ProductTypes } from './collections/ProductTypes'
 import { Navigation } from './globals/Navigation'
 import { Footer } from './globals/Footer'
 import { Homepage } from './globals/Homepage'
@@ -44,6 +45,7 @@ export default buildConfig({
     Products,
     Categories,
     Brands,
+    ProductTypes,
   ],
 
   globals: [Navigation, Footer, Homepage],
@@ -78,6 +80,10 @@ export default buildConfig({
         }
         return url
       })(),
+      // Supabase/Neon "Session mode" has low connection limit; Next.js can run multiple workers (each has a pool).
+      max: Number(process.env.DATABASE_POOL_MAX) || 3,
+      idleTimeoutMillis: 8000,
+      connectionTimeoutMillis: 8000,
     },
     // Use dedicated schema to avoid conflicts with other services (Medusa)
     schemaName: 'payload',

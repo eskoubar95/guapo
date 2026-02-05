@@ -31,7 +31,17 @@ if (process.env.NODE_ENV === "production") {
 const useRedis = !!process.env.REDIS_URL;
 
 // Build modules array based on environment
-const modules: any[] = [];
+const modules: any[] = [
+  {
+    resolve: './src/modules/payload',
+    options: {
+      serverUrl: process.env.PAYLOAD_SERVER_URL || 'http://localhost:3001',
+      apiKey: process.env.PAYLOAD_API_KEY || '',
+      userCollection: process.env.PAYLOAD_USER_COLLECTION || 'users',
+      syncSecret: process.env.PAYLOAD_MEDUSA_SYNC_SECRET || undefined,
+    },
+  },
+];
 
 if (useRedis) {
   // Production: Use Redis-based modules for scalability

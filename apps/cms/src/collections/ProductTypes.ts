@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { medusaBrandKeyExists } from '../lib/medusa'
+import { medusaProductTypeValueExists } from '../lib/medusa'
 
 /** Allow create/delete only when request is from Medusa sync (same as Products). */
 function isFromMedusa(req: { query?: Record<string, unknown>; headers?: { get?: (name: string) => string | null } }): boolean {
@@ -11,12 +11,12 @@ function isFromMedusa(req: { query?: Record<string, unknown>; headers?: { get?: 
 }
 
 /**
- * Brands – one document per brand (Medusa product.metadata.brand).
- * brandKey comes from Medusa; CMS fields for display, logo, SEO.
+ * ProductTypes – one document per Medusa product_type (e.g. serum, cleanser).
+ * value comes from Medusa; CMS fields for display, hero, SEO.
  * Create/delete only from Medusa (sync); editors can only update content.
  */
-export const Brands: CollectionConfig = {
-  slug: 'brands',
+export const ProductTypes: CollectionConfig = {
+  slug: 'product_types',
   access: {
     read: () => true,
     create: ({ req }) => isFromMedusa(req),
@@ -25,11 +25,11 @@ export const Brands: CollectionConfig = {
   hooks: {
     beforeValidate: [
       async ({ data, operation }) => {
-        if (operation === 'create' && data?.brandKey != null) {
-          const exists = await medusaBrandKeyExists(String(data.brandKey))
+        if (operation === 'create' && data?.value != null) {
+          const exists = await medusaProductTypeValueExists(String(data.value))
           if (!exists) {
             throw new Error(
-              `Brand key "${data.brandKey}" does not exist in Medusa. Only add brands that exist in the commerce catalog (product.metadata.brand).`,
+              `Product type value "${data.value}" does not exist in Medusa. Only add types that exist in the commerce catalog.`,
             )
           }
         }
@@ -38,32 +38,34 @@ export const Brands: CollectionConfig = {
     ],
   },
   admin: {
-    useAsTitle: 'displayName',
-    defaultColumns: ['brandKey', 'displayName', 'updatedAt'],
+    useAsTitle: 'name',
+    defaultColumns: ['value', 'name', 'updatedAt'],
     group: 'Catalog',
-    description: 'Brand pages; brandKey must match Medusa metadata.brand',
+    description: 'Product type pages (e.g. Serums); value must match Medusa product_type',
   },
   fields: [
     {
-      name: 'brandKey',
+      name: 'value',
       type: 'text',
       required: true,
       unique: true,
       admin: {
-        description: 'Medusa product.metadata.brand value',
+        description: 'Medusa product_type value (match exactly)',
+        readOnly: true,
       },
     },
     {
-      name: 'displayName',
+      name: 'name',
       type: 'text',
       admin: {
-        description: 'Display name for UI',
+        description: 'Display name (from Medusa or override)',
       },
     },
     {
-      name: 'logo',
+      name: 'heroImage',
       type: 'upload',
       relationTo: 'media',
+      admin: { description: 'Hero image for product type page' },
     },
     {
       name: 'meta',

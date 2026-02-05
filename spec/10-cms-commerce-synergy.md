@@ -74,6 +74,7 @@ See `spec/02-architecture.md` for high-level data flow (browse → guidance → 
 - **ProductGuidance:** productIdentifier is Medusa **handle** (and document in CMS if SKU is also allowed).
 - **Category/type/brand pages in Payload:** When implementing, define the exact field(s) (e.g. `category_handle`, `product_type`, `brand`) and where they live (e.g. Page type, or dedicated “Category page” block).
 - **i18n:** Category/type/brand labels for UI may later come from Payload (translations) while Medusa keeps stable handles/values; document when that is introduced.
+- **Payload catalog entities (Products, Categories, Brands):** Medusa is the only source of identity. **Products:** Create/delete in Payload are allowed only from Medusa (sync secret or API key + `is_from_medusa`). Medusa drives sync: `product.created` / `product.deleted` subscribers call Payload API; manual sync via `POST /admin/payload/sync/products`. Categories/Brands: same pattern planned (Phase 2). See `apps/cms/docs/data-model-medusa-payload.md` and `apps/cms/docs/payload-medusa-sync-plan.md`.
 
 ---
 
@@ -83,3 +84,5 @@ See `spec/02-architecture.md` for high-level data flow (browse → guidance → 
 - Commerce product metadata: `apps/commerce/docs/product-metadata-decisions.md`
 - Payload: ProductGuidance `apps/cms/src/collections/ProductGuidance.ts`; Products, Ingredients, Routines, Beneficials, Categories, Brands in `apps/cms/src/collections/`.
 - CMS Medusa proxy: `apps/cms/docs/medusa-proxy.md`
+- Data model (Medusa = catalog source, Payload = overlay): `apps/cms/docs/data-model-medusa-payload.md`
+- Sync-plan (Medusa-drevet sync for products, categories, product types, brands): `apps/cms/docs/payload-medusa-sync-plan.md`

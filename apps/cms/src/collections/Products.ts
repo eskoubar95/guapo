@@ -1,12 +1,45 @@
 import type { CollectionConfig } from 'payload'
+import { medusaProductHandleExists } from '../lib/medusa'
+
+/**
+ * Allow create/delete only when request is from Medusa sync (official integration pattern).
+ * Medusa sends either: query is_from_medusa=true with API key, or header x-medusa-sync-secret.
+ */
+function isFromMedusa(req: { query?: Record<string, unknown>; headers?: { get?: (name: string) => string | null } }): boolean {
+  const q = req?.query?.is_from_medusa
+  if (q === true || q === 'true') return true
+  const secret = process.env.PAYLOAD_MEDUSA_SYNC_SECRET
+  if (secret && req?.headers?.get?.('x-medusa-sync-secret') === secret) return true
+  return false
+}
 
 /**
  * Products – Medusa products with CMS content mapped on.
  * Handle (and optionally title) come from Medusa; rest is CMS-only.
- * Populate via "Add from Medusa" flow or sync; do not create by hand without handle.
+ * Create/delete only from Medusa (events or manual sync); editors can only update content.
  */
 export const Products: CollectionConfig = {
   slug: 'products',
+  access: {
+    read: () => true,
+    create: ({ req }) => isFromMedusa(req),
+    delete: ({ req }) => isFromMedusa(req),
+  },
+  hooks: {
+    beforeValidate: [
+      async ({ data, operation }) => {
+        if (operation === 'create' && data?.handle != null) {
+          const exists = await medusaProductHandleExists(String(data.handle))
+          if (!exists) {
+            throw new Error(
+              `Product handle "${data.handle}" does not exist in Medusa. Only add products that exist in the commerce catalog (use handle from Medusa).`,
+            )
+          }
+        }
+        return data
+      },
+    ],
+  },
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['handle', 'title', 'updatedAt'],
@@ -14,6 +47,15 @@ export const Products: CollectionConfig = {
     description: 'Product content keyed by Medusa handle; add from Medusa then edit',
   },
   fields: [
+    {
+      name: 'medusa_id',
+      type: 'text',
+      admin: {
+        description: 'Medusa product ID (set by Medusa sync for delete-by-id)',
+        readOnly: true,
+        hidden: true,
+      },
+    },
     {
       name: 'handle',
       type: 'text',

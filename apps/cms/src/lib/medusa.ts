@@ -209,3 +209,35 @@ export async function fetchMedusaBrands(): Promise<string[]> {
     return []
   }
 }
+
+/**
+ * Check if a product/category/brand key exists in Medusa (for Payload create validation).
+ * Returns true if key exists, false if not. Returns true if Medusa list is empty (unavailable).
+ */
+export async function medusaProductHandleExists(handle: string | undefined): Promise<boolean> {
+  if (!handle || !handle.trim()) return false
+  const list = await fetchMedusaProducts()
+  if (list.length === 0) return true // skip validation when Medusa unavailable
+  return list.some((p) => p.handle === handle.trim())
+}
+
+export async function medusaCategoryHandleExists(handle: string | undefined): Promise<boolean> {
+  if (!handle || !handle.trim()) return false
+  const list = await fetchMedusaCategories()
+  if (list.length === 0) return true
+  return list.some((c) => c.handle === handle.trim())
+}
+
+export async function medusaBrandKeyExists(brandKey: string | undefined): Promise<boolean> {
+  if (!brandKey || !brandKey.trim()) return false
+  const list = await fetchMedusaBrands()
+  if (list.length === 0) return true
+  return list.some((b) => b === brandKey.trim())
+}
+
+export async function medusaProductTypeValueExists(value: string | undefined): Promise<boolean> {
+  if (!value || !value.trim()) return false
+  const list = await fetchMedusaProductTypes()
+  if (list.length === 0) return true
+  return list.some((v) => v === value.trim())
+}
