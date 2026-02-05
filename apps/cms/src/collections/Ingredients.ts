@@ -17,6 +17,7 @@ export const Ingredients: CollectionConfig = {
       name: 'name',
       type: 'text',
       required: true,
+      localized: true,
       admin: {
         placeholder: 'e.g., Vitamin C (Ascorbic Acid)',
       },
@@ -24,6 +25,7 @@ export const Ingredients: CollectionConfig = {
     {
       name: 'benefit',
       type: 'textarea',
+      localized: true,
       admin: {
         description: 'What does this ingredient do?',
       },
@@ -31,6 +33,7 @@ export const Ingredients: CollectionConfig = {
     {
       name: 'concentration',
       type: 'text',
+      localized: true,
       admin: {
         placeholder: 'e.g., 15%',
       },
@@ -39,6 +42,7 @@ export const Ingredients: CollectionConfig = {
       name: 'avoidWith',
       type: 'array',
       label: 'Avoid combining with',
+      localized: true,
       fields: [
         {
           name: 'ingredient',

@@ -34,6 +34,7 @@ export const ProductGuidance: CollectionConfig = {
       name: 'skinTypes',
       type: 'group',
       label: 'Skin Type Compatibility',
+      localized: true,
       fields: [
         {
           name: 'suitable',
@@ -66,6 +67,7 @@ export const ProductGuidance: CollectionConfig = {
       name: 'concerns',
       type: 'group',
       label: 'Skin Concerns Addressed',
+      localized: true,
       fields: [
         {
           name: 'primary',
@@ -104,6 +106,7 @@ export const ProductGuidance: CollectionConfig = {
       name: 'ingredients',
       type: 'group',
       label: 'Key Ingredients',
+      localized: true,
       fields: [
         {
           name: 'highlighted',
@@ -162,6 +165,7 @@ export const ProductGuidance: CollectionConfig = {
       name: 'howTo',
       type: 'group',
       label: 'How to Use',
+      localized: true,
       fields: [
         {
           name: 'steps',
@@ -211,6 +215,7 @@ export const ProductGuidance: CollectionConfig = {
       name: 'routineTime',
       type: 'group',
       label: 'AM/PM Routine',
+      localized: true,
       fields: [
         {
           name: 'time',
@@ -273,6 +278,7 @@ export const ProductGuidance: CollectionConfig = {
       name: 'pairWith',
       type: 'group',
       label: 'Product Pairings',
+      localized: true,
       fields: [
         {
           name: 'recommended',
@@ -337,6 +343,7 @@ export const ProductGuidance: CollectionConfig = {
       name: 'precautions',
       type: 'group',
       label: 'Precautions & Warnings',
+      localized: true,
       fields: [
         {
           name: 'patchTest',

@@ -18,6 +18,8 @@ import { Products } from './collections/Products'
 import { Categories } from './collections/Categories'
 import { Brands } from './collections/Brands'
 import { ProductTypes } from './collections/ProductTypes'
+import { da } from '@payloadcms/translations/languages/da'
+import { en } from '@payloadcms/translations/languages/en'
 import { Navigation } from './globals/Navigation'
 import { Footer } from './globals/Footer'
 import { Homepage } from './globals/Homepage'
@@ -49,6 +51,22 @@ export default buildConfig({
   ],
 
   globals: [Navigation, Footer, Homepage],
+
+  /** Content localisation (da/en) for storefront. API: ?locale=da | ?locale=en; fallback to defaultLocale when missing. */
+  localization: {
+    locales: [
+      { code: 'da', label: 'Dansk' },
+      { code: 'en', label: 'English' },
+    ],
+    defaultLocale: 'da',
+    fallback: true,
+  },
+
+  /** Admin UI language (buttons, labels, errors). Users choose in account preferences; matches localization locales. */
+  i18n: {
+    supportedLanguages: { da, en },
+    fallbackLanguage: 'da',
+  },
 
   editor: lexicalEditor(),
 

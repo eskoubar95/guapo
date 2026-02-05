@@ -57,6 +57,7 @@ export const ProductTypes: CollectionConfig = {
     {
       name: 'name',
       type: 'text',
+      localized: true,
       admin: {
         description: 'Display name (from Medusa or override)',
       },
@@ -71,6 +72,7 @@ export const ProductTypes: CollectionConfig = {
       name: 'meta',
       type: 'group',
       label: 'SEO',
+      localized: true,
       fields: [
         { name: 'title', type: 'text' },
         { name: 'description', type: 'textarea' },
@@ -80,6 +82,7 @@ export const ProductTypes: CollectionConfig = {
       name: 'body',
       type: 'richText',
       label: 'Body content',
+      localized: true,
     },
   ],
 }

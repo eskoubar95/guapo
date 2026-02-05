@@ -69,6 +69,7 @@ export const Products: CollectionConfig = {
     {
       name: 'title',
       type: 'text',
+      localized: true,
       admin: {
         description: 'Product title (synced from Medusa or override)',
       },
@@ -113,6 +114,7 @@ export const Products: CollectionConfig = {
       name: 'howTo',
       type: 'group',
       label: 'How to Use',
+      localized: true,
       fields: [
         {
           name: 'steps',
@@ -132,6 +134,7 @@ export const Products: CollectionConfig = {
       name: 'routineTime',
       type: 'group',
       label: 'AM/PM Routine',
+      localized: true,
       fields: [
         {
           name: 'time',
@@ -153,6 +156,7 @@ export const Products: CollectionConfig = {
       name: 'pairWithRecommended',
       type: 'array',
       label: 'Recommended to pair with',
+      localized: true,
       fields: [
         {
           name: 'product',
@@ -176,6 +180,7 @@ export const Products: CollectionConfig = {
       name: 'pairWithAvoid',
       type: 'array',
       label: 'Avoid using with',
+      localized: true,
       fields: [
         {
           name: 'product',
@@ -190,6 +195,7 @@ export const Products: CollectionConfig = {
       name: 'precautions',
       type: 'group',
       label: 'Precautions',
+      localized: true,
       fields: [
         { name: 'patchTest', type: 'checkbox', defaultValue: false, label: 'Recommend patch test' },
         {

@@ -34,6 +34,7 @@ export const Routines: CollectionConfig = {
       name: 'steps',
       type: 'array',
       label: 'Steps',
+      localized: true,
       fields: [
         {
           name: 'step',

@@ -56,6 +56,7 @@ export const Brands: CollectionConfig = {
     {
       name: 'displayName',
       type: 'text',
+      localized: true,
       admin: {
         description: 'Display name for UI',
       },
@@ -69,6 +70,7 @@ export const Brands: CollectionConfig = {
       name: 'meta',
       type: 'group',
       label: 'SEO',
+      localized: true,
       fields: [
         { name: 'title', type: 'text' },
         { name: 'description', type: 'textarea' },
@@ -78,6 +80,7 @@ export const Brands: CollectionConfig = {
       name: 'body',
       type: 'richText',
       label: 'Body content',
+      localized: true,
     },
   ],
 }

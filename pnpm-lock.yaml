@@ -22,6 +22,9 @@ importers:
       '@payloadcms/storage-s3':
         specifier: ^3.18.0
         version: 3.73.0(@types/react@19.2.10)(monaco-editor@0.55.1)(next@15.5.10(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sass@1.77.4))(payload@3.73.0(graphql@16.12.0)(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
+      '@payloadcms/translations':
+        specifier: ^3.74.0
+        version: 3.74.0
       '@payloadcms/ui':
         specifier: ^3.18.0
         version: 3.73.0(@types/react@19.2.10)(monaco-editor@0.55.1)(next@15.5.10(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sass@1.77.4))(payload@3.73.0(graphql@16.12.0)(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
@@ -2691,6 +2694,9 @@ packages:
 
   '@payloadcms/translations@3.73.0':
     resolution: {integrity: sha512-sxC7GSO6Bnrngc46C39BD9ecHZZuKNh01MLRp1IPlqhJvP86JZliylQnoUV8TKmXm1aWJyvo7ZxIg9iojrDL7Q==}
+
+  '@payloadcms/translations@3.74.0':
+    resolution: {integrity: sha512-SGzF37i7yQ6av8sTrjBIEd4415hb4Dx66KW+aPsCYaiH5mf6TIXqkdmsteytxV1t1XYMG+jufbv7Gi0NeC3xdw==}
 
   '@payloadcms/ui@3.73.0':
     resolution: {integrity: sha512-m+6Oyk5vSTwBx9m5kwRfzFd/iJSdO3ambgbo8nxJmtd891WtCkk3V1FmmUW4jp5NLdEzP3wm5fwCCRix7aD1DQ==}
@@ -13277,6 +13283,10 @@ snapshots:
     dependencies:
       date-fns: 4.1.0
 
+  '@payloadcms/translations@3.74.0':
+    dependencies:
+      date-fns: 4.1.0
+
   '@payloadcms/ui@3.73.0(@types/react@19.2.10)(monaco-editor@0.55.1)(next@15.5.10(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sass@1.77.4))(payload@3.73.0(graphql@16.12.0)(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)':
     dependencies:
       '@date-fns/tz': 1.2.0
@@ -17477,7 +17487,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.2(jiti@2.6.1)):
+  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.2(jiti@2.6.1)))(eslint@9.39.2(jiti@2.6.1)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
@@ -17499,7 +17509,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 9.39.2(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.2(jiti@2.6.1))
+      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.2(jiti@2.6.1)))(eslint@9.39.2(jiti@2.6.1))
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3

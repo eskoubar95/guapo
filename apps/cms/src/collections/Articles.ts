@@ -19,12 +19,14 @@ export const Articles: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
+      localized: true,
     },
     {
       name: 'slug',
       type: 'text',
       required: true,
       unique: true,
+      localized: true,
       admin: {
         position: 'sidebar',
       },
@@ -81,6 +83,7 @@ export const Articles: CollectionConfig = {
       type: 'textarea',
       required: true,
       maxLength: 300,
+      localized: true,
       admin: {
         description: 'Brief summary for listings and SEO',
       },
@@ -89,6 +92,7 @@ export const Articles: CollectionConfig = {
       name: 'content',
       type: 'richText',
       required: true,
+      localized: true,
     },
     {
       name: 'author',
@@ -121,6 +125,7 @@ export const Articles: CollectionConfig = {
     {
       name: 'meta',
       type: 'group',
+      localized: true,
       admin: {
         description: 'SEO and social sharing (Article structured data, OG tags)',
       },

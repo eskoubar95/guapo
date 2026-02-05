@@ -39,6 +39,7 @@ export const Beneficials: CollectionConfig = {
       name: 'label',
       type: 'text',
       required: true,
+      localized: true,
       admin: {
         description: 'Display label (e.g. Dry skin)',
         placeholder: 'e.g., Dry skin',

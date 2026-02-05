@@ -59,7 +59,7 @@ export const Categories: CollectionConfig = {
       type: 'text',
       required: true,
       unique: true,
-      validate: (val) => {
+      validate: (val: unknown) => {
         if (typeof val !== 'string' || val.length === 0) return 'Handle is required.'
         if (!/^[a-z0-9-]+$/.test(val)) return 'Handle must be lowercase letters, numbers and hyphens only.'
         if (val.length > 100) return 'Handle must be 100 characters or less.'
@@ -73,6 +73,7 @@ export const Categories: CollectionConfig = {
     {
       name: 'name',
       type: 'text',
+      localized: true,
       admin: {
         description: 'Display name (from Medusa or override)',
       },
@@ -90,6 +91,7 @@ export const Categories: CollectionConfig = {
     {
       name: 'slug',
       type: 'text',
+      localized: true,
       admin: {
         description: 'URL slug override (defaults to handle)',
       },
@@ -104,6 +106,7 @@ export const Categories: CollectionConfig = {
       name: 'meta',
       type: 'group',
       label: 'SEO',
+      localized: true,
       fields: [
         { name: 'title', type: 'text' },
         { name: 'description', type: 'textarea' },
@@ -113,6 +116,7 @@ export const Categories: CollectionConfig = {
       name: 'body',
       type: 'richText',
       label: 'Body content',
+      localized: true,
     },
   ],
 }

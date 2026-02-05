@@ -18,6 +18,7 @@ export const Homepage: GlobalConfig = {
       name: 'meta',
       type: 'group',
       label: 'Page SEO',
+      localized: true,
       fields: [
         {
           name: 'title',
@@ -42,6 +43,7 @@ export const Homepage: GlobalConfig = {
       type: 'blocks',
       label: 'Page Sections',
       maxRows: 10,
+      localized: true,
       blocks: [
         // Hero Section
         {
