@@ -135,6 +135,36 @@ export default class PayloadModuleService {
     return result
   }
 
+  /** Update a single document by id. Merges partial data – use for Medusa sync updates. */
+  async updateById<T extends PayloadCollectionItem = PayloadCollectionItem>(
+    collection: string,
+    id: string,
+    data: PayloadUpsertData,
+  ): Promise<PayloadItemResult<T>> {
+    const query = this.buildQuery({})
+    const endpoint = `/${collection}/${id}${query}`
+    const result = await this.makeRequest<PayloadItemResult<T>>(endpoint, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+    return result
+  }
+
+  /** Fetch a single document by id for merge-before-update. Uses GET /collection/:id */
+  async findById<T extends PayloadCollectionItem = PayloadCollectionItem>(
+    collection: string,
+    id: string,
+  ): Promise<T | null> {
+    const query = this.buildQuery({})
+    const endpoint = `/${collection}/${id}${query}`
+    try {
+      const result = await this.makeRequest<PayloadItemResult<T> | T>(endpoint)
+      return (result && typeof result === 'object' && 'doc' in result ? result.doc : result) as T
+    } catch {
+      return null
+    }
+  }
+
   async delete(collection: string, options: PayloadQueryOptions = {}): Promise<PayloadApiResponse> {
     const query = this.buildQuery(options)
     const endpoint = `/${collection}${query}`

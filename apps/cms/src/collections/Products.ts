@@ -3,7 +3,6 @@ import { medusaProductHandleExists } from '../lib/medusa'
 
 /**
  * Allow create/delete only when request is from Medusa sync (official integration pattern).
- * Medusa sends either: query is_from_medusa=true with API key, or header x-medusa-sync-secret.
  */
 function isFromMedusa(req: { query?: Record<string, unknown>; headers?: { get?: (name: string) => string | null } }): boolean {
   const q = req?.query?.is_from_medusa
@@ -15,14 +14,14 @@ function isFromMedusa(req: { query?: Record<string, unknown>; headers?: { get?: 
 
 /**
  * Products – Medusa products with CMS content mapped on.
- * Handle (and optionally title) come from Medusa; rest is CMS-only.
- * Create/delete only from Medusa (events or manual sync); editors can only update content.
+ * Create/delete only from Medusa; editors can only update content.
  */
 export const Products: CollectionConfig = {
   slug: 'products',
   access: {
     read: () => true,
     create: ({ req }) => isFromMedusa(req),
+    update: ({ req }) => isFromMedusa(req) || !!req.user,
     delete: ({ req }) => isFromMedusa(req),
   },
   hooks: {
@@ -48,170 +47,163 @@ export const Products: CollectionConfig = {
   },
   fields: [
     {
-      name: 'medusa_id',
-      type: 'text',
-      admin: {
-        description: 'Medusa product ID (set by Medusa sync for delete-by-id)',
-        readOnly: true,
-        hidden: true,
-      },
-    },
-    {
-      name: 'handle',
-      type: 'text',
-      required: true,
-      unique: true,
-      admin: {
-        description: 'Medusa product handle (must match exactly)',
-        readOnly: true,
-      },
-    },
-    {
-      name: 'title',
-      type: 'text',
-      localized: true,
-      admin: {
-        description: 'Product title (synced from Medusa or override)',
-      },
-    },
-    {
-      name: 'featuredIngredients',
-      type: 'relationship',
-      relationTo: 'ingredients',
-      hasMany: true,
-      admin: {
-        description: 'Highlighted ingredients for this product',
-      },
-    },
-    {
-      name: 'avoidWithIngredients',
-      type: 'relationship',
-      relationTo: 'ingredients',
-      hasMany: true,
-      admin: {
-        description: 'Ingredients to avoid combining with this product',
-      },
-    },
-    {
-      name: 'beneficials',
-      type: 'relationship',
-      relationTo: 'beneficials',
-      hasMany: true,
-      admin: {
-        description: 'Skin types / concerns this product is good for',
-      },
-    },
-    {
-      name: 'routines',
-      type: 'relationship',
-      relationTo: 'routines',
-      hasMany: true,
-      admin: {
-        description: 'Routines this product fits into',
-      },
-    },
-    {
-      name: 'howTo',
-      type: 'group',
-      label: 'How to Use',
-      localized: true,
-      fields: [
+      type: 'tabs',
+      defaultValue: 'Content',
+      tabs: [
         {
-          name: 'steps',
-          type: 'array',
-          label: 'Application Steps',
+          label: 'Content',
           fields: [
-            { name: 'step', type: 'text', required: true },
-            { name: 'tip', type: 'text' },
-          ],
-        },
-        { name: 'amount', type: 'text', admin: { placeholder: 'e.g., 2-3 drops' } },
-        { name: 'frequency', type: 'text', admin: { placeholder: 'e.g., Once daily' } },
-        { name: 'tips', type: 'richText', label: 'Additional Tips' },
-      ],
-    },
-    {
-      name: 'routineTime',
-      type: 'group',
-      label: 'AM/PM Routine',
-      localized: true,
-      fields: [
-        {
-          name: 'time',
-          type: 'select',
-          options: [
-            { label: 'Morning (AM)', value: 'am' },
-            { label: 'Evening (PM)', value: 'pm' },
-            { label: 'Both AM & PM', value: 'both' },
-            { label: 'Either', value: 'either' },
-          ],
-        },
-        { name: 'order', type: 'number' },
-        { name: 'amNotes', type: 'textarea', label: 'AM Notes' },
-        { name: 'pmNotes', type: 'textarea', label: 'PM Notes' },
-        { name: 'sunscreenRequired', type: 'checkbox', defaultValue: false },
-      ],
-    },
-    {
-      name: 'pairWithRecommended',
-      type: 'array',
-      label: 'Recommended to pair with',
-      localized: true,
-      fields: [
-        {
-          name: 'product',
-          type: 'relationship',
-          relationTo: 'products',
-          required: true,
-        },
-        { name: 'reason', type: 'text' },
-        {
-          name: 'order',
-          type: 'select',
-          options: [
-            { label: 'Before', value: 'before' },
-            { label: 'After', value: 'after' },
-            { label: 'Alternate days', value: 'alternate' },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'pairWithAvoid',
-      type: 'array',
-      label: 'Avoid using with',
-      localized: true,
-      fields: [
-        {
-          name: 'product',
-          type: 'relationship',
-          relationTo: 'products',
-          required: true,
-        },
-        { name: 'reason', type: 'text' },
-      ],
-    },
-    {
-      name: 'precautions',
-      type: 'group',
-      label: 'Precautions',
-      localized: true,
-      fields: [
-        { name: 'patchTest', type: 'checkbox', defaultValue: false, label: 'Recommend patch test' },
-        {
-          name: 'pregnancySafe',
-          type: 'select',
-          options: [
-            { label: 'Safe', value: 'safe' },
-            { label: 'Consult doctor', value: 'consult' },
-            { label: 'Avoid', value: 'avoid' },
-            { label: 'Unknown', value: 'unknown' },
+            {
+              name: 'medusa_id',
+              type: 'text',
+              admin: {
+                description: 'Medusa product ID (set by Medusa sync for delete-by-id)',
+                readOnly: true,
+                hidden: true,
+              },
+            },
+            {
+              name: 'handle',
+              type: 'text',
+              required: true,
+              unique: true,
+              admin: {
+                description: 'Medusa product handle (must match exactly)',
+                readOnly: true,
+              },
+            },
+            {
+              name: 'title',
+              type: 'text',
+              localized: true,
+              admin: {
+                description: 'Product title (synced from Medusa or override)',
+              },
+            },
+            {
+              name: 'description',
+              type: 'richText',
+              localized: true,
+              admin: {
+                description: 'Product description',
+              },
+            },
+            {
+              name: 'application',
+              type: 'textarea',
+              label: 'Application / how to use',
+              localized: true,
+              admin: {
+                description: 'How to use the product',
+              },
+            },
           ],
         },
         {
-          name: 'warnings',
-          type: 'array',
-          fields: [{ name: 'warning', type: 'text', required: true }],
+          label: 'Ingredients',
+          fields: [
+            {
+              name: 'keyIngredients',
+              type: 'relationship',
+              relationTo: 'ingredients',
+              hasMany: true,
+              admin: {
+                description: 'Few highlighted ingredients',
+              },
+            },
+            {
+              name: 'ingredients',
+              type: 'relationship',
+              relationTo: 'ingredients',
+              hasMany: true,
+              label: 'Full ingredient list (INCI)',
+              admin: {
+                description: 'Complete list from packaging/PIF (select from Ingredients)',
+              },
+            },
+          ],
+        },
+        {
+          label: 'Fit & benefits',
+          fields: [
+            {
+              name: 'skinTypes',
+              type: 'relationship',
+              relationTo: 'skin-types',
+              hasMany: true,
+              admin: {
+                description: 'Which skin types is it suitable for?',
+              },
+            },
+            {
+              name: 'concerns',
+              type: 'relationship',
+              relationTo: 'concerns',
+              hasMany: true,
+              admin: {
+                description: 'What can it help with?',
+              },
+            },
+          ],
+        },
+        {
+          label: 'Specifications',
+          fields: [
+            {
+              name: 'specifications',
+              type: 'group',
+              label: 'Specifications',
+              admin: {
+                description: 'SKU and EAN are synced from Medusa (read-only). Other fields can be edited.',
+              },
+              fields: [
+                {
+                  name: 'brand',
+                  type: 'relationship',
+                  relationTo: 'brands',
+                  hasMany: false,
+                  admin: {
+                    description: 'Brand (matches Medusa metadata.brand via brandKey)',
+                  },
+                },
+                {
+                  name: 'volume',
+                  type: 'text',
+                  admin: {
+                    placeholder: 'e.g., 50 ml',
+                  },
+                },
+                {
+                  name: 'sku',
+                  type: 'text',
+                  label: 'SKU / item number',
+                  admin: {
+                    description: 'Synced from Medusa variant – do not edit',
+                    readOnly: true,
+                  },
+                },
+                {
+                  name: 'ean',
+                  type: 'text',
+                  label: 'EAN',
+                  admin: {
+                    description: 'Synced from Medusa variant – do not edit',
+                    readOnly: true,
+                  },
+                },
+                {
+                  name: 'manufacturer',
+                  type: 'text',
+                  label: 'Manufacturer',
+                },
+                {
+                  name: 'manufacturerContact',
+                  type: 'text',
+                  label: 'Manufacturer contact',
+                },
+              ],
+            },
+          ],
         },
       ],
     },

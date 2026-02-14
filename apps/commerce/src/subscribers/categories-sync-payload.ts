@@ -3,6 +3,7 @@ import { Modules } from '@medusajs/framework/utils'
 import { PAYLOAD_MODULE } from '../modules/payload'
 import type PayloadModuleService from '../modules/payload/service'
 import { syncPayloadCategoriesWorkflow } from '../workflows/sync-payload-categories'
+import { updatePayloadCategoriesWorkflow } from '../workflows/update-payload-categories'
 
 /**
  * Categories sync follows the same pattern as products (Medusa docs):
@@ -68,8 +69,6 @@ export default async function categoriesSyncPayloadHandler({
   )
 
   const missing = raw.filter((c) => !existingMedusaIds.has(c.id))
-  if (missing.length === 0) return
-
   const roots = missing.filter((c) => !c.parent_category_id)
   const children = missing.filter((c) => Boolean(c.parent_category_id))
 
@@ -88,11 +87,40 @@ export default async function categoriesSyncPayloadHandler({
     })
   }
 
-  if (children.length === 0) return
+  if (children.length > 0) {
+    const { docs: docsAfter } = await payloadService.find('categories', { limit: 1000 })
+    const parentMap = new Map<string, number>(
+      (docsAfter ?? []).map((d) => {
+        const r = d as Record<string, unknown>
+        const mid = r.medusa_id as string | undefined
+        const id = r.id as number | undefined
+        return mid != null && id != null ? [mid, id] : []
+      }).filter((pair): pair is [string, number] => pair.length === 2),
+    )
+    const childrenWithParent = children
+      .map((c) => {
+        const parentId = c.parent_category_id ? parentMap.get(c.parent_category_id) : undefined
+        if (parentId == null) return null
+        const displayName = (c.name ?? '').trim() || handleToDisplayName(c.handle ?? '')
+        return {
+          medusa_id: c.id,
+          handle: uniqueHandle(c.handle ?? c.name ?? '', c.id),
+          name: displayName || 'Category',
+          parent: parentId,
+        }
+      })
+      .filter((item): item is NonNullable<typeof item> => item != null)
+    if (childrenWithParent.length > 0) {
+      await syncPayloadCategoriesWorkflow(container).run({
+        input: { items: childrenWithParent },
+      })
+    }
+  }
 
-  const { docs: docsAfter } = await payloadService.find('categories', { limit: 1000 })
+  // Update existing Payload categories with Medusa-source fields (name, handle, parent)
+  const { docs: allDocs } = await payloadService.find('categories', { limit: 1000 })
   const medusaIdToPayloadId = new Map<string, number>(
-    (docsAfter ?? []).map((d) => {
+    (allDocs ?? []).map((d) => {
       const r = d as Record<string, unknown>
       const mid = r.medusa_id as string | undefined
       const id = r.id as number | undefined
@@ -100,24 +128,24 @@ export default async function categoriesSyncPayloadHandler({
     }).filter((pair): pair is [string, number] => pair.length === 2),
   )
 
-  const childrenWithParent = children
+  const updates = raw
+    .filter((c) => medusaIdToPayloadId.has(c.id))
     .map((c) => {
-      const parentId = c.parent_category_id ? medusaIdToPayloadId.get(c.parent_category_id) : undefined
-      if (parentId == null) return null
-      const displayName = (c.name ?? '').trim() || handleToDisplayName(c.handle ?? '')
+      const payloadId = String(medusaIdToPayloadId.get(c.id)!)
+      const parent =
+        c.parent_category_id != null
+          ? medusaIdToPayloadId.get(c.parent_category_id) ?? null
+          : null
       return {
-        medusa_id: c.id,
+        payloadId,
         handle: uniqueHandle(c.handle ?? c.name ?? '', c.id),
-        name: displayName || 'Category',
-        parent: parentId,
+        parent,
       }
     })
-    .filter((item): item is NonNullable<typeof item> => item != null)
+    .filter((u) => u.payloadId)
 
-  if (childrenWithParent.length > 0) {
-    await syncPayloadCategoriesWorkflow(container).run({
-      input: { items: childrenWithParent },
-    })
+  if (updates.length > 0) {
+    await updatePayloadCategoriesWorkflow(container).run({ input: { updates } })
   }
 }
 

@@ -65,7 +65,7 @@ This file is a lightweight index of project facts and conventions that are usefu
 - **Observability (MVP)**: Sentry + structured logs + uptime + alerts for payment failures and subscriptions on hold.
 
 ## Components
-- **Payload Localization (apps/cms):** Built-in localization enabled in `payload.config.ts`: `locales: ['da', 'en']`, `defaultLocale: 'da'`, `fallback: true`. Localized fields: Pages (title, slug, meta, content), Articles (title, slug, excerpt, content, meta), Products (title, howTo, routineTime, pairWithRecommended, pairWithAvoid, precautions), Navigation (mainMenu, ctaButton), Footer (columns, legalLinks, newsletter, copyright), Homepage (meta, sections), Media (alt). Storefront can request `?locale=da` or `?locale=en`; optional `?fallback-locale=...`.
+- **Payload Localization (apps/cms):** Built-in localization enabled in `payload.config.ts`: `locales: ['da', 'en']`, `defaultLocale: 'da'`, `fallback: true`. Localized fields: Pages (title, slug, meta, content), Articles (title, slug, excerpt, content, meta), Products (title, keyIngredients, ingredients, beneficials), Navigation (mainMenu, ctaButton), Footer (columns, legalLinks, newsletter, copyright), Homepage (meta, sections), Media (alt). Storefront can request `?locale=da` or `?locale=en`; optional `?fallback-locale=...`.
 
 ## User Defined Namespaces
 - [Leave blank - user populates]

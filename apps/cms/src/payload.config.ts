@@ -3,23 +3,22 @@ import { fileURLToPath } from 'url'
 import { buildConfig } from 'payload'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
-// S3 storage adapter for Supabase Storage (S3-compatible)
-// import { s3Storage } from '@payloadcms/storage-s3'
+import { s3Storage } from '@payloadcms/storage-s3'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Articles } from './collections/Articles'
-import { ProductGuidance } from './collections/ProductGuidance'
 import { Ingredients } from './collections/Ingredients'
-import { Routines } from './collections/Routines'
-import { Beneficials } from './collections/Beneficials'
+import { SkinTypes } from './collections/SkinTypes'
+import { Concerns } from './collections/Concerns'
 import { Products } from './collections/Products'
 import { Categories } from './collections/Categories'
 import { Brands } from './collections/Brands'
 import { ProductTypes } from './collections/ProductTypes'
 import { da } from '@payloadcms/translations/languages/da'
 import { en } from '@payloadcms/translations/languages/en'
+import { seoPlugin } from '@payloadcms/plugin-seo'
 import { Navigation } from './globals/Navigation'
 import { Footer } from './globals/Footer'
 import { Homepage } from './globals/Homepage'
@@ -40,17 +39,42 @@ export default buildConfig({
     Media,
     Pages,
     Articles,
-    ProductGuidance,
-    Ingredients,
-    Routines,
-    Beneficials,
     Products,
     Categories,
     Brands,
     ProductTypes,
+    SkinTypes,
+    Concerns,
+    Ingredients,
   ],
 
   globals: [Navigation, Footer, Homepage],
+
+  plugins: [
+    s3Storage({
+      collections: { media: true },
+      bucket: process.env.S3_BUCKET || 'payload',
+      config: {
+        endpoint: process.env.S3_ENDPOINT,
+        credentials: {
+          accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
+          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
+        },
+        region: process.env.S3_REGION || 'auto',
+        forcePathStyle: true,
+      },
+    }),
+    seoPlugin({
+      collections: [], // categories uses plugin fields directly in tabs (Content | SEO | Medusa)
+      uploadsCollection: 'media',
+      tabbedUI: false,
+      generateTitle: ({ doc }) => {
+        const name = typeof doc?.name === 'string' ? doc.name : (doc?.name as { da?: string } | undefined)?.da
+        if (name) return name
+        return (doc as { title?: string })?.title ?? ''
+      },
+    }),
+  ],
 
   /** Content localisation (da/en) for storefront. API: ?locale=da | ?locale=en; fallback to defaultLocale when missing. */
   localization: {
@@ -108,24 +132,4 @@ export default buildConfig({
     // Migration directory for version control
     migrationDir: path.resolve(dirname, '../migrations'),
   }),
-
-  // Supabase Storage via S3 compatibility
-  // Uncomment and configure when ready:
-  // plugins: [
-  //   s3Storage({
-  //     collections: {
-  //       media: true,
-  //     },
-  //     bucket: process.env.S3_BUCKET || 'media',
-  //     config: {
-  //       endpoint: process.env.S3_ENDPOINT,
-  //       credentials: {
-  //         accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
-  //         secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
-  //       },
-  //       region: process.env.S3_REGION || 'auto',
-  //       forcePathStyle: true, // Required for Supabase S3 compatibility
-  //     },
-  //   }),
-  // ],
 })

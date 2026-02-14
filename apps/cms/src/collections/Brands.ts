@@ -40,7 +40,7 @@ export const Brands: CollectionConfig = {
   admin: {
     useAsTitle: 'displayName',
     defaultColumns: ['brandKey', 'displayName', 'updatedAt'],
-    group: 'Catalog',
+    group: 'Product Content',
     description: 'Brand pages; brandKey must match Medusa metadata.brand',
   },
   fields: [

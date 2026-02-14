@@ -1008,4 +1008,3 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 **Estimate:** S
 
 **Notes:** spec/10-cms-commerce-synergy.md sektion 5 (Resolved/follow-ups). apps/cms/docs/medusa-proxy.md (env, ruter, cache). tasks.local.md med t7.8–t7.13. Linear: GUA-58.
-

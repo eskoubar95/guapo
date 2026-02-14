@@ -31,7 +31,35 @@ if (process.env.NODE_ENV === "production") {
 const useRedis = !!process.env.REDIS_URL;
 
 // Build modules array based on environment
-const modules: any[] = [
+const modules: any[] = [];
+
+// File storage: S3/Supabase when configured, else default local
+if (process.env.S3_ENDPOINT && process.env.S3_ACCESS_KEY_ID && process.env.S3_BUCKET) {
+  modules.push({
+    resolve: '@medusajs/medusa/file',
+    options: {
+      providers: [
+        {
+          resolve: '@medusajs/file-s3',
+          id: 's3',
+          options: {
+            file_url: process.env.S3_FILE_URL,
+            access_key_id: process.env.S3_ACCESS_KEY_ID,
+            secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
+            region: process.env.S3_REGION || 'eu-west-3',
+            bucket: process.env.S3_BUCKET,
+            endpoint: process.env.S3_ENDPOINT,
+            additional_client_config: {
+              forcePathStyle: true,
+            },
+          },
+        },
+      ],
+    },
+  });
+}
+
+modules.push(
   {
     resolve: './src/modules/payload',
     options: {
@@ -40,8 +68,8 @@ const modules: any[] = [
       userCollection: process.env.PAYLOAD_USER_COLLECTION || 'users',
       syncSecret: process.env.PAYLOAD_MEDUSA_SYNC_SECRET || undefined,
     },
-  },
-];
+  }
+);
 
 if (useRedis) {
   // Production: Use Redis-based modules for scalability

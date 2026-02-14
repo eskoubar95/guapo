@@ -9,10 +9,6 @@ import React from 'react'
 import { importMap } from './admin/importMap.js'
 import './custom.scss'
 
-type Args = {
-  children: React.ReactNode
-}
-
 const serverFunctions: ServerFunctionClient = async function (args) {
   'use server'
   return handleServerFunctions({
@@ -22,9 +18,10 @@ const serverFunctions: ServerFunctionClient = async function (args) {
   })
 }
 
-const Layout = ({ children }: Args) => (
+// Use Next.js LayoutProps for type compatibility (route group (payload))
+const Layout = (props: LayoutProps<'/'>) => (
   <RootLayout config={config} importMap={importMap} serverFunction={serverFunctions}>
-    {children}
+    {props.children}
   </RootLayout>
 )
 

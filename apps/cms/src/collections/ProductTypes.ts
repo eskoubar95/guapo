@@ -40,7 +40,7 @@ export const ProductTypes: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['value', 'name', 'updatedAt'],
-    group: 'Catalog',
+    group: 'Product Content',
     description: 'Product type pages (e.g. Serums); value must match Medusa product_type',
   },
   fields: [
