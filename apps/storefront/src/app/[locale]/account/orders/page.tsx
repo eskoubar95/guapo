@@ -81,44 +81,33 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Link href={`/${locale}`} className="text-xl font-semibold text-gray-900">
-              {dict.common.brand}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="max-w-3xl">
         {/* Breadcrumb */}
         <nav className="mb-6">
-          <ol className="flex items-center gap-2 text-sm text-gray-500">
+          <ol className="flex items-center gap-2 text-sm text-muted-foreground">
             <li>
-              <Link href={`/${locale}/account`} className="hover:text-gray-900">
+              <Link href={`/${locale}/account`} className="hover:text-primary">
                 {dict.account.title}
               </Link>
             </li>
             <li>/</li>
-            <li className="text-gray-900">{dict.account.orders}</li>
+            <li className="text-foreground">{dict.account.orders}</li>
           </ol>
         </nav>
 
-        <h1 className="text-2xl font-bold text-gray-900">{dict.account.orders}</h1>
+        <h1 className="text-2xl font-bold text-foreground">{dict.account.orders}</h1>
 
         {orders.length > 0 ? (
           <div className="mt-8 space-y-4">
             {orders.map((order) => (
               <div
                 key={order.id}
-                className="rounded-lg border border-gray-100 p-4 hover:border-gray-200"
+                className="rounded-lg border border-border p-4 hover:border-gray-200"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">{order.id}</p>
-                    <p className="text-sm text-gray-500">{formatDate(order.date)}</p>
+                    <p className="font-medium text-foreground">{order.id}</p>
+                    <p className="text-sm text-muted-foreground">{formatDate(order.date)}</p>
                   </div>
                   <span className={`rounded-full px-3 py-1 text-xs font-medium ${(statusLabels[order.status] ?? defaultStatusLabel).color}`}>
                     {(statusLabels[order.status] ?? defaultStatusLabel)[localeKey]}
@@ -126,7 +115,7 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
                 </div>
                 
                 <div className="mt-4 flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-muted-foreground">
                     {order.items.map((item, i) => (
                       <span key={i}>
                         {item.quantity}x {item.title}
@@ -134,14 +123,14 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
                       </span>
                     ))}
                   </div>
-                  <p className="font-medium text-gray-900">{formatPrice(order.total)}</p>
+                  <p className="font-medium text-foreground">{formatPrice(order.total)}</p>
                 </div>
 
                 <div className="mt-4 flex gap-4">
-                  <button className="text-sm font-medium text-gray-600 hover:text-gray-900">
+                  <button className="text-sm font-medium text-muted-foreground hover:text-primary">
                     {locale === "da" ? "Se detaljer" : "View details"}
                   </button>
-                  <button className="text-sm font-medium text-gray-600 hover:text-gray-900">
+                  <button className="text-sm font-medium text-muted-foreground hover:text-primary">
                     {locale === "da" ? "Spor pakke" : "Track package"}
                   </button>
                 </div>
@@ -150,7 +139,7 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
           </div>
         ) : (
           <div className="mt-12 text-center">
-            <p className="text-gray-500">
+            <p className="text-muted-foreground">
               {locale === "da" ? "Du har ingen ordrer endnu" : "You have no orders yet"}
             </p>
             <Link
@@ -161,7 +150,6 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
             </Link>
           </div>
         )}
-      </main>
     </div>
   );
 }

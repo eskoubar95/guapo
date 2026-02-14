@@ -2,6 +2,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { FAQAccordion } from "@/components/FAQAccordion";
 
 interface SupportPageProps {
   params: Promise<{ locale: string }>;
@@ -169,48 +170,15 @@ export default async function FAQPage({ params }: SupportPageProps) {
   const content = faqData[locale as "da" | "en"];
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Link href={`/${locale}`} className="text-xl font-semibold text-gray-900">
-              {dict.common.brand}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900">{content.title}</h1>
-
-        <div className="mt-12 space-y-12">
-          {content.categories.map((category, i) => (
-            <div key={i}>
-              <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-100 pb-3">
-                {category.name}
-              </h2>
-              <dl className="mt-6 space-y-6">
-                {category.faqs.map((faq, j) => (
-                  <div key={j}>
-                    <dt className="font-medium text-gray-900">{faq.question}</dt>
-                    <dd className="mt-2 text-gray-600">{faq.answer}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-16 border-t border-gray-100 pt-8">
-          <p className="text-gray-600">
-            {locale === "da"
-              ? "Fandt du ikke svar på dit spørgsmål?"
-              : "Didn't find the answer to your question?"}
+    <div className="min-h-full">
+      <main className="container mx-auto max-w-3xl px-4 py-12">
+        <h1 className="text-3xl font-bold text-foreground">{content.title}</h1>
+        <FAQAccordion categories={content.categories} />
+        <div className="mt-16 border-t border-border pt-8">
+          <p className="text-muted-foreground">
+            {locale === "da" ? "Fandt du ikke svar på dit spørgsmål?" : "Didn't find the answer to your question?"}
           </p>
-          <Link
-            href={`/${locale}/support/contact`}
-            className="mt-4 inline-flex items-center text-sm font-medium text-gray-900 hover:text-gray-600"
-          >
+          <Link href={`/${locale}/support/contact`} className="mt-4 inline-flex items-center text-sm font-medium text-primary hover:underline">
             {locale === "da" ? "Kontakt os →" : "Contact us →"}
           </Link>
         </div>

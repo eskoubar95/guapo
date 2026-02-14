@@ -41,39 +41,29 @@ export default async function BrandPage({ params }: BrandPageProps) {
   const brandName = brandNames[handle] || handle;
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Link href={`/${locale}`} className="text-xl font-semibold text-gray-900">
-              {dict.common.brand}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-full">
+      <main className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <nav className="mb-6">
-          <ol className="flex items-center gap-2 text-sm text-gray-500">
+          <ol className="flex items-center gap-2 text-sm text-muted-foreground">
             <li>
-              <Link href={`/${locale}`} className="hover:text-gray-900">
+              <Link href={`/${locale}`} className="hover:text-primary">
                 {dict.common.brand}
               </Link>
             </li>
             <li>/</li>
             <li>
-              <Link href={`/${locale}/brands`} className="hover:text-gray-900">
+              <Link href={`/${locale}/brands`} className="hover:text-primary">
                 {locale === "da" ? "Mærker" : "Brands"}
               </Link>
             </li>
             <li>/</li>
-            <li className="text-gray-900">{brandName}</li>
+            <li className="text-foreground">{brandName}</li>
           </ol>
         </nav>
 
-        <h1 className="text-2xl font-bold text-gray-900">{brandName}</h1>
-        <p className="mt-2 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-foreground">{brandName}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           {placeholderProducts.length} {locale === "da" ? "produkter" : "products"}
         </p>
 
@@ -87,10 +77,10 @@ export default async function BrandPage({ params }: BrandPageProps) {
             >
               <div className="aspect-square w-full rounded-lg bg-gray-100 transition-colors group-hover:bg-gray-200" />
               <div className="mt-3">
-                <h3 className="text-sm font-medium text-gray-900 group-hover:text-gray-600">
+                <h3 className="text-sm font-medium text-foreground group-hover:text-muted-foreground">
                   {product.title}
                 </h3>
-                <p className="mt-1 text-sm text-gray-500">{product.price} DKK</p>
+                <p className="mt-1 text-sm text-muted-foreground">{product.price} DKK</p>
               </div>
             </Link>
           ))}

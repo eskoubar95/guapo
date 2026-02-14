@@ -1,6 +1,24 @@
 import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
-import Link from "next/link";
+import {
+  HomePromoBars,
+  CategoryStrip,
+  PromotionSlider,
+  FeaturedProducts,
+  CampaignSection,
+  ServiceStrip,
+  BrandSpotlight,
+  ContentGrid,
+  RoutineBlock,
+  CtaStrip,
+  Newsletter,
+} from "@/components/sections";
+import {
+  homeMockProducts,
+  homeMockRoutines,
+  homeMockContent,
+  homeMockCategories,
+} from "@/lib/home-mock";
 
 interface HomePageProps {
   params: Promise<{ locale: string }>;
@@ -9,124 +27,153 @@ interface HomePageProps {
 export default async function HomePage({ params }: HomePageProps) {
   const { locale } = await params;
   const dict = await getDictionary(locale as Locale);
+  const validLocale = locale as Locale;
+
+  const featuredProducts = homeMockProducts.slice(0, 8);
+  const bestSellersList = homeMockProducts.slice(0, 5);
+  const bestSellers = [
+    ...bestSellersList.map((p, i) => ({ ...p, id: `bestseller-${p.id}-${i}` })),
+    ...bestSellersList.map((p, i) => ({ ...p, id: `bestseller-b-${p.id}-${i}` })),
+  ];
+  const newArrivals = homeMockProducts.slice(1, 8);
+  const brandProductsList = homeMockProducts.slice(0, 5);
+  const brandProducts = [
+    ...brandProductsList.map((p, i) => ({ ...p, id: `brand-${p.id}-${i}` })),
+    ...brandProductsList.map((p, i) => ({ ...p, id: `brand-b-${p.id}-${i}` })),
+  ];
+
+  const promoSliderSlides = [
+    {
+      id: "slide1",
+      variant: "dark" as const,
+      badge: dict.home.promoSlider.slide1.badge,
+      title: dict.home.promoSlider.slide1.title,
+      subtitle: dict.home.promoSlider.slide1.subtitle,
+      disclaimer: dict.home.promoSlider.slide1.disclaimer,
+      ctaText: dict.home.promoSlider.slide1.ctaText,
+      ctaHref: "/categories",
+    },
+    {
+      id: "slide2",
+      variant: "light-blue" as const,
+      title: dict.home.promoSlider.slide2.title,
+      subtitle: dict.home.promoSlider.slide2.subtitle,
+      ctaText: dict.home.promoSlider.slide2.ctaText,
+      ctaHref: "/categories",
+    },
+    {
+      id: "slide3",
+      variant: "light-warm" as const,
+      title: dict.home.promoSlider.slide3.title,
+      subtitle: dict.home.promoSlider.slide3.subtitle,
+      ctaText: dict.home.promoSlider.slide3.ctaText,
+      ctaHref: "/categories",
+      ctaVariant: "outline" as const,
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header placeholder */}
-      <header className="border-b border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Link href={`/${locale}`} className="text-xl font-semibold text-gray-900">
-              {dict.common.brand}
-            </Link>
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href={`/${locale}/search`} className="text-sm text-gray-600 hover:text-gray-900">
-                {dict.common.search}
-              </Link>
-              <Link href={`/${locale}/cart`} className="text-sm text-gray-600 hover:text-gray-900">
-                {dict.common.cart}
-              </Link>
-              <Link href={`/${locale}/account`} className="text-sm text-gray-600 hover:text-gray-900">
-                {dict.common.account}
-              </Link>
-              {/* Language switcher */}
-              <div className="flex items-center gap-2 text-sm">
-                <Link 
-                  href="/da" 
-                  className={locale === "da" ? "font-semibold text-gray-900" : "text-gray-500 hover:text-gray-900"}
-                >
-                  DA
-                </Link>
-                <span className="text-gray-300">|</span>
-                <Link 
-                  href="/en" 
-                  className={locale === "en" ? "font-semibold text-gray-900" : "text-gray-500 hover:text-gray-900"}
-                >
-                  EN
-                </Link>
-              </div>
-            </nav>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-full bg-background">
+      {/* Promo bars (design: two bars, not hero) */}
+      <HomePromoBars
+        bar1={dict.home.promoBars.bar1}
+        bar2={dict.home.promoBars.bar2}
+      />
 
-      {/* Hero section */}
-      <main>
-        <section className="relative bg-gray-50">
-          <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 lg:py-32">
-            <div className="text-center">
-              <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-                {dict.home.hero.title}
-              </h1>
-              <p className="mx-auto mt-6 max-w-xl text-lg text-gray-600">
-                {dict.home.hero.subtitle}
-              </p>
-              <div className="mt-10">
-                <Link
-                  href={`/${locale}/categories`}
-                  className="inline-flex items-center justify-center rounded-full bg-gray-900 px-8 py-3 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
-                >
-                  {dict.home.hero.cta}
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
+      {/* Category strip with colored circles */}
+      <CategoryStrip categories={homeMockCategories} locale={validLocale} />
 
-        {/* Featured products placeholder */}
-        <section className="py-16">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl font-bold text-gray-900">{dict.home.featured.title}</h2>
-            <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {/* Product cards will be rendered here */}
-              <div className="aspect-square rounded-lg bg-gray-100 animate-pulse" />
-              <div className="aspect-square rounded-lg bg-gray-100 animate-pulse" />
-              <div className="aspect-square rounded-lg bg-gray-100 animate-pulse" />
-              <div className="aspect-square rounded-lg bg-gray-100 animate-pulse" />
-            </div>
-          </div>
-        </section>
+      {/* Promotion slider (3 slides) */}
+      <PromotionSlider slides={promoSliderSlides} locale={validLocale} />
 
-        {/* New arrivals placeholder */}
-        <section className="bg-gray-50 py-16">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl font-bold text-gray-900">{dict.home.newArrivals.title}</h2>
-            <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {/* Product cards will be rendered here */}
-              <div className="aspect-square rounded-lg bg-gray-200 animate-pulse" />
-              <div className="aspect-square rounded-lg bg-gray-200 animate-pulse" />
-              <div className="aspect-square rounded-lg bg-gray-200 animate-pulse" />
-              <div className="aspect-square rounded-lg bg-gray-200 animate-pulse" />
-            </div>
-          </div>
-        </section>
-      </main>
+      {/* Editor picks */}
+      <FeaturedProducts
+        title={dict.home.editorPicks}
+        products={featuredProducts}
+        locale={validLocale}
+        layout="carousel"
+        backgroundColor="bg-white"
+      />
 
-      {/* Footer */}
-      <footer className="border-t border-gray-100 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900">{dict.footer.support}</h3>
-              <ul className="mt-4 space-y-2">
-                <li><Link href={`/${locale}/support/faq`} className="text-sm text-gray-600 hover:text-gray-900">FAQ</Link></li>
-                <li><Link href={`/${locale}/support/contact`} className="text-sm text-gray-600 hover:text-gray-900">Contact</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900">{dict.footer.policies}</h3>
-              <ul className="mt-4 space-y-2">
-                <li><Link href={`/${locale}/policies/terms`} className="text-sm text-gray-600 hover:text-gray-900">Terms</Link></li>
-                <li><Link href={`/${locale}/policies/privacy`} className="text-sm text-gray-600 hover:text-gray-900">Privacy</Link></li>
-                <li><Link href={`/${locale}/policies/returns`} className="text-sm text-gray-600 hover:text-gray-900">Returns</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-8 border-t border-gray-100 pt-8 text-center">
-            <p className="text-sm text-gray-500">{dict.footer.copyright}</p>
-          </div>
-        </div>
-      </footer>
+      {/* Campaign: Vinter hudpleje */}
+      <CampaignSection
+        title={dict.home.campaign.title}
+        description={dict.home.campaign.description}
+        image="https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=1200&q=80"
+        primaryCta={{
+          text: dict.home.campaign.ctaText,
+          href: "/categories",
+        }}
+        locale={validLocale}
+        layout="background"
+      />
+
+      {/* Bestsellers */}
+      <FeaturedProducts
+        title={dict.home.featured.title}
+        products={bestSellers}
+        locale={validLocale}
+        viewAllLink="/categories"
+        viewAllText="Se alle"
+        backgroundColor="bg-gradient-to-b from-slate-50/50 to-background"
+        layout="carousel"
+      />
+
+      {/* Routine block */}
+      <RoutineBlock
+        title={dict.home.routine.title}
+        subtitle={dict.home.routine.subtitle}
+        routines={homeMockRoutines}
+        locale={validLocale}
+        layout="carousel"
+        backgroundColor="bg-surface-muted/30"
+      />
+
+      {/* New arrivals */}
+      <FeaturedProducts
+        title={dict.home.newArrivals.title}
+        products={newArrivals}
+        locale={validLocale}
+        viewAllLink="/categories"
+        backgroundColor="bg-gradient-to-b from-sky-50/20 to-white"
+        layout="carousel"
+      />
+
+      {/* Content grid: Inspiration & Guides */}
+      <ContentGrid
+        title={dict.home.content.title}
+        subtitle={dict.home.content.subtitle}
+        content={homeMockContent}
+        locale={validLocale}
+        layout="carousel"
+      />
+
+      {/* Brand spotlight: The Ordinary */}
+      <BrandSpotlight
+        brandName="The Ordinary"
+        description={dict.home.brandSpotlight.description}
+        brandImage="https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=800&q=80"
+        products={brandProducts}
+        brandPageLink="/brands/the-ordinary"
+        locale={validLocale}
+        backgroundColor="bg-gradient-to-b from-teal-50/20 to-slate-50/30"
+      />
+
+      {/* CTA strip */}
+      <CtaStrip locale={validLocale} backgroundColor="bg-white" />
+
+      {/* Service strip */}
+      <ServiceStrip
+        backgroundColor="bg-gradient-to-br from-slate-50/40 to-sky-50/20"
+      />
+
+      {/* Newsletter */}
+      <Newsletter
+        title={dict.home.newsletter.title}
+        description={dict.home.newsletter.description}
+        placeholder={dict.home.newsletter.placeholder}
+        submitLabel={dict.home.newsletter.submitLabel}
+      />
     </div>
   );
 }

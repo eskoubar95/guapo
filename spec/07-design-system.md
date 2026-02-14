@@ -54,7 +54,7 @@ Hex values below are **initial direction** and can be adjusted once the final lo
 - `textMuted`: #64748B
 
 #### Brand / accent
-- `primary`: TBD (Guapo logo dark navy)
+- `primary`: #051537 (Guapo logo dark navy; confirmed from design repo)
 - `primaryForeground`: #FFFFFF
 - `secondary`: #E6F0FF (soft, unisex pastel-blue; optional)
 - `secondaryForeground`: #0F172A
@@ -139,6 +139,14 @@ Hex values below are **initial direction** and can be adjusted once the final lo
 - **Keyboard**: all interactive UI reachable and operable
 - **Focus**: visible focus indicator everywhere (use **active border**); no focus traps
 - **Screen readers**: labels/roles for inputs, dialogs, menus
+
+## M6 implementation status (checkpoint)
+
+**As of branch `task/m6-design-system-integration`:**
+
+- **Design 1:1 (UI):** Prioriteret handlingsliste Fase 1–6 er implementeret: Order confirmation + Subscription detail, AccountLayout, FilterSystem, ProductGallery, CartItemCard, Accordion, Tabs/RadioGroup/Label/Checkbox/Textarea, KeyInformationCard, PDPTrustStrip, Cart subscription-toggle, CartDiscountCode, CheckoutSteps (step-flow), FAQ Accordion, Contact form + kontaktinfo. Se `apps/storefront/docs/DESIGN-TO-STOREFRONT-GAP-ANALYSIS.md`.
+- **Data:** Storefront bruger stadig placeholder/mock (homeMockProducts, placeholderProducts, hardcoded PDP). Medusa + Payload kører, men katalog og CMS-data er ikke fyldt ud eller koblet til storefront.
+- **Næste fase:** Backend data-opstilling (Medusa: types, kategorier, tags, collections, produkter med handle/metadata; Payload: ProductGuidance + homepage med handles) og derefter wiring af rigtig data ind i storefront. Spec: `apps/storefront/docs/CMS-COMMERCE-SYNERGY-RESEARCH.md`, `spec/09-sitemap.md`.
 
 ## UI Definition of Done (copy into tasks)
 - [ ] Matches tokens and component conventions

@@ -50,18 +50,8 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
     : results;
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Link href={`/${locale}`} className="text-xl font-semibold text-gray-900">
-              {dict.common.brand}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-full">
+      <main className="container mx-auto px-4 py-8">
         {/* Search form */}
         <form action={`/${locale}/search`} method="GET" className="mb-8">
           <div className="relative">
@@ -70,7 +60,7 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
               name="q"
               defaultValue={query}
               placeholder={locale === "da" ? "Søg efter produkter..." : "Search for products..."}
-              className="w-full rounded-lg border border-gray-200 px-4 py-3 pl-12 text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+              className="w-full rounded-lg border border-border px-4 py-3 pl-12 text-foreground placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
             />
             <svg
               className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400"
@@ -91,7 +81,7 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
         {/* Results header */}
         {query && (
           <div className="mb-6">
-            <h1 className="text-xl font-bold text-gray-900">
+            <h1 className="text-xl font-bold text-foreground">
               {locale === "da" ? "Søgeresultater for" : "Search results for"} "{query}"
             </h1>
             <p className="mt-1 text-sm text-gray-500">
@@ -134,7 +124,7 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
               >
                 <div className="aspect-square w-full rounded-lg bg-gray-100 transition-colors group-hover:bg-gray-200" />
                 <div className="mt-3">
-                  <h3 className="text-sm font-medium text-gray-900 group-hover:text-gray-600">
+                  <h3 className="text-sm font-medium text-foreground group-hover:text-muted-foreground">
                     {product.title}
                   </h3>
                   <p className="mt-1 text-sm text-gray-500">{product.price} DKK</p>
@@ -147,7 +137,7 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
             <p className="text-gray-500">{dict.products.noResults}</p>
             <Link
               href={`/${locale}/categories`}
-              className="mt-4 inline-flex text-sm font-medium text-gray-900 hover:text-gray-600"
+              className="mt-4 inline-flex text-sm font-medium text-foreground hover:text-muted-foreground"
             >
               {locale === "da" ? "Se alle kategorier →" : "Browse all categories →"}
             </Link>

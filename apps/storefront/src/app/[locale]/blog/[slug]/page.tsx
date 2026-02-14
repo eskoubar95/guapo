@@ -163,41 +163,30 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Link href={`/${locale}`} className="text-xl font-semibold text-gray-900">
-              {dict.common.brand}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+    <div className="min-h-full">
+      <main className="container mx-auto max-w-3xl px-4 py-12">
         {/* Breadcrumb */}
         <nav className="mb-8">
-          <ol className="flex items-center gap-2 text-sm text-gray-500">
+          <ol className="flex items-center gap-2 text-sm text-muted-foreground">
             <li>
-              <Link href={`/${locale}`} className="hover:text-gray-900">
+              <Link href={`/${locale}`} className="hover:text-primary">
                 {dict.common.brand}
               </Link>
             </li>
             <li>/</li>
             <li>
-              <Link href={`/${locale}/blog`} className="hover:text-gray-900">
+              <Link href={`/${locale}/blog`} className="hover:text-primary">
                 Blog
               </Link>
             </li>
             <li>/</li>
-            <li className="text-gray-900">{article.title[localeKey]}</li>
+            <li className="text-foreground">{article.title[localeKey]}</li>
           </ol>
         </nav>
 
         {/* Article header */}
         <div className="mb-8">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span className="rounded-full bg-gray-100 px-3 py-1">
               {article.category[localeKey]}
             </span>
@@ -210,7 +199,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               })}
             </time>
           </div>
-          <h1 className="mt-4 text-4xl font-bold text-gray-900">
+          <h1 className="mt-4 text-4xl font-bold text-foreground">
             {article.title[localeKey]}
           </h1>
         </div>
@@ -220,21 +209,21 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           {article.content[localeKey].split("\n\n").map((paragraph, i) => {
             if (paragraph.startsWith("## ")) {
               return (
-                <h2 key={i} className="mt-8 text-2xl font-bold text-gray-900">
+                <h2 key={i} className="mt-8 text-2xl font-bold text-foreground">
                   {paragraph.replace("## ", "")}
                 </h2>
               );
             }
             if (paragraph.startsWith("### ")) {
               return (
-                <h3 key={i} className="mt-6 text-xl font-semibold text-gray-900">
+                <h3 key={i} className="mt-6 text-xl font-semibold text-foreground">
                   {paragraph.replace("### ", "")}
                 </h3>
               );
             }
             if (paragraph.startsWith("- ")) {
               return (
-                <ul key={i} className="mt-4 list-disc pl-6 space-y-2 text-gray-600">
+                <ul key={i} className="mt-4 list-disc pl-6 space-y-2 text-muted-foreground">
                   {paragraph.split("\n").map((item, j) => (
                     <li key={j}>{item.replace("- ", "").replace(/\*\*(.*?)\*\*/g, "$1")}</li>
                   ))}
@@ -242,7 +231,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               );
             }
             return (
-              <p key={i} className="mt-4 text-gray-600">
+              <p key={i} className="mt-4 text-muted-foreground">
                 {paragraph}
               </p>
             );
@@ -253,7 +242,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         <div className="mt-12 border-t border-gray-100 pt-8">
           <Link
             href={`/${locale}/blog`}
-            className="text-sm font-medium text-gray-900 hover:text-gray-600"
+            className="text-sm font-medium text-foreground hover:text-muted-foreground"
           >
             ← {locale === "da" ? "Tilbage til blog" : "Back to blog"}
           </Link>

@@ -66,6 +66,7 @@ This file is a lightweight index of project facts and conventions that are usefu
 
 ## Components
 - **Payload Localization (apps/cms):** Built-in localization enabled in `payload.config.ts`: `locales: ['da', 'en']`, `defaultLocale: 'da'`, `fallback: true`. Localized fields: Pages (title, slug, meta, content), Articles (title, slug, excerpt, content, meta), Products (title, keyIngredients, ingredients, beneficials), Navigation (mainMenu, ctaButton), Footer (columns, legalLinks, newsletter, copyright), Homepage (meta, sections), Media (alt). Storefront can request `?locale=da` or `?locale=en`; optional `?fallback-locale=...`.
+- **Home sections**: HomePromoBars, CategoryStrip (colored circles), PromotionSlider (3 slides), FeaturedProducts, CampaignSection, RoutineBlock, ContentGrid, BrandSpotlight, CtaStrip, ServiceStrip, Newsletter. Design source: `design/Ecommercestorefrontdesign/src/app/pages/home.tsx` + `src/app/components/sections/`.
 
 ## User Defined Namespaces
 - [Leave blank - user populates]

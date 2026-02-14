@@ -17,11 +17,70 @@ export interface Dictionary {
       subtitle: string;
       cta: string;
     };
+    announcement: {
+      text: string;
+      subtext: string;
+    };
+    promoBars: {
+      bar1: { text: string; subtext: string };
+      bar2: { text: string; subtext: string };
+    };
+    promoSlider: {
+      slide1: {
+        badge: string;
+        title: string;
+        subtitle: string;
+        disclaimer: string;
+        ctaText: string;
+      };
+      slide2: {
+        title: string;
+        subtitle: string;
+        ctaText: string;
+      };
+      slide3: {
+        title: string;
+        subtitle: string;
+        ctaText: string;
+        ctaVariant: string;
+      };
+    };
+    promo: {
+      badge: string;
+      title: string;
+      subtitle: string;
+      disclaimer: string;
+      ctaText: string;
+    };
+    campaign: {
+      title: string;
+      description: string;
+      ctaText: string;
+    };
     featured: {
       title: string;
     };
+    editorPicks: string;
     newArrivals: {
       title: string;
+    };
+    routine: {
+      title: string;
+      subtitle: string;
+    };
+    content: {
+      title: string;
+      subtitle: string;
+    };
+    brandSpotlight: {
+      description: string;
+      cta: string;
+    };
+    newsletter: {
+      title: string;
+      description: string;
+      placeholder: string;
+      submitLabel: string;
     };
   };
   products: {
@@ -29,8 +88,27 @@ export interface Dictionary {
     outOfStock: string;
     viewDetails: string;
     filters: string;
+    clearFilters: string;
+    activeFilters: string;
     sort: string;
     noResults: string;
+    tabs: {
+      description: string;
+      ingredients: string;
+      reviews: string;
+    };
+    skinTypes: string;
+    targets: string;
+    keyIngredients: string;
+    howToUse: string;
+    when: string;
+    pairWith: string;
+    noReviews: string;
+    trustStrip: {
+      freeShipping: string;
+      returns: string;
+      securePayment: string;
+    };
   };
   cart: {
     title: string;
@@ -42,6 +120,13 @@ export interface Dictionary {
     total: string;
     summary: string;
     remove: string;
+    oneTimePurchase: string;
+    subscribe: string;
+    discountCodeLabel: string;
+    discountCodePlaceholder: string;
+    apply: string;
+    discountApplied: string;
+    continueShoppingTitle: string;
   };
   checkout: {
     title: string;
@@ -50,14 +135,57 @@ export interface Dictionary {
     payment: string;
     review: string;
     placeOrder: string;
+    backToCart: string;
+    deliveryMethod: string;
+    homeDelivery: string;
+    homeDeliverySub: string;
+    parcelShop: string;
+    parcelShopSub: string;
+    expressDelivery: string;
+    expressDeliverySub: string;
+    freeLabel: string;
+    continueToPayment: string;
+    nextStep: string;
+    previousStep: string;
   };
   account: {
     title: string;
+    overview: string;
     orders: string;
     subscriptions: string;
     profile: string;
     addresses: string;
     signOut: string;
+  };
+  orderConfirmation: {
+    title: string;
+    subtitle: string;
+    orderNumber: string;
+    viewOrder: string;
+    continueShopping: string;
+    summary: string;
+    subtotal: string;
+    shipping: string;
+    total: string;
+  };
+  subscriptionDetail: {
+    title: string;
+    price: string;
+    frequency: string;
+    nextDelivery: string;
+    deliveries: string;
+    skipNext: string;
+    pause: string;
+    changeFrequency: string;
+    resume: string;
+    cancel: string;
+    cancelAfter: string;
+    benefitsTitle: string;
+    benefitSave: string;
+    benefitShipping: string;
+    benefitFlexible: string;
+    backToSubscriptions: string;
+    viewDetails: string;
   };
   footer: {
     support: string;
