@@ -1,16 +1,6 @@
 import type { CollectionConfig } from 'payload'
+import { isFromMedusa } from '../lib/access'
 import { medusaBrandKeyExists } from '../lib/medusa'
-
-/** Allow create/delete only when request is from Medusa sync (same as Products). */
-function isFromMedusa(req: { query?: Record<string, unknown>; headers?: { get?: (name: string) => string | null } }): boolean {
-  const secret = process.env.PAYLOAD_MEDUSA_SYNC_SECRET
-  if (secret && req?.headers?.get?.('x-medusa-sync-secret') === secret) return true
-  if (process.env.NODE_ENV === 'development') {
-    const q = req?.query?.is_from_medusa
-    if (q === true || q === 'true') return true
-  }
-  return false
-}
 
 /**
  * Brands – one document per brand (Medusa product.metadata.brand).
@@ -26,8 +16,11 @@ export const Brands: CollectionConfig = {
   },
   hooks: {
     beforeValidate: [
-      async ({ data, operation }) => {
-        if (operation === 'create' && data?.brandKey != null) {
+      async ({ data, operation, originalDoc }) => {
+        const brandKeyChanged =
+          data?.brandKey != null &&
+          (operation === 'create' || data.brandKey !== originalDoc?.brandKey)
+        if (brandKeyChanged) {
           const exists = await medusaBrandKeyExists(String(data.brandKey))
           if (!exists) {
             throw new Error(
@@ -53,6 +46,7 @@ export const Brands: CollectionConfig = {
       unique: true,
       admin: {
         description: 'Medusa product.metadata.brand value',
+        readOnly: true,
       },
     },
     {

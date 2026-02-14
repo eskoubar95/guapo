@@ -211,20 +211,31 @@ export async function fetchMedusaBrands(): Promise<string[]> {
 }
 
 /**
- * Check if a product/category/brand key exists in Medusa (for Payload create validation).
- * Returns true if key exists, false if not. Returns true if Medusa list is empty (unavailable).
+ * Check if a product handle exists in Medusa (for Payload create validation).
+ * Returns true if key exists, false if not.
+ * Returns true if Medusa list is empty (fail-open: skip validation when Medusa unavailable to avoid blocking CMS).
  */
 export async function medusaProductHandleExists(handle: string | undefined): Promise<boolean> {
   if (!handle || !handle.trim()) return false
   const list = await fetchMedusaProducts()
-  if (list.length === 0) return true // skip validation when Medusa unavailable
+  if (list.length === 0) {
+    console.warn(
+      `[medusa] Medusa appears unavailable (empty product list); validation skipped for handle "${handle}"`,
+    )
+    return true
+  }
   return list.some((p) => p.handle === handle.trim())
 }
 
+/**
+ * Check if a category handle exists in Medusa.
+ * Returns true if key exists, false if not.
+ * Returns true if Medusa list is empty (fail-open: skip validation when Medusa unavailable).
+ */
 export async function medusaCategoryHandleExists(handle: string | undefined): Promise<boolean> {
   if (!handle || !handle.trim()) return false
   const list = await fetchMedusaCategories()
-  if (list.length === 0) return true
+  if (list.length === 0) return true // fail-open: avoid blocking CMS when Medusa unavailable
   return list.some((c) => c.handle === handle.trim())
 }
 

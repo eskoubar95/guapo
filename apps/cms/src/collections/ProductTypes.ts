@@ -1,16 +1,6 @@
 import type { CollectionConfig } from 'payload'
+import { isFromMedusa } from '../lib/access'
 import { medusaProductTypeValueExists } from '../lib/medusa'
-
-/** Allow create/delete only when request is from Medusa sync (same as Products). */
-function isFromMedusa(req: { query?: Record<string, unknown>; headers?: { get?: (name: string) => string | null } }): boolean {
-  const secret = process.env.PAYLOAD_MEDUSA_SYNC_SECRET
-  if (secret && req?.headers?.get?.('x-medusa-sync-secret') === secret) return true
-  if (process.env.NODE_ENV === 'development') {
-    const q = req?.query?.is_from_medusa
-    if (q === true || q === 'true') return true
-  }
-  return false
-}
 
 /**
  * ProductTypes – one document per Medusa product_type (e.g. serum, cleanser).
