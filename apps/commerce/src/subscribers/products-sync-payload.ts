@@ -27,13 +27,15 @@ export default async function productsSyncPayloadHandler({
 
   try {
     // 1. Create missing Payload products
-    do {
+    let hasMore = true
+    while (hasMore) {
       const { data: products = [], metadata } = await query.graph({
         entity: 'product',
         fields: ['id', 'metadata'],
         pagination: { take: BATCH, skip: offset },
       })
-      total = metadata?.count ?? products.length
+      hasMore = products.length === BATCH
+      total = metadata?.count ?? total + products.length
       for (const p of products) allProductIds.push(p.id)
       const withoutPayload = products.filter((p) => !p.metadata?.payload_id)
       if (withoutPayload.length > 0) {
@@ -46,7 +48,7 @@ export default async function productsSyncPayloadHandler({
         log(`Created ${count} product(s)`)
       }
       offset += BATCH
-    } while (offset < total)
+    }
 
     // 2. Update existing Payload products (Medusa-source fields only: images, sku, ean)
     if (allProductIds.length > 0) {
