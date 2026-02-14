@@ -114,6 +114,9 @@ See `spec/08-infrastructure.md` for the source of truth.
 - Cache/Queue: Redis (Railway)
 - Language: TypeScript
 
+## CMS–Commerce synergy
+- **Data ownership, canonical keys, and storefront data flow:** See `spec/10-cms-commerce-synergy.md` (product.handle, Payload vs Medusa, who decides what).
+
 ## API Design (if applicable)
 - Storefront consumes Medusa APIs for commerce and Payload APIs for content.
 - Subscription/customer-control APIs must be deterministic and auditable (skip/pause/resume/cancel gating).

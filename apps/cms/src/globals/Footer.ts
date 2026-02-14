@@ -12,6 +12,7 @@ export const Footer: GlobalConfig = {
       type: 'array',
       label: 'Link Columns',
       maxRows: 4,
+      localized: true,
       fields: [
         {
           name: 'title',
@@ -65,6 +66,7 @@ export const Footer: GlobalConfig = {
       name: 'legalLinks',
       type: 'array',
       label: 'Legal/Policy Links',
+      localized: true,
       fields: [
         {
           name: 'label',
@@ -107,6 +109,7 @@ export const Footer: GlobalConfig = {
       name: 'newsletter',
       type: 'group',
       label: 'Newsletter Section',
+      localized: true,
       fields: [
         {
           name: 'show',
@@ -135,6 +138,7 @@ export const Footer: GlobalConfig = {
       name: 'copyright',
       type: 'text',
       defaultValue: '© {year} Guapo. All rights reserved.',
+      localized: true,
       admin: {
         description: 'Use {year} to auto-insert current year',
       },

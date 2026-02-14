@@ -7,6 +7,7 @@
   "scripts": {
     "build": "medusa build",
     "seed": "medusa exec ./src/scripts/seed.ts",
+    "sync:payload": "medusa exec ./src/scripts/sync-payload-products.ts",
     "start": "medusa start",
     "dev": "medusa develop",
     "db:setup": "medusa db:setup",
@@ -22,6 +23,7 @@
     "@medusajs/cli": "2.13.1",
     "@medusajs/dashboard": "2.13.1",
     "@medusajs/draft-order": "2.13.1",
+    "@medusajs/file-s3": "2.13.1",
     "@medusajs/framework": "2.13.1",
     "@medusajs/icons": "2.13.1",
     "@medusajs/medusa": "2.13.1",

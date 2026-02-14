@@ -12,6 +12,7 @@ export const Navigation: GlobalConfig = {
       type: 'array',
       label: 'Main Menu',
       maxRows: 8,
+      localized: true,
       fields: [
         {
           name: 'label',
@@ -125,6 +126,7 @@ export const Navigation: GlobalConfig = {
       name: 'ctaButton',
       type: 'group',
       label: 'CTA Button',
+      localized: true,
       fields: [
         {
           name: 'show',

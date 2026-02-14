@@ -96,7 +96,9 @@ Secondary (to define later, not required for /spec/init):
 - Fulfillment is planned as **own stock / self-shipping** (not dropship as default).
 
 ## 8. Related specifications
+- `spec/02-architecture.md`
 - `spec/03-risks.md`
 - `spec/04-open-questions.md`
 - `spec/07-design-system.md`
 - `spec/08-infrastructure.md`
+- `spec/10-cms-commerce-synergy.md` (Payload vs Medusa; canonical keys; storefront data flow)

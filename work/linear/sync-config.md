@@ -32,4 +32,3 @@ CLOUD_AGENT_LABEL=agent-ok
 # Defaults for automation behavior
 AUTO_CREATE_DOCUMENTS=false
 AUTO_ASSIGN_CURSOR_AGENT=false
-
