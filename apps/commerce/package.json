@@ -29,7 +29,7 @@
     "@medusajs/icons": "2.13.1",
     "@medusajs/medusa": "2.13.1",
     "@medusajs/types": "2.13.1",
-    "@medusajs/ui": "latest"
+    "@medusajs/ui": "4.1.1"
   },
   "devDependencies": {
     "@medusajs/test-utils": "latest",
