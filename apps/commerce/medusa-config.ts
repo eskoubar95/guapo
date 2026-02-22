@@ -113,7 +113,12 @@ export default defineConfig({
     workerMode: (process.env.MEDUSA_WORKER_MODE as "shared" | "worker" | "server") || "shared",
   },
   admin: {
-    disable: process.env.DISABLE_MEDUSA_ADMIN === "true",
+    // In production, disable admin by default so server starts without admin build (e.g. Railway/Nixpacks).
+    // Set DISABLE_MEDUSA_ADMIN=false when serving admin (e.g. Dockerfile build with .medusa).
+    disable:
+      process.env.NODE_ENV === "production"
+        ? process.env.DISABLE_MEDUSA_ADMIN !== "false"
+        : process.env.DISABLE_MEDUSA_ADMIN === "true",
     backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
   },
   plugins: [
