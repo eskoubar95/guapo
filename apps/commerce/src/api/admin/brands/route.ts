@@ -43,6 +43,11 @@ export const POST = async (
   if (items.length === 0) {
     return res.status(400).json({ message: 'Request body must include name and optional handle' })
   }
+  for (const item of items) {
+    if (!item.name || String(item.name).trim() === '') {
+      return res.status(400).json({ message: 'Each brand must have a non-empty name' })
+    }
+  }
   const data = items.map((item) => ({
     name: item.name,
     handle: item.handle ?? item.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),

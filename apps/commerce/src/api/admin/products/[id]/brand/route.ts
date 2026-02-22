@@ -56,6 +56,13 @@ export const PATCH = async (
     return res.status(404).json({ message: `Product ${productId} not found` })
   }
 
+  if (brandId != null && brandId !== '') {
+    const newBrand = await brandService.retrieveBrand(brandId)
+    if (!newBrand) {
+      return res.status(400).json({ message: 'Brand not found' })
+    }
+  }
+
   if (currentProduct.brand?.id) {
     await link.dismiss({
       [Modules.PRODUCT]: { product_id: productId },
@@ -64,7 +71,6 @@ export const PATCH = async (
   }
 
   if (brandId != null && brandId !== '') {
-    await brandService.retrieveBrand(brandId)
     await link.create([
       {
         [Modules.PRODUCT]: { product_id: productId },

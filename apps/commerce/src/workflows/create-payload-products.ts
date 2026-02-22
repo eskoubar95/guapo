@@ -22,7 +22,6 @@ export const createPayloadProductsWorkflow = createWorkflow(
         'subtitle',
         'variants.sku',
         'variants.ean',
-        'brand.handle',
       ],
       filters: { id: input.product_ids },
       options: { throwIfKeyNotFound: false },
@@ -40,7 +39,6 @@ export const createPayloadProductsWorkflow = createWorkflow(
           description?: string
           subtitle?: string
           variants?: Array<{ sku?: string; ean?: string }>
-          brand?: { handle?: string }
         }>
       }) => ({
         collection: 'products',

@@ -22,7 +22,7 @@ const orders = [
     id: "ORD-001",
     date: "2026-01-15",
     status: "delivered",
-    total: 42555,
+    total: 426,
     items: [
       { title: "Gentle Cleanser", quantity: 1 },
       { title: "Niacinamide Serum", quantity: 1 },
@@ -32,7 +32,7 @@ const orders = [
     id: "ORD-002",
     date: "2025-12-20",
     status: "delivered",
-    total: 32900,
+    total: 329,
     items: [
       { title: "Hydrating Moisturizer", quantity: 1 },
     ],
@@ -41,7 +41,7 @@ const orders = [
     id: "ORD-003",
     date: "2025-11-05",
     status: "delivered",
-    total: 27900,
+    total: 279,
     items: [
       { title: "Daily SPF 50", quantity: 1 },
     ],

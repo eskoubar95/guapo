@@ -43,7 +43,7 @@ const footerSections = (locale: string) => [
 export function Footer({ locale }: FooterProps) {
   const sections = footerSections(locale);
   return (
-    <footer className="bg-[#F8F9FB] border-t border-border mt-auto">
+    <footer className="bg-surface border-t border-border mt-auto">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           {sections.map((section) => (

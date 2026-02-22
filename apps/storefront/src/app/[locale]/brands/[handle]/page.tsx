@@ -34,7 +34,7 @@ export default async function BrandPage({ params }: BrandPageProps) {
     <div className="min-h-full">
       <main className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <nav className="mb-6">
+        <nav className="mb-6" aria-label="Breadcrumb">
           <ol className="flex items-center gap-2 text-sm text-muted-foreground">
             <li>
               <Link href={`/${locale}`} className="hover:text-primary">

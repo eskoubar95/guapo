@@ -122,10 +122,16 @@ export async function ProductReviewsSection({
   locale,
   labels,
 }: ProductReviewsSectionProps) {
-  const [stats, { reviews, count }] = await Promise.all([
+  const [statsResult, reviewsResult] = await Promise.allSettled([
     fetchProductReviewStats(productId),
     fetchProductReviews(productId, 20, 0),
   ]);
+
+  const stats = statsResult.status === "fulfilled" ? statsResult.value : null;
+  const { reviews, count } =
+    reviewsResult.status === "fulfilled"
+      ? reviewsResult.value
+      : { reviews: [] as ProductReviewItem[], count: 0 };
 
   const countText =
     count === 1

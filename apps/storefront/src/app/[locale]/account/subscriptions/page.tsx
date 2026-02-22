@@ -21,7 +21,7 @@ const subscriptions = [
     id: "SUB-001",
     product: "Niacinamide Serum",
     variant: "30ml",
-    price: 23655,
+    price: 237,
     cycle: 8,
     status: "active",
     nextDelivery: "2026-02-12",

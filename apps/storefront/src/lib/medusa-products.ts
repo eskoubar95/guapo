@@ -88,6 +88,9 @@ export async function fetchProductsByCategory(
       limit: "50",
       fields: "id,handle,title,metadata,thumbnail,*images.url,*variants.calculated_price,*brand.*",
     });
+    if (_sort === "price-asc") params.set("order", "variants.calculated_price:asc");
+    else if (_sort === "price-desc") params.set("order", "variants.calculated_price:desc");
+    else if (_sort === "newest") params.set("order", "created_at:desc");
     const res = await fetch(`${MEDUSA_URL}/products?${params}`, {
       headers: medusaHeaders(),
       next: { revalidate: 60 },
@@ -146,10 +149,14 @@ export async function fetchProductsByBrand(
   if (cached !== null) return cached;
 
   try {
-    const res = await fetch(
-      `${MEDUSA_URL}/products/by-brand/${encodeURIComponent(brandHandle)}`,
-      { headers: medusaHeaders(), next: { revalidate: 60 } }
-    );
+    const url = new URL(`${MEDUSA_URL}/products/by-brand/${encodeURIComponent(brandHandle)}`);
+    if (_sort === "price-asc") url.searchParams.set("order", "variants.calculated_price:asc");
+    else if (_sort === "price-desc") url.searchParams.set("order", "variants.calculated_price:desc");
+    else if (_sort === "newest") url.searchParams.set("order", "created_at:desc");
+    const res = await fetch(String(url), {
+      headers: medusaHeaders(),
+      next: { revalidate: 60 },
+    });
     if (!res.ok) return { products: [], count: 0 };
     const json = (await res.json()) as { products?: MedusaProductResponse[]; count?: number };
     const list = json.products ?? [];

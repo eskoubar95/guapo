@@ -105,7 +105,7 @@ export function Header({ locale }: HeaderProps) {
               <Link
                 href={`${base}/account`}
                 className="p-2 hover:bg-surface rounded-lg transition-colors relative inline-flex"
-                aria-label="Favoritter"
+                aria-label="Konto"
               >
                 <Heart className="h-5 w-5" />
                 {favoriteCount > 0 && (

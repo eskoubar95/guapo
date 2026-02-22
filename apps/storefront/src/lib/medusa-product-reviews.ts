@@ -14,10 +14,10 @@ function medusaHeaders(): HeadersInit {
   return headers;
 }
 
+/** Review item for display; email is never exposed to storefront (PII). */
 export interface ProductReviewItem {
   id: string;
   name: string | null;
-  email: string | null;
   rating: number;
   content: string | null;
   status: string;
@@ -57,10 +57,14 @@ export async function fetchProductReviews(
     });
     if (!res.ok) return { reviews: [], count: 0 };
     const json = (await res.json()) as {
-      product_reviews?: ProductReviewItem[];
+      product_reviews?: Array<Omit<ProductReviewItem, 'email'> & { email?: string | null }>;
       count?: number;
     };
-    const reviews = json.product_reviews ?? [];
+    const raw = json.product_reviews ?? [];
+    const reviews: ProductReviewItem[] = raw.map((r) => {
+      const { email: _, ...rest } = r;
+      return rest;
+    });
     return { reviews, count: json.count ?? reviews.length };
   } catch {
     return { reviews: [], count: 0 };

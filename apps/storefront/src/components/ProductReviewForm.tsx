@@ -60,7 +60,7 @@ export function ProductReviewForm({
         setRating(0);
         setHeadline("");
         setContent("");
-        onSuccess?.();
+        setTimeout(() => onSuccess?.(), 2000);
       } else if (res.status === 401) {
         setStatus("error");
         setErrorCode("UNAUTHORIZED");

@@ -25,7 +25,7 @@ const statusLabels: Record<string, { da: string; en: string; color: string }> = 
 // Placeholder: will be replaced by Medusa subscription fetch
 function getSubscriptionById(id: string) {
   const subs: Record<string, ReturnType<typeof makeSubscription>> = {
-    "SUB-001": makeSubscription("SUB-001", "Niacinamide Serum", "30ml", 23655, 8, "active", "2026-02-12", 3, 2),
+    "SUB-001": makeSubscription("SUB-001", "Niacinamide Serum", "30ml", 237, 8, "active", "2026-02-12", 3, 2),
   };
   return subs[id] ?? null;
 }

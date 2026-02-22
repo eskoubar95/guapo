@@ -20,12 +20,12 @@ function getOrderById(orderId: string) {
     id: orderId,
     date: new Date().toISOString().slice(0, 10),
     status: "confirmed",
-    subtotal: 42555,
+    subtotal: 426,
     shipping: 0,
-    total: 42555,
+    total: 426,
     items: [
-      { title: "Gentle Cleanser", quantity: 1, unitPrice: 18900 },
-      { title: "Niacinamide Serum", quantity: 1, unitPrice: 23655, isSubscription: true },
+      { title: "Gentle Cleanser", quantity: 1, unitPrice: 189 },
+      { title: "Niacinamide Serum", quantity: 1, unitPrice: 237, isSubscription: true },
     ],
   };
 }

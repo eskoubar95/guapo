@@ -15,7 +15,7 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
     )::varchar
     WHERE "title" IS NOT NULL
       AND "title"::text ~ E'^\\s*\\{'
-      AND "title"::jsonb ? 'da'
+      AND ("title"::jsonb ? 'da' OR "title"::jsonb ? 'en')
   `)
 
   await db.execute(sql`
@@ -27,7 +27,7 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
     )::varchar
     WHERE "subtitle" IS NOT NULL
       AND "subtitle"::text ~ E'^\\s*\\{'
-      AND "subtitle"::jsonb ? 'da'
+      AND ("subtitle"::jsonb ? 'da' OR "subtitle"::jsonb ? 'en')
   `)
 
   await db.execute(sql`

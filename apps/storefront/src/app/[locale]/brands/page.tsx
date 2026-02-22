@@ -55,9 +55,11 @@ export default async function BrandsPage({ params }: BrandsPageProps) {
               className="flex items-center justify-between rounded-lg border-2 border-border bg-card p-4 transition-colors hover:border-primary hover:bg-surface focus-visible:border-primary focus-visible:outline-none"
             >
               <span className="font-medium text-foreground">{brand.name}</span>
-              <span className="text-sm text-muted-foreground">
-                {brand.productCount} {locale === "da" ? "produkter" : "products"}
-              </span>
+              {brand.productCount > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  {brand.productCount} {locale === "da" ? "produkter" : "products"}
+                </span>
+              )}
             </Link>
           ))}
         </div>

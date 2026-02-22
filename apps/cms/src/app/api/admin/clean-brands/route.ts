@@ -1,19 +1,24 @@
 /**
  * POST /api/admin/clean-brands
  * Clears all brands in Payload (and product brand refs). Use for fresh sync from Medusa.
- * Requires CLEAN_BRANDS_SECRET header or ?secret=... (set in .env).
+ * Requires x-clean-brands-secret header (CLEAN_BRANDS_SECRET in .env). Do not pass secret in URL.
  */
 import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
-/** Set CLEAN_BRANDS_SECRET in .env for production; dev defaults to 'dev-clean-brands' */
-const SECRET = process.env.CLEAN_BRANDS_SECRET ?? 'dev-clean-brands'
+const SECRET =
+  process.env.CLEAN_BRANDS_SECRET ??
+  (process.env.NODE_ENV === 'production' ? undefined : 'dev-clean-brands')
 
 export async function POST(req: Request) {
-  const auth =
-    req.headers.get('x-clean-brands-secret') === SECRET ||
-    new URL(req.url).searchParams.get('secret') === SECRET
+  if (!SECRET) {
+    return NextResponse.json(
+      { error: 'CLEAN_BRANDS_SECRET not configured' },
+      { status: 500 }
+    )
+  }
+  const auth = req.headers.get('x-clean-brands-secret') === SECRET
   if (!auth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

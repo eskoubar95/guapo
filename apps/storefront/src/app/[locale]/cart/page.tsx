@@ -19,8 +19,8 @@ export async function generateMetadata({ params }: CartPageProps): Promise<Metad
 }
 
 const cartItems = [
-  { id: "1", name: "Gentle Cleanser", variant: "150ml", price: 18900, quantity: 1, image: null, subscription: null },
-  { id: "2", name: "Niacinamide Serum", variant: "30ml", price: 23655, quantity: 1, image: null, subscription: { cycle: 8 } },
+  { id: "1", name: "Gentle Cleanser", variant: "150ml", price: 189, quantity: 1, image: null, subscription: null },
+  { id: "2", name: "Niacinamide Serum", variant: "30ml", price: 237, quantity: 1, image: null, subscription: { cycle: 8 } },
 ];
 
 export default async function CartPage({ params }: CartPageProps) {

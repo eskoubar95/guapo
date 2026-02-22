@@ -89,7 +89,7 @@ export async function fetchCategoryByHandle(handle: string): Promise<MedusaCateg
     if (!res.ok) return null;
     const json = (await res.json()) as { product_categories?: MedusaCategory[] };
     const cat = json.product_categories?.[0] ?? null;
-    setCache(key, cat);
+    if (cat !== null) setCache(key, cat);
     return cat;
   } catch {
     return null;

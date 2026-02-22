@@ -57,8 +57,8 @@ export const DELETE = async (req: MedusaRequest, res: MedusaResponse) => {
   if (!brand) {
     return res.status(404).json({ message: `Brand with id ${id} not found` })
   }
+  await brandService.deleteBrands([id])
   const eventBus = req.scope.resolve(Modules.EVENT_BUS) as { emit: (event: { name: string; data: Record<string, unknown> }) => Promise<void> }
   await eventBus.emit({ name: 'brand.deleted', data: { id, handle: brand.handle, name: brand.name } })
-  await brandService.deleteBrands([id])
   res.status(200).json({ id, object: 'brand', deleted: true })
 }

@@ -16,7 +16,10 @@ createProductsWorkflow.hooks.productsCreated(
       return new StepResponse([], [])
     }
     const brandService = container.resolve<BrandModuleService>(BRAND_MODULE)
-    await brandService.retrieveBrand(brandId)
+    const brand = await brandService.retrieveBrand(brandId)
+    if (!brand) {
+      return new StepResponse([], [])
+    }
     const link = container.resolve<{ create: (links: LinkDefinition[]) => Promise<unknown> }>(
       ContainerRegistrationKeys.LINK
     )

@@ -240,7 +240,7 @@ const ProductBrandIngredientsWidget = ({ data: product }: DetailWidgetProps) => 
         return
       }
       const json = await res.json()
-      setCurrentIngredients(json.ingredients ?? [])
+      setCurrentIngredients(json.ingredients ?? currentIngredients.filter((i) => i.id !== id))
       toast.success('Ingredient removed')
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed')
