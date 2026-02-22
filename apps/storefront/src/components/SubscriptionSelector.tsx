@@ -6,7 +6,7 @@ interface SubscriptionSelectorProps {
   basePrice: number;
   currency: string;
   locale: string;
-  onSelect: (type: "one-time" | "subscription", cycle?: number) => void;
+  onSelect?: (type: "one-time" | "subscription", cycle?: number) => void;
 }
 
 const SUBSCRIPTION_DISCOUNT = 0.05; // 5% discount
@@ -29,17 +29,17 @@ export function SubscriptionSelector({
       style: "currency",
       currency: currency,
       minimumFractionDigits: 0,
-    }).format(amount / 100);
+    }).format(amount);
   };
 
   const handleTypeChange = (type: "one-time" | "subscription") => {
     setPurchaseType(type);
-    onSelect(type, type === "subscription" ? selectedCycle : undefined);
+    onSelect?.(type, type === "subscription" ? selectedCycle : undefined);
   };
 
   const handleCycleChange = (cycle: number) => {
     setSelectedCycle(cycle);
-    onSelect("subscription", cycle);
+    onSelect?.("subscription", cycle);
   };
 
   const labels = {

@@ -8,6 +8,8 @@ import { medusaProductHandleExists } from '../lib/medusa'
  */
 export const Products: CollectionConfig = {
   slug: 'products',
+  /** Avoid lock-check DB query on update; products are often updated from Medusa (sync, parse & link) with no admin user. */
+  lockDocuments: false,
   access: {
     read: () => true,
     create: ({ req }) => isFromMedusa(req),
@@ -79,12 +81,12 @@ export const Products: CollectionConfig = {
               },
             },
             {
-              name: 'application',
+              name: 'subtitle',
               type: 'textarea',
-              label: 'Application / how to use',
+              label: 'Subtitle',
               localized: true,
               admin: {
-                description: 'How to use the product',
+                description: 'Short product subtitle (synced from Medusa or editor override)',
               },
             },
           ],

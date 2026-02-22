@@ -20,9 +20,11 @@ interface FilterSystemProps {
     activeFilters: string;
   };
   className?: string;
+  /** Renders at end of filter bar (e.g. sort dropdown) */
+  trailingSlot?: React.ReactNode;
 }
 
-export function FilterSystem({ categories, labels, className }: FilterSystemProps) {
+export function FilterSystem({ categories, labels, className, trailingSlot }: FilterSystemProps) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -80,8 +82,9 @@ export function FilterSystem({ categories, labels, className }: FilterSystemProp
   return (
     <div className={cn(className)}>
       {/* Filter bar */}
-      <div className="sticky top-0 z-30 border-b border-border bg-background">
+      <div className="sticky top-0 z-30 border-b border-border bg-white">
         <div className="flex items-center gap-3 overflow-x-auto py-3 scrollbar-hide">
+          <div className="flex flex-1 min-w-0 items-center gap-3">
           <button
             type="button"
             onClick={() => {
@@ -113,6 +116,8 @@ export function FilterSystem({ categories, labels, className }: FilterSystemProp
               )}
             </button>
           ))}
+          </div>
+          {trailingSlot && <div className="flex shrink-0">{trailingSlot}</div>}
         </div>
       </div>
 
@@ -125,7 +130,7 @@ export function FilterSystem({ categories, labels, className }: FilterSystemProp
             aria-hidden
           />
           <div
-            className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-background shadow-xl animate-in slide-in-from-right duration-200"
+            className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-white shadow-xl animate-in slide-in-from-right duration-200"
             role="dialog"
             aria-modal="true"
             aria-label={labels.filters}
@@ -216,7 +221,7 @@ export function FilterSystem({ categories, labels, className }: FilterSystemProp
 
       {/* Active filters */}
       {totalActiveFilters > 0 && (
-        <div className="mt-4 rounded-lg border border-border bg-card p-4">
+        <div className="mt-4 rounded-lg border border-border bg-white p-4">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-medium text-foreground">{labels.activeFilters}</p>
             <button

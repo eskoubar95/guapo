@@ -15,7 +15,6 @@ export function CartDiscountCode({
   label,
   placeholder,
   applyLabel,
-  className,
   appliedLabel,
   className,
 }: CartDiscountCodeProps) {

@@ -8,7 +8,7 @@ export interface CartItemCardProps {
   id: string;
   name: string;
   brand?: string;
-  price: number; // cents
+  price: number; // major units (e.g. DKK)
   image: string | null;
   quantity: number;
   size?: string;
@@ -50,7 +50,7 @@ export function CartItemCard({
       style: "currency",
       currency: "DKK",
       minimumFractionDigits: 0,
-    }).format(amount / 100);
+    }).format(amount);
 
   const handleDecrease = () => {
     if (quantity <= 1) return;

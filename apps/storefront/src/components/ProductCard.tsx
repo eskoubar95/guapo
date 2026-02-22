@@ -33,7 +33,7 @@ export function ProductCard({ product, locale, className }: ProductCardProps) {
         href={`/${locale}/products/${product.id}`}
         className="block relative"
       >
-        <div className="aspect-[3/3.5] overflow-hidden rounded-lg mb-2 bg-surface-muted">
+        <div className="aspect-[3/3.5] overflow-hidden rounded-lg mb-2 bg-slate-100">
           <ImageWithFallback
             src={product.image}
             alt={product.name}
@@ -46,7 +46,7 @@ export function ProductCard({ product, locale, className }: ProductCardProps) {
             e.preventDefault();
             setIsFavorite(!isFavorite);
           }}
-          className="absolute top-2 right-2 p-2 bg-card rounded-full shadow-sm hover:bg-surface-muted transition-colors border-0 focus-visible:ring-2 focus-visible:ring-primary"
+          className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-sm hover:bg-slate-50 transition-colors border-0 focus-visible:ring-2 focus-visible:ring-primary"
           aria-label={isFavorite ? "Fjern fra favoritter" : "Tilføj til favoritter"}
         >
           <Heart

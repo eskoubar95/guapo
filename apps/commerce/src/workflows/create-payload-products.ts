@@ -5,6 +5,7 @@ import {
 } from '@medusajs/framework/workflows-sdk'
 import { useQueryGraphStep, updateProductsWorkflow } from '@medusajs/medusa/core-flows'
 import { createPayloadItemsStep } from './steps/create-payload-items'
+import { plainTextToLexical } from '../lib/lexical'
 
 type WorkflowInput = { product_ids: string[] }
 
@@ -17,6 +18,8 @@ export const createPayloadProductsWorkflow = createWorkflow(
         'id',
         'title',
         'handle',
+        'description',
+        'subtitle',
         'variants.sku',
         'variants.ean',
       ],
@@ -33,6 +36,8 @@ export const createPayloadProductsWorkflow = createWorkflow(
           id: string
           title?: string
           handle?: string
+          description?: string
+          subtitle?: string
           variants?: Array<{ sku?: string; ean?: string }>
         }>
       }) => ({
@@ -41,16 +46,22 @@ export const createPayloadProductsWorkflow = createWorkflow(
           const item: Record<string, unknown> = {
             medusa_id: p.id,
             handle: p.handle ?? '',
-            title: p.title ?? p.handle ?? '',
+            title: (p.title ?? p.handle ?? '').trim(),
           }
-          // SKU and EAN from first variant (read-only in Payload; source of truth is Medusa)
+          if (p.description?.trim()) {
+            const lexical = plainTextToLexical(p.description)
+            if (lexical) item.description = lexical
+          }
+          if (p.subtitle?.trim()) {
+            item.subtitle = p.subtitle.trim()
+          }
           const primaryVariant = Array.isArray(p.variants) ? p.variants[0] : undefined
+          const spec: Record<string, unknown> = {}
           if (primaryVariant) {
-            item.specifications = {
-              sku: primaryVariant.sku ?? undefined,
-              ean: primaryVariant.ean ?? undefined,
-            }
+            spec.sku = primaryVariant.sku ?? undefined
+            spec.ean = primaryVariant.ean ?? undefined
           }
+          if (Object.keys(spec).length > 0) item.specifications = spec
           return item
         }),
       }),

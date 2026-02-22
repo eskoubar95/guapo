@@ -61,6 +61,9 @@ if (process.env.S3_ENDPOINT && process.env.S3_ACCESS_KEY_ID && process.env.S3_BU
 
 modules.push(
   {
+    resolve: "./src/modules/brand",
+  },
+  {
     resolve: './src/modules/payload',
     options: {
       serverUrl: process.env.PAYLOAD_SERVER_URL || 'http://localhost:3001',
@@ -113,5 +116,13 @@ export default defineConfig({
     disable: process.env.DISABLE_MEDUSA_ADMIN === "true",
     backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
   },
+  plugins: [
+    {
+      resolve: "@lambdacurry/medusa-product-reviews",
+      options: {
+        defaultReviewStatus: "pending", // Pre-moderation per spec (on-site reviews)
+      },
+    },
+  ],
   modules,
 });

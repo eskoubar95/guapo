@@ -5,14 +5,21 @@ import {
   MetaTitleField,
   OverviewField,
 } from '@payloadcms/plugin-seo/fields'
+import { isFromMedusa } from '../lib/access'
 
 /**
  * Ingredients – database of ingredients for product content and ingredient pages.
  * Products reference these for "featured ingredients" and "avoid with".
- * Layout: Content (default) | SEO | CosIng/INCI – same structure as Categories.
+ * Medusa can read (widget dropdown) and create (parse flow); editors can CRUD.
  */
 export const Ingredients: CollectionConfig = {
   slug: 'ingredients',
+  access: {
+    read: () => true,
+    create: ({ req }) => isFromMedusa(req) || !!req.user,
+    update: ({ req }) => !!req.user,
+    delete: ({ req }) => !!req.user,
+  },
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'inciName', 'updatedAt'],

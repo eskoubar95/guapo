@@ -1,6 +1,7 @@
 {
   "common": {
     "brand": "Guapo",
+    "breadcrumbRoot": "Skincare",
     "search": "Search",
     "cart": "Cart",
     "account": "Account",
@@ -95,22 +96,47 @@
     "activeFilters": "Active filters",
     "sort": "Sort",
     "noResults": "No products found",
+    "relatedTitle": "Other customers also bought",
     "tabs": {
       "description": "Description",
       "ingredients": "Ingredients",
-      "reviews": "Reviews"
+      "specifications": "Specifications"
     },
     "skinTypes": "Skin Types",
     "targets": "Targets",
     "keyIngredients": "Key Ingredients",
     "howToUse": "How to Use",
     "when": "When",
-    "pairWith": "Pair With",
-    "noReviews": "No reviews yet. Be the first to leave one.",
+    "volume": "Volume",
+    "notSpecified": "Not specified",
+    "quantity": "Quantity",
     "trustStrip": {
       "freeShipping": "Free shipping over 299 DKK",
       "returns": "30-day return policy",
       "securePayment": "Secure payment"
+    },
+    "reviews": {
+      "title": "Customer reviews",
+      "count": "{{count}} review",
+      "count_plural": "{{count}} reviews",
+      "noReviews": "No reviews yet.",
+      "reviewAfterPurchase": "Bought this product? You can leave a review from your order history under Account → Orders.",
+      "responseLabel": "Response from Guapo",
+      "writeReview": "Write a review",
+      "writeReviewTitle": "Write your review",
+      "headline": "Headline",
+      "headlinePlaceholder": "E.g. Great product!",
+      "reviewText": "Review",
+      "reviewTextPlaceholder": "Tell others about your experience with this product...",
+      "submitReview": "Submit review",
+      "loginToReview": "Sign in to write a review.",
+      "loginLink": "Sign in",
+      "wasHelpful": "Was this review helpful?",
+      "yes": "Yes",
+      "no": "No",
+      "submitting": "Submitting...",
+      "errorSubmit": "Could not submit. Please try again.",
+      "successSubmit": "Thank you! Your review has been received and will appear after moderation."
     }
   },
   "cart": {

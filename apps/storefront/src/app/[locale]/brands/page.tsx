@@ -2,6 +2,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { fetchMedusaBrands } from "@/lib/medusa-brands";
 
 interface BrandsPageProps {
   params: Promise<{ locale: string }>;
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: BrandsPageProps): Promise<Met
   };
 }
 
-const brands = [
+const fallbackBrands = [
   { handle: "the-ordinary", name: "The Ordinary", productCount: 24 },
   { handle: "cerave", name: "CeraVe", productCount: 18 },
   { handle: "paula-choice", name: "Paula's Choice", productCount: 15 },
@@ -29,6 +30,11 @@ const brands = [
 export default async function BrandsPage({ params }: BrandsPageProps) {
   const { locale } = await params;
   const dict = await getDictionary(locale as Locale);
+  const medusaBrands = await fetchMedusaBrands();
+  const brands =
+    medusaBrands.length > 0
+      ? medusaBrands.map((b) => ({ handle: b.handle, name: b.name, productCount: 0 }))
+      : fallbackBrands;
 
   return (
     <div className="min-h-full">
@@ -49,9 +55,11 @@ export default async function BrandsPage({ params }: BrandsPageProps) {
               className="flex items-center justify-between rounded-lg border-2 border-border bg-card p-4 transition-colors hover:border-primary hover:bg-surface focus-visible:border-primary focus-visible:outline-none"
             >
               <span className="font-medium text-foreground">{brand.name}</span>
-              <span className="text-sm text-muted-foreground">
-                {brand.productCount} {locale === "da" ? "produkter" : "products"}
-              </span>
+              {brand.productCount > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  {brand.productCount} {locale === "da" ? "produkter" : "products"}
+                </span>
+              )}
             </Link>
           ))}
         </div>

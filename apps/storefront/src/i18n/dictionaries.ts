@@ -4,6 +4,7 @@ import type { Locale } from "./config";
 export interface Dictionary {
   common: {
     brand: string;
+    breadcrumbRoot: string;
     search: string;
     cart: string;
     account: string;
@@ -92,22 +93,47 @@ export interface Dictionary {
     activeFilters: string;
     sort: string;
     noResults: string;
+    relatedTitle: string;
     tabs: {
       description: string;
       ingredients: string;
-      reviews: string;
+      specifications: string;
     };
     skinTypes: string;
     targets: string;
     keyIngredients: string;
     howToUse: string;
     when: string;
-    pairWith: string;
-    noReviews: string;
+    volume: string;
+    notSpecified: string;
+    quantity: string;
     trustStrip: {
       freeShipping: string;
       returns: string;
       securePayment: string;
+    };
+    reviews: {
+      title: string;
+      count: string;
+      count_plural: string;
+      noReviews: string;
+      reviewAfterPurchase: string;
+      responseLabel: string;
+      writeReview: string;
+      writeReviewTitle: string;
+      headline: string;
+      headlinePlaceholder: string;
+      reviewText: string;
+      reviewTextPlaceholder: string;
+      submitReview: string;
+      loginToReview: string;
+      loginLink: string;
+      wasHelpful: string;
+      yes: string;
+      no: string;
+      submitting: string;
+      errorSubmit: string;
+      successSubmit: string;
     };
   };
   cart: {

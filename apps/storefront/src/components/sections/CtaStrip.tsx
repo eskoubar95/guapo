@@ -54,7 +54,7 @@ export function CtaStrip({
               <Link
                 key={index}
                 href={href}
-                className="bg-gradient-to-br from-surface-muted to-surface-muted/80 rounded-xl p-6 lg:p-8 border border-border hover:shadow-md transition-all"
+                className="bg-gradient-to-br from-slate-50 to-sky-50/30 rounded-xl p-6 lg:p-8 border border-border hover:shadow-md transition-all"
               >
                 {Icon && (
                   <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">

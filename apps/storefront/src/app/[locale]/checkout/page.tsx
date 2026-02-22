@@ -22,9 +22,9 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
 
   const orderSummary = {
     items: 2,
-    subtotal: 42555,
+    subtotal: 426,
     shipping: 0,
-    total: 42555,
+    total: 426,
   };
 
   const formatPrice = (amount: number) => {
@@ -32,7 +32,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
       style: "currency",
       currency: "DKK",
       minimumFractionDigits: 0,
-    }).format(amount / 100);
+    }).format(amount);
   };
 
   return (
@@ -66,7 +66,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
                     <p className="text-sm font-medium text-foreground">Gentle Cleanser</p>
                     <p className="text-sm text-muted-foreground">150ml</p>
                   </div>
-                  <p className="text-sm font-medium text-foreground">{formatPrice(18900)}</p>
+                  <p className="text-sm font-medium text-foreground">{formatPrice(189)}</p>
                 </li>
                 <li className="flex gap-4 py-4">
                   <div className="relative h-16 w-16 shrink-0 rounded-lg bg-muted" />
@@ -77,7 +77,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
                       {locale === "da" ? "Abonnement" : "Subscription"}
                     </span>
                   </div>
-                  <p className="text-sm font-medium text-foreground">{formatPrice(23655)}</p>
+                  <p className="text-sm font-medium text-foreground">{formatPrice(237)}</p>
                 </li>
               </ul>
 

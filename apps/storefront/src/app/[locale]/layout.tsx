@@ -41,7 +41,10 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased bg-background text-foreground flex min-h-screen flex-col`}>
+      <body
+        className={`${inter.variable} font-sans antialiased bg-white text-foreground flex min-h-screen flex-col`}
+        suppressHydrationWarning
+      >
         <Header locale={locale} />
         <main className="flex-1">{children}</main>
         <Footer locale={locale} />

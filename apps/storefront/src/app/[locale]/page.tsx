@@ -73,7 +73,7 @@ export default async function HomePage({ params }: HomePageProps) {
   ];
 
   return (
-    <div className="min-h-full bg-background">
+    <div className="min-h-full bg-white">
       {/* Promo bars (design: two bars, not hero) */}
       <HomePromoBars
         bar1={dict.home.promoBars.bar1}
@@ -115,7 +115,7 @@ export default async function HomePage({ params }: HomePageProps) {
         locale={validLocale}
         viewAllLink="/categories"
         viewAllText="Se alle"
-        backgroundColor="bg-gradient-to-b from-slate-50/50 to-background"
+        backgroundColor="bg-gradient-to-b from-slate-50/50 to-white"
         layout="carousel"
       />
 

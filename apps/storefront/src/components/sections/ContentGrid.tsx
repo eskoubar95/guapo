@@ -68,7 +68,7 @@ export function ContentGrid({
 
   if (layout === "carousel") {
     return (
-      <section className="py-8 lg:py-12 bg-background">
+      <section className="py-8 lg:py-12 bg-white">
         <div className="container mx-auto px-4">
           <div className="mb-5 lg:mb-6">
             <h2 className="text-xl lg:text-2xl font-semibold text-primary mb-1">
@@ -87,7 +87,7 @@ export function ContentGrid({
               <button
                 type="button"
                 onClick={() => scroll("left")}
-                className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-card rounded-full shadow-lg flex items-center justify-center hover:bg-surface-muted border-0 focus-visible:ring-2 focus-visible:ring-primary"
+                className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-slate-50 border-0 focus-visible:ring-2 focus-visible:ring-primary"
                 aria-label="Scroll til venstre"
               >
                 <ChevronLeft className="h-6 w-6 text-primary" />
@@ -97,7 +97,7 @@ export function ContentGrid({
               <button
                 type="button"
                 onClick={() => scroll("right")}
-                className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-card rounded-full shadow-lg flex items-center justify-center hover:bg-surface-muted border-0 focus-visible:ring-2 focus-visible:ring-primary"
+                className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-slate-50 border-0 focus-visible:ring-2 focus-visible:ring-primary"
                 aria-label="Scroll til højre"
               >
                 <ChevronRight className="h-6 w-6 text-primary" />
@@ -112,7 +112,7 @@ export function ContentGrid({
                 <Link
                   key={item.id}
                   href={`/${locale}${item.href}`}
-                  className="flex-shrink-0 w-[85%] sm:w-[60%] md:w-[45%] lg:w-[30%] bg-card rounded-xl overflow-hidden border border-border hover:shadow-md transition-shadow"
+                  className="flex-shrink-0 w-[85%] sm:w-[60%] md:w-[45%] lg:w-[30%] bg-white rounded-xl overflow-hidden border border-border hover:shadow-md transition-shadow"
                 >
                   <div className="relative h-48 lg:h-56 overflow-hidden bg-surface-muted">
                     {item.label && (
@@ -146,7 +146,7 @@ export function ContentGrid({
   }
 
   return (
-    <section className="py-8 lg:py-12 bg-background">
+    <section className="py-8 lg:py-12 bg-white">
       <div className="container mx-auto px-4">
         <div className="mb-5 lg:mb-6">
           <h2 className="text-xl lg:text-2xl font-semibold text-primary mb-1">
@@ -161,7 +161,7 @@ export function ContentGrid({
             <Link
               key={item.id}
               href={`/${locale}${item.href}`}
-              className="bg-card rounded-xl overflow-hidden border border-border hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl overflow-hidden border border-border hover:shadow-md transition-shadow"
             >
               <div className="relative h-48 lg:h-56 overflow-hidden bg-surface-muted">
                 {item.label && (

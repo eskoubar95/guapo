@@ -4,21 +4,22 @@ import Link from "next/link";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { FilterSystem, type FilterCategory } from "@/components/FilterSystem";
+import { ProductCard } from "@/components/ProductCard";
+import {
+  fetchCategoryByHandle,
+  fetchPayloadCategoryByHandle,
+} from "@/lib/medusa-categories";
+import { fetchProductsByCategory } from "@/lib/medusa-products";
+import { getProductsForCategory } from "@/lib/plp-products";
+import { PLPSortSelect } from "./PLPSortSelect";
 
 interface CategoryPageProps {
   params: Promise<{ locale: string; handle: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-// Placeholder product data
-const placeholderProducts = [
-  { id: "1", title: "Gentle Cleanser", price: "189", image: null },
-  { id: "2", title: "Niacinamide Serum", price: "249", image: null },
-  { id: "3", title: "Hydrating Moisturizer", price: "329", image: null },
-  { id: "4", title: "Daily SPF 50", price: "279", image: null },
-];
-
-const categoryNames: Record<string, { da: string; en: string }> = {
+const fallbackCategoryNames: Record<string, { da: string; en: string }> = {
+  skincare: { da: "Skincare", en: "Skincare" },
   cleansers: { da: "Rensere", en: "Cleansers" },
   serums: { da: "Serum", en: "Serums" },
   moisturizers: { da: "Fugtighedscremer", en: "Moisturizers" },
@@ -75,11 +76,15 @@ function getFilterCategories(locale: string): FilterCategory[] {
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { locale, handle } = await params;
-  const name = categoryNames[handle]?.[locale as "da" | "en"] || handle;
-  
+  const [medusaCat, payloadCat] = await Promise.all([
+    fetchCategoryByHandle(handle),
+    fetchPayloadCategoryByHandle(handle, locale),
+  ]);
+  const name =
+    payloadCat?.name ?? medusaCat?.name ?? fallbackCategoryNames[handle]?.[locale as "da" | "en"] ?? handle;
+
   return {
     title: name,
-    // Canonical URL to base category (without filters)
     alternates: {
       canonical: `/${locale}/categories/${handle}`,
     },
@@ -91,30 +96,42 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const filters = await searchParams;
   const dict = await getDictionary(locale as Locale);
   const localeKey = locale as "da" | "en";
-  const categoryName = categoryNames[handle]?.[localeKey] || handle;
 
-  // Parse filter params
-  const activeFilters = {
-    skinType: filters.skinType as string | undefined,
-    priceRange: filters.price as string | undefined,
-    sort: (filters.sort as string) || "featured",
-  };
+  const sort = (filters.sort as string) || "featured";
+
+  // Fetch from Medusa + Payload
+  const [medusaCat, payloadCat] = await Promise.all([
+    fetchCategoryByHandle(handle),
+    fetchPayloadCategoryByHandle(handle, locale),
+  ]);
+
+  const categoryName =
+    payloadCat?.name ?? medusaCat?.name ?? fallbackCategoryNames[handle]?.[localeKey] ?? handle;
+
+  let products: Awaited<ReturnType<typeof getProductsForCategory>>["products"];
+  let total: number;
+
+  if (medusaCat?.id) {
+    const res = await fetchProductsByCategory(medusaCat.id, sort);
+    products = res.products;
+    total = res.count;
+  } else {
+    const res = getProductsForCategory(handle, undefined, sort);
+    products = res.products;
+    total = res.total;
+  }
+
+  const subcategories = medusaCat?.category_children ?? [];
 
   return (
-    <div className="min-h-full">
-      <main className="container mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <nav className="mb-6" aria-label="Breadcrumb">
-          <ol className="flex items-center gap-2 text-sm text-muted-foreground">
+    <div className="min-h-full bg-white">
+      <main className="container mx-auto px-4 py-6 lg:py-8">
+        {/* Breadcrumbs: Guapo / Skincare (uden "Kategorier" da vi kun har én topkategori) */}
+        <nav className="mb-4 text-sm text-muted-foreground" aria-label="Breadcrumb">
+          <ol className="flex items-center gap-2">
             <li>
               <Link href={`/${locale}`} className="hover:text-primary">
                 {dict.common.brand}
-              </Link>
-            </li>
-            <li>/</li>
-            <li>
-              <Link href={`/${locale}/categories`} className="hover:text-primary">
-                {locale === "da" ? "Kategorier" : "Categories"}
               </Link>
             </li>
             <li>/</li>
@@ -122,14 +139,37 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           </ol>
         </nav>
 
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">{categoryName}</h1>
+        {/* Page Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl lg:text-3xl font-semibold text-primary mb-2">
+            {categoryName}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            {placeholderProducts.length} {locale === "da" ? "produkter" : "products"}
+            {total} {locale === "da" ? "produkter" : "products"}
           </p>
         </div>
 
-        {/* Filter bar + sheet (syncs with URL) */}
+        {/* Subcategories (when category has children from Medusa) */}
+        {subcategories.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-sm font-medium text-muted-foreground mb-3">
+              {locale === "da" ? "Underkategorier" : "Subcategories"}
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {subcategories.map((sub) => (
+                <Link
+                  key={sub.id}
+                  href={`/${locale}/categories/${sub.handle}`}
+                  className="rounded-full bg-surface-muted px-4 py-2 text-sm font-medium text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+                >
+                  {sub.name ?? sub.handle}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Filter bar + sort (samme række), uden redundans "Viser X produkter" */}
         <Suspense fallback={<div className="border-b border-border py-3" />}>
           <FilterSystem
             categories={getFilterCategories(locale)}
@@ -139,43 +179,53 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
               activeFilters: dict.products.activeFilters,
             }}
             className="mt-6"
+            trailingSlot={
+              <Suspense fallback={<div className="h-10 w-40 rounded-lg border border-border bg-surface-muted" />}>
+                <PLPSortSelect
+                  locale={locale}
+                  currentSort={sort}
+                  dictSort={dict.products.sort}
+                  options={[
+                    { value: "featured", label: locale === "da" ? "Anbefalet" : "Featured" },
+                    {
+                      value: "price-asc",
+                      label: locale === "da" ? "Pris: Lav til høj" : "Price: Low to high",
+                    },
+                    {
+                      value: "price-desc",
+                      label: locale === "da" ? "Pris: Høj til lav" : "Price: High to low",
+                    },
+                    { value: "newest", label: locale === "da" ? "Nyeste" : "Newest" },
+                  ]}
+                />
+              </Suspense>
+            }
           />
         </Suspense>
 
-        {/* Sort */}
-        <div className="mt-4 flex justify-end">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{dict.products.sort}:</span>
-            <select
-              className="rounded-lg border-2 border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-              defaultValue={activeFilters.sort}
-            >
-              <option value="featured">{locale === "da" ? "Anbefalet" : "Featured"}</option>
-              <option value="price-asc">{locale === "da" ? "Pris: Lav til høj" : "Price: Low to high"}</option>
-              <option value="price-desc">{locale === "da" ? "Pris: Høj til lav" : "Price: High to low"}</option>
-              <option value="newest">{locale === "da" ? "Nyeste" : "Newest"}</option>
-            </select>
-          </div>
-        </div>
-
         {/* Product Grid */}
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {placeholderProducts.map((product) => (
-            <Link
-              key={product.id}
-              href={`/${locale}/products/${product.id}`}
-              className="group rounded-lg border border-border bg-card overflow-hidden hover:border-primary transition-colors focus-visible:border-primary focus-visible:outline-none"
-            >
-              <div className="aspect-square w-full bg-surface-muted transition-colors group-hover:bg-surface" />
-              <div className="p-3">
-                <h3 className="text-sm font-medium text-foreground group-hover:text-primary">
-                  {product.title}
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground">{product.price} DKK</p>
-              </div>
-            </Link>
+        <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 lg:gap-4">
+          {products.map((product) => (
+            <ProductCard key={product.id} product={product} locale={locale} />
           ))}
         </div>
+
+        {/* Empty state */}
+        {products.length === 0 && (
+          <div className="py-16 text-center">
+            <p className="text-muted-foreground mb-4">
+              {locale === "da"
+                ? "Ingen produkter matcher dine filtre"
+                : "No products match your filters"}
+            </p>
+            <Link
+              href={`/${locale}/categories/${handle}`}
+              className="font-medium text-primary hover:underline"
+            >
+              {dict.products.clearFilters}
+            </Link>
+          </div>
+        )}
       </main>
     </div>
   );
