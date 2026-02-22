@@ -50,7 +50,7 @@ export function CartItemCard({
       style: "currency",
       currency: "DKK",
       minimumFractionDigits: 0,
-    }).format(amount / 100);
+    }).format(amount);
 
   const handleDecrease = () => {
     if (quantity <= 1) return;

@@ -28,7 +28,7 @@ export default async function CartPage({ params }: CartPageProps) {
   const dict = await getDictionary(locale as Locale);
 
   const formatPrice = (amount: number) =>
-    new Intl.NumberFormat(locale, { style: "currency", currency: "DKK", minimumFractionDigits: 0 }).format(amount / 100);
+    new Intl.NumberFormat(locale, { style: "currency", currency: "DKK", minimumFractionDigits: 0 }).format(amount);
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shipping = 0;

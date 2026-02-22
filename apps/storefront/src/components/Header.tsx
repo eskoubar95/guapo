@@ -44,7 +44,7 @@ export function Header({ locale }: HeaderProps) {
         locale={locale}
       />
 
-      <header className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
         {/* Top announcement bar */}
         <div className="bg-primary text-primary-foreground py-2 px-4 text-center">
           <p className="text-sm">Fri fragt over 299 kr. • 30 dages returret</p>

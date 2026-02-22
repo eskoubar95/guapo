@@ -41,7 +41,7 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
       style: "currency",
       currency: "DKK",
       minimumFractionDigits: 0,
-    }).format(amount / 100);
+    }).format(amount);
   };
 
   return (

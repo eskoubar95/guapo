@@ -88,7 +88,7 @@ export function RoutineBlock({
               <button
                 type="button"
                 onClick={() => scroll("left")}
-                className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-card rounded-full shadow-lg flex items-center justify-center hover:bg-surface-muted border-0 focus-visible:ring-2 focus-visible:ring-primary"
+                className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-slate-50 border-0 focus-visible:ring-2 focus-visible:ring-primary"
                 aria-label="Scroll til venstre"
               >
                 <ChevronLeft className="h-6 w-6 text-primary" />
@@ -98,7 +98,7 @@ export function RoutineBlock({
               <button
                 type="button"
                 onClick={() => scroll("right")}
-                className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-card rounded-full shadow-lg flex items-center justify-center hover:bg-surface-muted border-0 focus-visible:ring-2 focus-visible:ring-primary"
+                className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-slate-50 border-0 focus-visible:ring-2 focus-visible:ring-primary"
                 aria-label="Scroll til højre"
               >
                 <ChevronRight className="h-6 w-6 text-primary" />

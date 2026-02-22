@@ -107,12 +107,14 @@ button:focus-visible {
   outline: none;
 }
 
+/* Force light mode — Figma design is light-only. No auto dark. */
 html {
   color-scheme: light;
+  background-color: #ffffff;
 }
 
 body {
-  background: var(--background);
+  background: #ffffff;
   color: var(--foreground);
   font-size: var(--font-size);
 }

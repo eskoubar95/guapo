@@ -1,6 +1,7 @@
 {
   "common": {
     "brand": "Guapo",
+    "breadcrumbRoot": "Hudpleje",
     "search": "Søg",
     "cart": "Kurv",
     "account": "Konto",
@@ -95,22 +96,47 @@
     "activeFilters": "Aktive filtre",
     "sort": "Sorter",
     "noResults": "Ingen produkter fundet",
+    "relatedTitle": "Andre kunder køber også",
     "tabs": {
       "description": "Beskrivelse",
       "ingredients": "Ingredienser",
-      "reviews": "Anmeldelser"
+      "specifications": "Specifikationer"
     },
     "skinTypes": "Hudtyper",
     "targets": "Målretter",
     "keyIngredients": "Nøgleingredienser",
     "howToUse": "Sådan bruger du det",
     "when": "Hvornår",
-    "pairWith": "Kombiner med",
-    "noReviews": "Ingen anmeldelser endnu. Vær den første til at anmelde.",
+    "volume": "Volumen",
+    "notSpecified": "Ikke angivet",
+    "quantity": "Antal",
     "trustStrip": {
       "freeShipping": "Fri fragt over 299 kr.",
       "returns": "30 dages returret",
       "securePayment": "Sikker betaling"
+    },
+    "reviews": {
+      "title": "Kundeanmeldelser",
+      "count": "{{count}} anmeldelse",
+      "count_plural": "{{count}} anmeldelser",
+      "noReviews": "Ingen anmeldelser endnu.",
+      "reviewAfterPurchase": "Har du købt dette produkt? Du kan anmelde det fra din ordreoversigt under Konto → Ordrer.",
+      "responseLabel": "Svar fra Guapo",
+      "writeReview": "Skriv en anmeldelse",
+      "writeReviewTitle": "Skriv din anmeldelse",
+      "headline": "Overskrift",
+      "headlinePlaceholder": "F.eks. Fantastisk produkt!",
+      "reviewText": "Anmeldelse",
+      "reviewTextPlaceholder": "Fortæl andre om din oplevelse med produktet...",
+      "submitReview": "Indsend anmeldelse",
+      "loginToReview": "Log ind for at skrive en anmeldelse.",
+      "loginLink": "Log ind",
+      "wasHelpful": "Var denne anmeldelse hjælpsom?",
+      "yes": "Ja",
+      "no": "Nej",
+      "submitting": "Sender...",
+      "errorSubmit": "Kunne ikke indsende. Prøv igen.",
+      "successSubmit": "Tak! Din anmeldelse er modtaget og vises efter godkendelse."
     }
   },
   "cart": {

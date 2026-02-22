@@ -21,6 +21,8 @@ import {
   updateProductCategoriesWorkflow,
 } from "@medusajs/medusa/core-flows";
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
+import { BRAND_MODULE } from "../modules/brand";
+import type BrandModuleService from "../modules/brand/service";
 
 export default async function seed({ container }: ExecArgs) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER);
@@ -300,7 +302,19 @@ export default async function seed({ container }: ExecArgs) {
   }
   logger.info(`✅ Child categories: ${childCategoriesCreated} created, ${childCategorySpecs.length} total with rank`);
 
-  // 8. Get or create test products (with product_type, category, tags)
+  // 7b. Get or create Guapo brand (Brand module)
+  logger.info("Checking brand...");
+  const brandService = container.resolve<BrandModuleService>(BRAND_MODULE);
+  let guapoBrand = (await brandService.listBrands({ handle: "guapo" }, { take: 1 }))[0];
+  if (!guapoBrand) {
+    const created = await brandService.createBrands([{ name: "Guapo", handle: "guapo" }]);
+    guapoBrand = Array.isArray(created) ? created[0] : created;
+    logger.info(`✅ Created brand: Guapo`);
+  } else {
+    logger.info(`✅ Using existing brand: Guapo`);
+  }
+
+  // 8. Get or create test products (with product_type, category, tags, brand link)
   logger.info("Checking test products...");
   const testProducts = [
     {
@@ -311,10 +325,10 @@ export default async function seed({ container }: ExecArgs) {
       product_type: "cleanser",
       category_name: "Cleansers",
       tag_values: ["normal", "combination", "hydration", "all-skin-types"],
-      metadata: { brand: "Guapo", primary_skin_type: "normal", primary_concern: "hydration" },
+      metadata: { primary_skin_type: "normal", primary_concern: "hydration" },
       sizes: [
-        { size: "150ml", dkk: 18900, eur: 2500, ean: "5701234001501" },
-        { size: "300ml", dkk: 29900, eur: 3900, ean: "5701234003004" },
+        { size: "150ml", dkk: 189, eur: 25, ean: "5701234001501" },
+        { size: "300ml", dkk: 299, eur: 39, ean: "5701234003004" },
       ],
     },
     {
@@ -325,8 +339,8 @@ export default async function seed({ container }: ExecArgs) {
       product_type: "serum",
       category_name: "Serums",
       tag_values: ["oily", "acne", "pigmentation"],
-      metadata: { brand: "Guapo", primary_skin_type: "oily", primary_concern: "acne" },
-      sizes: [{ size: "30ml", dkk: 24900, eur: 3300, ean: "5701234003005" }],
+      metadata: { primary_skin_type: "oily", primary_concern: "acne" },
+      sizes: [{ size: "30ml", dkk: 249, eur: 33, ean: "5701234003005" }],
     },
     {
       title: "Hydrating Moisturizer",
@@ -336,10 +350,10 @@ export default async function seed({ container }: ExecArgs) {
       product_type: "moisturizer",
       category_name: "Moisturizers",
       tag_values: ["dry", "hydration", "all-skin-types"],
-      metadata: { brand: "Guapo", primary_skin_type: "dry", primary_concern: "hydration" },
+      metadata: { primary_skin_type: "dry", primary_concern: "hydration" },
       sizes: [
-        { size: "50ml", dkk: 32900, eur: 4400, ean: "5701234005002" },
-        { size: "100ml", dkk: 54900, eur: 7300, ean: "5701234010006" },
+        { size: "50ml", dkk: 329, eur: 44, ean: "5701234005002" },
+        { size: "100ml", dkk: 549, eur: 73, ean: "5701234010006" },
       ],
     },
     {
@@ -350,8 +364,8 @@ export default async function seed({ container }: ExecArgs) {
       product_type: "SPF",
       category_name: "SPF",
       tag_values: ["sensitive", "all-skin-types"],
-      metadata: { brand: "Guapo", primary_skin_type: "sensitive" },
-      sizes: [{ size: "50ml", dkk: 27900, eur: 3700, ean: "5701234050003" }],
+      metadata: { primary_skin_type: "sensitive" },
+      sizes: [{ size: "50ml", dkk: 279, eur: 37, ean: "5701234050003" }],
     },
   ];
 
@@ -394,6 +408,7 @@ export default async function seed({ container }: ExecArgs) {
               ...(productData.metadata && Object.keys(productData.metadata).length > 0 && { metadata: productData.metadata }),
             },
           ],
+          additional_data: { brand_id: guapoBrand.id },
         },
       });
       const product = result[0];
@@ -406,6 +421,28 @@ export default async function seed({ container }: ExecArgs) {
       allProductsInOrder.push(product);
     }
   }
+  // Link existing products to Guapo brand (for products that were created before brand-link was added)
+  const query = container.resolve("query") as {
+    graph: (opts: { entity: string; fields: string[]; filters?: Record<string, unknown> }) => Promise<{ data: Array<{ id: string; brand?: { id: string } }> }>;
+  };
+  for (const product of allProductsInOrder) {
+    const { data: prods } = await query.graph({
+      entity: "product",
+      fields: ["id", "brand.*"],
+      filters: { id: product.id },
+    });
+    const p = prods?.[0];
+    if (p && !p.brand?.id) {
+      try {
+        await link.create([
+          { [Modules.PRODUCT]: { product_id: product.id }, [BRAND_MODULE]: { brand_id: guapoBrand.id } },
+        ]);
+      } catch {
+        // Link may already exist, ignore
+      }
+    }
+  }
+
   // Apply type, categories, and tags to all products via update (tags applied here to avoid create-path issues)
   for (let i = 0; i < testProducts.length; i++) {
     const productData = testProducts[i];

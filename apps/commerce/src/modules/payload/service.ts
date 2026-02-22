@@ -55,6 +55,8 @@ export default class PayloadModuleService {
     if (options.limit != null) merged.limit = String(options.limit)
     if (options.page != null) merged.page = String(options.page)
     if (options.sort != null) merged.sort = options.sort
+    if (options.locale != null) merged.locale = options.locale
+    if (options.fallbackLocale != null) merged['fallback-locale'] = options.fallbackLocale
     if (options.where != null) {
       Object.entries(options.where).forEach(([key, value]) => {
         if (value != null && typeof value === 'object' && !Array.isArray(value)) {
@@ -140,8 +142,9 @@ export default class PayloadModuleService {
     collection: string,
     id: string,
     data: PayloadUpsertData,
+    options: PayloadQueryOptions = {},
   ): Promise<PayloadItemResult<T>> {
-    const query = this.buildQuery({})
+    const query = this.buildQuery(options)
     const endpoint = `/${collection}/${id}${query}`
     const result = await this.makeRequest<PayloadItemResult<T>>(endpoint, {
       method: 'PATCH',

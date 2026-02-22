@@ -24,7 +24,7 @@ export function Newsletter({
   };
 
   return (
-    <section id="newsletter" className="py-10 bg-background">
+    <section id="newsletter" className="py-10 bg-white">
       <div className="container mx-auto px-4">
         <div className="max-w-xl mx-auto text-center">
           <h2 className="text-2xl font-semibold text-primary mb-2">

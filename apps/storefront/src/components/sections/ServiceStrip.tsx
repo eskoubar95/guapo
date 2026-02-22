@@ -37,7 +37,7 @@ const defaultServices: ServiceItem[] = [
 
 export function ServiceStrip({
   services = defaultServices,
-  backgroundColor = "bg-surface-muted/30",
+  backgroundColor = "bg-slate-50/30",
 }: ServiceStripProps) {
   return (
     <section className={`py-8 lg:py-10 ${backgroundColor}`}>
@@ -48,7 +48,7 @@ export function ServiceStrip({
             return (
               <div
                 key={index}
-                className="flex flex-col items-center text-center p-4 bg-card rounded-xl border border-border"
+                className="flex flex-col items-center text-center p-4 bg-white rounded-xl border border-border"
               >
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
                   <Icon className="h-6 w-6 text-primary" />

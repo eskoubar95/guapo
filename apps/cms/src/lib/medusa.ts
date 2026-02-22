@@ -41,6 +41,12 @@ export interface MedusaCategoryItem {
   name?: string
 }
 
+export interface MedusaBrandItem {
+  id: string
+  handle: string
+  name: string
+}
+
 /** GET /store/products and return { handle, title } for dropdowns */
 export async function fetchMedusaProducts(): Promise<MedusaProductItem[]> {
   const base = getBaseUrl()
@@ -163,51 +169,35 @@ export async function fetchMedusaProductTypes(): Promise<string[]> {
   return list
 }
 
-/** Brands: try GET /store/brands (custom commerce route) first, else aggregate from products metadata */
-export async function fetchMedusaBrands(): Promise<string[]> {
+/** Brands from GET /store/brands (Brand module). Returns { id, handle, name } per brand. */
+export async function fetchMedusaBrands(): Promise<MedusaBrandItem[]> {
   const base = getBaseUrl()
   if (!base) return []
-  const cached = getCached<string[]>('brands')
+  const cached = getCached<MedusaBrandItem[]>('brands')
   if (cached !== null) return cached
   try {
     const res = await fetch(`${base}/store/brands`, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(process.env.MEDUSA_PUBLISHABLE_API_KEY && {
+          'x-publishable-api-key': process.env.MEDUSA_PUBLISHABLE_API_KEY,
+        }),
+      },
       next: { revalidate: 300 },
     })
     if (res.ok) {
-      const json = (await res.json()) as { brands?: string[] }
-      const list = Array.isArray(json.brands) ? json.brands.filter((b) => typeof b === 'string') : []
+      const json = (await res.json()) as { brands?: Array<{ id?: string; handle?: string; name?: string }> }
+      const list = (json.brands ?? [])
+        .filter((b) => typeof b.handle === 'string' && b.handle.trim())
+        .map((b) => ({ id: b.id ?? '', handle: String(b.handle).trim(), name: b.name ?? b.handle ?? '' }))
       setCache('brands', list)
       return list
     }
   } catch {
     // fallthrough
   }
-  try {
-    const res = await fetch(
-      `${base}/store/products?limit=250&fields=metadata`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(process.env.MEDUSA_PUBLISHABLE_API_KEY && {
-            'x-publishable-api-key': process.env.MEDUSA_PUBLISHABLE_API_KEY,
-          }),
-        },
-      }
-    )
-    if (!res.ok) return []
-    const json = (await res.json()) as { products?: Array<{ metadata?: Record<string, unknown> }> }
-    const brands = new Set<string>()
-    for (const p of json.products ?? []) {
-      const b = p.metadata?.brand
-      if (typeof b === 'string' && b.trim()) brands.add(b.trim())
-    }
-    const list = Array.from(brands)
-    setCache('brands', list)
-    return list
-  } catch {
-    return []
-  }
+  setCache('brands', [])
+  return []
 }
 
 /**
@@ -239,11 +229,12 @@ export async function medusaCategoryHandleExists(handle: string | undefined): Pr
   return list.some((c) => c.handle === handle.trim())
 }
 
+/** brandKey must match Medusa brand handle. Returns true if Medusa unavailable (fail-open). */
 export async function medusaBrandKeyExists(brandKey: string | undefined): Promise<boolean> {
   if (!brandKey || !brandKey.trim()) return false
   const list = await fetchMedusaBrands()
   if (list.length === 0) return true
-  return list.some((b) => b === brandKey.trim())
+  return list.some((b) => b.handle === brandKey.trim())
 }
 
 export async function medusaProductTypeValueExists(value: string | undefined): Promise<boolean> {

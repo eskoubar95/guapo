@@ -61,12 +61,12 @@ export async function POST() {
       results.categories.created += 1
     }
 
-    // Sync brands
+    // Sync brands (brandKey = handle, displayName = name from Medusa Brand module)
     const brands = await fetchMedusaBrands()
     for (const b of brands) {
       const existing = await payload.find({
         collection: 'brands',
-        where: { brandKey: { equals: b } },
+        where: { brandKey: { equals: b.handle } },
         limit: 1,
       })
       if (existing.docs.length > 0) {
@@ -75,7 +75,7 @@ export async function POST() {
       }
       await payload.create({
         collection: 'brands',
-        data: { brandKey: b, displayName: b },
+        data: { brandKey: b.handle, displayName: b.name },
         overrideAccess: true,
       })
       results.brands.created += 1

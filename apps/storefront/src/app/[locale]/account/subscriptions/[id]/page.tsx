@@ -67,7 +67,7 @@ export default async function SubscriptionDetailPage({ params }: SubscriptionDet
       style: "currency",
       currency: "DKK",
       minimumFractionDigits: 0,
-    }).format(amount / 100);
+    }).format(amount);
   };
 
   const formatDate = (dateStr: string) => {

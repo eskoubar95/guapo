@@ -3,10 +3,13 @@ import { createPayloadItemsStep } from './steps/create-payload-items'
 
 export const syncPayloadBrandsWorkflow = createWorkflow(
   'sync-payload-brands',
-  (input: { items: Array<{ brandKey: string }> }) => {
+  (input: { items: Array<{ brandKey: string; displayName?: string }> }) => {
     const createData = transform({ input }, ({ input: i }) => ({
       collection: 'brands',
-      items: (i.items ?? []).map((b) => ({ brandKey: b.brandKey })),
+      items: (i.items ?? []).map((b) => ({
+        brandKey: b.brandKey,
+        displayName: b.displayName ?? b.brandKey,
+      })),
     }))
     const { items } = createPayloadItemsStep(createData)
     return new WorkflowResponse({ items })

@@ -69,7 +69,7 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
       style: "currency",
       currency,
       minimumFractionDigits: 0,
-    }).format(amount / 100);
+    }).format(amount);
   };
 
   const formatDate = (dateStr: string) => {

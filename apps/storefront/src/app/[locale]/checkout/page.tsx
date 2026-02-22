@@ -32,7 +32,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
       style: "currency",
       currency: "DKK",
       minimumFractionDigits: 0,
-    }).format(amount / 100);
+    }).format(amount);
   };
 
   return (

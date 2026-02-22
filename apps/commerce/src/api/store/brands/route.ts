@@ -1,26 +1,19 @@
 import type { MedusaRequest, MedusaResponse } from '@medusajs/framework/http'
-import { Modules } from '@medusajs/framework/utils'
+import { BRAND_MODULE } from '../../../modules/brand'
+import type BrandModuleService from '../../../modules/brand/service'
 
 /**
  * GET /store/brands
- * Returns distinct product.metadata.brand values for CMS/admin dropdowns.
- * Used by Payload CMS to populate brand lists without fetching all products.
+ * Returns brands from Brand module for CMS/storefront.
+ * Used by Payload CMS sync and storefront brand pages.
  */
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   try {
-    const productModule = req.scope.resolve(Modules.PRODUCT) as {
-      listProducts: (filters: Record<string, unknown>, config?: { take?: number; select?: string[] }) => Promise<Array<{ metadata?: Record<string, unknown> }>>
-    }
-    const products = await productModule.listProducts(
-      {},
-      { take: 500 }
-    )
-    const brands = new Set<string>()
-    for (const p of products ?? []) {
-      const b = p.metadata?.brand
-      if (typeof b === 'string' && b.trim()) brands.add(b.trim())
-    }
-    res.json({ brands: Array.from(brands) })
+    const brandService = req.scope.resolve<BrandModuleService>(BRAND_MODULE)
+    const brands = await brandService.listBrands({}, { take: 500 })
+    res.json({
+      brands: (brands ?? []).map((b) => ({ id: b.id, handle: b.handle, name: b.name })),
+    })
   } catch {
     res.json({ brands: [] })
   }
