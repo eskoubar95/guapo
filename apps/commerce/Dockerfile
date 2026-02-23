@@ -12,12 +12,15 @@ RUN npm install --legacy-peer-deps
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ENV NODE_ENV=production
 RUN npm run build
 
-# Production: full app from builder so .medusa/ and all runtime files are present
+# Production: full app from builder; fail build if admin was not built (Medusa expects .medusa/server/public/admin/index.html)
 FROM base AS runner
 ENV NODE_ENV=production
+ENV DISABLE_MEDUSA_ADMIN=false
 COPY --from=builder /app ./
+RUN test -f .medusa/server/public/admin/index.html || (echo "Admin build missing. Clear Railway build cache and redeploy." && exit 1)
 
 EXPOSE 9000
 CMD ["npm", "run", "start"]

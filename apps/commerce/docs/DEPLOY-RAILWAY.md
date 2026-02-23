@@ -24,6 +24,9 @@ Hvis du får **401 Unauthorized** på `/admin` og **ingen login-side**, skyldes 
 3. Redeploy. Derefter serveres admin-appen fra `.medusa`, og du får login-siden på `/admin`.
 4. Opret evt. admin-bruger mod samme DB: `DATABASE_URL="<staging-db>" npx medusa user -e din@email.com -p password` (kør fra `apps/commerce`).
 
+**Fejl: "Could not find index.html in the admin build directory"**  
+Serveren forventer admin-build i `.medusa/server/public/admin/`. Hvis du bruger Dockerfile, tjek: (1) at server-service virkelig bygger med **Dockerfile** (Settings → Build → Dockerfile), (2) at Root Directory er `apps/commerce`. Hvis build lykkes men containeren stadig fejler, **ryd Railway build cache** (Settings → Build → Clear build cache) og redeploy – så kører `medusa build` igen i builder-stage og genererer `.medusa`. Dockerfile’et validerer nu eksplicit at admin-filen findes; mangler den, fejler Docker-build med beskeden "Admin build missing. Clear Railway build cache and redeploy."
+
 ## Env: Server vs Worker
 
 **Begge services** skal have de samme fælles env vars (DB, Redis, secrets, Payload). Kun mode/admin adskiller.
