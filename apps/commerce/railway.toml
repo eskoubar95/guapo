@@ -1,0 +1,16 @@
+# Railway config for Medusa server (beauty-shop / CORE-21 pattern).
+# This service handles HTTP (API + optional admin).
+
+[build]
+builder = "NIXPACKS"
+# Clean build dir to avoid corrupted cache (same as beauty-shop)
+buildCommand = "rm -rf .medusa && npm run build"
+
+[deploy]
+startCommand = "npm run start"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+
+[deploy.environmentVariables]
+NODE_ENV = "production"
+MEDUSA_WORKER_MODE = "server"
