@@ -8,11 +8,10 @@ FROM base AS deps
 COPY package.json .npmrc* ./
 RUN npm install --legacy-peer-deps
 
-# Build: run medusa build so .medusa/ (incl. admin index.html) exists at runtime
+# Build: medusa build (no NODE_ENV=production here – Medusa then requires REDIS_URL/JWT_SECRET/COOKIE_SECRET at build time; Railway only provides them at runtime)
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ENV NODE_ENV=production
 RUN npm run build
 
 # Production: full app from builder; fail build if admin was not built (Medusa expects .medusa/server/public/admin/index.html)
