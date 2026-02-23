@@ -13,15 +13,54 @@ Both use the same repo (Root Directory: `apps/commerce`), same build, same start
 
 - **railway.toml** – server service. Nixpacks, clean `.medusa` then build, healthcheck `/health`, env `MEDUSA_WORKER_MODE=server`.
 - **railway-worker.toml** – worker service. Same build; no healthcheck; env `MEDUSA_WORKER_MODE=worker`, `DISABLE_MEDUSA_ADMIN=true`. In Railway, create a second service from the same repo (Root Directory: `apps/commerce`) and set the service’s config file to `railway-worker.toml` if your plan supports a custom config path; otherwise use the same `railway.toml` and set the worker env vars in the dashboard.
-- **Dockerfile** – alternative if you build with Docker; then the image includes `.medusa` and you can set `DISABLE_MEDUSA_ADMIN=false` to serve admin.
+- **Dockerfile** – use this for the **server** if you want the **Medusa Admin login page**. Nixpacks often does not include `.medusa` in the image, so with `railway.toml` you get 401 on `/admin` and no login UI. With Dockerfile the image contains the admin build; then set `DISABLE_MEDUSA_ADMIN=false` in Railway.
 
-## Env (both services)
+### Få login-siden frem (ikke bare 401 på /admin)
 
-- `REDIS_URL` – same Redis for event bus and workflow engine.
-- `DATABASE_URL` – Supabase (use pooler in production).
-- `JWT_SECRET`, `COOKIE_SECRET` – required in production.
-- Server only: `MEDUSA_WORKER_MODE=server` (optional).
-- Worker only: `MEDUSA_WORKER_MODE=worker`, `DISABLE_MEDUSA_ADMIN=true`.
+Hvis du får **401 Unauthorized** på `/admin` og **ingen login-side**, skyldes det at admin er slået fra i production (så serveren ikke serverer admin-SPA’en). For at få login-siden:
+
+1. **Byg serveren med Dockerfile** i stedet for Nixpacks: i Railway → server-service → **Settings** → **Build** → vælg at bruge **Dockerfile** (fx “Dockerfile Path” = `Dockerfile` eller “Builder” = Dockerfile). Root Directory forbliver `apps/commerce`.
+2. Sæt **`DISABLE_MEDUSA_ADMIN=false`** i server-service env.
+3. Redeploy. Derefter serveres admin-appen fra `.medusa`, og du får login-siden på `/admin`.
+4. Opret evt. admin-bruger mod samme DB: `DATABASE_URL="<staging-db>" npx medusa user -e din@email.com -p password` (kør fra `apps/commerce`).
+
+## Env: Server vs Worker
+
+**Begge services** skal have de samme fælles env vars (DB, Redis, secrets, Payload). Kun mode/admin adskiller.
+
+### Fælles (server + worker)
+
+| Env | Beskrivelse |
+|-----|-------------|
+| `NODE_ENV` | `production` (Railway sætter ofte selv) |
+| `DATABASE_URL` | Supabase Postgres (brug pooler i prod) |
+| `DATABASE_SCHEMA` | Valgfri, default `medusa` |
+| `REDIS_URL` | Samme Redis – event bus + workflow engine |
+| `JWT_SECRET` | Påkrævet i production |
+| `COOKIE_SECRET` | Påkrævet i production |
+| `PAYLOAD_SERVER_URL` | CMS URL (fx `https://cms.xxx.up.railway.app`) |
+| `PAYLOAD_API_KEY` | API key til Payload (sync/kald fra worker) |
+| `PAYLOAD_USER_COLLECTION` | Valgfri, default `users` |
+| `PAYLOAD_MEDUSA_SYNC_SECRET` | Valgfri, til sync-endpoints |
+
+Hvis I bruger S3/Supabase Storage til filer: `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_REGION`, evt. `S3_FILE_URL`.
+
+### Kun server
+
+| Env | Beskrivelse |
+|-----|-------------|
+| `MEDUSA_WORKER_MODE` | `server` (kan udelades – toml sætter det) |
+| `MEDUSA_BACKEND_URL` | Offentlig URL til Medusa API (til admin/cors) |
+| `STORE_CORS` | Tillatte origins for storefront (fx `https://store.xxx.up.railway.app`) |
+| `ADMIN_CORS` | Tillatte origins for admin |
+| `AUTH_CORS` | Tillatte origins for auth |
+
+### Kun worker
+
+| Env | Beskrivelse |
+|-----|-------------|
+| `MEDUSA_WORKER_MODE` | `worker` (skal sættes) |
+| `DISABLE_MEDUSA_ADMIN` | `true` (worker har ingen HTTP admin) |
 
 ## CORE-21 notes (Medusa v1 → v2)
 

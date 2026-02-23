@@ -1,5 +1,6 @@
 # Railway config for Medusa server (beauty-shop / CORE-21 pattern).
-# This service handles HTTP (API + optional admin).
+# Nixpacks build: serveren starter, men /admin giver 401 og ingen login-side (admin build inkluderes ikke).
+# For admin login-side: brug Dockerfile til server-service og sæt DISABLE_MEDUSA_ADMIN=false. Se docs/DEPLOY-RAILWAY.md.
 
 [build]
 builder = "NIXPACKS"
@@ -8,8 +9,8 @@ buildCommand = "rm -rf .medusa && npm run build"
 
 [deploy]
 startCommand = "npm run start"
-healthcheckPath = "/health"
-healthcheckTimeout = 300
+# Medusa has no built-in /health – healthcheck disabled so Dockerfile deploy can succeed.
+# Optional: add a custom GET /health route and set healthcheckPath here.
 
 [deploy.environmentVariables]
 NODE_ENV = "production"
