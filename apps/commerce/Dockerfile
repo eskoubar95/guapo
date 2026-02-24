@@ -4,12 +4,13 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies (matches Railway npm + .npmrc legacy-peer-deps)
-FROM base AS deps
+FROM base AS install-deps
 COPY package.json .npmrc* ./
 RUN npm install --legacy-peer-deps
 
 # Build: medusa build (no NODE_ENV=production here – Medusa then requires REDIS_URL/JWT_SECRET/COOKIE_SECRET at build time; Railway only provides them at runtime).
-COPY --from=deps /app/node_modules ./node_modules
+FROM base AS builder
+COPY --from=install-deps /app/node_modules ./node_modules
 COPY . .
 # MEDUSA_BACKEND_URL at build time so admin UI bakes in correct API URL (__BACKEND_URL__); set in Railway Variables and redeploy.
 ARG MEDUSA_BACKEND_URL
