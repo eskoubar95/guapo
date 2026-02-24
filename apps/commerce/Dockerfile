@@ -14,12 +14,13 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-# Production: full app from builder; fail build if admin was not built (Medusa expects .medusa/server/public/admin/index.html)
+# Production: build writes admin to dist/public/admin; runtime loader expects public/admin – copy and validate
 FROM base AS runner
 ENV NODE_ENV=production
 ENV DISABLE_MEDUSA_ADMIN=false
 COPY --from=builder /app ./
-RUN test -f .medusa/server/public/admin/index.html || (echo "Admin build missing. Clear Railway build cache and redeploy." && exit 1)
+RUN test -f dist/public/admin/index.html || (echo "Admin build missing. Clear Railway build cache and redeploy." && exit 1) \
+  && mkdir -p public && cp -r dist/public/admin public/
 
 EXPOSE 9000
 CMD ["npm", "run", "start"]
