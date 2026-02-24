@@ -4,6 +4,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { fetchMedusaBrands } from "@/lib/medusa-brands";
 
+// Avoid build-time fetch to Medusa (unreachable or slow in CI/Railway)
+export const dynamic = "force-dynamic";
+
 interface BrandsPageProps {
   params: Promise<{ locale: string }>;
 }

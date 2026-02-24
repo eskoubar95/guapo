@@ -6,6 +6,9 @@ import type { Metadata } from "next";
 import { Card, CardContent } from "@/components/ui/card";
 import { fetchTopLevelCategories } from "@/lib/medusa-categories";
 
+// Avoid build-time fetch to Medusa (unreachable or slow in CI/Railway)
+export const dynamic = "force-dynamic";
+
 interface CategoriesPageProps {
   params: Promise<{ locale: string }>;
 }
