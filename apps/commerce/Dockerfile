@@ -8,8 +8,10 @@ FROM base AS deps
 COPY package.json .npmrc* ./
 RUN npm install --legacy-peer-deps
 
-# Build: medusa build (no NODE_ENV=production here – Medusa then requires REDIS_URL/JWT_SECRET/COOKIE_SECRET at build time; Railway only provides them at runtime)
-FROM base AS builder
+# Build: medusa build (no NODE_ENV=production here – Medusa then requires REDIS_URL/JWT_SECRET/COOKIE_SECRET at build time; Railway only provides them at runtime).
+# MEDUSA_BACKEND_URL must be set at build time so admin UI bakes in the correct API URL (__BACKEND_URL__); otherwise login calls go to localhost.
+ARG MEDUSA_BACKEND_URL
+ENV MEDUSA_BACKEND_URL=${MEDUSA_BACKEND_URL}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
