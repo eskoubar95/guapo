@@ -25,7 +25,7 @@ export default async function inviteEmailHandler({
     config.admin?.backendUrl && config.admin.backendUrl !== "/"
       ? config.admin.backendUrl.replace(/\/$/, "")
       : "http://localhost:9000";
-  const adminPath = config.admin?.path ?? "app";
+  const adminPath = (config.admin?.path ?? "/app").replace(/^\//, "");
   const inviteUrl = `${backendUrl}/${adminPath}/invite?token=${invite.token}`;
 
   const subject = `You've been invited to join ${STORE_NAME}`;
