@@ -57,6 +57,10 @@ Hvis I bruger S3/Supabase Storage til filer: `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, 
 | `STORE_CORS` | Tillatte origins for storefront (fx `https://store.xxx.up.railway.app`) |
 | `ADMIN_CORS` | Tillatte origins for admin |
 | `AUTH_CORS` | Tillatte origins for auth |
+| `PLUNK_SECRET_KEY` | Plunk secret key (sk_*) for transactional email – [Next API](https://next-wiki.useplunk.com/) |
+| `PLUNK_FROM_EMAIL` | Sender email (verified domain i Plunk). Påkrævet for at sende mails. |
+| `PLUNK_FROM_NAME` | Valgfri afsender-navn (fx Guapo). |
+| `PLUNK_STORE_NAME` | Valgfri butiksnavn i invite-mail (default: Guapo). |
 
 **"Failed to fetch" på login:** Hvis login-siden vises men "Continue with Email" giver "Failed to fetch", sender admin-UI’en kald til den URL som `MEDUSA_BACKEND_URL` peger på. Er den ikke sat (eller er den `http://localhost:9000`), forsøger browseren at kalde localhost fra din maskine → fejl. Sæt på **server**-service: `MEDUSA_BACKEND_URL=${{RAILWAY_STATIC_URL}}` (eller den fulde URL, fx `https://guapo-server-staging.up.railway.app`). `AUTH_CORS` og `ADMIN_CORS` skal inkludere samme origin (fx også `${{RAILWAY_STATIC_URL}}`).
 
