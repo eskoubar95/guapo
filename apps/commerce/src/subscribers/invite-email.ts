@@ -42,7 +42,9 @@ export default async function inviteEmailHandler({
     body,
   });
 
-  if (!result.success) {
+  if (result.success) {
+    console.info("[invite-email] Invite email sent to", invite.email);
+  } else {
     console.error("[invite-email] Plunk send failed:", result.error);
   }
 }

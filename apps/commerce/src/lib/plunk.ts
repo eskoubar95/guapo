@@ -29,7 +29,7 @@ export type PlunkSendResult = {
 export async function sendPlunkEmail(options: PlunkSendOptions): Promise<PlunkSendResult> {
   const secretKey = process.env.PLUNK_SECRET_KEY;
   if (!secretKey) {
-    console.warn("[Plunk] PLUNK_SECRET_KEY not set; skipping email.");
+    console.warn("[Plunk] PLUNK_SECRET_KEY not set; skipping email. Set it in Railway Variables (server) or .env.");
     return { success: false, error: { code: "NO_KEY", message: "PLUNK_SECRET_KEY not set" } };
   }
 

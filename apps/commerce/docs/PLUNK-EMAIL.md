@@ -26,6 +26,15 @@ Transactional emails via [Plunk](https://useplunk.com/) using the **Next API** (
   Subscriber: `src/subscribers/invite-email.ts` (events: `invite.created`, `invite.resent`).  
   Klient: `src/lib/plunk.ts`.
 
+## Fejlfinding: "Ingen mail sendt"
+
+- **HTTP 200 på resend** betyder kun, at Medusa modtog anmodningen – ikke at Plunk sendte mailen.
+- Tjek **Railway → server → Deploy logs / Application logs** (ikke kun HTTP Logs). Søg efter:
+  - `[Plunk] PLUNK_SECRET_KEY not set` → sæt **PLUNK_SECRET_KEY** (sk_*) i Railway Variables.
+  - `[invite-email] Plunk send failed` → se fejldetaljer (fx 401 = forkert key, 422 = from mangler eller ugyldig).
+  - `[invite-email] Invite email sent to ...` → mailen blev sendt til Plunk.
+- På Railway skal **server**-service have: **PLUNK_SECRET_KEY** og **PLUNK_FROM_EMAIL** (verificeret domain i Plunk). Redeploy efter ændring af Variables.
+
 ## Fremtidige mails
 
 - Order confirmation, subscription reminders m.m. kan tilføjes via flere subscribers eller workflows der kalder `sendPlunkEmail()` fra `src/lib/plunk.ts`.
