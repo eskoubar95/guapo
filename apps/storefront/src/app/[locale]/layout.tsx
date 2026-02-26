@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { locales, type Locale } from "@/i18n/config";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { AuthProvider } from "@/contexts/AuthContext";
 import "../globals.css";
 
 const inter = Inter({
@@ -45,9 +46,11 @@ export default async function LocaleLayout({
         className={`${inter.variable} font-sans antialiased bg-white text-foreground flex min-h-screen flex-col`}
         suppressHydrationWarning
       >
-        <Header locale={locale} />
-        <main className="flex-1">{children}</main>
-        <Footer locale={locale} />
+        <AuthProvider>
+          <Header locale={locale} />
+          <main className="flex-1">{children}</main>
+          <Footer locale={locale} />
+        </AuthProvider>
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
 import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import { AccountLayout } from "@/components/AccountLayout";
+import { AccountGate } from "@/components/AccountGate";
 
 interface AccountLayoutWrapperProps {
   children: React.ReactNode;
@@ -24,7 +25,7 @@ export default async function AccountLayoutWrapper({
         subscriptions: dict.account.subscriptions,
       }}
     >
-      {children}
+      <AccountGate locale={locale}>{children}</AccountGate>
     </AccountLayout>
   );
 }
