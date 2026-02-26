@@ -1,4 +1,5 @@
 import { defineConfig } from "@medusajs/framework/utils";
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
 
 /**
  * Medusa Configuration for Guapo Commerce
@@ -70,6 +71,27 @@ modules.push(
       apiKey: process.env.PAYLOAD_API_KEY || '',
       userCollection: process.env.PAYLOAD_USER_COLLECTION || 'users',
       syncSecret: process.env.PAYLOAD_MEDUSA_SYNC_SECRET || undefined,
+    },
+  },
+  {
+    resolve: "@medusajs/medusa/auth",
+    dependencies: [Modules.CACHE, ContainerRegistrationKeys.LOGGER],
+    options: {
+      providers: [
+        {
+          resolve: "@medusajs/medusa/auth-emailpass",
+          id: "emailpass",
+        },
+        {
+          resolve: "@medusajs/medusa/auth-google",
+          id: "google",
+          options: {
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            callbackUrl: process.env.GOOGLE_CALLBACK_URL,
+          },
+        },
+      ],
     },
   }
 );
