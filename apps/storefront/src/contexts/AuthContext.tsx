@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { medusa } from "@/lib/medusa";
 
 type Customer = { id: string; email?: string | null; first_name?: string | null; last_name?: string | null; [k: string]: unknown };
@@ -18,23 +18,34 @@ const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
+  const requestVersionRef = useRef(0);
 
   const refetch = useCallback(async () => {
+    const requestVersion = ++requestVersionRef.current;
+    setLoading(true);
     try {
       const { customer: c } = await medusa.store.customer.retrieve();
-      setCustomer((c ?? null) as unknown as Customer | null);
+      if (requestVersion === requestVersionRef.current) {
+        setCustomer((c ?? null) as unknown as Customer | null);
+      }
     } catch {
-      setCustomer(null);
+      if (requestVersion === requestVersionRef.current) {
+        setCustomer(null);
+      }
     } finally {
-      setLoading(false);
+      if (requestVersion === requestVersionRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
   const signOut = useCallback(async () => {
+    requestVersionRef.current += 1;
     try {
       await medusa.auth.logout();
     } finally {
       setCustomer(null);
+      setLoading(false);
     }
   }, []);
 
@@ -56,13 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth(): AuthState {
   const ctx = useContext(AuthContext);
   if (!ctx) {
-    return {
-      customer: null,
-      loading: true,
-      isAuthenticated: false,
-      refetch: async () => {},
-      signOut: async () => {},
-    };
+    throw new Error("useAuth must be used within AuthProvider");
   }
   return ctx;
 }

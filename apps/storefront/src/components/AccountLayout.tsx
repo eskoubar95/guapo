@@ -9,6 +9,7 @@ export interface AccountLayoutLabels {
   overview: string;
   orders: string;
   subscriptions: string;
+  loading: string;
 }
 
 interface AccountLayoutProps {

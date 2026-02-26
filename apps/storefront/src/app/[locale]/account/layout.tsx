@@ -23,9 +23,12 @@ export default async function AccountLayoutWrapper({
         overview: dict.account.overview,
         orders: dict.account.orders,
         subscriptions: dict.account.subscriptions,
+        loading: dict.account.loading,
       }}
     >
-      <AccountGate locale={locale}>{children}</AccountGate>
+      <AccountGate locale={locale} loadingLabel={dict.account.loading}>
+        {children}
+      </AccountGate>
     </AccountLayout>
   );
 }

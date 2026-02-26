@@ -186,6 +186,7 @@
     "errorLogin": "Kunne ikke logge ind. Tjek email og adgangskode.",
     "noAccount": "Har du ikke en konto?",
     "registerLink": "Opret konto",
+    "orDivider": "eller",
     "registerTitle": "Opret konto",
     "firstName": "Fornavn",
     "lastName": "Efternavn",
@@ -201,7 +202,8 @@
     "subscriptions": "Abonnementer",
     "profile": "Profil",
     "addresses": "Adresser",
-    "signOut": "Log ud"
+    "signOut": "Log ud",
+    "loading": "Indlæser…"
   },
   "orderConfirmation": {
     "title": "Tak for din ordre!",

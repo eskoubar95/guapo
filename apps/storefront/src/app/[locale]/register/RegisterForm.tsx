@@ -37,6 +37,7 @@ export function RegisterForm({ locale, labels }: RegisterFormProps) {
     setError(null);
     setLoading(true);
     try {
+      let shouldCreateCustomer = true;
       try {
         await medusa.auth.register("customer", "emailpass", { email, password });
       } catch (err: unknown) {
@@ -55,12 +56,15 @@ export function RegisterForm({ locale, labels }: RegisterFormProps) {
           setLoading(false);
           return;
         }
+        shouldCreateCustomer = false;
       }
-      await medusa.store.customer.create({
-        first_name: firstName,
-        last_name: lastName,
-        email,
-      });
+      if (shouldCreateCustomer) {
+        await medusa.store.customer.create({
+          first_name: firstName,
+          last_name: lastName,
+          email,
+        });
+      }
       router.push(`/${locale}/account`);
       router.refresh();
     } catch {

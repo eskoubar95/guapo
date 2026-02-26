@@ -183,6 +183,7 @@ export interface Dictionary {
     errorLogin: string;
     noAccount: string;
     registerLink: string;
+    orDivider: string;
     registerTitle: string;
     firstName: string;
     lastName: string;
@@ -199,6 +200,7 @@ export interface Dictionary {
     profile: string;
     addresses: string;
     signOut: string;
+    loading: string;
   };
   orderConfirmation: {
     title: string;

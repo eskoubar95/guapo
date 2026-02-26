@@ -16,6 +16,7 @@ type AuthLabels = {
   errorLogin: string;
   noAccount: string;
   registerLink: string;
+  orDivider: string;
 };
 
 interface LoginFormProps {
@@ -59,7 +60,8 @@ export function LoginForm({ locale, labels }: LoginFormProps) {
     setError(null);
     setGoogleLoading(true);
     try {
-      const result = await medusa.auth.login("customer", "google", {});
+      const callbackUrl = typeof window !== "undefined" ? `${window.location.origin}/${locale}/auth/google/callback` : "";
+      const result = await medusa.auth.login("customer", "google", callbackUrl ? { callback_url: callbackUrl } : {});
       if (typeof result === "object" && result.location) {
         window.location.href = result.location;
         return;
@@ -112,7 +114,7 @@ export function LoginForm({ locale, labels }: LoginFormProps) {
 
       <div className="relative">
         <span className="bg-background relative z-10 flex justify-center px-2 text-sm text-muted-foreground">
-          {locale === "da" ? "eller" : "or"}
+          {labels.orDivider}
         </span>
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t border-border" />

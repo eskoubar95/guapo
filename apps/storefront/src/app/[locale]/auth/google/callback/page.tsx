@@ -37,10 +37,12 @@ export default function GoogleCallbackPage() {
         const decoded = decodeJwtPayload(token);
         const shouldCreateCustomer = !decoded.actor_id || decoded.actor_id === "";
 
-        if (shouldCreateCustomer && decoded.user_metadata?.email) {
-          await medusa.store.customer.create({
-            email: decoded.user_metadata.email as string,
-          });
+        if (shouldCreateCustomer) {
+          const email = typeof decoded.user_metadata?.email === "string" ? decoded.user_metadata.email : "";
+          if (!email) {
+            throw new Error("Missing email in Google callback payload");
+          }
+          await medusa.store.customer.create({ email });
           await medusa.auth.refresh();
         }
 

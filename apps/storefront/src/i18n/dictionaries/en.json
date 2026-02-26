@@ -186,6 +186,7 @@
     "errorLogin": "Could not sign in. Check email and password.",
     "noAccount": "Don't have an account?",
     "registerLink": "Create account",
+    "orDivider": "or",
     "registerTitle": "Create account",
     "firstName": "First name",
     "lastName": "Last name",
@@ -201,7 +202,8 @@
     "subscriptions": "Subscriptions",
     "profile": "Profile",
     "addresses": "Addresses",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "loading": "Loading…"
   },
   "orderConfirmation": {
     "title": "Thank you for your order!",
