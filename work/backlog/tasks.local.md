@@ -863,6 +863,67 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** S
 
+## Task: t9.7
+
+**Description:** Stripe recurring: betalingsmetode til abonnement (mandate/setup) ved subscription-checkout; gem token til genbrug ved renewal.
+
+**Workspace:** apps/commerce, apps/storefront
+
+**Status:** backlog
+
+**Tags:** payments, subscription, integration
+
+**Milestone:** M9
+
+**Dependencies:** t9.1, t9.3
+
+**Acceptance:**
+- Subscription-checkout understøtter Stripe mandate/setup for recurring.
+- Betalingsmetode gemmes til renewal (token/customer payment method).
+
+**Estimate:** L
+
+## Task: t9.8
+
+**Description:** Stripe subscription renewal: håndter renewal charge (webhook/cron); opret order ved success; håndter failed + retry/recovery (2 retries over 3 dage pr. spec).
+
+**Workspace:** apps/commerce
+
+**Status:** backlog
+
+**Tags:** payments, subscription, backend
+
+**Milestone:** M9
+
+**Dependencies:** t9.4
+
+**Acceptance:**
+- Renewal charge udløses (webhook eller cron) for aktive abonnementer.
+- Ved success: ny order oprettes.
+- Ved failure: retry/recovery (2 forsøg over 3 dage); subscription on hold ved vedvarende fejl.
+
+**Estimate:** L
+
+## Task: t9.9
+
+**Description:** Staging gate: mindst én renewal simulation gennemført i staging (validering af recurring flow).
+
+**Workspace:** .
+
+**Status:** backlog
+
+**Tags:** subscription, gate
+
+**Milestone:** M9
+
+**Dependencies:** t9.8
+
+**Acceptance:**
+- Fuldt renewal-flow (charge → order) kørt i staging med test-kort.
+- Retry/recovery eller on-hold adfærd dokumenteret eller verificeret.
+
+**Estimate:** M
+
 ## M10 — Shipmondo Shipping
 
 ## Task: t10.1
