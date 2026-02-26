@@ -100,9 +100,9 @@ This log captures **actual decisions** made during specification and delivery. K
 - **Where**: `spec/04-open-questions.md`, `spec/08-infrastructure.md`
 
 ## 2026-01-26 — Payment methods required in MVP (DK)
-- **Decision**: MVP must support cards, Apple Pay, Google Pay, MobilePay, and Klarna (via Adyen).
+- **Decision**: MVP must support cards, Apple Pay, Google Pay, MobilePay, and Klarna (via Stripe).
 - **Why**: Reduce checkout friction in Denmark and cover expected payment preferences.
-- **Consequences**: Must confirm Adyen configuration/contract supports each method; may impact delivery timeline.
+- **Consequences**: Must confirm Stripe configuration supports each method when enabled; may impact delivery timeline.
 - **Where**: `spec/00-root-spec.md`, `spec/04-open-questions.md`, `spec/08-infrastructure.md`
 
 ## 2026-01-26 — Guest checkout allowed
@@ -254,7 +254,7 @@ This log captures **actual decisions** made during specification and delivery. K
 
 ## 2026-01-26 — Environment strategy (MVP)
 - **Decision**: Use staging + production environments (plus local development).
-- **Why**: Safely validate Adyen, subscriptions, and shipping integrations before release.
+- **Why**: Safely validate Stripe, subscriptions, and shipping integrations before release.
 - **Consequences**: Requires separate Railway services/env vars (or separate Railway environments) and separate Supabase projects or schema strategy for staging.
 - **Where**: `spec/08-infrastructure.md`, `spec/06-acceptance.md`
 
@@ -270,7 +270,7 @@ This log captures **actual decisions** made during specification and delivery. K
 - **Consequences**: Carrier/service availability must be configured correctly in Shipmondo.
 - **Where**: `spec/00-root-spec.md`, `spec/04-open-questions.md`
 
-## 2026-01-26 — Adyen risk/3DS and refund operations (MVP)
+## 2026-01-26 — Payment provider risk/3DS and refund operations (MVP)
 - **Decision**:
   - 3DS: risk-based (default) to optimize conversion.
   - Refunds: performed by customer support in Medusa admin/backoffice (partial refunds supported).
@@ -372,8 +372,8 @@ This log captures **actual decisions** made during specification and delivery. K
 - **Consequences**: Requires consent-aware capture and safe storage in order metadata.
 - **Where**: `spec/04-open-questions.md`, `spec/08-infrastructure.md`
 
-## 2026-01-26 — Adyen capability checks as staging gate
-- **Decision**: Adyen recurring capability confirmation and payment method availability confirmation are treated as **staging acceptance gates**, not /spec/plan blockers.
+## 2026-01-26 — Stripe capability checks as staging gate
+- **Decision**: Stripe recurring capability confirmation and payment method availability confirmation are treated as **staging acceptance gates**, not /spec/plan blockers.
 - **Why**: Allows planning to proceed while still enforcing validation before release.
 - **Consequences**: Must be explicitly tested in staging before shipping.
 - **Where**: `spec/04-open-questions.md`, `spec/06-acceptance.md`

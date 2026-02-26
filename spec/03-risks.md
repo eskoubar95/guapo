@@ -39,4 +39,4 @@ This document lists risks that are already visible at the /spec/init stage. It i
 - **Google OAuth credentials**: Google Cloud Console setup required; callback URL must match deployed storefront URL (staging/production).
 - **Stripe DK payment methods**: MobilePay via Stripe requires separate setup/approval; Klarna via Stripe is available but must be enabled. Card payments are primary for MVP.
 - **Shipmondo API availability**: Custom fulfillment provider requires robust error handling; parcel-shop data can be unstable or rate-limited.
-- **Payment provider change (Adyen → Stripe)**: Subscription recurring billing and method availability (MobilePay, Klarna) differ; Stripe subscription lifecycle vs Medusa-managed subscriptions must be aligned.
+- **Payment provider (Stripe)**: Subscription recurring billing and method availability (MobilePay, Klarna when enabled) must be confirmed for DK; Stripe subscription lifecycle vs Medusa-managed subscriptions must be aligned.

@@ -247,8 +247,8 @@ export function CheckoutSteps({
             <div className="mt-4 rounded-lg border border-dashed border-border bg-muted/30 p-6 text-center">
               <p className="text-muted-foreground">
                 {locale === "da"
-                  ? "Adyen betalingsmodul integreres her"
-                  : "Adyen payment module will be integrated here"}
+                  ? "Stripe betalingsmodul integreres her"
+                  : "Stripe payment module will be integrated here"}
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
                 {locale === "da"
