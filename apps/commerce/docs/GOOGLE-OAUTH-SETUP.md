@@ -18,7 +18,7 @@ Denne guide beskriver, hvordan du opretter **GOOGLE_CLIENT_ID**, **GOOGLE_CLIENT
 2. Vælg **External** (eller Internal hvis kun G Suite-brugere).
 3. Udfyld **App name** (fx "Guapo"), **User support email**, **Developer contact** – gem.
 4. I venstremenuen: **APIs & Services** → **Library**.
-5. Søg efter **Google+ API** eller **Google Identity** – eller brug **Credentials** direkte; OAuth 2.0 bruger ofte "Google Identity"-scopes. For “Log ind med Google” er det typisk nok at oprette OAuth 2.0 Client ID (næste trin).
+5. Søg efter **Google Identity Services** (eller **People API** ved profil/kontakt-scopes) – eller gå direkte til **Credentials**; OAuth 2.0 bruger ofte OpenID-scopes (email, profile). For “Log ind med Google” er det typisk nok at oprette OAuth 2.0 Client ID (næste trin).
 
 ---
 
