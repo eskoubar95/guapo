@@ -31,6 +31,12 @@ This document lists risks that are already visible at the /spec/init stage. It i
 - **Observability gaps**: Without Sentry + alerting, payment/subscription issues can go unnoticed and hurt revenue and trust.
 
 ## Delivery risks
-- **Time-to-market**: 1–2 months leaves limited slack for unknowns (Adyen subscription setup, CMS modeling, SEO rules, Qogita investigation).
+- **Time-to-market**: 1–2 months leaves limited slack for unknowns (Stripe subscription setup, CMS modeling, SEO rules, Qogita investigation).
 - **Integration surface area**: Multiple systems (commerce backend + CMS + payment provider) increases integration failure modes early.
 - **Figma export code quality**: Figma-generated code often has redundancy, weak modularization, and hardcoded values. Mitigation: dedicated refactoring toward `spec/07-design-system.md` (tokens, component rules) and reuse of existing storefront data flows (Medusa/CMS).
+
+## Auth, payment & shipping risks (M8, M9, M10)
+- **Google OAuth credentials**: Google Cloud Console setup required; callback URL must match deployed storefront URL (staging/production).
+- **Stripe DK payment methods**: MobilePay via Stripe requires separate setup/approval; Klarna via Stripe is available but must be enabled. Card payments are primary for MVP.
+- **Shipmondo API availability**: Custom fulfillment provider requires robust error handling; parcel-shop data can be unstable or rate-limited.
+- **Payment provider change (Adyen → Stripe)**: Subscription recurring billing and method availability (MobilePay, Klarna) differ; Stripe subscription lifecycle vs Medusa-managed subscriptions must be aligned.

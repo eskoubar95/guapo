@@ -50,8 +50,8 @@ Buying skincare is overwhelming without guidance. Customers want:
 - Support: FAQ + contact entry point
 
 ### 6.4 Payments (Denmark)
-- Provider: Adyen
-- Payment methods: cards, Apple Pay, Google Pay, MobilePay, Klarna
+- Provider: Stripe
+- Payment methods: cards (primary); Apple Pay, Google Pay, MobilePay, Klarna when enabled in Stripe
 
 ### 6.5 Shipping & returns (Denmark)
 - Shipping via Shipmondo

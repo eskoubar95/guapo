@@ -82,13 +82,11 @@ Milestones are the execution backbone for the MVP. Each milestone has a clear ob
 
 ## M5 — Integrations + gates + launch readiness
 
-**Objective:** Integrate Adyen/Shipmondo/Plunk + consent/analytics + SEO/structured data and satisfy launch/staging gates.
+**Objective:** Integrate Plunk + consent/analytics + SEO/structured data and satisfy launch/staging gates. (Payment: M9 Stripe. Shipping: M10 Shipmondo.)
 
 **In scope:**
-- Adyen integration baseline + method availability staging gate
-- Subscription recurring billing validation plan + renewal simulation in staging
-- Shipmondo parcel shop (GLS + DAO) + 39 DKK flat rate
 - Plunk transactional emails (order + subscription notifications)
+- Subscription recurring billing validation plan + renewal simulation in staging (Stripe; see M9)
 - Consent manager + PostHog + pixels + UTM storage in order metadata
 - SEO: sitemap.xml + structured data (Product/Breadcrumb/Org/WebSite/Article/FAQ)
 - Observability: Sentry + basic alerting plan for payment/subscription issues
@@ -151,3 +149,60 @@ Milestones are the execution backbone for the MVP. Each milestone has a clear ob
 - Lokalisation/SEO i CMS er besluttet og (hvis relevant) implementeret eller dokumenteret med konkrete tasks
 - Payload-plugins er undersøgt og anbefaling er skrevet ned (evt. i spec eller work/backlog)
 - Medusa har korrekte product_type, kategorier, tags og metadata (brand + primary tags); dokumentation for handle-baserede links mellem CMS og Medusa findes
+
+## M8 — Customer Authentication
+
+**Objective:** Kunder kan oprette konto (email/password) og logge ind med email eller Google. Auth-gated routes virker.
+
+**In scope:**
+- Medusa Auth module konfigureret (emailpass + Google providers)
+- Login- og register-sider i storefront
+- Google social login flow (redirect → callback → validering via Medusa)
+- Auth state management (session/JWT, auth context/hook, beskyttede routes)
+- Account-området wiret med sign out, kundedata, redirect til login
+
+**Out of scope:**
+- Andre social providers (Apple, Microsoft, GitHub) end Google
+
+**Exit criteria:**
+- Kunder kan registrere og logge ind med email/password
+- Kunder kan logge ind med Google
+- Account-sider er auth-gated; sign out virker
+
+## M9 — Stripe Payments
+
+**Objective:** Kunder kan betale med kort via Stripe i checkout. Stripe erstatter Adyen som payment provider.
+
+**In scope:**
+- Stripe Payment Module registreret i Medusa
+- Stripe aktiveret i Denmark-regionen
+- Stripe PaymentElement i storefront checkout
+- Stripe webhook endpoint for deployed miljø
+- Spec-filer opdateret (Adyen → Stripe)
+
+**Out of scope:**
+- MobilePay/Klarna via Stripe (kan tilføjes senere)
+- Subscription recurring via Stripe (planlægges separat)
+
+**Exit criteria:**
+- End-to-end betaling med test-kort virker i staging
+- Webhook håndterer payment events (succeeded, failed, refunded)
+
+## M10 — Shipmondo Shipping
+
+**Objective:** Kunder kan vælge GLS/DAO pakkeshop ved checkout. Shipping koster 39 DKK flat rate. Labels kan genereres.
+
+**In scope:**
+- Shipmondo API research og dokumentation
+- Custom Fulfillment Module Provider (validateOption, calculatePrice, createFulfillment, getFulfillmentDocuments)
+- Shipmondo provider registreret i Medusa
+- Pakkeshop-valg i storefront checkout (søgning, kort/liste, gem valgt)
+
+**Out of scope:**
+- Andre carriers end GLS + DAO parcel shop
+- Hjemlevering (kun pakkeshop i MVP)
+
+**Exit criteria:**
+- Pakkeshop kan vælges ved checkout
+- Flat rate 39 DKK anvendt
+- Fulfillment/label-flow testet end-to-end

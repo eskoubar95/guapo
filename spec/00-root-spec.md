@@ -50,8 +50,8 @@ Out of scope (explicit):
 - **Commerce flow**: cart, checkout, order confirmation
 - **Accounts**: login/account + order history
 - **Payments + shipping (DK)**:
-  - Payment provider integration (Adyen)
-  - Payment methods in MVP: cards, Apple Pay, Google Pay, MobilePay, Klarna
+  - Payment provider: Stripe (replaces Adyen)
+  - Payment methods in MVP: cards via Stripe; Apple Pay, Google Pay when enabled in Stripe; MobilePay/Klarna optional via Stripe
   - Guest checkout is allowed for one-time purchases; **subscriptions require an account**
   - Shipping via Shipmondo (carrier selection via Shipmondo; MVP: parcel shop only)
   - Shipping carriers (MVP): GLS + DAO

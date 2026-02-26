@@ -416,7 +416,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** .
 
-**Status:** backlog
+**Status:** cancelled
 
 **Tags:** payments, integration, gate
 
@@ -430,13 +430,15 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** L
 
+**Notes:** Replaced by M9 (Stripe). See t9.1–t9.6.
+
 ## Task: t5.2
 
 **Description:** Subscriptions recurring billing validation plan + renewal simulation in staging (staging gate).
 
 **Workspace:** .
 
-**Status:** backlog
+**Status:** cancelled
 
 **Tags:** subscriptions, payments, gate
 
@@ -450,13 +452,15 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** L
 
+**Notes:** Replaced by M9 (Stripe). Recurring billing validation will use Stripe; see t9.x.
+
 ## Task: t5.3
 
 **Description:** Shipmondo integration: parcel shop + GLS/DAO + 39 DKK flat rate.
 
 **Workspace:** .
 
-**Status:** backlog
+**Status:** cancelled
 
 **Tags:** shipping, integration
 
@@ -469,6 +473,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Flat rate shipping is 39 DKK.
 
 **Estimate:** L
+
+**Notes:** Replaced by M10. See t10.1–t10.5.
 
 ## Task: t5.4
 
@@ -489,6 +495,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Subscription notification emails are mapped (renewal upcoming, payment failed/recovered, pause/skip/cancel confirmations).
 
 **Estimate:** M
+
+**Notes:** Linear: GUA-81
 
 ## Task: t5.5
 
@@ -512,6 +520,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** L
 
+**Notes:** Linear: GUA-82
+
 ## Task: t5.6
 
 **Description:** SEO: `sitemap.xml` + structured data (Product, BreadcrumbList, Organization, WebSite+SearchAction, Article, FAQPage).
@@ -532,6 +542,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** L
 
+**Notes:** Linear: GUA-83
+
 ## Task: t5.7
 
 **Description:** Observability baseline: Sentry + payment/subscription alerting plan.
@@ -551,6 +563,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Basic alerting thresholds are defined for elevated payment failures and subscriptions on hold.
 
 **Estimate:** M
+
+**Notes:** Linear: GUA-84
 
 ## Task: t5.8
 
@@ -575,6 +589,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** M
 
+**Notes:** Linear: GUA-85
+
 ## Task: t5.9
 
 **Description:** Launch gate: DK subscription compliance review (copy/policies).
@@ -592,6 +608,346 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Checkout/policy copy updated accordingly.
 
 **Estimate:** S
+
+**Notes:** Linear: GUA-86
+
+## M8 — Customer Authentication
+
+## Task: t8.1
+
+**Description:** Konfigurer Medusa Auth module i medusa-config.ts (emailpass + Google providers) + env vars (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL).
+
+**Workspace:** apps/commerce
+
+**Status:** backlog
+
+**Tags:** auth, backend, infrastructure
+
+**Milestone:** M8
+
+**Acceptance:**
+- Auth module med emailpass og google providers er tilføjet i medusa-config.ts.
+- Env var-navne er dokumenteret i env.template.
+
+**Estimate:** S
+
+## Task: t8.2
+
+**Description:** Byg Login-side i storefront: email/password form + "Log ind med Google"-knap. Brug Medusa JS SDK (sdk.auth.login, sdk.auth.register).
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** auth, storefront, frontend
+
+**Milestone:** M8
+
+**Dependencies:** t8.1
+
+**Acceptance:**
+- Login-side findes under /[locale]/login.
+- Email/password login virker via Medusa.
+- "Log ind med Google"-knap starter OAuth flow.
+
+**Estimate:** M
+
+## Task: t8.3
+
+**Description:** Byg Register-side i storefront: opret konto form (email, password, navn) via Medusa Store API.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** auth, storefront, frontend
+
+**Milestone:** M8
+
+**Dependencies:** t8.1
+
+**Acceptance:**
+- Register-side findes under /[locale]/register.
+- Oprettelse af kunde virker via Medusa Store API.
+
+**Estimate:** M
+
+## Task: t8.4
+
+**Description:** Implementer Google social login flow: redirect til Google → callback-side modtager code → validerer via Medusa callback-route → opretter/logger ind kunde.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** auth, storefront, frontend
+
+**Milestone:** M8
+
+**Dependencies:** t8.1
+
+**Acceptance:**
+- Callback-side findes (fx /[locale]/auth/google/callback).
+- Efter Google login redirectes bruger til callback med code; kald til Medusa validateCallback; kunde oprettes eller logges ind.
+
+**Estimate:** M
+
+## Task: t8.5
+
+**Description:** Auth state management i storefront: session/JWT handling, auth context/hook, beskyttede routes (account-området).
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** auth, storefront, frontend
+
+**Milestone:** M8
+
+**Dependencies:** t8.2, t8.3
+
+**Acceptance:**
+- Auth context eller hook eksisterer; session/JWT bruges til efterfølgende kald.
+- Account-routes er beskyttet (redirect til login hvis ikke autentificeret).
+
+**Estimate:** M
+
+## Task: t8.6
+
+**Description:** Wire Account-området med auth: sign out, vis kundedata, redirect til login hvis ikke autentificeret.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** auth, storefront, frontend
+
+**Milestone:** M8
+
+**Dependencies:** t8.5
+
+**Acceptance:**
+- Sign out virker og rydder session.
+- Kundedata vises på account-sider.
+- Uautentificerede brugere redirectes til login.
+
+**Estimate:** S
+
+## M9 — Stripe Payments
+
+## Task: t9.1
+
+**Description:** Registrer Stripe Payment Module i medusa-config.ts + env vars (STRIPE_API_KEY, STRIPE_WEBHOOK_SECRET, NEXT_PUBLIC_STRIPE_KEY).
+
+**Workspace:** apps/commerce, apps/storefront
+
+**Status:** backlog
+
+**Tags:** payments, integration, backend
+
+**Milestone:** M9
+
+**Dependencies:** t3.3, t4.4
+
+**Acceptance:**
+- Stripe payment provider er tilføjet til Payment Module i medusa-config.ts.
+- Env var-navne er dokumenteret i env.template og storefront env.
+
+**Estimate:** S
+
+## Task: t9.2
+
+**Description:** Aktiver Stripe som payment provider i Denmark-regionen via Medusa Admin.
+
+**Workspace:** apps/commerce
+
+**Status:** backlog
+
+**Tags:** payments, integration
+
+**Milestone:** M9
+
+**Dependencies:** t9.1
+
+**Acceptance:**
+- I Medusa Admin: Settings → Regions → Denmark har Stripe valgt som payment provider.
+
+**Estimate:** S
+
+## Task: t9.3
+
+**Description:** Integrer Stripe PaymentElement i storefront checkout: payment collection → Stripe client secret → PaymentElement widget → bekræft betaling.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** payments, storefront, frontend
+
+**Milestone:** M9
+
+**Dependencies:** t9.1
+
+**Acceptance:**
+- Checkout viser Stripe PaymentElement.
+- Betaling kan gennemføres med test-kort (staging).
+
+**Estimate:** L
+
+## Task: t9.4
+
+**Description:** Opsæt Stripe webhook endpoint for deployed miljø (payment events: succeeded, failed, refunded).
+
+**Workspace:** apps/commerce
+
+**Status:** backlog
+
+**Tags:** payments, integration, backend
+
+**Milestone:** M9
+
+**Dependencies:** t9.1
+
+**Acceptance:**
+- Webhook route eksisterer og verifierer Stripe signature.
+- Relevante payment events opdaterer order/status eller logges.
+
+**Estimate:** M
+
+## Task: t9.5
+
+**Description:** Test end-to-end payment flow (test-kort i staging).
+
+**Workspace:** .
+
+**Status:** backlog
+
+**Tags:** payments, gate
+
+**Milestone:** M9
+
+**Dependencies:** t9.3, t9.4
+
+**Acceptance:**
+- Fuldt checkout-flow med Stripe test-kort gennemføres i staging.
+- Order oprettes og betaling bekræftes.
+
+**Estimate:** M
+
+## Task: t9.6
+
+**Description:** Opdater spec-filer: erstatt Adyen med Stripe i spec/00-root-spec.md, spec/01-prd.md, spec/02-architecture.md, spec/08-infrastructure.md, openmemory.md.
+
+**Workspace:** .
+
+**Status:** backlog
+
+**Tags:** documentation
+
+**Milestone:** M9
+
+**Acceptance:**
+- Alle nævnte filer nævner Stripe som payment provider; Adyen fjernes eller markeres som erstattet.
+
+**Estimate:** S
+
+## M10 — Shipmondo Shipping
+
+## Task: t10.1
+
+**Description:** Research Shipmondo API: endpoints (pakkeshop-søgning, label-oprettelse, tracking), auth (API key), rate limits. Dokumenter i apps/commerce/docs/SHIPMONDO.md.
+
+**Workspace:** apps/commerce
+
+**Status:** backlog
+
+**Tags:** shipping, research, documentation
+
+**Milestone:** M10
+
+**Acceptance:**
+- SHIPMONDO.md beskriver API, auth og anvendelige endpoints.
+
+**Estimate:** M
+
+## Task: t10.2
+
+**Description:** Byg custom Fulfillment Module Provider (src/modules/shipmondo/service.ts extends AbstractFulfillmentProviderService): validateOption, calculatePrice (39 DKK flat), createFulfillment (label), getFulfillmentDocuments.
+
+**Workspace:** apps/commerce
+
+**Status:** backlog
+
+**Tags:** shipping, backend, integration
+
+**Milestone:** M10
+
+**Dependencies:** t10.1
+
+**Acceptance:**
+- Shipmondo provider-service implementerer de nødvendige metoder.
+- Flat rate 39 DKK anvendes.
+
+**Estimate:** L
+
+## Task: t10.3
+
+**Description:** Registrer Shipmondo provider i medusa-config.ts fulfillment module + env vars (SHIPMONDO_API_KEY).
+
+**Workspace:** apps/commerce
+
+**Status:** backlog
+
+**Tags:** shipping, backend, infrastructure
+
+**Milestone:** M10
+
+**Dependencies:** t10.2
+
+**Acceptance:**
+- Fulfillment module i medusa-config.ts inkluderer Shipmondo provider.
+- SHIPMONDO_API_KEY dokumenteret i env.template.
+
+**Estimate:** S
+
+## Task: t10.4
+
+**Description:** Integrer pakkeshop-valg i storefront checkout: GLS + DAO pakkeshop-søgning (postnummer/by), kort/liste-visning, gem valgt pakkeshop.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** shipping, storefront, frontend
+
+**Milestone:** M10
+
+**Dependencies:** t10.3
+
+**Acceptance:**
+- Checkout viser pakkeshop-søgning og valg.
+- Valgt pakkeshop gemmes på cart/order.
+
+**Estimate:** L
+
+## Task: t10.5
+
+**Description:** Test shipping flow end-to-end: vælg pakkeshop → ordre → opret fulfillment → label.
+
+**Workspace:** .
+
+**Status:** backlog
+
+**Tags:** shipping, gate
+
+**Milestone:** M10
+
+**Dependencies:** t10.4
+
+**Acceptance:**
+- Fuldt flow fra pakkeshop-valg til label (eller simulering) gennemføres.
+
+**Estimate:** M
 
 ## M6 — Storefront design system-integration
 

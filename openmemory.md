@@ -5,7 +5,7 @@ This file is a lightweight index of project facts and conventions that are usefu
 ## Overview
 - **Project**: Guapo (DK-first, unisex beauty e-commerce)
 - **Focus (MVP)**: face skincare; curation-first guidance; competitive pricing; fast, clean UX
-- **Core stack**: Next.js + Medusa + Payload CMS; payments via Adyen (cards, Apple Pay, Google Pay, MobilePay, Klarna); product subscriptions require recurring billing
+- **Core stack**: Next.js + Medusa + Payload CMS; payments via Stripe (cards, Apple Pay, Google Pay; MobilePay/Klarna when enabled); product subscriptions require recurring billing
 - **Repo layout (DECIDED)**: Monorepo with `apps/*`:
   - `apps/storefront` (Next.js customer storefront)
   - `apps/commerce` (Medusa backend + worker)
@@ -33,7 +33,7 @@ This file is a lightweight index of project facts and conventions that are usefu
 - **Storefront**: Next.js (PLP/PDP, cart, checkout, account, content)
 - **Commerce backend**: Medusa (products, carts, orders, subscriptions)
 - **CMS**: Payload (static pages, blog/articles, landing pages, nav/footer links, PDP guidance fields, homepage composition via page builder)
-- **Payments**: Adyen (recurring required for subscriptions)
+- **Payments**: Stripe (recurring required for subscriptions)
 - **Shipping**: Shipmondo (parcel shop only in MVP; GLS+DAO; flat rate 39 DKK; returns 14 days, customer-paid label)
 - **Hosting/DB**: Railway for compute (storefront + medusa-server + medusa-worker + payload + redis); Supabase Postgres for DB; Railway Redis for Medusa requirements
 - **Supplier**: Qogita (investigation; decision later)

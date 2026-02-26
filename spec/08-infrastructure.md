@@ -12,7 +12,7 @@ This is the **source of truth** for technologies, frameworks, and tooling used i
 - Build Tool: pnpm (via Corepack; lockfile is source of truth)
 - Language: TypeScript (expected for this stack)
 - Other:
-  - Payment: Adyen
+  - Payment: Stripe
   - Supplier (investigation): Qogita (qogita.com)
   - Subscriptions: recurring billing is required for the MVP subscription feature
     - MVP policy: cycles 4/8/12 weeks, 5% discount, minimum commitment 2 deliveries before cancellation
@@ -52,8 +52,8 @@ DECIDED: monorepo with `apps/*` workspaces (see `spec/05-decisions.md`).
   - Medusa: prefer a dedicated schema (e.g. `medusa`) or a dedicated database. Exact wiring depends on Medusa connection options and should be validated during scaffolding.
 
 ## External Services
-- Payment: Adyen
-  - Required methods (MVP, DK): cards, Apple Pay, Google Pay, MobilePay, Klarna
+- Payment: Stripe
+  - Primary: cards; optional in Stripe: Apple Pay, Google Pay, MobilePay, Klarna (MVP, DK)
 - Shipping: Shipmondo
 - Supplier / catalog source (future): Qogita (investigate API access and fit)
 - Newsletter: TBD
@@ -142,9 +142,9 @@ Do not commit secrets. Names below are placeholders.
 Env var inventory file (names only): `env.example`.
 
 - Required (expected):
-  - `ADYEN_MERCHANT_ACCOUNT`
-  - `ADYEN_API_KEY`
-  - `ADYEN_CLIENT_KEY`
+  - `STRIPE_API_KEY`
+  - `STRIPE_WEBHOOK_SECRET` (deployed environments)
+  - `NEXT_PUBLIC_STRIPE_KEY` (storefront)
   - `DATABASE_URL`
   - `PAYLOAD_SECRET`
   - `REDIS_URL`
