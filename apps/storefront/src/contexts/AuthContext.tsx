@@ -10,6 +10,7 @@ type AuthState = {
   loading: boolean;
   isAuthenticated: boolean;
   refetch: () => Promise<void>;
+  signOut: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -29,6 +30,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const signOut = useCallback(async () => {
+    try {
+      await medusa.auth.logout();
+    } finally {
+      setCustomer(null);
+    }
+  }, []);
+
   useEffect(() => {
     refetch();
   }, [refetch]);
@@ -38,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     isAuthenticated: !!customer,
     refetch,
+    signOut,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -51,6 +61,7 @@ export function useAuth(): AuthState {
       loading: true,
       isAuthenticated: false,
       refetch: async () => {},
+      signOut: async () => {},
     };
   }
   return ctx;

@@ -3,6 +3,7 @@ import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Card, CardContent } from "@/components/ui/card";
+import { AccountHeader } from "@/components/AccountHeader";
 
 interface AccountPageProps {
   params: Promise<{ locale: string }>;
@@ -29,12 +30,11 @@ export default async function AccountPage({ params }: AccountPageProps) {
 
   return (
     <div className="max-w-3xl">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">{dict.account.title}</h1>
-          <button type="button" className="text-sm text-muted-foreground hover:text-primary">
-            {dict.account.signOut}
-          </button>
-        </div>
+        <AccountHeader
+          locale={locale}
+          title={dict.account.title}
+          signOutLabel={dict.account.signOut}
+        />
         <div className="mt-8 grid grid-cols-2 gap-4">
           <Card className="border-border bg-surface">
             <CardContent className="p-4">
