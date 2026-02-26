@@ -177,6 +177,24 @@
     "nextStep": "Fortsæt",
     "previousStep": "Tilbage"
   },
+  "auth": {
+    "loginTitle": "Log ind",
+    "email": "Email",
+    "password": "Adgangskode",
+    "submitLogin": "Log ind",
+    "loginWithGoogle": "Log ind med Google",
+    "errorLogin": "Kunne ikke logge ind. Tjek email og adgangskode.",
+    "noAccount": "Har du ikke en konto?",
+    "registerLink": "Opret konto",
+    "orDivider": "eller",
+    "registerTitle": "Opret konto",
+    "firstName": "Fornavn",
+    "lastName": "Efternavn",
+    "submitRegister": "Opret konto",
+    "errorRegister": "Kunne ikke oprette konto. Prøv igen.",
+    "hasAccount": "Har du allerede en konto?",
+    "loginLink": "Log ind"
+  },
   "account": {
     "title": "Min konto",
     "overview": "Oversigt",
@@ -184,7 +202,8 @@
     "subscriptions": "Abonnementer",
     "profile": "Profil",
     "addresses": "Adresser",
-    "signOut": "Log ud"
+    "signOut": "Log ud",
+    "loading": "Indlæser…"
   },
   "orderConfirmation": {
     "title": "Tak for din ordre!",

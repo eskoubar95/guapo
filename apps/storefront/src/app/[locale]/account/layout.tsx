@@ -1,7 +1,12 @@
 import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import { AccountLayout } from "@/components/AccountLayout";
+import { AccountGate } from "@/components/AccountGate";
 
+/**
+ * Account layout: auth is enforced client-side via AccountGate (JWT in client/localStorage).
+ * Server-side redirect would require cookie-based session; not used in this stack.
+ */
 interface AccountLayoutWrapperProps {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
@@ -22,9 +27,12 @@ export default async function AccountLayoutWrapper({
         overview: dict.account.overview,
         orders: dict.account.orders,
         subscriptions: dict.account.subscriptions,
+        loading: dict.account.loading,
       }}
     >
-      {children}
+      <AccountGate locale={locale} loadingLabel={dict.account.loading}>
+        {children}
+      </AccountGate>
     </AccountLayout>
   );
 }

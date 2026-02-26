@@ -631,6 +631,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** S
 
+**Notes:** Linear: GUA-64
+
 ## Task: t8.2
 
 **Description:** Byg Login-side i storefront: email/password form + "Log ind med Google"-knap. Brug Medusa JS SDK (sdk.auth.login, sdk.auth.register).
@@ -652,6 +654,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** M
 
+**Notes:** Linear: GUA-65
+
 ## Task: t8.3
 
 **Description:** Byg Register-side i storefront: opret konto form (email, password, navn) via Medusa Store API.
@@ -671,6 +675,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Oprettelse af kunde virker via Medusa Store API.
 
 **Estimate:** M
+
+**Notes:** Linear: GUA-66
 
 ## Task: t8.4
 
@@ -692,6 +698,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** M
 
+**Notes:** Linear: GUA-67
+
 ## Task: t8.5
 
 **Description:** Auth state management i storefront: session/JWT handling, auth context/hook, beskyttede routes (account-området).
@@ -711,6 +719,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Account-routes er beskyttet (redirect til login hvis ikke autentificeret).
 
 **Estimate:** M
+
+**Notes:** Linear: GUA-68
 
 ## Task: t8.6
 
@@ -732,6 +742,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Uautentificerede brugere redirectes til login.
 
 **Estimate:** S
+
+**Notes:** Linear: GUA-69
 
 ## M9 — Stripe Payments
 
