@@ -19,6 +19,7 @@ import {
   createProductTagsWorkflow,
   updateProductsWorkflow,
   updateProductCategoriesWorkflow,
+  updateRegionsWorkflow,
 } from "@medusajs/medusa/core-flows";
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
 import { BRAND_MODULE } from "../modules/brand";
@@ -130,7 +131,9 @@ export default async function seed({ container }: ExecArgs) {
   // 4. Get or create regions
   logger.info("Checking regions...");
   let regionsCreated = 0;
-  
+  const stripeProviderId = "pp_stripe_stripe";
+  const dkPaymentProviders = process.env.STRIPE_API_KEY ? [stripeProviderId] : [];
+
   // Check Denmark region
   const existingDkRegion = await regionModule.listRegions({ currency_code: "dkk" });
   if (existingDkRegion.length === 0) {
@@ -141,15 +144,26 @@ export default async function seed({ container }: ExecArgs) {
             name: "Denmark",
             currency_code: "dkk",
             countries: ["dk"],
-            payment_providers: [],
+            payment_providers: dkPaymentProviders,
           },
         ],
       },
     });
     regionsCreated++;
-    logger.info("✅ Created Denmark region");
+    logger.info("✅ Created Denmark region" + (dkPaymentProviders.length ? " with Stripe" : ""));
   } else {
-    logger.info("✅ Denmark region already exists");
+    const dkRegion = existingDkRegion[0];
+    if (dkPaymentProviders.length > 0) {
+      await updateRegionsWorkflow(container).run({
+        input: {
+          selector: { id: dkRegion.id },
+          update: { payment_providers: dkPaymentProviders },
+        },
+      });
+      logger.info("✅ Denmark region: Stripe payment provider enabled");
+    } else {
+      logger.info("✅ Denmark region already exists");
+    }
   }
 
   // Check Europe region
