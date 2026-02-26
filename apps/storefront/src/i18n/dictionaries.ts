@@ -183,6 +183,13 @@ export interface Dictionary {
     errorLogin: string;
     noAccount: string;
     registerLink: string;
+    registerTitle: string;
+    firstName: string;
+    lastName: string;
+    submitRegister: string;
+    errorRegister: string;
+    hasAccount: string;
+    loginLink: string;
   };
   account: {
     title: string;

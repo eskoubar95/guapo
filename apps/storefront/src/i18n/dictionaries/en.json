@@ -185,7 +185,14 @@
     "loginWithGoogle": "Sign in with Google",
     "errorLogin": "Could not sign in. Check email and password.",
     "noAccount": "Don't have an account?",
-    "registerLink": "Create account"
+    "registerLink": "Create account",
+    "registerTitle": "Create account",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "submitRegister": "Create account",
+    "errorRegister": "Could not create account. Please try again.",
+    "hasAccount": "Already have an account?",
+    "loginLink": "Sign in"
   },
   "account": {
     "title": "My Account",

@@ -185,7 +185,14 @@
     "loginWithGoogle": "Log ind med Google",
     "errorLogin": "Kunne ikke logge ind. Tjek email og adgangskode.",
     "noAccount": "Har du ikke en konto?",
-    "registerLink": "Opret konto"
+    "registerLink": "Opret konto",
+    "registerTitle": "Opret konto",
+    "firstName": "Fornavn",
+    "lastName": "Efternavn",
+    "submitRegister": "Opret konto",
+    "errorRegister": "Kunne ikke oprette konto. Prøv igen.",
+    "hasAccount": "Har du allerede en konto?",
+    "loginLink": "Log ind"
   },
   "account": {
     "title": "Min konto",
