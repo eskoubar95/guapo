@@ -48,3 +48,14 @@ Example: `https://your-medusa.railway.app/hooks/payment/stripe_stripe`
 4. Copy the signing secret (whsec_…) and set `STRIPE_WEBHOOK_SECRET` in your Medusa environment
 
 **Behavior:** The Stripe module verifies the `Stripe-Signature` header and updates payment/order status on success or failure.
+
+## 4. E2E Payment Test (t9.5 Staging Gate)
+
+With Stripe and Medusa configured:
+
+1. Set `STRIPE_API_KEY` (test key sk_test_…), `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_KEY` (pk_test_…)
+2. Run `pnpm -C apps/commerce seed` (enables Stripe for Denmark)
+3. Start Medusa: `pnpm -C apps/commerce dev`
+4. Start storefront: `pnpm -C apps/storefront dev`
+5. Go to checkout, complete steps 1–3; use Stripe test card 4242 4242 4242 4242
+6. Confirm order is created and payment succeeds
