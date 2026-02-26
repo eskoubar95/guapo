@@ -767,6 +767,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** S
 
+**Notes:** Linear: GUA-87
+
 ## Task: t9.2
 
 **Description:** Aktiver Stripe som payment provider i Denmark-regionen via Medusa Admin.
@@ -785,6 +787,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - I Medusa Admin: Settings → Regions → Denmark har Stripe valgt som payment provider.
 
 **Estimate:** S
+
+**Notes:** Linear: GUA-88
 
 ## Task: t9.3
 
@@ -806,6 +810,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** L
 
+**Notes:** Linear: GUA-89
+
 ## Task: t9.4
 
 **Description:** Opsæt Stripe webhook endpoint for deployed miljø (payment events: succeeded, failed, refunded).
@@ -825,6 +831,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Relevante payment events opdaterer order/status eller logges.
 
 **Estimate:** M
+
+**Notes:** Linear: GUA-90
 
 ## Task: t9.5
 
@@ -846,6 +854,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** M
 
+**Notes:** Linear: GUA-91
+
 ## Task: t9.6
 
 **Description:** Opdater spec-filer: erstatt Adyen med Stripe i spec/00-root-spec.md, spec/01-prd.md, spec/02-architecture.md, spec/08-infrastructure.md, openmemory.md.
@@ -862,6 +872,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Alle nævnte filer nævner Stripe som payment provider; Adyen fjernes eller markeres som erstattet.
 
 **Estimate:** S
+
+**Notes:** Linear: GUA-92
 
 ## Task: t9.7
 
@@ -882,6 +894,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Betalingsmetode gemmes til renewal (token/customer payment method).
 
 **Estimate:** L
+
+**Notes:** Linear: GUA-93
 
 ## Task: t9.8
 
@@ -904,6 +918,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** L
 
+**Notes:** Linear: GUA-94
+
 ## Task: t9.9
 
 **Description:** Staging gate: mindst én renewal simulation gennemført i staging (validering af recurring flow).
@@ -923,6 +939,8 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Retry/recovery eller on-hold adfærd dokumenteret eller verificeret.
 
 **Estimate:** M
+
+**Notes:** Linear: GUA-95
 
 ## M10 — Shipmondo Shipping
 

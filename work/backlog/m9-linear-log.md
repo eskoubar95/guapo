@@ -6,15 +6,15 @@ Status og Linear-mapping for tasks under M9 (Stripe Payments + Subscription).
 
 | Task  | Linear ID | Status | Beskrivelse |
 |-------|-----------|--------|-------------|
-| t9.1  |           |        | Stripe Payment Module + env |
-| t9.2  |           |        | Stripe i Denmark-regionen |
-| t9.3  |           |        | PaymentElement i checkout |
-| t9.4  |           |        | Webhook endpoint |
-| t9.5  |           |        | E2E test staging |
-| t9.6  |           |        | Spec Adyen → Stripe |
-| t9.7  |           |        | Recurring/mandate subscription-checkout |
-| t9.8  |           |        | Renewal charge + webhook/cron |
-| t9.9  |           |        | Staging gate renewal simulation |
+| t9.1  | GUA-87    | Todo   | Stripe Payment Module + env |
+| t9.2  | GUA-88    | Backlog| Stripe i Denmark-regionen |
+| t9.3  | GUA-89    | Backlog| PaymentElement i checkout |
+| t9.4  | GUA-90    | Backlog| Webhook endpoint |
+| t9.5  | GUA-91    | Backlog| E2E test staging |
+| t9.6  | GUA-92    | Backlog| Spec Adyen → Stripe |
+| t9.7  | GUA-93    | Backlog| Recurring/mandate subscription-checkout |
+| t9.8  | GUA-94    | Backlog| Renewal charge + webhook/cron |
+| t9.9  | GUA-95    | Backlog| Staging gate renewal simulation |
 
 Tilføj **Notes: Linear: GUA-xxx** i `work/backlog/tasks.local.md` for hver task når Linear-issues er oprettet.
 
