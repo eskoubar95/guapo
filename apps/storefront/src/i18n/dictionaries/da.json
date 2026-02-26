@@ -177,6 +177,16 @@
     "nextStep": "Fortsæt",
     "previousStep": "Tilbage"
   },
+  "auth": {
+    "loginTitle": "Log ind",
+    "email": "Email",
+    "password": "Adgangskode",
+    "submitLogin": "Log ind",
+    "loginWithGoogle": "Log ind med Google",
+    "errorLogin": "Kunne ikke logge ind. Tjek email og adgangskode.",
+    "noAccount": "Har du ikke en konto?",
+    "registerLink": "Opret konto"
+  },
   "account": {
     "title": "Min konto",
     "overview": "Oversigt",

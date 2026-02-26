@@ -177,6 +177,16 @@
     "nextStep": "Continue",
     "previousStep": "Back"
   },
+  "auth": {
+    "loginTitle": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "submitLogin": "Sign in",
+    "loginWithGoogle": "Sign in with Google",
+    "errorLogin": "Could not sign in. Check email and password.",
+    "noAccount": "Don't have an account?",
+    "registerLink": "Create account"
+  },
   "account": {
     "title": "My Account",
     "overview": "Overview",

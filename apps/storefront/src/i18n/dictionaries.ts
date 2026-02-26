@@ -174,6 +174,16 @@ export interface Dictionary {
     nextStep: string;
     previousStep: string;
   };
+  auth: {
+    loginTitle: string;
+    email: string;
+    password: string;
+    submitLogin: string;
+    loginWithGoogle: string;
+    errorLogin: string;
+    noAccount: string;
+    registerLink: string;
+  };
   account: {
     title: string;
     overview: string;
