@@ -2,7 +2,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { CheckoutSteps } from "@/components/CheckoutSteps";
+import { CheckoutWithStripe } from "@/components/CheckoutWithStripe";
 
 interface CheckoutPageProps {
   params: Promise<{ locale: string }>;
@@ -47,7 +47,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
         <div className="lg:grid lg:grid-cols-12 lg:gap-12">
           <div className="lg:col-span-7">
             <h1 className="text-2xl font-bold text-foreground">{dict.checkout.title}</h1>
-            <CheckoutSteps
+            <CheckoutWithStripe
               locale={locale}
               dict={{ checkout: dict.checkout }}
               confirmationHref={`/${locale}/order-confirmation/placeholder`}
