@@ -753,7 +753,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/commerce, apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** payments, integration, backend
 
@@ -775,7 +775,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/commerce
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** payments, integration
 
@@ -796,7 +796,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** payments, storefront, frontend
 
@@ -818,7 +818,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/commerce
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** payments, integration, backend
 
@@ -840,7 +840,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** .
 
-**Status:** backlog
+**Status:** in progress
 
 **Tags:** payments, gate
 
@@ -862,7 +862,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** .
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** documentation
 
