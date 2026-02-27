@@ -110,6 +110,11 @@
     "volume": "Volume",
     "notSpecified": "Not specified",
     "quantity": "Quantity",
+    "size": "Size",
+    "added": "Added ✓",
+    "purchaseOptions": "Purchase options",
+    "decreaseQuantity": "Decrease quantity",
+    "increaseQuantity": "Increase quantity",
     "trustStrip": {
       "freeShipping": "Free shipping over 299 DKK",
       "returns": "30-day return policy",
@@ -149,6 +154,8 @@
     "total": "Total",
     "summary": "Order summary",
     "remove": "Remove",
+    "decreaseQuantity": "Decrease quantity",
+    "increaseQuantity": "Increase quantity",
     "oneTimePurchase": "One-time",
     "subscribe": "Subscribe",
     "discountCodeLabel": "Have a discount code?",
@@ -214,7 +221,10 @@
     "summary": "Order summary",
     "subtotal": "Subtotal",
     "shipping": "Shipping",
-    "total": "Total"
+    "total": "Total",
+    "confirming": "Confirming order…",
+    "errorMessage": "Could not confirm order.",
+    "backToCheckout": "Back to checkout"
   },
   "subscriptionDetail": {
     "title": "Subscription details",

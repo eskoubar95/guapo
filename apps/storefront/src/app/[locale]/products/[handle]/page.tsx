@@ -172,15 +172,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             <ProductPurchaseSection
               variants={variants}
-              sizeLabel={locale === "da" ? "Størrelse" : "Size"}
+              sizeLabel={dict.products.size}
               quantityLabel={dict.products.quantity}
               addToCartLabel={dict.products.addToCart}
-              addedLabel={locale === "da" ? "Tilføjet ✓" : "Added ✓"}
+              addedLabel={dict.products.added}
+              decreaseQuantityAriaLabel={dict.products.decreaseQuantity}
+              increaseQuantityAriaLabel={dict.products.increaseQuantity}
             >
               {/* Purchase options (one-time vs subscription) */}
               <div className="mt-6">
                 <p className="mb-3 text-sm font-medium text-foreground">
-                  {locale === "da" ? "Købsmuligheder" : "Purchase options"}
+                  {dict.products.purchaseOptions}
                 </p>
                 <SubscriptionSelector
                   basePrice={basePrice}

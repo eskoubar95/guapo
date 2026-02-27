@@ -196,8 +196,14 @@ export default async function seed({ container }: ExecArgs) {
       [Modules.FULFILLMENT]: { fulfillment_provider_id: "manual_manual" },
     });
     logger.info("✅ Linked manual fulfillment provider to stock location");
-  } catch {
-    logger.info("✅ Manual fulfillment provider already linked");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("already exists") || msg.includes("duplicate") || msg.includes("unique")) {
+      logger.info("✅ Manual fulfillment provider already linked");
+    } else {
+      logger.warn("Link create (manual_manual):", err);
+      throw err;
+    }
   }
 
   // Check for service zone + shipping option on stock location's fulfillment set
@@ -500,9 +506,6 @@ export default async function seed({ container }: ExecArgs) {
     }
   }
   // Link existing products to Guapo brand (for products that were created before brand-link was added)
-  const query = container.resolve("query") as {
-    graph: (opts: { entity: string; fields: string[]; filters?: Record<string, unknown> }) => Promise<{ data: Array<{ id: string; brand?: { id: string } }> }>;
-  };
   for (const product of allProductsInOrder) {
     const { data: prods } = await query.graph({
       entity: "product",

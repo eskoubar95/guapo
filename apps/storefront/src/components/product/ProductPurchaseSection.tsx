@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Minus, Plus } from "lucide-react";
 import { addToCart } from "@/lib/cart";
@@ -17,6 +17,8 @@ interface ProductPurchaseSectionProps {
   quantityLabel: string;
   addToCartLabel: string;
   addedLabel: string;
+  decreaseQuantityAriaLabel?: string;
+  increaseQuantityAriaLabel?: string;
   children?: React.ReactNode;
 }
 
@@ -26,6 +28,8 @@ export function ProductPurchaseSection({
   quantityLabel,
   addToCartLabel,
   addedLabel,
+  decreaseQuantityAriaLabel = "Decrease quantity",
+  increaseQuantityAriaLabel = "Increase quantity",
   children,
 }: ProductPurchaseSectionProps) {
   const [selectedVariantId, setSelectedVariantId] = useState(variants[0]?.id ?? "");
@@ -34,6 +38,13 @@ export function ProductPurchaseSection({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const addedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
+    };
+  }, []);
 
   const handleQuantityChange = (newQuantity: number) => {
     if (newQuantity < 1 || newQuantity > 99) return;
@@ -48,7 +59,8 @@ export function ProductPurchaseSection({
         await addToCart(selectedVariantId, quantity);
         setAdded(true);
         router.refresh();
-        setTimeout(() => setAdded(false), 2000);
+        if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
+        addedTimerRef.current = setTimeout(() => setAdded(false), 2000);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error");
       }
@@ -93,7 +105,7 @@ export function ProductPurchaseSection({
               onClick={() => handleQuantityChange(quantity - 1)}
               disabled={quantity <= 1}
               className="rounded p-2 transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Decrease quantity"
+              aria-label={decreaseQuantityAriaLabel}
             >
               <Minus className="h-4 w-4 text-foreground" />
             </button>
@@ -103,7 +115,7 @@ export function ProductPurchaseSection({
               onClick={() => handleQuantityChange(quantity + 1)}
               disabled={quantity >= 99}
               className="rounded p-2 transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Increase quantity"
+              aria-label={increaseQuantityAriaLabel}
             >
               <Plus className="h-4 w-4 text-foreground" />
             </button>

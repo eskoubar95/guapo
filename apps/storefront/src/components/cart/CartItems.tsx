@@ -2,16 +2,33 @@
 
 import { useTransition } from "react";
 import { removeLineItem, updateLineItem } from "@/lib/cart";
+import { formatPrice } from "@/lib/format";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, Trash2 } from "lucide-react";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface CartItem {
+  id: string;
+  thumbnail?: string;
+  product_title?: string;
+  title?: string;
+  variant_title?: string;
+  variant?: {
+    product?: { thumbnail?: string };
+    title?: string;
+  };
+  unit_price?: number;
+  quantity?: number;
+  total?: number;
+}
+
 interface CartItemsProps {
-  items: any[];
+  items: CartItem[];
   locale: string;
   dict: {
     cart: {
       remove: string;
+      decreaseQuantity: string;
+      increaseQuantity: string;
       oneTimePurchase: string;
       subscribe: string;
     };
@@ -21,13 +38,6 @@ interface CartItemsProps {
 export function CartItems({ items, locale, dict }: CartItemsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-
-  const formatPrice = (amount: number) =>
-    new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: "DKK",
-      minimumFractionDigits: 0,
-    }).format(amount);
 
   const handleRemove = (lineItemId: string) => {
     startTransition(async () => {
@@ -80,7 +90,7 @@ export function CartItems({ items, locale, dict }: CartItemsProps) {
                   )}
                 </div>
                 <p className="text-sm font-medium text-foreground">
-                  {formatPrice(lineTotal)}
+                  {formatPrice(lineTotal, locale)}
                 </p>
               </div>
 
@@ -91,6 +101,7 @@ export function CartItems({ items, locale, dict }: CartItemsProps) {
                     onClick={() => handleQuantityChange(item.id, quantity - 1)}
                     disabled={isPending || quantity <= 1}
                     className="rounded p-1 hover:bg-muted disabled:opacity-40"
+                    aria-label={dict.cart.decreaseQuantity}
                   >
                     <Minus className="h-3.5 w-3.5" />
                   </button>
@@ -100,6 +111,7 @@ export function CartItems({ items, locale, dict }: CartItemsProps) {
                     onClick={() => handleQuantityChange(item.id, quantity + 1)}
                     disabled={isPending}
                     className="rounded p-1 hover:bg-muted disabled:opacity-40"
+                    aria-label={dict.cart.increaseQuantity}
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </button>

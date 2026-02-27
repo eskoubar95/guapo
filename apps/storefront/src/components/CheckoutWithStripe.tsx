@@ -48,7 +48,8 @@ export function CheckoutWithStripe({
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
   const ensureCartAndPayment = useCallback(async () => {
-    if (!cartId || cart) return;
+    if (!cartId) return;
+    if (cart && clientSecret) return;
     try {
       // Update cart with shipping address for checkout
       await medusa.store.cart.update(cartId, {
@@ -100,7 +101,7 @@ export function CheckoutWithStripe({
     } catch (err) {
       setPaymentError(err instanceof Error ? err.message : "Could not initialize payment");
     }
-  }, [cartId, cart, locale]);
+  }, [cartId, cart, clientSecret, locale]);
 
   const paymentContent =
     stripePromise && clientSecret && cart ? (

@@ -3,7 +3,9 @@ import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { CheckoutWithStripe } from "@/components/CheckoutWithStripe";
-import { getCart, getCartId } from "@/lib/cart";
+import { getCart } from "@/lib/cart";
+import { formatPrice } from "@/lib/format";
+import type { CartItem } from "@/components/cart/CartItems";
 
 interface CheckoutPageProps {
   params: Promise<{ locale: string }>;
@@ -21,21 +23,11 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   const { locale } = await params;
   const dict = await getDictionary(locale as Locale);
   const cart = await getCart();
-  const cartId = await getCartId();
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const items = (cart?.items ?? []) as any[];
+  const cartId = cart?.id ?? null;
+  const items = (cart?.items ?? []) as CartItem[];
   const subtotal = cart?.subtotal ?? 0;
   const shipping = cart?.shipping_total ?? 0;
   const total = cart?.total ?? 0;
-
-  const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: "DKK",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
 
   return (
     <div className="min-h-full">
@@ -63,7 +55,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
               <h2 className="text-lg font-semibold text-foreground">{dict.cart.summary}</h2>
 
               <ul className="mt-4 divide-y divide-border">
-                {items.map((item: { id: string; title: string; variant_title?: string; thumbnail?: string; quantity: number; total: number }) => (
+                {items.map((item) => (
                   <li key={item.id} className="flex gap-4 py-4">
                     <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
                       {item.thumbnail ? (
@@ -74,13 +66,13 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
                       )}
                     </div>
                     <div className="flex flex-1 flex-col">
-                      <p className="text-sm font-medium text-foreground">{item.title}</p>
+                      <p className="text-sm font-medium text-foreground">{item.title ?? item.product_title ?? ""}</p>
                       {item.variant_title && (
                         <p className="text-sm text-muted-foreground">{item.variant_title}</p>
                       )}
                       <p className="text-xs text-muted-foreground">x{item.quantity}</p>
                     </div>
-                    <p className="text-sm font-medium text-foreground">{formatPrice(item.total)}</p>
+                    <p className="text-sm font-medium text-foreground">{formatPrice(item.total ?? 0, locale)}</p>
                   </li>
                 ))}
               </ul>
@@ -88,17 +80,17 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
               <dl className="mt-4 space-y-3 border-t border-border pt-4">
                 <div className="flex justify-between">
                   <dt className="text-sm text-muted-foreground">{dict.cart.subtotal}</dt>
-                  <dd className="text-sm font-medium text-foreground">{formatPrice(subtotal)}</dd>
+                  <dd className="text-sm font-medium text-foreground">{formatPrice(subtotal, locale)}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-sm text-muted-foreground">{dict.cart.shipping}</dt>
                   <dd className="text-sm font-medium text-foreground">
-                    {shipping === 0 ? dict.checkout.freeLabel : formatPrice(shipping)}
+                    {shipping === 0 ? dict.checkout.freeLabel : formatPrice(shipping, locale)}
                   </dd>
                 </div>
                 <div className="flex justify-between border-t border-border pt-3">
                   <dt className="font-medium text-foreground">{dict.cart.total}</dt>
-                  <dd className="font-medium text-foreground">{formatPrice(total)}</dd>
+                  <dd className="font-medium text-foreground">{formatPrice(total, locale)}</dd>
                 </div>
               </dl>
             </div>

@@ -110,6 +110,11 @@
     "volume": "Volumen",
     "notSpecified": "Ikke angivet",
     "quantity": "Antal",
+    "size": "Størrelse",
+    "added": "Tilføjet ✓",
+    "purchaseOptions": "Købsmuligheder",
+    "decreaseQuantity": "Reducer antal",
+    "increaseQuantity": "Øg antal",
     "trustStrip": {
       "freeShipping": "Fri fragt over 299 kr.",
       "returns": "30 dages returret",
@@ -149,6 +154,8 @@
     "total": "Total",
     "summary": "Ordreoversigt",
     "remove": "Fjern",
+    "decreaseQuantity": "Reducer antal",
+    "increaseQuantity": "Øg antal",
     "oneTimePurchase": "Engangskøb",
     "subscribe": "Abonnement",
     "discountCodeLabel": "Har du en rabatkode?",
@@ -214,7 +221,10 @@
     "summary": "Ordreoversigt",
     "subtotal": "Subtotal",
     "shipping": "Fragt",
-    "total": "Total"
+    "total": "Total",
+    "confirming": "Bekræfter ordre…",
+    "errorMessage": "Kunne ikke bekræfte ordren.",
+    "backToCheckout": "Tilbage til checkout"
   },
   "subscriptionDetail": {
     "title": "Abonnementsdetaljer",

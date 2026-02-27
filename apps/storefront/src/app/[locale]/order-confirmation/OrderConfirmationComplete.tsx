@@ -8,7 +8,11 @@ import { medusa } from "@/lib/medusa";
 interface OrderConfirmationCompleteProps {
   locale: string;
   cartId: string | undefined;
-  dict: Record<string, string>;
+  dict: {
+    confirming: string;
+    errorMessage: string;
+    backToCheckout: string;
+  };
 }
 
 export function OrderConfirmationComplete({
@@ -20,34 +24,39 @@ export function OrderConfirmationComplete({
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     cartId ? "loading" : "error"
   );
-  const [orderId, setOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!cartId) {
       setStatus("error");
       return;
     }
+    let cancelled = false;
     medusa.store.cart
       .complete(cartId)
       .then((res) => {
+        if (cancelled) return;
         if (res.type === "order" && "order" in res && res.order?.id) {
-          setOrderId(res.order.id);
           setStatus("success");
           router.replace(`/${locale}/order-confirmation/${res.order.id}`);
         } else {
           setStatus("error");
         }
       })
-      .catch(() => setStatus("error"));
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("Failed to complete cart:", err);
+        setStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [cartId, locale, router]);
 
   if (status === "loading") {
     return (
       <div className="min-h-full">
         <main className="container mx-auto max-w-2xl px-4 py-8 text-center">
-          <p className="text-muted-foreground">
-            {locale === "da" ? "Bekræfter ordre..." : "Confirming order..."}
-          </p>
+          <p className="text-muted-foreground">{dict.confirming}</p>
         </main>
       </div>
     );
@@ -57,16 +66,12 @@ export function OrderConfirmationComplete({
     return (
       <div className="min-h-full">
         <main className="container mx-auto max-w-2xl px-4 py-8 text-center">
-          <p className="text-destructive">
-            {locale === "da"
-              ? "Kunne ikke bekræfte ordren."
-              : "Could not confirm order."}
-          </p>
+          <p className="text-destructive">{dict.errorMessage}</p>
           <Link
             href={`/${locale}/checkout`}
             className="mt-4 inline-block text-primary hover:underline"
           >
-            {locale === "da" ? "Tilbage til checkout" : "Back to checkout"}
+            {dict.backToCheckout}
           </Link>
         </main>
       </div>

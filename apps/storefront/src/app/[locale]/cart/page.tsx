@@ -5,7 +5,9 @@ import type { Metadata } from "next";
 import { Card, CardContent } from "@/components/ui/card";
 import { CartDiscountCode } from "@/components/CartDiscountCode";
 import { getCart } from "@/lib/cart";
+import { formatPrice } from "@/lib/format";
 import { CartItems } from "@/components/cart/CartItems";
+import type { CartItem } from "@/components/cart/CartItems";
 
 interface CartPageProps {
   params: Promise<{ locale: string }>;
@@ -24,11 +26,7 @@ export default async function CartPage({ params }: CartPageProps) {
   const dict = await getDictionary(locale as Locale);
   const cart = await getCart();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const items = (cart?.items ?? []) as any[];
-
-  const formatPrice = (amount: number) =>
-    new Intl.NumberFormat(locale, { style: "currency", currency: "DKK", minimumFractionDigits: 0 }).format(amount);
+  const items = (cart?.items ?? []) as CartItem[];
 
   const subtotal = cart?.subtotal ?? 0;
   const shipping = cart?.shipping_total ?? 0;
@@ -70,17 +68,17 @@ export default async function CartPage({ params }: CartPageProps) {
                   <dl className="mt-6 space-y-4">
                     <div className="flex justify-between">
                       <dt className="text-sm text-muted-foreground">{dict.cart.subtotal}</dt>
-                      <dd className="text-sm font-medium text-foreground">{formatPrice(subtotal)}</dd>
+                      <dd className="text-sm font-medium text-foreground">{formatPrice(subtotal, locale)}</dd>
                     </div>
                     <div className="flex justify-between">
                       <dt className="text-sm text-muted-foreground">{dict.cart.shipping}</dt>
                       <dd className="text-sm font-medium text-foreground">
-                        {shipping === 0 ? (locale === "da" ? "Beregnes" : "Calculated at checkout") : formatPrice(shipping)}
+                        {shipping === 0 ? (locale === "da" ? "Beregnes" : "Calculated at checkout") : formatPrice(shipping, locale)}
                       </dd>
                     </div>
                     <div className="flex justify-between border-t border-border pt-4">
                       <dt className="font-medium text-foreground">{dict.cart.total}</dt>
-                      <dd className="font-medium text-foreground">{formatPrice(total)}</dd>
+                      <dd className="font-medium text-foreground">{formatPrice(total, locale)}</dd>
                     </div>
                   </dl>
                   <Link

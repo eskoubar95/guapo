@@ -280,7 +280,7 @@ export function CheckoutSteps({
             >
               {checkout.previousStep}
             </button>
-            {!paymentReady && (
+            {(!paymentContent || paymentReady) && (
               <Link
                 href={confirmationHref}
                 className="rounded-full bg-primary px-8 py-4 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"

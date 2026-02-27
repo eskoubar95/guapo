@@ -72,13 +72,11 @@ export async function addToCart(variantId: string, quantity: number = 1) {
     body: JSON.stringify({ variant_id: variantId, quantity }),
   });
 
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to add item to cart");
+    throw new Error((data as { message?: string }).message || "Failed to add item to cart");
   }
-
-  const { cart } = await res.json();
-  return cart;
+  return (data as { cart: unknown }).cart;
 }
 
 export async function updateLineItem(lineItemId: string, quantity: number) {
