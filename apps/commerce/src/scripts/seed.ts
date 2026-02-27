@@ -201,7 +201,7 @@ export default async function seed({ container }: ExecArgs) {
     if (msg.includes("already exists") || msg.includes("duplicate") || msg.includes("unique")) {
       logger.info("✅ Manual fulfillment provider already linked");
     } else {
-      logger.warn("Link create (manual_manual):", err);
+      logger.warn(`Link create (manual_manual): ${err instanceof Error ? err.message : String(err)}`);
       throw err;
     }
   }
