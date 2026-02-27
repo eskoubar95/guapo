@@ -81,6 +81,26 @@ if (process.env.STRIPE_API_KEY) {
   });
 }
 
+// Fulfillment: manual (default) + Shipmondo (GLS/DAO pakkeshop, 39 DKK) when credentials set
+const fulfillmentProviders: { resolve: string; id: string; options?: Record<string, unknown> }[] = [
+  { resolve: "@medusajs/medusa/fulfillment-manual", id: "manual" },
+];
+if (process.env.SHIPMONDO_API_USER && process.env.SHIPMONDO_API_KEY) {
+  fulfillmentProviders.push({
+    resolve: "./src/modules/shipmondo",
+    id: "shipmondo",
+    options: {
+      apiUser: process.env.SHIPMONDO_API_USER,
+      apiKey: process.env.SHIPMONDO_API_KEY,
+      sandbox: process.env.SHIPMONDO_SANDBOX === "true",
+    },
+  });
+}
+modules.push({
+  resolve: "@medusajs/medusa/fulfillment",
+  options: { providers: fulfillmentProviders },
+});
+
 modules.push(
   {
     resolve: "./src/modules/brand",
