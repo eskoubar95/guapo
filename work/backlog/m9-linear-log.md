@@ -21,3 +21,9 @@ Tilføj **Notes: Linear: GUA-xxx** i `work/backlog/tasks.local.md` for hver task
 ## Scheduler (9 tasks)
 
 Efter tilføjelse af t9.7–t9.9: `node .cursor/scripts/sdd-scheduler.cjs M9` — køreplan med 9 tasks.
+
+## Post-merge (PR #13)
+
+- **Squash-merged** til `staging`: M9 Stripe Payments t9.1–t9.6 (checkout, webhook, E2E).
+- t9.1–t9.6 leveret på `staging`. Næste: t9.7–t9.9 (subscription recurring + renewal + staging gate) eller M10.
+- Workspace: checkout `staging`, pull fra `origin/staging`; opret ny branch fra `staging` til næste batch (fx `task/m9-subscription`).
