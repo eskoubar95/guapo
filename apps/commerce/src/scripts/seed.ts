@@ -154,17 +154,17 @@ export default async function seed({ container }: ExecArgs) {
     logger.info("✅ Created Denmark region" + (dkPaymentProviders.length ? " with Stripe" : ""));
   } else {
     const dkRegion = existingDkRegion[0];
-    if (dkPaymentProviders.length > 0) {
-      await updateRegionsWorkflow(container).run({
-        input: {
-          selector: { id: dkRegion.id },
-          update: { payment_providers: dkPaymentProviders },
-        },
-      });
-      logger.info("✅ Denmark region: Stripe payment provider enabled");
-    } else {
-      logger.info("✅ Denmark region already exists");
-    }
+    await updateRegionsWorkflow(container).run({
+      input: {
+        selector: { id: dkRegion.id },
+        update: { payment_providers: dkPaymentProviders },
+      },
+    });
+    logger.info(
+      dkPaymentProviders.length > 0
+        ? "✅ Denmark region: Stripe payment provider enabled"
+        : "✅ Denmark region: Stripe payment provider disabled"
+    );
   }
 
   // Check Europe region
@@ -213,8 +213,11 @@ export default async function seed({ container }: ExecArgs) {
     filters: { id: stockLocation.id },
     fields: ["fulfillment_sets.id", "fulfillment_sets.name"],
   });
-  const locSets = (locData[0] as Record<string, unknown>).fulfillment_sets as { id: string; name: string }[] | undefined;
-  const shippingSet = locSets?.[0];
+  const locSets = (
+    (locData?.[0] as { fulfillment_sets?: { id: string; name: string }[] } | undefined)
+      ?.fulfillment_sets
+  ) ?? [];
+  const shippingSet = locSets[0];
 
   if (shippingSet) {
     const existingZones = await fulfillmentModule.listServiceZones({
@@ -236,8 +239,9 @@ export default async function seed({ container }: ExecArgs) {
     const existingOptions = await fulfillmentModule.listShippingOptions({
       service_zone: { id: dkZone.id },
     });
+    const standardLevering = existingOptions.find((o) => o.name === "Standard Levering");
 
-    if (existingOptions.length === 0) {
+    if (!standardLevering) {
       await createShippingOptionsWorkflow(container).run({
         input: [{
           name: "Standard Levering",
@@ -251,7 +255,7 @@ export default async function seed({ container }: ExecArgs) {
       });
       logger.info("✅ Created shipping option: Standard Levering (gratis, DKK)");
     } else {
-      logger.info(`✅ Shipping options exist: ${existingOptions.length}`);
+      logger.info(`✅ Shipping option already exists: ${standardLevering.id}`);
     }
   } else {
     logger.info("⚠️  No fulfillment set found on stock location - create one in Medusa Admin");
