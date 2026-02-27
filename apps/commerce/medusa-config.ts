@@ -60,6 +60,27 @@ if (process.env.S3_ENDPOINT && process.env.S3_ACCESS_KEY_ID && process.env.S3_BU
   });
 }
 
+// Payment: Stripe (cards, Apple Pay, Google Pay; MobilePay/Klarna when enabled)
+// Register only when STRIPE_API_KEY is set to avoid init errors when keys are missing
+if (process.env.STRIPE_API_KEY) {
+  modules.push({
+    resolve: "@medusajs/medusa/payment",
+    options: {
+      providers: [
+        {
+          resolve: "@medusajs/medusa/payment-stripe",
+          id: "stripe",
+          options: {
+            apiKey: process.env.STRIPE_API_KEY,
+            webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+            automatic_payment_methods: true,
+          },
+        },
+      ],
+    },
+  });
+}
+
 modules.push(
   {
     resolve: "./src/modules/brand",

@@ -52,7 +52,7 @@ Short report: which Payload v3 plugins/features are recommended for Guapo MVP, w
 
 ## 4. Other relevant plugins (brief)
 
-- **Stripe** — Billing/subscriptions; we use Medusa + Adyen for commerce, so not needed for CMS.
+- **Stripe** — Billing/subscriptions; we use Medusa + Stripe for commerce, so not needed for CMS.
 - **Cloud storage (legacy)** — Replaced by `@payloadcms/storage-s3` in v3.
 - **Custom plugins** — None required for MVP; add only if a concrete need appears.
 

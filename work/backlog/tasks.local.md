@@ -753,7 +753,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/commerce, apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** payments, integration, backend
 
@@ -767,13 +767,15 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** S
 
+**Notes:** Linear: GUA-87
+
 ## Task: t9.2
 
 **Description:** Aktiver Stripe som payment provider i Denmark-regionen via Medusa Admin.
 
 **Workspace:** apps/commerce
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** payments, integration
 
@@ -786,13 +788,15 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** S
 
+**Notes:** Linear: GUA-88
+
 ## Task: t9.3
 
 **Description:** Integrer Stripe PaymentElement i storefront checkout: payment collection → Stripe client secret → PaymentElement widget → bekræft betaling.
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** payments, storefront, frontend
 
@@ -806,13 +810,15 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** L
 
+**Notes:** Linear: GUA-89
+
 ## Task: t9.4
 
 **Description:** Opsæt Stripe webhook endpoint for deployed miljø (payment events: succeeded, failed, refunded).
 
 **Workspace:** apps/commerce
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** payments, integration, backend
 
@@ -826,13 +832,15 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** M
 
+**Notes:** Linear: GUA-90
+
 ## Task: t9.5
 
 **Description:** Test end-to-end payment flow (test-kort i staging).
 
 **Workspace:** .
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** payments, gate
 
@@ -846,13 +854,15 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** M
 
+**Notes:** Linear: GUA-91
+
 ## Task: t9.6
 
 **Description:** Opdater spec-filer: erstatt Adyen med Stripe i spec/00-root-spec.md, spec/01-prd.md, spec/02-architecture.md, spec/08-infrastructure.md, openmemory.md.
 
 **Workspace:** .
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** documentation
 
@@ -862,6 +872,75 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Alle nævnte filer nævner Stripe som payment provider; Adyen fjernes eller markeres som erstattet.
 
 **Estimate:** S
+
+**Notes:** Linear: GUA-92
+
+## Task: t9.7
+
+**Description:** Stripe recurring: betalingsmetode til abonnement (mandate/setup) ved subscription-checkout; gem token til genbrug ved renewal.
+
+**Workspace:** apps/commerce, apps/storefront
+
+**Status:** backlog
+
+**Tags:** payments, subscription, integration
+
+**Milestone:** M9
+
+**Dependencies:** t9.1, t9.3
+
+**Acceptance:**
+- Subscription-checkout understøtter Stripe mandate/setup for recurring.
+- Betalingsmetode gemmes til renewal (token/customer payment method).
+
+**Estimate:** L
+
+**Notes:** Linear: GUA-93
+
+## Task: t9.8
+
+**Description:** Stripe subscription renewal: håndter renewal charge (webhook/cron); opret order ved success; håndter failed + retry/recovery (2 retries over 3 dage pr. spec).
+
+**Workspace:** apps/commerce
+
+**Status:** backlog
+
+**Tags:** payments, subscription, backend
+
+**Milestone:** M9
+
+**Dependencies:** t9.4
+
+**Acceptance:**
+- Renewal charge udløses (webhook eller cron) for aktive abonnementer.
+- Ved success: ny order oprettes.
+- Ved failure: retry/recovery (2 forsøg over 3 dage); subscription on hold ved vedvarende fejl.
+
+**Estimate:** L
+
+**Notes:** Linear: GUA-94
+
+## Task: t9.9
+
+**Description:** Staging gate: mindst én renewal simulation gennemført i staging (validering af recurring flow).
+
+**Workspace:** .
+
+**Status:** backlog
+
+**Tags:** subscription, gate
+
+**Milestone:** M9
+
+**Dependencies:** t9.8
+
+**Acceptance:**
+- Fuldt renewal-flow (charge → order) kørt i staging med test-kort.
+- Retry/recovery eller on-hold adfærd dokumenteret eller verificeret.
+
+**Estimate:** M
+
+**Notes:** Linear: GUA-95
 
 ## M10 — Shipmondo Shipping
 

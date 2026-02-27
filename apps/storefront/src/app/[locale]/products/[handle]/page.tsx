@@ -8,8 +8,7 @@ import { ProductGallery } from "@/components/ProductGallery";
 import { ProductPageTabs } from "@/components/ProductPageTabs";
 import { KeyInformationCard } from "@/components/KeyInformationCard";
 import { PDPTrustStrip } from "@/components/PDPTrustStrip";
-import { QuantitySelector } from "@/components/QuantitySelector";
-import { VariantSelector } from "@/components/product/VariantSelector";
+import { ProductPurchaseSection } from "@/components/product/ProductPurchaseSection";
 import { fetchProductByHandle, fetchRecommendedProducts } from "@/lib/medusa-products";
 import { fetchPayloadProductByHandle } from "@/lib/payload-products";
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
@@ -171,31 +170,27 @@ export default async function ProductPage({ params }: ProductPageProps) {
               }).format(basePrice)}
             </p>
 
-            <VariantSelector
+            <ProductPurchaseSection
               variants={variants}
-              sizeLabel={locale === "da" ? "Størrelse" : "Size"}
-            />
-
-            <div className="mt-6 flex flex-wrap items-end gap-6">
-              <QuantitySelector label={dict.products.quantity} />
-            </div>
-
-            {/* Purchase options (one-time vs subscription) */}
-            <div className="mt-6">
-              <p className="mb-3 text-sm font-medium text-foreground">
-                {locale === "da" ? "Købsmuligheder" : "Purchase options"}
-              </p>
-              <SubscriptionSelector
-                basePrice={basePrice}
-                currency="DKK"
-                locale={locale}
-              />
-            </div>
-
-            {/* Add to cart button */}
-            <button className="mt-6 w-full rounded-full bg-primary px-8 py-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-              {dict.products.addToCart}
-            </button>
+              sizeLabel={dict.products.size}
+              quantityLabel={dict.products.quantity}
+              addToCartLabel={dict.products.addToCart}
+              addedLabel={dict.products.added}
+              decreaseQuantityAriaLabel={dict.products.decreaseQuantity}
+              increaseQuantityAriaLabel={dict.products.increaseQuantity}
+            >
+              {/* Purchase options (one-time vs subscription) */}
+              <div className="mt-6">
+                <p className="mb-3 text-sm font-medium text-foreground">
+                  {dict.products.purchaseOptions}
+                </p>
+                <SubscriptionSelector
+                  basePrice={basePrice}
+                  currency="DKK"
+                  locale={locale}
+                />
+              </div>
+            </ProductPurchaseSection>
 
             <PDPTrustStrip labels={dict.products.trustStrip} />
 

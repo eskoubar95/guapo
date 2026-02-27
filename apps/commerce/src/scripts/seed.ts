@@ -13,12 +13,14 @@ import {
   linkSalesChannelsToStockLocationWorkflow,
   createStockLocationsWorkflow,
   createShippingProfilesWorkflow,
+  createShippingOptionsWorkflow,
   createProductsWorkflow,
   createProductCategoriesWorkflow,
   createProductTypesWorkflow,
   createProductTagsWorkflow,
   updateProductsWorkflow,
   updateProductCategoriesWorkflow,
+  updateRegionsWorkflow,
 } from "@medusajs/medusa/core-flows";
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
 import { BRAND_MODULE } from "../modules/brand";
@@ -130,7 +132,9 @@ export default async function seed({ container }: ExecArgs) {
   // 4. Get or create regions
   logger.info("Checking regions...");
   let regionsCreated = 0;
-  
+  const stripeProviderId = "pp_stripe_stripe";
+  const dkPaymentProviders = process.env.STRIPE_API_KEY ? [stripeProviderId] : [];
+
   // Check Denmark region
   const existingDkRegion = await regionModule.listRegions({ currency_code: "dkk" });
   if (existingDkRegion.length === 0) {
@@ -141,15 +145,26 @@ export default async function seed({ container }: ExecArgs) {
             name: "Denmark",
             currency_code: "dkk",
             countries: ["dk"],
-            payment_providers: [],
+            payment_providers: dkPaymentProviders,
           },
         ],
       },
     });
     regionsCreated++;
-    logger.info("✅ Created Denmark region");
+    logger.info("✅ Created Denmark region" + (dkPaymentProviders.length ? " with Stripe" : ""));
   } else {
-    logger.info("✅ Denmark region already exists");
+    const dkRegion = existingDkRegion[0];
+    await updateRegionsWorkflow(container).run({
+      input: {
+        selector: { id: dkRegion.id },
+        update: { payment_providers: dkPaymentProviders },
+      },
+    });
+    logger.info(
+      dkPaymentProviders.length > 0
+        ? "✅ Denmark region: Stripe payment provider enabled"
+        : "✅ Denmark region: Stripe payment provider disabled"
+    );
   }
 
   // Check Europe region
@@ -171,6 +186,79 @@ export default async function seed({ container }: ExecArgs) {
     logger.info("✅ Created Europe region");
   } else {
     logger.info("✅ Europe region already exists");
+  }
+
+  // 4b. Ensure fulfillment provider, service zone, and shipping options for Denmark
+  logger.info("Checking fulfillment setup for shipping...");
+  try {
+    await link.create({
+      [Modules.STOCK_LOCATION]: { stock_location_id: stockLocation.id },
+      [Modules.FULFILLMENT]: { fulfillment_provider_id: "manual_manual" },
+    });
+    logger.info("✅ Linked manual fulfillment provider to stock location");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("already exists") || msg.includes("duplicate") || msg.includes("unique")) {
+      logger.info("✅ Manual fulfillment provider already linked");
+    } else {
+      logger.warn("Link create (manual_manual):", err);
+      throw err;
+    }
+  }
+
+  // Check for service zone + shipping option on stock location's fulfillment set
+  const query = container.resolve(ContainerRegistrationKeys.QUERY);
+  const { data: locData } = await query.graph({
+    entity: "stock_location",
+    filters: { id: stockLocation.id },
+    fields: ["fulfillment_sets.id", "fulfillment_sets.name"],
+  });
+  const locSets = (
+    (locData?.[0] as { fulfillment_sets?: { id: string; name: string }[] } | undefined)
+      ?.fulfillment_sets
+  ) ?? [];
+  const shippingSet = locSets[0];
+
+  if (shippingSet) {
+    const existingZones = await fulfillmentModule.listServiceZones({
+      fulfillment_set: { id: shippingSet.id },
+    });
+    let dkZone = existingZones.find(z => z.name === "Denmark" || z.name === "Denmark Zone");
+
+    if (!dkZone) {
+      dkZone = await fulfillmentModule.createServiceZones({
+        fulfillment_set_id: shippingSet.id,
+        name: "Denmark",
+        geo_zones: [{ type: "country", country_code: "dk" }],
+      });
+      logger.info(`✅ Created Denmark service zone in ${shippingSet.name}`);
+    } else {
+      logger.info(`✅ Denmark service zone already exists: ${dkZone.id}`);
+    }
+
+    const existingOptions = await fulfillmentModule.listShippingOptions({
+      service_zone: { id: dkZone.id },
+    });
+    const standardLevering = existingOptions.find((o) => o.name === "Standard Levering");
+
+    if (!standardLevering) {
+      await createShippingOptionsWorkflow(container).run({
+        input: [{
+          name: "Standard Levering",
+          service_zone_id: dkZone.id,
+          shipping_profile_id: shippingProfile.id,
+          provider_id: "manual_manual",
+          type: { label: "Standard", description: "2-4 hverdage", code: "standard" },
+          price_type: "flat",
+          prices: [{ currency_code: "dkk", amount: 0 }],
+        }],
+      });
+      logger.info("✅ Created shipping option: Standard Levering (gratis, DKK)");
+    } else {
+      logger.info(`✅ Shipping option already exists: ${standardLevering.id}`);
+    }
+  } else {
+    logger.info("⚠️  No fulfillment set found on stock location - create one in Medusa Admin");
   }
 
   // 5. Seed product types (cleanser, toner, serum, moisturizer, SPF, eye cream, face mask)
@@ -422,9 +510,6 @@ export default async function seed({ container }: ExecArgs) {
     }
   }
   // Link existing products to Guapo brand (for products that were created before brand-link was added)
-  const query = container.resolve("query") as {
-    graph: (opts: { entity: string; fields: string[]; filters?: Record<string, unknown> }) => Promise<{ data: Array<{ id: string; brand?: { id: string } }> }>;
-  };
   for (const product of allProductsInOrder) {
     const { data: prods } = await query.graph({
       entity: "product",

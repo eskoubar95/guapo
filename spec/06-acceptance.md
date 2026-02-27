@@ -5,7 +5,7 @@ Use it as the project’s **ship gate** during planning and validation.
 
 ## MVP definition (1–5 bullets)
 - A Denmark-first Guapo storefront is live with **/da** and **/en** URLs and core face skincare catalog.
-- Customers can complete purchases with Adyen (cards, Apple Pay, Google Pay, MobilePay, Klarna).
+- Customers can complete purchases with Stripe (cards, Apple Pay, Google Pay, MobilePay, Klarna when enabled).
 - Product subscriptions are live (cycles 4/8/12, 5% discount) with skip/pause/resume/cancel (cancel gated by 2 deliveries).
 - CMS-driven content + SEO foundations are live (pages/blog/landing/homepage builder + structured data).
 - Consent-aware analytics + marketing tracking is live (PostHog + Meta/Google Ads behind consent).
@@ -47,7 +47,7 @@ Use it as the project’s **ship gate** during planning and validation.
 ## Non-functional requirements (MVP)
 - **Performance**: Core pages (home/PLP/PDP/checkout) feel fast; no obvious layout shift; basic web vitals monitoring TBD.
 - **Reliability**: Payment failures are handled gracefully; subscription retry/on-hold states are clear.
-- **Security**: No secrets in git; payment handled via Adyen; basic rate limiting and input validation where applicable.
+- **Security**: No secrets in git; payment handled via Stripe; basic rate limiting and input validation where applicable.
 - **Accessibility**: WCAG AA target; keyboard flows must work. Focus indicator uses **active borders** (no focus rings).
 - **Privacy/Compliance**: Consent banner with necessary/analytics/marketing; PostHog behind analytics consent; pixels behind marketing consent.
 
@@ -56,7 +56,7 @@ Use it as the project’s **ship gate** during planning and validation.
   - [ ] Browse → PDP → add to cart → checkout → order confirmation
   - [ ] Subscription purchase → account shows subscription → skip/pause/resume → cancel after commitment
 - [ ] Payment methods validated in staging at least once: cards + one wallet + one alt method (MobilePay/Klarna) (full matrix can follow post-launch)
-- [ ] Adyen subscription recurring is validated in staging (tokenization/mandates + at least one successful renewal simulation)
+- [ ] Stripe subscription recurring is validated in staging (tokenization/mandates + at least one successful renewal simulation)
 - [ ] Supabase schema separation is validated in staging (Medusa + Payload migrations run cleanly). Fallback: separate DB if needed.
 - [ ] Subscription compliance (DK) reviewed and copy/policies updated (renewal notices, cancellation rights, required disclosures).
 - [ ] Email deliverability basics configured (SPF/DKIM/DMARC) and key emails render correctly

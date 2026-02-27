@@ -171,7 +171,7 @@ Milestones are the execution backbone for the MVP. Each milestone has a clear ob
 
 ## M9 — Stripe Payments
 
-**Objective:** Kunder kan betale med kort via Stripe i checkout. Stripe erstatter Adyen som payment provider.
+**Objective:** Kunder kan betale med kort via Stripe i checkout. Stripe erstatter Adyen som payment provider. Subscription: recurring payment method (mandate) ved subscription-checkout, renewal charge + webhook, staging renewal simulation.
 
 **In scope:**
 - Stripe Payment Module registreret i Medusa
@@ -179,14 +179,17 @@ Milestones are the execution backbone for the MVP. Each milestone has a clear ob
 - Stripe PaymentElement i storefront checkout
 - Stripe webhook endpoint for deployed miljø
 - Spec-filer opdateret (Adyen → Stripe)
+- Recurring payment method (mandate) ved subscription-checkout; gem token til renewal
+- Subscription renewal charge (webhook/cron); opret order ved success; retry/recovery (2 retries over 3 dage)
+- Staging gate: mindst én renewal simulation gennemført i staging
 
 **Out of scope:**
 - MobilePay/Klarna via Stripe (kan tilføjes senere)
-- Subscription recurring via Stripe (planlægges separat)
 
 **Exit criteria:**
 - End-to-end betaling med test-kort virker i staging
 - Webhook håndterer payment events (succeeded, failed, refunded)
+- Subscription: betalingsmetode til abonnement ved checkout; renewal flow med retry/recovery; renewal simulation i staging
 
 ## M10 — Shipmondo Shipping
 

@@ -107,6 +107,11 @@ export interface Dictionary {
     volume: string;
     notSpecified: string;
     quantity: string;
+    size: string;
+    added: string;
+    purchaseOptions: string;
+    decreaseQuantity: string;
+    increaseQuantity: string;
     trustStrip: {
       freeShipping: string;
       returns: string;
@@ -146,6 +151,8 @@ export interface Dictionary {
     total: string;
     summary: string;
     remove: string;
+    decreaseQuantity: string;
+    increaseQuantity: string;
     oneTimePurchase: string;
     subscribe: string;
     discountCodeLabel: string;
@@ -212,6 +219,9 @@ export interface Dictionary {
     subtotal: string;
     shipping: string;
     total: string;
+    confirming: string;
+    errorMessage: string;
+    backToCheckout: string;
   };
   subscriptionDetail: {
     title: string;

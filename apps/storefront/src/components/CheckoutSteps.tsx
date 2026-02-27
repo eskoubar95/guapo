@@ -33,6 +33,9 @@ interface CheckoutStepsProps {
     };
   };
   confirmationHref: string;
+  onStepChange?: (step: CheckoutStepNum) => void;
+  paymentContent?: React.ReactNode;
+  paymentReady?: boolean;
 }
 
 const STEPS: { num: CheckoutStepNum; labelKey: keyof CheckoutStepsProps["dict"]["checkout"] }[] = [
@@ -45,9 +48,17 @@ export function CheckoutSteps({
   locale,
   dict,
   confirmationHref,
+  onStepChange,
+  paymentContent,
+  paymentReady,
 }: CheckoutStepsProps) {
   const [step, setStep] = useState<CheckoutStepNum>(1);
   const { checkout } = dict;
+
+  const handleStepChange = (newStep: CheckoutStepNum) => {
+    setStep(newStep);
+    onStepChange?.(newStep);
+  };
 
   return (
     <>
@@ -200,7 +211,7 @@ export function CheckoutSteps({
           <div className="flex justify-end">
             <button
               type="button"
-              onClick={() => setStep(2)}
+              onClick={() => handleStepChange(2)}
               className="rounded-full bg-primary px-8 py-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               {checkout.nextStep}
@@ -223,14 +234,14 @@ export function CheckoutSteps({
           <div className="flex flex-wrap items-center justify-between gap-4">
             <button
               type="button"
-              onClick={() => setStep(1)}
+              onClick={() => handleStepChange(1)}
               className="rounded-full border-2 border-border px-8 py-4 text-sm font-medium text-foreground hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               {checkout.previousStep}
             </button>
             <button
               type="button"
-              onClick={() => setStep(3)}
+              onClick={() => handleStepChange(3)}
               className="rounded-full bg-primary px-8 py-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               {checkout.continueToPayment}
@@ -244,33 +255,39 @@ export function CheckoutSteps({
         <div className="mt-8 space-y-8">
           <section>
             <h2 className="text-lg font-semibold text-foreground">{checkout.payment}</h2>
-            <div className="mt-4 rounded-lg border border-dashed border-border bg-muted/30 p-6 text-center">
-              <p className="text-muted-foreground">
-                {locale === "da"
-                  ? "Adyen betalingsmodul integreres her"
-                  : "Adyen payment module will be integrated here"}
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {locale === "da"
-                  ? "Understøtter kort, MobilePay, Apple Pay, Google Pay"
-                  : "Supports cards, MobilePay, Apple Pay, Google Pay"}
-              </p>
+            <div className="mt-4">
+              {paymentContent ?? (
+                <div className="rounded-lg border border-dashed border-border bg-muted/30 p-6 text-center">
+                  <p className="text-muted-foreground">
+                    {locale === "da"
+                      ? "Stripe betalingsmodul integreres her"
+                      : "Stripe payment module will be integrated here"}
+                  </p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {locale === "da"
+                      ? "Understøtter kort, MobilePay, Apple Pay, Google Pay"
+                      : "Supports cards, MobilePay, Apple Pay, Google Pay"}
+                  </p>
+                </div>
+              )}
             </div>
           </section>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <button
               type="button"
-              onClick={() => setStep(2)}
+              onClick={() => handleStepChange(2)}
               className="rounded-full border-2 border-border px-8 py-4 text-sm font-medium text-foreground hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               {checkout.previousStep}
             </button>
-            <Link
-              href={confirmationHref}
-              className="rounded-full bg-primary px-8 py-4 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            >
-              {checkout.placeOrder}
-            </Link>
+            {(!paymentContent || paymentReady) && (
+              <Link
+                href={confirmationHref}
+                className="rounded-full bg-primary px-8 py-4 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                {checkout.placeOrder}
+              </Link>
+            )}
           </div>
         </div>
       )}

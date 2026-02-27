@@ -3,8 +3,11 @@ import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Card, CardContent } from "@/components/ui/card";
-import { CartItemList } from "@/components/CartItemList";
 import { CartDiscountCode } from "@/components/CartDiscountCode";
+import { getCart } from "@/lib/cart";
+import { formatPrice } from "@/lib/format";
+import { CartItems } from "@/components/cart/CartItems";
+import type { CartItem } from "@/components/cart/CartItems";
 
 interface CartPageProps {
   params: Promise<{ locale: string }>;
@@ -18,55 +21,35 @@ export async function generateMetadata({ params }: CartPageProps): Promise<Metad
   };
 }
 
-const cartItems = [
-  { id: "1", name: "Gentle Cleanser", variant: "150ml", price: 189, quantity: 1, image: null, subscription: null },
-  { id: "2", name: "Niacinamide Serum", variant: "30ml", price: 237, quantity: 1, image: null, subscription: { cycle: 8 } },
-];
-
 export default async function CartPage({ params }: CartPageProps) {
   const { locale } = await params;
   const dict = await getDictionary(locale as Locale);
+  const cart = await getCart();
 
-  const formatPrice = (amount: number) =>
-    new Intl.NumberFormat(locale, { style: "currency", currency: "DKK", minimumFractionDigits: 0 }).format(amount);
+  const items = (cart?.items ?? []) as CartItem[];
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = 0;
-  const total = subtotal + shipping;
+  const subtotal = cart?.subtotal ?? 0;
+  const shipping = cart?.shipping_total ?? 0;
+  const total = cart?.total ?? 0;
 
   return (
     <div className="min-h-full">
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-foreground">{dict.cart.title}</h1>
 
-        {cartItems.length > 0 ? (
+        {items.length > 0 ? (
           <div className="mt-8 lg:grid lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-7">
-              <CartItemList
-                items={cartItems}
-                locale={locale}
-                removeLabel={dict.cart.remove}
-                oneTimeLabel={dict.cart.oneTimePurchase}
-                subscribeLabel={dict.cart.subscribe}
-              />
+              <CartItems items={items} locale={locale} dict={dict} />
 
-              {/* Continue shopping - product suggestions */}
               <section className="mt-10 border-t border-border pt-8">
                 <h2 className="text-lg font-semibold text-foreground">{dict.cart.continueShoppingTitle}</h2>
-                <div className="mt-4 flex flex-wrap gap-4">
+                <div className="mt-4">
                   <Link
-                    href={`/${locale}/products/gentle-cleanser`}
-                    className="group flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary"
+                    href={`/${locale}/categories`}
+                    className="text-sm font-medium text-primary hover:underline"
                   >
-                    <div className="h-14 w-14 shrink-0 rounded-lg bg-muted" />
-                    <span className="text-sm font-medium text-foreground group-hover:text-primary">Gentle Cleanser</span>
-                  </Link>
-                  <Link
-                    href={`/${locale}/products/niacinamide-serum`}
-                    className="group flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary"
-                  >
-                    <div className="h-14 w-14 shrink-0 rounded-lg bg-muted" />
-                    <span className="text-sm font-medium text-foreground group-hover:text-primary">Niacinamide Serum 10%</span>
+                    {locale === "da" ? "Se alle produkter →" : "Browse all products →"}
                   </Link>
                 </div>
               </section>
@@ -85,17 +68,17 @@ export default async function CartPage({ params }: CartPageProps) {
                   <dl className="mt-6 space-y-4">
                     <div className="flex justify-between">
                       <dt className="text-sm text-muted-foreground">{dict.cart.subtotal}</dt>
-                      <dd className="text-sm font-medium text-foreground">{formatPrice(subtotal)}</dd>
+                      <dd className="text-sm font-medium text-foreground">{formatPrice(subtotal, locale)}</dd>
                     </div>
                     <div className="flex justify-between">
                       <dt className="text-sm text-muted-foreground">{dict.cart.shipping}</dt>
                       <dd className="text-sm font-medium text-foreground">
-                        {shipping === 0 ? (locale === "da" ? "Gratis" : "Free") : formatPrice(shipping)}
+                        {shipping === 0 ? (locale === "da" ? "Beregnes" : "Calculated at checkout") : formatPrice(shipping, locale)}
                       </dd>
                     </div>
                     <div className="flex justify-between border-t border-border pt-4">
                       <dt className="font-medium text-foreground">{dict.cart.total}</dt>
-                      <dd className="font-medium text-foreground">{formatPrice(total)}</dd>
+                      <dd className="font-medium text-foreground">{formatPrice(total, locale)}</dd>
                     </div>
                   </dl>
                   <Link

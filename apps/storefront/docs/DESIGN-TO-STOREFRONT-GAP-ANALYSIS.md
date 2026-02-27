@@ -17,7 +17,7 @@ Præcis gennemgang af hvad der findes i `design/Ecommercestorefrontdesign` vs `a
 | `/brands/:brand` | ProductListPage | `/[locale]/brands/[handle]` | ⚠️ Delvist | Samme som categories |
 | `/product/:id` | ProductDetailPage | `/[locale]/products/[handle]` | ⚠️ Delvist | QuantitySelector, SizeVariantSelector (ProductGallery, Tabs, KeyInformationCard, trust-strip done) |
 | `/cart` | CartPage | `/[locale]/cart` | ⚠️ Delvist | FilterSystem/PLP design-tokens (CartItemCard, subscription-toggle, rabatkode, continue-shopping done) |
-| `/checkout` | CheckoutPage | `/[locale]/checkout` | ⚠️ Delvist | CheckoutSteps: fuld step-flow (1→2→3), leveringsvalg; Adyen-placeholder |
+| `/checkout` | CheckoutPage | `/[locale]/checkout` | ⚠️ Delvist | CheckoutSteps: fuld step-flow (1→2→3), leveringsvalg; Stripe-placeholder |
 | `/order-confirmation/:orderId` | OrderConfirmationPage | `/[locale]/order-confirmation/[orderId]` | ✅ Implementeret | — |
 | `/account` | AccountOverviewPage | `/[locale]/account` | ⚠️ Delvist | AccountLayout med sidebar, design-kort (Ordrer, Abonnementer, Adresser, Kontakt) |
 | `/account/orders` | OrdersPage | `/[locale]/account/orders` | ⚠️ Delvist | Design layout, ordreliste |
@@ -134,7 +134,7 @@ Præcis gennemgang af hvad der findes i `design/Ecommercestorefrontdesign` vs `a
 ### Checkout
 - **Design:** Step-indikator (1. Levering, 2. Oversigt, 3. Betaling), leveringsvalg (hjem, pakkeshop, express), formularfelter, ordreoversigt-sidebar
 - **Vi har:** CheckoutSteps med fuld step-flow (kun ét step synligt ad gangen, Tilbage/Fortsæt), step-indikator med completed-state, leveringsvalg-UI, ordreoversigt-sidebar
-- **Mangler:** Adyen-integration, evt. design-tokens
+- **Mangler:** Stripe-integration, evt. design-tokens
 
 ### Account
 - **Design:** AccountLayout med sidebar (Oversigt, Mine ordrer, Abonnementer), AccountOverviewPage med kort (Ordrer, Abonnementer, Adresser, Kontakt)
