@@ -10,7 +10,7 @@ Status og Linear-mapping for tasks under M9 (Stripe Payments + Subscription).
 | t9.2  | GUA-88    | Done       | Stripe i Denmark-regionen |
 | t9.3  | GUA-89    | Done       | PaymentElement i checkout |
 | t9.4  | GUA-90    | Done       | Webhook endpoint |
-| t9.5  | GUA-91    | In Progress| E2E test staging |
+| t9.5  | GUA-91    | Done       | E2E test staging |
 | t9.6  | GUA-92    | Done       | Spec Adyen → Stripe |
 | t9.7  | GUA-93    | Backlog    | Recurring/mandate subscription-checkout |
 | t9.8  | GUA-94    | Backlog    | Renewal charge + webhook/cron |

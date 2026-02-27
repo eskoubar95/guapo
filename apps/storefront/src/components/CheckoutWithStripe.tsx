@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { medusa } from "@/lib/medusa";
@@ -34,62 +34,73 @@ interface CheckoutWithStripeProps {
     };
   };
   confirmationHref: string;
+  cartId: string | null;
 }
 
 export function CheckoutWithStripe({
   locale,
   dict,
   confirmationHref,
+  cartId,
 }: CheckoutWithStripeProps) {
-  const [initData, setInitData] = useState<{
-    region_id: string;
-    variant_id: string;
-  } | null>(null);
   const [cart, setCart] = useState<{ id: string } | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch("/api/checkout/init")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.region_id && data.variant_id) {
-          setInitData({ region_id: data.region_id, variant_id: data.variant_id });
-        }
-      })
-      .catch(() => {});
-  }, []);
-
   const ensureCartAndPayment = useCallback(async () => {
-    if (!initData || cart) return;
+    if (!cartId || cart) return;
     try {
-      const { cart: newCart } = await medusa.store.cart.create({
-        region_id: initData.region_id,
-        email: "checkout@example.com",
+      // Update cart with shipping address for checkout
+      await medusa.store.cart.update(cartId, {
+        email: "checkout@guapo.dk",
         shipping_address: {
           first_name: "Test",
-          last_name: "User",
-          address_1: "Test Street 1",
-          city: "Copenhagen",
+          last_name: "Bruger",
+          address_1: "Testvej 1",
+          city: "København",
           postal_code: "1000",
           country_code: "dk",
         },
-        items: [{ variant_id: initData.variant_id, quantity: 1 }],
+        billing_address: {
+          first_name: "Test",
+          last_name: "Bruger",
+          address_1: "Testvej 1",
+          city: "København",
+          postal_code: "1000",
+          country_code: "dk",
+        },
       });
+
+      // Add shipping method
+      const { shipping_options } = await medusa.store.fulfillment
+        .listCartOptions({ cart_id: cartId });
+
+      if (shipping_options?.length) {
+        await medusa.store.cart.addShippingMethod(cartId, {
+          option_id: shipping_options[0].id,
+        });
+      }
+
+      // Initiate payment session
+      const { cart: updatedCart } = await medusa.store.cart.retrieve(cartId);
       const { payment_collection } = await medusa.store.payment.initiatePaymentSession(
-        newCart,
+        updatedCart,
         { provider_id: "pp_stripe_stripe", data: {} }
       );
       const session = payment_collection?.payment_sessions?.[0];
       const secret = session?.data?.client_secret as string | undefined;
       if (secret) {
-        setCart({ id: newCart.id });
+        setCart({ id: cartId });
         setClientSecret(secret);
+      } else {
+        setPaymentError(locale === "da"
+          ? "Kunne ikke oprette betalingssession"
+          : "Could not create payment session");
       }
     } catch (err) {
       setPaymentError(err instanceof Error ? err.message : "Could not initialize payment");
     }
-  }, [initData, cart]);
+  }, [cartId, cart, locale]);
 
   const paymentContent =
     stripePromise && clientSecret && cart ? (

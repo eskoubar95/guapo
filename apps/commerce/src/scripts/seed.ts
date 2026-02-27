@@ -13,6 +13,7 @@ import {
   linkSalesChannelsToStockLocationWorkflow,
   createStockLocationsWorkflow,
   createShippingProfilesWorkflow,
+  createShippingOptionsWorkflow,
   createProductsWorkflow,
   createProductCategoriesWorkflow,
   createProductTypesWorkflow,
@@ -185,6 +186,69 @@ export default async function seed({ container }: ExecArgs) {
     logger.info("✅ Created Europe region");
   } else {
     logger.info("✅ Europe region already exists");
+  }
+
+  // 4b. Ensure fulfillment provider, service zone, and shipping options for Denmark
+  logger.info("Checking fulfillment setup for shipping...");
+  try {
+    await link.create({
+      [Modules.STOCK_LOCATION]: { stock_location_id: stockLocation.id },
+      [Modules.FULFILLMENT]: { fulfillment_provider_id: "manual_manual" },
+    });
+    logger.info("✅ Linked manual fulfillment provider to stock location");
+  } catch {
+    logger.info("✅ Manual fulfillment provider already linked");
+  }
+
+  // Check for service zone + shipping option on stock location's fulfillment set
+  const query = container.resolve(ContainerRegistrationKeys.QUERY);
+  const { data: locData } = await query.graph({
+    entity: "stock_location",
+    filters: { id: stockLocation.id },
+    fields: ["fulfillment_sets.id", "fulfillment_sets.name"],
+  });
+  const locSets = (locData[0] as Record<string, unknown>).fulfillment_sets as { id: string; name: string }[] | undefined;
+  const shippingSet = locSets?.[0];
+
+  if (shippingSet) {
+    const existingZones = await fulfillmentModule.listServiceZones({
+      fulfillment_set: { id: shippingSet.id },
+    });
+    let dkZone = existingZones.find(z => z.name === "Denmark" || z.name === "Denmark Zone");
+
+    if (!dkZone) {
+      dkZone = await fulfillmentModule.createServiceZones({
+        fulfillment_set_id: shippingSet.id,
+        name: "Denmark",
+        geo_zones: [{ type: "country", country_code: "dk" }],
+      });
+      logger.info(`✅ Created Denmark service zone in ${shippingSet.name}`);
+    } else {
+      logger.info(`✅ Denmark service zone already exists: ${dkZone.id}`);
+    }
+
+    const existingOptions = await fulfillmentModule.listShippingOptions({
+      service_zone: { id: dkZone.id },
+    });
+
+    if (existingOptions.length === 0) {
+      await createShippingOptionsWorkflow(container).run({
+        input: [{
+          name: "Standard Levering",
+          service_zone_id: dkZone.id,
+          shipping_profile_id: shippingProfile.id,
+          provider_id: "manual_manual",
+          type: { label: "Standard", description: "2-4 hverdage", code: "standard" },
+          price_type: "flat",
+          prices: [{ currency_code: "dkk", amount: 0 }],
+        }],
+      });
+      logger.info("✅ Created shipping option: Standard Levering (gratis, DKK)");
+    } else {
+      logger.info(`✅ Shipping options exist: ${existingOptions.length}`);
+    }
+  } else {
+    logger.info("⚠️  No fulfillment set found on stock location - create one in Medusa Admin");
   }
 
   // 5. Seed product types (cleanser, toner, serum, moisturizer, SPF, eye cream, face mask)

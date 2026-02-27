@@ -840,7 +840,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** .
 
-**Status:** in progress
+**Status:** done
 
 **Tags:** payments, gate
 
