@@ -189,3 +189,15 @@ Required service for GLS: `EMAIL_NT` (email notification). Include in `service_c
 | `SHIPMONDO_SANDBOX` | `true` to use sandbox base URL; omit or `false` for production |
 
 See `env.template` in this app for the full list.
+
+## End-to-end test (M10 acceptance)
+
+To validate the full shipping flow (t10.5):
+
+1. **Prerequisites:** Commerce and storefront running; `SHIPMONDO_API_USER` and `SHIPMONDO_API_KEY` set in commerce (sandbox or production); Stripe configured; seed run so "Pakkeshop (39 kr)" option exists.
+2. **Checkout:** In storefront, add a product to cart, go to checkout. Step 1: select "Pakkeshop" (GLS/DAO), enter postnummer (e.g. 1000), click Search, choose a pickup point from the list.
+3. **Payment:** Proceed through steps 2 and 3; complete payment with a Stripe test card. Confirm order is created and shipping total is 39 DKK when Pakkeshop was selected.
+4. **Fulfillment:** In Medusa Admin, open the order and create a fulfillment. The Shipmondo provider will call the Shipmondo API to create the shipment (and optionally return label data). Verify no errors; in sandbox, labels can be viewed in Shipmondo sandbox account.
+5. **Documents:** Use "Get documents" / label retrieval in Admin for the fulfillment to confirm the provider returns label data when available.
+
+If Shipmondo credentials are not set, the provider still registers; "Pakkeshop (39 kr)" will not appear in seed, and pickup-points proxy returns 503. With credentials, full flow from pakkeshop selection to label (or sandbox booking) can be verified.
