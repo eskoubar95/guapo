@@ -55,6 +55,7 @@ export function CheckoutWithStripe({
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [selectedShippingOptionId, setSelectedShippingOptionId] = useState<string | null>(null);
   const [selectedShippingData, setSelectedShippingData] = useState<Record<string, unknown>>({});
+  const [appliedShippingOptionId, setAppliedShippingOptionId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: "",
     firstName: "",
@@ -76,10 +77,11 @@ export function CheckoutWithStripe({
           amount: (o.amount ?? 0) as number,
         }));
         setShippingOptions(opts);
-        if (opts.length && !selectedShippingOptionId) {
+        setSelectedShippingOptionId((prev) => {
+          if (prev && opts.some((o) => o.id === prev)) return prev;
           const pakkeshop = opts.find((o) => o.name.includes("Pakkeshop") || o.name.includes("39"));
-          setSelectedShippingOptionId((pakkeshop ?? opts[0]).id);
-        }
+          return (pakkeshop ?? opts[0])?.id ?? null;
+        });
       })
       .catch(() => setShippingOptions([]));
   }, [cartId]);
@@ -91,7 +93,7 @@ export function CheckoutWithStripe({
 
   const ensureCartAndPayment = useCallback(async () => {
     if (!cartId) return;
-    if (cart && clientSecret) return;
+    if (cart && clientSecret && appliedShippingOptionId === selectedShippingOptionId) return;
     try {
       const email = formData.email || "guest@guapo.dk";
       const hasServicePoint =
@@ -139,6 +141,7 @@ export function CheckoutWithStripe({
           option_id: optionId,
           data: Object.keys(selectedShippingData).length ? selectedShippingData : undefined,
         });
+        setAppliedShippingOptionId(optionId);
       }
 
       const { cart: updatedCart } = await medusa.store.cart.retrieve(cartId);
@@ -159,7 +162,7 @@ export function CheckoutWithStripe({
     } catch (err) {
       setPaymentError(err instanceof Error ? err.message : "Could not initialize payment");
     }
-  }, [cartId, cart, clientSecret, locale, selectedShippingOptionId, selectedShippingData, formData]);
+  }, [cartId, cart, clientSecret, locale, selectedShippingOptionId, selectedShippingData, appliedShippingOptionId, formData]);
 
   const paymentContent =
     stripePromise && clientSecret && cart ? (

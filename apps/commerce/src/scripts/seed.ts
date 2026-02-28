@@ -221,6 +221,7 @@ export default async function seed({ container }: ExecArgs) {
         logger.info("✅ Shipmondo fulfillment provider already linked");
       } else {
         logger.warn(`Link create (shipmondo_shipmondo): ${msg}`);
+        throw err;
       }
     }
   }

@@ -71,15 +71,33 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     });
   }
 
-  const carrier_code = (req.query.carrier_code as string) || "gls";
-  const country_code = (req.query.country_code as string) || "DK";
-  const zipcode = req.query.zipcode as string;
+  const one = (v: unknown) => (typeof v === "string" ? v : Array.isArray(v) ? v[0] : undefined);
+  const carrier_code = one(req.query.carrier_code) ?? "gls";
+  const country_code = (one(req.query.country_code) ?? "DK").toUpperCase();
+  const zipcode = one(req.query.zipcode);
   if (!zipcode || zipcode.length < 3) {
     return res.status(400).json({
       message: "zipcode required (min 3 characters)",
       pickup_points: [],
     });
   }
+  if (!["gls", "dao", "pdk"].includes(carrier_code)) {
+    return res.status(400).json({ message: "invalid carrier_code", pickup_points: [] });
+  }
+
+  const rawLimit = one(req.query.limit);
+  const limit = rawLimit ? Math.min(Math.max(1, Number(rawLimit)), 50) : undefined;
+
+  const fetchWithTimeout = async (url: string, init?: RequestInit) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8_000);
+    try {
+      const r = await fetch(url, { ...init, signal: controller.signal });
+      return r;
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
 
   try {
     if (frontendKey) {
@@ -91,10 +109,9 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
       url.searchParams.set("carrier_code", carrier_code);
       url.searchParams.set("country_code", country_code);
       url.searchParams.set("zipcode", zipcode);
-      const limit = req.query.limit;
-      if (limit) url.searchParams.set("limit", String(limit));
+      if (limit != null && limit > 0) url.searchParams.set("limit", String(limit));
 
-      const response = await fetch(url.toString());
+      const response = await fetchWithTimeout(url.toString());
       if (!response.ok) {
         const text = await response.text();
         const status = response.status;
@@ -126,11 +143,10 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     url.searchParams.set("carrier_code", carrier_code);
     url.searchParams.set("country_code", country_code);
     url.searchParams.set("zipcode", zipcode);
-    const limit = req.query.limit;
-    if (limit) url.searchParams.set("limit", String(limit));
+    if (limit != null && limit > 0) url.searchParams.set("limit", String(limit));
 
     const auth = Buffer.from(`${apiUser}:${apiKey}`).toString("base64");
-    const response = await fetch(url.toString(), {
+    const response = await fetchWithTimeout(url.toString(), {
       headers: { Authorization: `Basic ${auth}` },
     });
     if (!response.ok) {

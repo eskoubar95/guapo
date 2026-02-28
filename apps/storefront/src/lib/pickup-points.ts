@@ -30,8 +30,12 @@ export async function fetchPickupPoints(params: {
   if (limit) url.searchParams.set("limit", String(limit));
   const headers: HeadersInit = {};
   if (PUBLISHABLE_KEY) headers["x-publishable-api-key"] = PUBLISHABLE_KEY;
-  const res = await fetch(url.toString(), { headers });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return Array.isArray(data.pickup_points) ? data.pickup_points : [];
+  try {
+    const res = await fetch(url.toString(), { headers });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data.pickup_points) ? data.pickup_points : [];
+  } catch {
+    return [];
+  }
 }

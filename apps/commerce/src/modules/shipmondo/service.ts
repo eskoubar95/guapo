@@ -57,15 +57,24 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
       Authorization: `Basic ${auth}`,
       "Content-Type": "application/json",
     };
-    const res = await fetch(url, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
     if (!res.ok) {
       const text = await res.text();
-      this.logger_.warn(`Shipmondo API ${method} ${path}: ${res.status} ${text}`);
-      throw new Error(`Shipmondo API error: ${res.status} ${text}`);
+      const safeMsg = text.slice(0, 300);
+      this.logger_.warn(`Shipmondo API ${method} ${path}: ${res.status}`);
+      throw new Error(`Shipmondo API error: ${res.status} ${safeMsg}`);
     }
     if (res.status === 204 || res.headers.get("content-length") === "0") {
       return undefined as T;
@@ -170,8 +179,12 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
       address1: servicePointId
         ? ((data?.service_point_address ?? data?.service_point_name) as string) ?? "Pakkeshop"
         : (addr?.address_1 as string) ?? "",
-      postal_code: (addr?.postal_code as string) ?? (data?.service_point_zipcode as string) ?? "",
-      city: (addr?.city as string) ?? (data?.service_point_city as string) ?? "",
+      postal_code: servicePointId
+        ? ((data?.service_point_zipcode as string) ?? (addr?.postal_code as string) ?? "")
+        : ((addr?.postal_code as string) ?? ""),
+      city: servicePointId
+        ? ((data?.service_point_city as string) ?? (addr?.city as string) ?? "")
+        : ((addr?.city as string) ?? ""),
       country_code: ((addr?.country_code as string) ?? "DK").toUpperCase(),
       email: (orderRecord?.email as string) ?? "",
       mobile: (addr?.phone as string) ?? "",
