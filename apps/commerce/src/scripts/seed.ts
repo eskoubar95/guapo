@@ -206,7 +206,9 @@ export default async function seed({ container }: ExecArgs) {
     }
   }
 
-  if (process.env.SHIPMONDO_API_USER && process.env.SHIPMONDO_API_KEY) {
+  const hasShipmondoApi = !!(process.env.SHIPMONDO_API_USER && process.env.SHIPMONDO_API_KEY);
+  const hasShipmondoModuleKey = !!process.env.SHIPMONDO_SHIPPING_MODULE_KEY;
+  if (hasShipmondoApi || hasShipmondoModuleKey) {
     try {
       await link.create({
         [Modules.STOCK_LOCATION]: { stock_location_id: stockLocation.id },
@@ -256,30 +258,25 @@ export default async function seed({ container }: ExecArgs) {
     const existingOptions = await fulfillmentModule.listShippingOptions({
       service_zone: { id: dkZone.id },
     });
-    const standardLevering = existingOptions.find((o) => o.name === "Standard Levering");
 
-    if (!standardLevering) {
-      await createShippingOptionsWorkflow(container).run({
-        input: [{
-          name: "Standard Levering",
-          service_zone_id: dkZone.id,
-          shipping_profile_id: shippingProfile.id,
-          provider_id: "manual_manual",
-          type: { label: "Standard", description: "2-4 hverdage", code: "standard" },
-          price_type: "flat",
-          prices: [{ currency_code: "dkk", amount: 0 }],
-        }],
-      });
-      logger.info("✅ Created shipping option: Standard Levering (gratis, DKK)");
-    } else {
-      logger.info(`✅ Shipping option already exists: ${standardLevering.id}`);
+    // Pakkeshop-only: only GLS pakkeshop (39 kr). Remove old options (Standard Levering, etc.).
+    const toRemove = existingOptions.filter(
+      (o) => o.name === "Standard Levering" || o.name?.includes("Ekspres") || o.name?.includes("Express")
+    );
+    if (toRemove.length > 0) {
+      try {
+        await fulfillmentModule.deleteShippingOptions(toRemove.map((o) => o.id));
+        logger.info(`✅ Removed ${toRemove.length} old shipping option(s): ${toRemove.map((o) => o.name).join(", ")}`);
+      } catch (err) {
+        logger.warn(`Could not remove old shipping options: ${err instanceof Error ? err.message : String(err)}`);
+      }
     }
+    const remainingOptions = toRemove.length
+      ? (await fulfillmentModule.listShippingOptions({ service_zone: { id: dkZone.id } }))
+      : existingOptions;
 
-    if (process.env.SHIPMONDO_API_USER && process.env.SHIPMONDO_API_KEY) {
-      const existingOptionsAfter = await fulfillmentModule.listShippingOptions({
-        service_zone: { id: dkZone.id },
-      });
-      const pakkeshopOption = existingOptionsAfter.find((o) => o.name === "Pakkeshop (39 kr)");
+    if (hasShipmondoApi || hasShipmondoModuleKey) {
+      const pakkeshopOption = remainingOptions.find((o) => o.name === "Pakkeshop (39 kr)");
       if (!pakkeshopOption) {
         await createShippingOptionsWorkflow(container).run({
           input: [{

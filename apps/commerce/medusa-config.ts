@@ -81,17 +81,20 @@ if (process.env.STRIPE_API_KEY) {
   });
 }
 
-// Fulfillment: manual (default) + Shipmondo (GLS/DAO pakkeshop, 39 DKK) when credentials set
+// Fulfillment: manual (default) + Shipmondo (GLS/DAO pakkeshop, 39 DKK)
+// Register when: API User+Key (for labels) OR Shipping Module Key (for dry-run + pickup points)
+const hasShipmondoApi = !!(process.env.SHIPMONDO_API_USER && process.env.SHIPMONDO_API_KEY);
+const hasShipmondoModuleKey = !!process.env.SHIPMONDO_SHIPPING_MODULE_KEY;
 const fulfillmentProviders: { resolve: string; id: string; options?: Record<string, unknown> }[] = [
   { resolve: "@medusajs/medusa/fulfillment-manual", id: "manual" },
 ];
-if (process.env.SHIPMONDO_API_USER && process.env.SHIPMONDO_API_KEY) {
+if (hasShipmondoApi || hasShipmondoModuleKey) {
   fulfillmentProviders.push({
     resolve: "./src/modules/shipmondo",
     id: "shipmondo",
     options: {
-      apiUser: process.env.SHIPMONDO_API_USER,
-      apiKey: process.env.SHIPMONDO_API_KEY,
+      apiUser: process.env.SHIPMONDO_API_USER || "",
+      apiKey: process.env.SHIPMONDO_API_KEY || "",
       sandbox: process.env.SHIPMONDO_SANDBOX === "true",
     },
   });

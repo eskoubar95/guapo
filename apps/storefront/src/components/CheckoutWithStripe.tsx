@@ -55,6 +55,15 @@ export function CheckoutWithStripe({
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [selectedShippingOptionId, setSelectedShippingOptionId] = useState<string | null>(null);
   const [selectedShippingData, setSelectedShippingData] = useState<Record<string, unknown>>({});
+  const [formData, setFormData] = useState({
+    email: "",
+    firstName: "",
+    lastName: "",
+    address1: "",
+    postalCode: "",
+    city: "",
+    phone: "",
+  });
 
   useEffect(() => {
     if (!cartId) return;
@@ -69,8 +78,7 @@ export function CheckoutWithStripe({
         setShippingOptions(opts);
         if (opts.length && !selectedShippingOptionId) {
           const pakkeshop = opts.find((o) => o.name.includes("Pakkeshop") || o.name.includes("39"));
-          const standard = opts.find((o) => o.name.includes("Standard") || o.amount === 0) ?? opts[0];
-          setSelectedShippingOptionId(pakkeshop ? standard?.id ?? opts[0].id : opts[0].id);
+          setSelectedShippingOptionId((pakkeshop ?? opts[0]).id);
         }
       })
       .catch(() => setShippingOptions([]));
@@ -85,24 +93,42 @@ export function CheckoutWithStripe({
     if (!cartId) return;
     if (cart && clientSecret) return;
     try {
+      const email = formData.email || "guest@guapo.dk";
+      const hasServicePoint =
+        selectedShippingData?.service_point_id &&
+        selectedShippingData?.service_point_address;
+      const addr = hasServicePoint
+        ? {
+            first_name: formData.firstName || "Gæst",
+            last_name: formData.lastName || "Bruger",
+            address_1: String(selectedShippingData.service_point_address),
+            city: String(selectedShippingData.service_point_city ?? ""),
+            postal_code: String(selectedShippingData.service_point_zipcode ?? ""),
+            country_code: "dk",
+            phone: formData.phone || undefined,
+          }
+        : {
+            first_name: formData.firstName || "Gæst",
+            last_name: formData.lastName || "Bruger",
+            address_1: formData.address1 || "—",
+            city: formData.city || "—",
+            postal_code: formData.postalCode || "—",
+            country_code: "dk",
+            phone: formData.phone || undefined,
+          };
+      const billingAddr = {
+        first_name: formData.firstName || "Gæst",
+        last_name: formData.lastName || "Bruger",
+        address_1: formData.address1 || "—",
+        city: formData.city || "—",
+        postal_code: formData.postalCode || "—",
+        country_code: "dk",
+        phone: formData.phone || undefined,
+      };
       await medusa.store.cart.update(cartId, {
-        email: "checkout@guapo.dk",
-        shipping_address: {
-          first_name: "Test",
-          last_name: "Bruger",
-          address_1: "Testvej 1",
-          city: "København",
-          postal_code: "1000",
-          country_code: "dk",
-        },
-        billing_address: {
-          first_name: "Test",
-          last_name: "Bruger",
-          address_1: "Testvej 1",
-          city: "København",
-          postal_code: "1000",
-          country_code: "dk",
-        },
+        email,
+        shipping_address: addr,
+        billing_address: billingAddr,
       });
 
       const { shipping_options } = await medusa.store.fulfillment
@@ -133,7 +159,7 @@ export function CheckoutWithStripe({
     } catch (err) {
       setPaymentError(err instanceof Error ? err.message : "Could not initialize payment");
     }
-  }, [cartId, cart, clientSecret, locale, selectedShippingOptionId, selectedShippingData]);
+  }, [cartId, cart, clientSecret, locale, selectedShippingOptionId, selectedShippingData, formData]);
 
   const paymentContent =
     stripePromise && clientSecret && cart ? (
@@ -167,6 +193,8 @@ export function CheckoutWithStripe({
       shippingOptions={shippingOptions}
       selectedShippingOptionId={selectedShippingOptionId}
       onShippingSelect={handleShippingSelect}
+      formData={formData}
+      onFormDataChange={setFormData}
     />
   );
 }

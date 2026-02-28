@@ -39,13 +39,27 @@ async function setCartId(cartId: string) {
   });
 }
 
+/** Clear the cart cookie (call after order completion so next visit gets a fresh cart) */
+export async function clearCartId() {
+  const cookieStore = await cookies();
+  cookieStore.delete("cart_id");
+}
+
 export async function getOrCreateCart(): Promise<string> {
   const existing = await getCartId();
   if (existing) {
     const check = await fetch(`${MEDUSA_URL}/store/carts/${existing}`, {
       headers: headers(),
     });
-    if (check.ok) return existing;
+    if (check.ok) {
+      const data = await check.json().catch(() => ({}));
+      const cart = (data as { cart?: { completed_at?: string | null } }).cart;
+      if (cart?.completed_at) {
+        await clearCartId();
+      } else {
+        return existing;
+      }
+    }
   }
 
   const regionId = await getRegionId();
@@ -119,7 +133,12 @@ export async function getCart() {
       cache: "no-store",
     });
     if (!res.ok) return null;
-    const { cart } = await res.json();
+    const data = await res.json();
+    const cart = (data as { cart?: { completed_at?: string | null } }).cart;
+    if (cart?.completed_at) {
+      await clearCartId();
+      return null;
+    }
     return cart;
   } catch {
     return null;

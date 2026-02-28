@@ -6,29 +6,29 @@ This document describes the Shipmondo API v3 integration for parcel shop (pakkes
 
 - **API version:** v3 (REST)
 - **Documentation:** https://shipmondo.dev/
-- **API Reference:** https://shipmondo.dev/api-reference (select Sandbox or Production server)
+- **API Reference:** https://shipmondo.dev/api-reference
+- **Shipping Module (recommended for checkout):** https://shipmondo.dev/docs/shipping_module/intro
 
-## Authentication
+## Authentication: Two Options
 
-Shipmondo uses **HTTP Basic Authentication** with two credentials:
+### 1. Shipping Module Key (recommended for pakkeshop search)
 
-- **API User** — Your Shipmondo account email or API user identifier
-- **API Key** — Secret key from Shipmondo (Account → API access)
+For **pakkeshop-søgning i checkout** anbefales Shipmondo's [Shipping Module API](https://shipmondo.dev/docs/shipping_module/intro). Den bruger en **shipping module key** (også kaldet Delivery Checkout key):
 
-Send every request with header:
+- **Opret nøgle:** Shipmondo → Settings → [Create a Shipping Module Key](https://help.shipmondo.com/en/articles/1897540-create-a-shipping-module-key)
+- **Env:** `SHIPMONDO_SHIPPING_MODULE_KEY`
+- **Fordele:** Virker i production uden sandbox, ingen ekstra omkostninger for pickup point-søgning, begrænset adgang (read-only)
+- **Endpoints:** `/service_point/service_points`, `/shipping_modules/carriers`, `/shipping_modules/products`
 
-```
-Authorization: Basic <base64(api_user:api_key)>
-```
+### 2. API User + API Key (Basic Auth)
 
-Example (Node.js):
+For **label-oprettelse** (fulfillment) bruges fuld API-adgang:
 
-```js
-const auth = Buffer.from(`${process.env.SHIPMONDO_API_USER}:${process.env.SHIPMONDO_API_KEY}`).toString("base64");
-fetch(url, { headers: { Authorization: `Basic ${auth}` } });
-```
+- **Opret:** [app.shipmondo.com](https://app.shipmondo.com/account/sign-up) → [API access](https://app.shipmondo.com/main/app/#/setting/api)
+- **Env:** `SHIPMONDO_API_USER`, `SHIPMONDO_API_KEY`
+- Bruges til: `POST /shipments`, `GET /shipments/{id}`, og som fallback til pickup points
 
-**Do not commit API keys.** Use environment variables (`SHIPMONDO_API_USER`, `SHIPMONDO_API_KEY`).
+**Prioritet i Guapo:** Hvis `SHIPMONDO_SHIPPING_MODULE_KEY` er sat, bruges den til pakkeshop-søgning. Ellers bruges API User + Key.
 
 ## Sandbox vs Production
 
@@ -184,20 +184,44 @@ Required service for GLS: `EMAIL_NT` (email notification). Include in `service_c
 
 | Variable | Description |
 |----------|-------------|
-| `SHIPMONDO_API_USER` | Shipmondo API user (email or API user id) |
-| `SHIPMONDO_API_KEY` | Shipmondo API key (secret) |
-| `SHIPMONDO_SANDBOX` | `true` to use sandbox base URL; omit or `false` for production |
+| `SHIPMONDO_SHIPPING_MODULE_KEY` | **Anbefalet:** Shipping Module Key til pakkeshop-søgning. Opret i Shipmondo Settings. |
+| `SHIPMONDO_API_USER` | API user (til label-oprettelse og fallback for pickup points) |
+| `SHIPMONDO_API_KEY` | API key (secret) |
+| `SHIPMONDO_SANDBOX` | `true` til sandbox base URL; `false` eller udelad for production |
+| `SHIPMONDO_DRY_RUN` | `true` for at simulere fulfillment uden at oprette rigtige labels (til test) |
 
-See `env.template` in this app for the full list.
+Se `env.template` for fuld liste.
+
+## Test uden sandbox og uden at købe labels
+
+For at teste hele integrationen **uden** at anmode om sandbox og **uden** at købe ægte labels:
+
+1. **Opret Shipping Module Key** i [Shipmondo](https://app.shipmondo.com/main/app/#/setting/api) (Settings → Shipping Module Key / Delivery Checkout). Sæt `SHIPMONDO_SHIPPING_MODULE_KEY` i commerce `.env`.
+2. **Sæt `SHIPMONDO_DRY_RUN=true`** i commerce `.env`. Fulfillment simuleres; ingen rigtige labels oprettes.
+3. **Sæt API User + Key** (`SHIPMONDO_API_USER`, `SHIPMONDO_API_KEY`) hvis du vil teste med Basic Auth fallback, eller lad dem være tomme hvis du kun bruger Shipping Module Key — fulfillment vil stadig køre i dry-run.
+4. Kør seed, start commerce og storefront, og test hele flowet (checkout → pakkeshop-valg → betaling → ordre → fulfillment i Admin).
 
 ## End-to-end test (M10 acceptance)
 
-To validate the full shipping flow (t10.5):
+1. **Prerequisites:** Commerce og storefront kører; `SHIPMONDO_SHIPPING_MODULE_KEY` (eller API User + Key) sat; Stripe konfigureret; seed kørt så "Pakkeshop (39 kr)" findes.
+2. **Checkout:** Vælg Pakkeshop, indtast postnummer (f.eks. 1000), søg, vælg pakkeshop.
+3. **Payment:** Gennemfør betaling med Stripe test kort. Bekræft ordre oprettes og fragt er 39 DKK.
+4. **Fulfillment:** I Medusa Admin, åbn ordren og opret fulfillment. Med `SHIPMONDO_DRY_RUN=true` returneres simulerede data uden API-kald. Uden dry-run kaldes Shipmondo og labels oprettes (kræver saldo/aftale).
 
-1. **Prerequisites:** Commerce and storefront running; `SHIPMONDO_API_USER` and `SHIPMONDO_API_KEY` set in commerce (sandbox or production); Stripe configured; seed run so "Pakkeshop (39 kr)" option exists.
-2. **Checkout:** In storefront, add a product to cart, go to checkout. Step 1: select "Pakkeshop" (GLS/DAO), enter postnummer (e.g. 1000), click Search, choose a pickup point from the list.
-3. **Payment:** Proceed through steps 2 and 3; complete payment with a Stripe test card. Confirm order is created and shipping total is 39 DKK when Pakkeshop was selected.
-4. **Fulfillment:** In Medusa Admin, open the order and create a fulfillment. The Shipmondo provider will call the Shipmondo API to create the shipment (and optionally return label data). Verify no errors; in sandbox, labels can be viewed in Shipmondo sandbox account.
-5. **Documents:** Use "Get documents" / label retrieval in Admin for the fulfillment to confirm the provider returns label data when available.
+Uden credentials registreres provider stadig; "Pakkeshop (39 kr)" vises ikke i seed, og pickup-points returnerer 503.
 
-If Shipmondo credentials are not set, the provider still registers; "Pakkeshop (39 kr)" will not appear in seed, and pickup-points proxy returns 503. With credentials, full flow from pakkeshop selection to label (or sandbox booking) can be verified.
+## Kan man se integrationen i Shipmondo uden at oprette labels?
+
+**Nej.** Med `SHIPMONDO_DRY_RUN=true` kalder Guapo slet ikke Shipmondo API for at oprette forsendelser. Alt simuleres lokalt — intet vises i Shipmondo-appen (hverken sandbox eller production). For at se en registrering i Shipmondo (f.eks. under Forsendelser > Booked) skal du slå dry-run fra og gennemføre et rigtigt fulfillment, der opretter en ægte label.
+
+## Hvad sker der, hvis jeg slår dry-run fra?
+
+**Uden dry-run** kalder Guapo Shipmondos `POST /shipments` API, når du opretter fulfillment i Medusa Admin. Det opretter en **ægte forsendelse** i Shipmondo og forbruger din saldo — du **betaler for labelen**. Der findes ikke en "registrer uden at betale"-tilstand i production. For at teste uden at betale skal du bruge Shipmondos **sandbox** (adgang via support) med `SHIPMONDO_SANDBOX=true` og sandbox-credentials.
+
+## Kan jeg hente/prise labelen direkte i Medusa uden at åbne Shipmondo?
+
+**Ja.** Når du opretter fulfillment i Medusa Admin (uden dry-run), returnerer Shipmondo-provideren label-data (PDF som base64). Medusa gemmer dette og eksponerer det via "Get documents" / fulfillment documents. Du kan downloade labelen direkte fra Medusa Admin uden at åbne Shipmondo-appen.
+
+## Shipping address for pakkeshop
+
+For pakkeshop-ordrer sættes **shipping address** på ordren til **pakkeshop-adressen** (det sted, hvor pakken fysisk leveres). Billing address forbliver kundens egen adresse. Det er korrekt registreret sådan i Medusa og bruges korrekt af Shipmondo-provideren ved label-oprettelse.

@@ -115,6 +115,25 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
     fulfillment: Partial<Omit<FulfillmentDTO, "provider_id" | "data" | "items">>
   ): Promise<CreateFulfillmentResult> {
     const servicePointId = data?.service_point_id as string | undefined;
+
+    // Dry-run: simulate fulfillment without calling Shipmondo (no real labels, no cost)
+    if (process.env.SHIPMONDO_DRY_RUN === "true") {
+      const optionId = (fulfillment as { shipping_option_id?: string })?.shipping_option_id;
+      const productCode = optionId === "dao-pakkeshop" ? "DAO_SD" : "GLSDK_SD";
+      this.logger_.info(
+        `Shipmondo dry-run: would create shipment (product=${productCode}, service_point=${servicePointId ?? "auto"})`
+      );
+      return {
+        data: {
+          dry_run: true,
+          service_point_id: servicePointId,
+          product_code: productCode,
+          order_id: order?.id,
+        },
+        labels: [{ tracking_number: "DRY-RUN", tracking_url: "", label_url: "" }],
+      };
+    }
+
     if (!this.options_.apiUser || !this.options_.apiKey) {
       this.logger_.warn("Shipmondo API credentials not set; skipping label creation");
       return {

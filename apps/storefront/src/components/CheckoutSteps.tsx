@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { fetchPickupPoints, type PickupPoint } from "@/lib/pickup-points";
@@ -41,6 +40,24 @@ interface CheckoutStepsProps {
   shippingOptions?: ShippingOption[];
   selectedShippingOptionId?: string | null;
   onShippingSelect?: (optionId: string, data: Record<string, unknown>) => void;
+  formData?: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    address1: string;
+    postalCode: string;
+    city: string;
+    phone: string;
+  };
+  onFormDataChange?: (data: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    address1: string;
+    postalCode: string;
+    city: string;
+    phone: string;
+  }) => void;
 }
 
 const STEPS: { num: CheckoutStepNum; labelKey: keyof CheckoutStepsProps["dict"]["checkout"] }[] = [
@@ -57,19 +74,38 @@ export function CheckoutSteps({
   paymentContent,
   paymentReady,
   shippingOptions = [],
-  selectedShippingOptionId,
   onShippingSelect,
+  formData = {
+    email: "",
+    firstName: "",
+    lastName: "",
+    address1: "",
+    postalCode: "",
+    city: "",
+    phone: "",
+  },
+  onFormDataChange,
 }: CheckoutStepsProps) {
   const [step, setStep] = useState<CheckoutStepNum>(1);
-  const [deliveryType, setDeliveryType] = useState<"home" | "parcel" | "express">("home");
   const [parcelZipcode, setParcelZipcode] = useState("");
   const [pickupPoints, setPickupPoints] = useState<PickupPoint[]>([]);
   const [pickupLoading, setPickupLoading] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState<PickupPoint | null>(null);
   const { checkout } = dict;
 
-  const standardOption = shippingOptions.find((o) => o.amount === 0 || o.name.includes("Standard")) ?? shippingOptions[0];
-  const pakkeshopOption = shippingOptions.find((o) => o.name.includes("Pakkeshop") || o.name.includes("39"));
+  const pakkeshopOption = shippingOptions.find((o) => o.name.includes("Pakkeshop") || o.name.includes("39")) ?? shippingOptions[0];
+
+  useEffect(() => {
+    if (pakkeshopOption && onShippingSelect) {
+      onShippingSelect(pakkeshopOption.id, selectedPoint ? {
+        service_point_id: selectedPoint.number ?? selectedPoint.id,
+        service_point_name: selectedPoint.name,
+        service_point_address: selectedPoint.address,
+        service_point_zipcode: selectedPoint.zipcode,
+        service_point_city: selectedPoint.city,
+      } : {});
+    }
+  }, [pakkeshopOption, selectedPoint, onShippingSelect]);
 
   const searchPickupPoints = useCallback(async () => {
     if (!parcelZipcode.trim() || parcelZipcode.length < 3) return;
@@ -78,48 +114,15 @@ export function CheckoutSteps({
     try {
       const points = await fetchPickupPoints({ zipcode: parcelZipcode.trim(), country_code: "DK", carrier_code: "gls" });
       setPickupPoints(points);
-      if (points.length && !selectedPoint) setSelectedPoint(null);
+      setSelectedPoint(null);
     } finally {
       setPickupLoading(false);
     }
   }, [parcelZipcode]);
 
-  const selectPoint = useCallback(
-    (point: PickupPoint) => {
-      setSelectedPoint(point);
-      if (pakkeshopOption && onShippingSelect) {
-        onShippingSelect(pakkeshopOption.id, {
-          service_point_id: point.number ?? point.id,
-          service_point_name: point.name,
-          service_point_address: point.address,
-          service_point_zipcode: point.zipcode,
-          service_point_city: point.city,
-        });
-      }
-    },
-    [pakkeshopOption, onShippingSelect]
-  );
-
-  const selectHome = useCallback(() => {
-    setDeliveryType("home");
-    setSelectedPoint(null);
-    if (standardOption && onShippingSelect) onShippingSelect(standardOption.id, {});
-  }, [standardOption, onShippingSelect]);
-
-  const selectParcel = useCallback(() => {
-    setDeliveryType("parcel");
-    if (pakkeshopOption && selectedPoint && onShippingSelect) {
-      onShippingSelect(pakkeshopOption.id, {
-        service_point_id: selectedPoint.number ?? selectedPoint.id,
-        service_point_name: selectedPoint.name,
-        service_point_address: selectedPoint.address,
-        service_point_zipcode: selectedPoint.zipcode,
-        service_point_city: selectedPoint.city,
-      });
-    } else if (pakkeshopOption && onShippingSelect) {
-      onShippingSelect(pakkeshopOption.id, {});
-    }
-  }, [pakkeshopOption, selectedPoint, onShippingSelect]);
+  const selectPoint = useCallback((point: PickupPoint) => {
+    setSelectedPoint(point);
+  }, []);
 
   const handleStepChange = (newStep: CheckoutStepNum) => {
     setStep(newStep);
@@ -180,6 +183,8 @@ export function CheckoutSteps({
                   id="email"
                   placeholder="you@example.com"
                   className="w-full"
+                  value={formData.email}
+                  onChange={(e) => onFormDataChange?.({ ...formData, email: e.target.value })}
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -204,104 +209,82 @@ export function CheckoutSteps({
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="firstName">{locale === "da" ? "Fornavn" : "First name"}</Label>
-                <Input id="firstName" className="w-full" />
+                <Input
+                  id="firstName"
+                  className="w-full"
+                  value={formData.firstName}
+                  onChange={(e) => onFormDataChange?.({ ...formData, firstName: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">{locale === "da" ? "Efternavn" : "Last name"}</Label>
-                <Input id="lastName" className="w-full" />
+                <Input
+                  id="lastName"
+                  className="w-full"
+                  value={formData.lastName}
+                  onChange={(e) => onFormDataChange?.({ ...formData, lastName: e.target.value })}
+                />
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="address">{locale === "da" ? "Adresse" : "Address"}</Label>
-                <Input id="address" className="w-full" />
+                <Input
+                  id="address"
+                  className="w-full"
+                  value={formData.address1}
+                  onChange={(e) => onFormDataChange?.({ ...formData, address1: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="postalCode">{locale === "da" ? "Postnummer" : "Postal code"}</Label>
-                <Input id="postalCode" className="w-full" />
+                <Input
+                  id="postalCode"
+                  className="w-full"
+                  value={formData.postalCode}
+                  onChange={(e) => onFormDataChange?.({ ...formData, postalCode: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="city">{locale === "da" ? "By" : "City"}</Label>
-                <Input id="city" className="w-full" />
+                <Input
+                  id="city"
+                  className="w-full"
+                  value={formData.city}
+                  onChange={(e) => onFormDataChange?.({ ...formData, city: e.target.value })}
+                />
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="phone">{locale === "da" ? "Telefon" : "Phone"}</Label>
-                <Input type="tel" id="phone" placeholder="+45" className="w-full" />
+                <Input
+                  type="tel"
+                  id="phone"
+                  placeholder="+45"
+                  className="w-full"
+                  value={formData.phone}
+                  onChange={(e) => onFormDataChange?.({ ...formData, phone: e.target.value })}
+                />
               </div>
             </div>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-foreground">{checkout.deliveryMethod}</h2>
-            <RadioGroup
-              value={deliveryType}
-              onValueChange={(v) => {
-                const next = v as "home" | "parcel" | "express";
-                setDeliveryType(next);
-                if (next === "home") selectHome();
-                if (next === "parcel") selectParcel();
-              }}
-              className="mt-4 space-y-3"
+            <div
+              className={cn(
+                "mt-4 flex items-center justify-between rounded-lg border-2 border-primary bg-primary/5 p-4"
+              )}
             >
-              <div
-                className={cn(
-                  "flex items-center justify-between rounded-lg border-2 p-4 transition-colors",
-                  deliveryType === "home" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-                )}
-              >
-                <RadioGroupItem
-                  value="home"
-                  id="delivery-home"
-                  className="flex flex-1 items-center gap-3 rounded-lg border-0 p-0"
-                >
-                  <div>
-                    <p className="font-medium text-foreground">{checkout.homeDelivery}</p>
-                    <p className="text-sm text-muted-foreground">{checkout.homeDeliverySub}</p>
-                  </div>
-                </RadioGroupItem>
-                <span className="ml-4 shrink-0 font-medium text-success">{checkout.freeLabel}</span>
+              <div>
+                <p className="font-medium text-foreground">{checkout.parcelShop}</p>
+                <p className="text-sm text-muted-foreground">{checkout.parcelShopSub}</p>
               </div>
-              <div
-                className={cn(
-                  "flex items-center justify-between rounded-lg border-2 p-4 transition-colors",
-                  deliveryType === "parcel" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-                )}
-              >
-                <RadioGroupItem
-                  value="parcel"
-                  id="delivery-parcel"
-                  className="flex flex-1 items-center gap-3 rounded-lg border-0 p-0"
-                >
-                  <div>
-                    <p className="font-medium text-foreground">{checkout.parcelShop}</p>
-                    <p className="text-sm text-muted-foreground">{checkout.parcelShopSub}</p>
-                  </div>
-                </RadioGroupItem>
-                <span className="ml-4 shrink-0 font-medium text-foreground">
-                  {pakkeshopOption?.amount != null && pakkeshopOption.amount > 0
-                    ? `${(pakkeshopOption.amount / 100).toFixed(0)} DKK`
-                    : "39 DKK"}
-                </span>
-              </div>
-              <div
-                className={cn(
-                  "flex items-center justify-between rounded-lg border-2 border-border p-4 transition-colors hover:border-primary/50"
-                )}
-              >
-                <RadioGroupItem
-                  value="express"
-                  id="delivery-express"
-                  className="flex flex-1 items-center gap-3 rounded-lg border-0 p-0"
-                >
-                  <div>
-                    <p className="font-medium text-foreground">{checkout.expressDelivery}</p>
-                    <p className="text-sm text-muted-foreground">{checkout.expressDeliverySub}</p>
-                  </div>
-                </RadioGroupItem>
-                <span className="ml-4 shrink-0 font-medium text-foreground">49 DKK</span>
-              </div>
-            </RadioGroup>
+              <span className="ml-4 shrink-0 font-medium text-foreground">
+                {pakkeshopOption?.amount != null && pakkeshopOption.amount > 0
+                  ? `${(pakkeshopOption.amount / 100).toFixed(0)} DKK`
+                  : "39 DKK"}
+              </span>
+            </div>
 
-            {deliveryType === "parcel" && (
-              <div className="mt-4 space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+            <div className="mt-4 space-y-3 rounded-lg border border-border bg-muted/30 p-4">
                 <Label htmlFor="parcel-zipcode">
                   {locale === "da" ? "Postnummer" : "Postal code"}
                 </Label>
@@ -353,7 +336,6 @@ export function CheckoutSteps({
                   </p>
                 )}
               </div>
-            )}
           </section>
 
           <div className="flex justify-end">

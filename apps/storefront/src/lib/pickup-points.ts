@@ -1,4 +1,5 @@
 const MEDUSA_BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000";
+const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
 
 export interface PickupPoint {
   number: string;
@@ -27,7 +28,9 @@ export async function fetchPickupPoints(params: {
   url.searchParams.set("country_code", country_code);
   url.searchParams.set("zipcode", zipcode);
   if (limit) url.searchParams.set("limit", String(limit));
-  const res = await fetch(url.toString());
+  const headers: HeadersInit = {};
+  if (PUBLISHABLE_KEY) headers["x-publishable-api-key"] = PUBLISHABLE_KEY;
+  const res = await fetch(url.toString(), { headers });
   if (!res.ok) return [];
   const data = await res.json();
   return Array.isArray(data.pickup_points) ? data.pickup_points : [];
