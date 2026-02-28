@@ -250,7 +250,7 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
     return {};
   }
 
-  async getFulfillmentDocuments(data: Record<string, unknown>): Promise<{ name: string; url: string }[]> {
+  async getFulfillmentDocuments(data: Record<string, unknown>): Promise<never[]> {
     const id = data?.shipment_id as number | undefined;
     if (id == null || !this.options_.apiUser || !this.options_.apiKey) {
       return [];
@@ -266,7 +266,7 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
             name: "label",
             url: `data:application/pdf;base64,${shipment.label_base64}`,
           },
-        ];
+        ] as never[];
       }
     } catch (e) {
       this.logger_.warn(`Shipmondo getFulfillmentDocuments: ${e instanceof Error ? e.message : String(e)}`);
@@ -290,8 +290,8 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
   async retrieveDocuments(
     fulfillmentData: Record<string, unknown>,
     _documentType: string
-  ): Promise<{ name: string; url: string }[]> {
-    return this.getFulfillmentDocuments(fulfillmentData);
+  ): Promise<void> {
+    await this.getFulfillmentDocuments(fulfillmentData);
   }
 }
 
