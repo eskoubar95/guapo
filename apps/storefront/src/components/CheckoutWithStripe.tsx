@@ -112,18 +112,18 @@ export function CheckoutWithStripe({
         : {
             first_name: formData.firstName || "Gæst",
             last_name: formData.lastName || "Bruger",
-            address_1: formData.address1 || "—",
-            city: formData.city || "—",
-            postal_code: formData.postalCode || "—",
+            address_1: formData.address1 || "",
+            city: formData.city || "",
+            postal_code: formData.postalCode || "",
             country_code: "dk",
             phone: formData.phone || undefined,
           };
       const billingAddr = {
         first_name: formData.firstName || "Gæst",
         last_name: formData.lastName || "Bruger",
-        address_1: formData.address1 || "—",
-        city: formData.city || "—",
-        postal_code: formData.postalCode || "—",
+        address_1: formData.address1 || "",
+        city: formData.city || "",
+        postal_code: formData.postalCode || "",
         country_code: "dk",
         phone: formData.phone || undefined,
       };

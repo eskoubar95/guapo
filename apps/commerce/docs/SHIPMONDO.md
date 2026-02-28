@@ -59,7 +59,7 @@ Search for GLS or DAO parcel shops by postal code (and optional address).
 
 **Example request:**
 
-```
+```http
 GET /pickup_points?carrier_code=gls&country_code=DK&zipcode=5000
 ```
 
@@ -208,7 +208,7 @@ For at teste hele integrationen **uden** at anmode om sandbox og **uden** at kø
 3. **Payment:** Gennemfør betaling med Stripe test kort. Bekræft ordre oprettes og fragt er 39 DKK.
 4. **Fulfillment:** I Medusa Admin, åbn ordren og opret fulfillment. Med `SHIPMONDO_DRY_RUN=true` returneres simulerede data uden API-kald. Uden dry-run kaldes Shipmondo og labels oprettes (kræver saldo/aftale).
 
-Uden credentials registreres provider stadig; "Pakkeshop (39 kr)" vises ikke i seed, og pickup-points returnerer 503.
+Uden Shipmondo-credentials registreres Shipmondo-provideren ikke; appen starter med manual shipping, og `/store/pickup-points` returnerer 503.
 
 ## Kan man se integrationen i Shipmondo uden at oprette labels?
 

@@ -37,7 +37,12 @@ export function OrderConfirmationComplete({
       .then(async (res) => {
         if (cancelled) return;
         if (res.type === "order" && "order" in res && res.order?.id) {
-          await clearCartId();
+          try {
+            await clearCartId();
+          } catch (err) {
+            console.warn("Order completed, but cart cleanup failed:", err);
+          }
+          if (cancelled) return;
           setStatus("success");
           router.replace(`/${locale}/order-confirmation/${res.order.id}`);
         } else {

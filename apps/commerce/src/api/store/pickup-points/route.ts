@@ -139,6 +139,12 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     }
 
     // Basic Auth with /pickup_points (primary when no frontendKey, or fallback on 422)
+    if (!apiUser || !apiKey) {
+      return res.status(503).json({
+        message: "Shipmondo API credentials not configured for Basic Auth fallback",
+        pickup_points: [],
+      });
+    }
     const url = new URL(`${SHIPMONDO_BASE}/pickup_points`);
     url.searchParams.set("carrier_code", carrier_code);
     url.searchParams.set("country_code", country_code);
