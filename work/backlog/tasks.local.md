@@ -950,7 +950,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/commerce
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** shipping, research, documentation
 
@@ -961,13 +961,15 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** M
 
+**Notes:** SHIPMONDO.md inkl. Shipping Module Key, dry-run, sandbox vs production. Linear: (opret GUA-xxx)
+
 ## Task: t10.2
 
 **Description:** Byg custom Fulfillment Module Provider (src/modules/shipmondo/service.ts extends AbstractFulfillmentProviderService): validateOption, calculatePrice (39 DKK flat), createFulfillment (label), getFulfillmentDocuments.
 
 **Workspace:** apps/commerce
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** shipping, backend, integration
 
@@ -981,13 +983,15 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** L
 
+**Notes:** apps/commerce/src/modules/shipmondo/. Linear: (opret GUA-xxx)
+
 ## Task: t10.3
 
 **Description:** Registrer Shipmondo provider i medusa-config.ts fulfillment module + env vars (SHIPMONDO_API_KEY).
 
 **Workspace:** apps/commerce
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** shipping, backend, infrastructure
 
@@ -1001,13 +1005,15 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** S
 
+**Notes:** medusa-config, env.template, seed (pakkeshop-only). Linear: (opret GUA-xxx)
+
 ## Task: t10.4
 
 **Description:** Integrer pakkeshop-valg i storefront checkout: GLS + DAO pakkeshop-søgning (postnummer/by), kort/liste-visning, gem valgt pakkeshop.
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** shipping, storefront, frontend
 
@@ -1021,13 +1027,15 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Estimate:** L
 
+**Notes:** CheckoutSteps, pickup-points proxy, pakkeshop-only. Linear: (opret GUA-xxx)
+
 ## Task: t10.5
 
 **Description:** Test shipping flow end-to-end: vælg pakkeshop → ordre → opret fulfillment → label.
 
 **Workspace:** .
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** shipping, gate
 
@@ -1039,6 +1047,32 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Fuldt flow fra pakkeshop-valg til label (eller simulering) gennemføres.
 
 **Estimate:** M
+
+**Notes:** E2E dokumenteret i SHIPMONDO.md. Dry-run flow verificeret. Ægte label test afventer sandbox (t10.6). Linear: (opret GUA-xxx)
+
+## Task: t10.6
+
+**Description:** Shipmondo sandbox-test: Anmod sandbox-adgang hos Shipmondo. Når modtaget: verificer fuld flow inkl. label-oprettelse i sandbox, og at label hentes i Medusa Admin uden at åbne Shipmondo.
+
+**Workspace:** apps/commerce
+
+**Status:** in progress
+
+**Tags:** shipping, gate, sandbox
+
+**Milestone:** M10
+
+**Dependencies:** t10.5
+
+**Acceptance:**
+- Sandbox-adgang anmodet (mail sendt 2026-02-28).
+- Ved modtagelse: SHIPMONDO_SANDBOX=true + sandbox credentials, SHIPMONDO_DRY_RUN=false.
+- Fulfillment opretter forsendelse i Shipmondo sandbox.
+- Label hentes og vises i Medusa Admin (Get documents).
+
+**Estimate:** S
+
+**Notes:** Blocker: Shipmondo support svarer typisk hverdage. Mail sendt lør 28/2. Linear: (opret GUA-xxx)
 
 ## M6 — Storefront design system-integration
 

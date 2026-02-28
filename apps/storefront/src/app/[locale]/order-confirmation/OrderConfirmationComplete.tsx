@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { medusa } from "@/lib/medusa";
+import { clearCartId } from "@/lib/cart";
 
 interface OrderConfirmationCompleteProps {
   locale: string;
@@ -33,9 +34,15 @@ export function OrderConfirmationComplete({
     let cancelled = false;
     medusa.store.cart
       .complete(cartId)
-      .then((res) => {
+      .then(async (res) => {
         if (cancelled) return;
         if (res.type === "order" && "order" in res && res.order?.id) {
+          try {
+            await clearCartId();
+          } catch (err) {
+            console.warn("Order completed, but cart cleanup failed:", err);
+          }
+          if (cancelled) return;
           setStatus("success");
           router.replace(`/${locale}/order-confirmation/${res.order.id}`);
         } else {

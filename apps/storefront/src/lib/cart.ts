@@ -39,13 +39,37 @@ async function setCartId(cartId: string) {
   });
 }
 
+/** Clear the cart cookie (call after order completion so next visit gets a fresh cart) */
+/** Medusa store cart shape (minimal for page usage) */
+export interface StoreCart {
+  id?: string;
+  items?: unknown[];
+  subtotal?: number;
+  shipping_total?: number;
+  total?: number;
+  completed_at?: string | null;
+}
+
+export async function clearCartId() {
+  const cookieStore = await cookies();
+  cookieStore.delete("cart_id");
+}
+
 export async function getOrCreateCart(): Promise<string> {
   const existing = await getCartId();
   if (existing) {
     const check = await fetch(`${MEDUSA_URL}/store/carts/${existing}`, {
       headers: headers(),
     });
-    if (check.ok) return existing;
+    if (check.ok) {
+      const data = await check.json().catch(() => ({}));
+      const cart = (data as { cart?: { completed_at?: string | null } }).cart;
+      if (cart?.completed_at) {
+        await clearCartId();
+      } else {
+        return existing;
+      }
+    }
   }
 
   const regionId = await getRegionId();
@@ -109,7 +133,7 @@ export async function removeLineItem(lineItemId: string) {
   return cart;
 }
 
-export async function getCart() {
+export async function getCart(): Promise<StoreCart | null> {
   try {
     const cartId = await getCartId();
     if (!cartId) return null;
@@ -119,8 +143,13 @@ export async function getCart() {
       cache: "no-store",
     });
     if (!res.ok) return null;
-    const { cart } = await res.json();
-    return cart;
+    const data = await res.json();
+    const cart = (data as { cart?: StoreCart & { completed_at?: string | null } }).cart;
+    if (cart?.completed_at) {
+      await clearCartId();
+      return null;
+    }
+    return cart ?? null;
   } catch {
     return null;
   }

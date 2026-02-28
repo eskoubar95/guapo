@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
+import { fetchPickupPoints, type PickupPoint } from "@/lib/pickup-points";
+import type { ShippingOption } from "./CheckoutWithStripe";
 
 export type CheckoutStepNum = 1 | 2 | 3;
 
@@ -36,6 +37,27 @@ interface CheckoutStepsProps {
   onStepChange?: (step: CheckoutStepNum) => void;
   paymentContent?: React.ReactNode;
   paymentReady?: boolean;
+  shippingOptions?: ShippingOption[];
+  selectedShippingOptionId?: string | null;
+  onShippingSelect?: (optionId: string, data: Record<string, unknown>) => void;
+  formData?: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    address1: string;
+    postalCode: string;
+    city: string;
+    phone: string;
+  };
+  onFormDataChange?: (data: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    address1: string;
+    postalCode: string;
+    city: string;
+    phone: string;
+  }) => void;
 }
 
 const STEPS: { num: CheckoutStepNum; labelKey: keyof CheckoutStepsProps["dict"]["checkout"] }[] = [
@@ -51,9 +73,56 @@ export function CheckoutSteps({
   onStepChange,
   paymentContent,
   paymentReady,
+  shippingOptions = [],
+  onShippingSelect,
+  formData = {
+    email: "",
+    firstName: "",
+    lastName: "",
+    address1: "",
+    postalCode: "",
+    city: "",
+    phone: "",
+  },
+  onFormDataChange,
 }: CheckoutStepsProps) {
   const [step, setStep] = useState<CheckoutStepNum>(1);
+  const [parcelZipcode, setParcelZipcode] = useState("");
+  const [pickupPoints, setPickupPoints] = useState<PickupPoint[]>([]);
+  const [pickupLoading, setPickupLoading] = useState(false);
+  const [selectedPoint, setSelectedPoint] = useState<PickupPoint | null>(null);
   const { checkout } = dict;
+
+  const pakkeshopOption = shippingOptions.find((o) => o.name.includes("Pakkeshop") || o.name.includes("39")) ?? shippingOptions[0];
+
+  useEffect(() => {
+    if (pakkeshopOption && onShippingSelect) {
+      onShippingSelect(pakkeshopOption.id, selectedPoint ? {
+        service_point_id: selectedPoint.number ?? selectedPoint.id,
+        service_point_name: selectedPoint.name,
+        service_point_address: selectedPoint.address,
+        service_point_zipcode: selectedPoint.zipcode,
+        service_point_city: selectedPoint.city,
+      } : {});
+    }
+  }, [pakkeshopOption, selectedPoint, onShippingSelect]);
+
+  const searchPickupPoints = useCallback(async () => {
+    if (!parcelZipcode.trim() || parcelZipcode.length < 3) return;
+    setPickupLoading(true);
+    setPickupPoints([]);
+    try {
+      const points = await fetchPickupPoints({ zipcode: parcelZipcode.trim(), country_code: "DK", carrier_code: "gls" });
+      setPickupPoints(points);
+      setSelectedPoint(null);
+    } finally {
+      setPickupLoading(false);
+    }
+  }, [parcelZipcode]);
+
+  const selectPoint = useCallback((point: PickupPoint) => {
+    setSelectedPoint(point);
+  }, []);
 
   const handleStepChange = (newStep: CheckoutStepNum) => {
     setStep(newStep);
@@ -114,6 +183,8 @@ export function CheckoutSteps({
                   id="email"
                   placeholder="you@example.com"
                   className="w-full"
+                  value={formData.email}
+                  onChange={(e) => onFormDataChange?.({ ...formData, email: e.target.value })}
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -138,74 +209,133 @@ export function CheckoutSteps({
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="firstName">{locale === "da" ? "Fornavn" : "First name"}</Label>
-                <Input id="firstName" className="w-full" />
+                <Input
+                  id="firstName"
+                  className="w-full"
+                  value={formData.firstName}
+                  onChange={(e) => onFormDataChange?.({ ...formData, firstName: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">{locale === "da" ? "Efternavn" : "Last name"}</Label>
-                <Input id="lastName" className="w-full" />
+                <Input
+                  id="lastName"
+                  className="w-full"
+                  value={formData.lastName}
+                  onChange={(e) => onFormDataChange?.({ ...formData, lastName: e.target.value })}
+                />
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="address">{locale === "da" ? "Adresse" : "Address"}</Label>
-                <Input id="address" className="w-full" />
+                <Input
+                  id="address"
+                  className="w-full"
+                  value={formData.address1}
+                  onChange={(e) => onFormDataChange?.({ ...formData, address1: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="postalCode">{locale === "da" ? "Postnummer" : "Postal code"}</Label>
-                <Input id="postalCode" className="w-full" />
+                <Input
+                  id="postalCode"
+                  className="w-full"
+                  value={formData.postalCode}
+                  onChange={(e) => onFormDataChange?.({ ...formData, postalCode: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="city">{locale === "da" ? "By" : "City"}</Label>
-                <Input id="city" className="w-full" />
+                <Input
+                  id="city"
+                  className="w-full"
+                  value={formData.city}
+                  onChange={(e) => onFormDataChange?.({ ...formData, city: e.target.value })}
+                />
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="phone">{locale === "da" ? "Telefon" : "Phone"}</Label>
-                <Input type="tel" id="phone" placeholder="+45" className="w-full" />
+                <Input
+                  type="tel"
+                  id="phone"
+                  placeholder="+45"
+                  className="w-full"
+                  value={formData.phone}
+                  onChange={(e) => onFormDataChange?.({ ...formData, phone: e.target.value })}
+                />
               </div>
             </div>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-foreground">{checkout.deliveryMethod}</h2>
-            <RadioGroup defaultValue="home" className="mt-4 space-y-3">
-              <div className="flex items-center justify-between rounded-lg border-2 border-primary bg-primary/5 p-4 has-checked:border-primary has-checked:bg-primary/5">
-                <RadioGroupItem
-                  value="home"
-                  id="delivery-home"
-                  className="flex flex-1 items-center gap-3 rounded-lg border-0 p-0"
-                >
-                  <div>
-                    <p className="font-medium text-foreground">{checkout.homeDelivery}</p>
-                    <p className="text-sm text-muted-foreground">{checkout.homeDeliverySub}</p>
-                  </div>
-                </RadioGroupItem>
-                <span className="ml-4 shrink-0 font-medium text-success">{checkout.freeLabel}</span>
+            <div
+              className={cn(
+                "mt-4 flex items-center justify-between rounded-lg border-2 border-primary bg-primary/5 p-4"
+              )}
+            >
+              <div>
+                <p className="font-medium text-foreground">{checkout.parcelShop}</p>
+                <p className="text-sm text-muted-foreground">{checkout.parcelShopSub}</p>
               </div>
-              <div className="flex items-center justify-between rounded-lg border-2 border-border p-4 transition-colors hover:border-primary/50 has-checked:border-primary has-checked:bg-primary/5">
-                <RadioGroupItem
-                  value="parcel"
-                  id="delivery-parcel"
-                  className="flex flex-1 items-center gap-3 rounded-lg border-0 p-0"
-                >
-                  <div>
-                    <p className="font-medium text-foreground">{checkout.parcelShop}</p>
-                    <p className="text-sm text-muted-foreground">{checkout.parcelShopSub}</p>
-                  </div>
-                </RadioGroupItem>
-                <span className="ml-4 shrink-0 font-medium text-success">{checkout.freeLabel}</span>
+              <span className="ml-4 shrink-0 font-medium text-foreground">
+                {pakkeshopOption?.amount != null && pakkeshopOption.amount > 0
+                  ? `${(pakkeshopOption.amount / 100).toFixed(0)} DKK`
+                  : "39 DKK"}
+              </span>
+            </div>
+
+            <div className="mt-4 space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+                <Label htmlFor="parcel-zipcode">
+                  {locale === "da" ? "Postnummer" : "Postal code"}
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="parcel-zipcode"
+                    placeholder="1000"
+                    value={parcelZipcode}
+                    onChange={(e) => setParcelZipcode(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), searchPickupPoints())}
+                    className="max-w-[120px]"
+                  />
+                  <button
+                    type="button"
+                    onClick={searchPickupPoints}
+                    disabled={pickupLoading || parcelZipcode.trim().length < 3}
+                    className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    {pickupLoading ? (locale === "da" ? "Søger..." : "Searching...") : locale === "da" ? "Søg" : "Search"}
+                  </button>
+                </div>
+                {pickupPoints.length > 0 && (
+                  <ul className="max-h-48 space-y-2 overflow-y-auto">
+                    {pickupPoints.map((point) => (
+                      <li key={point.id}>
+                        <button
+                          type="button"
+                          onClick={() => selectPoint(point)}
+                          className={cn(
+                            "w-full rounded-lg border p-3 text-left text-sm transition-colors",
+                            selectedPoint?.id === point.id || selectedPoint?.number === point.number
+                              ? "border-primary bg-primary/10"
+                              : "border-border hover:bg-muted/50"
+                          )}
+                        >
+                          <p className="font-medium text-foreground">{point.name}</p>
+                          <p className="text-muted-foreground">
+                            {point.address}, {point.zipcode} {point.city}
+                          </p>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {selectedPoint && (
+                  <p className="text-sm text-muted-foreground">
+                    {locale === "da" ? "Valgt: " : "Selected: "}
+                    {selectedPoint.name}, {selectedPoint.zipcode} {selectedPoint.city}
+                  </p>
+                )}
               </div>
-              <div className="flex items-center justify-between rounded-lg border-2 border-border p-4 transition-colors hover:border-primary/50 has-checked:border-primary has-checked:bg-primary/5">
-                <RadioGroupItem
-                  value="express"
-                  id="delivery-express"
-                  className="flex flex-1 items-center gap-3 rounded-lg border-0 p-0"
-                >
-                  <div>
-                    <p className="font-medium text-foreground">{checkout.expressDelivery}</p>
-                    <p className="text-sm text-muted-foreground">{checkout.expressDeliverySub}</p>
-                  </div>
-                </RadioGroupItem>
-                <span className="ml-4 shrink-0 font-medium text-foreground">49 DKK</span>
-              </div>
-            </RadioGroup>
           </section>
 
           <div className="flex justify-end">

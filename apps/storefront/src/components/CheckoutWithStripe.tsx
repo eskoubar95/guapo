@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { medusa } from "@/lib/medusa";
@@ -10,6 +10,12 @@ import { StripePaymentForm } from "./StripePaymentForm";
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY)
   : null;
+
+export interface ShippingOption {
+  id: string;
+  name: string;
+  amount?: number;
+}
 
 interface CheckoutWithStripeProps {
   locale: string;
@@ -46,43 +52,111 @@ export function CheckoutWithStripe({
   const [cart, setCart] = useState<{ id: string } | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
+  const [selectedShippingOptionId, setSelectedShippingOptionId] = useState<string | null>(null);
+  const [selectedShippingData, setSelectedShippingData] = useState<Record<string, unknown>>({});
+  const [appliedShippingOptionId, setAppliedShippingOptionId] = useState<string | null>(null);
+  const lastAppliedFormDataRef = useRef<string>("");
+  const [formData, setFormData] = useState({
+    email: "",
+    firstName: "",
+    lastName: "",
+    address1: "",
+    postalCode: "",
+    city: "",
+    phone: "",
+  });
+
+  useEffect(() => {
+    if (!cartId) return;
+    medusa.store.fulfillment
+      .listCartOptions({ cart_id: cartId })
+      .then(({ shipping_options }) => {
+        const opts = (shipping_options ?? []).map((o) => ({
+          id: o.id,
+          name: o.name ?? "",
+          amount: (o.amount ?? 0) as number,
+        }));
+        setShippingOptions(opts);
+        setSelectedShippingOptionId((prev) => {
+          if (prev && opts.some((o) => o.id === prev)) return prev;
+          const pakkeshop = opts.find((o) => o.name.includes("Pakkeshop") || o.name.includes("39"));
+          return (pakkeshop ?? opts[0])?.id ?? null;
+        });
+      })
+      .catch(() => setShippingOptions([]));
+  }, [cartId]);
+
+  const handleShippingSelect = useCallback((optionId: string, data: Record<string, unknown>) => {
+    setSelectedShippingOptionId(optionId);
+    setSelectedShippingData(data);
+  }, []);
 
   const ensureCartAndPayment = useCallback(async () => {
     if (!cartId) return;
-    if (cart && clientSecret) return;
+    const formDataSig = `${formData.firstName}|${formData.lastName}|${formData.address1}|${formData.postalCode}|${formData.city}`;
+    const formDataUnchanged = lastAppliedFormDataRef.current === formDataSig;
+    if (cart && clientSecret && appliedShippingOptionId === selectedShippingOptionId && formDataUnchanged) return;
     try {
-      // Update cart with shipping address for checkout
+      const email = formData.email || "guest@guapo.dk";
+      const hasServicePoint =
+        selectedShippingData?.service_point_id &&
+        selectedShippingData?.service_point_address;
+      const billingFieldsOk =
+        formData.address1?.trim() && formData.postalCode?.trim() && formData.city?.trim();
+      if (!hasServicePoint && !billingFieldsOk) {
+        setPaymentError(locale === "da" ? "Udfyld venligst leveringsadresse (adresse, postnummer og by)" : "Please fill in shipping address, postal code and city");
+        return;
+      }
+      if (!billingFieldsOk) {
+        setPaymentError(locale === "da" ? "Udfyld venligst fakturaadresse (adresse, postnummer og by)" : "Please fill in billing address, postal code and city");
+        return;
+      }
+      const addr = hasServicePoint
+        ? {
+            first_name: formData.firstName || "Gæst",
+            last_name: formData.lastName || "Bruger",
+            address_1: String(selectedShippingData.service_point_address),
+            city: String(selectedShippingData.service_point_city ?? ""),
+            postal_code: String(selectedShippingData.service_point_zipcode ?? ""),
+            country_code: "dk",
+            phone: formData.phone || undefined,
+          }
+        : {
+            first_name: formData.firstName || "Gæst",
+            last_name: formData.lastName || "Bruger",
+            address_1: formData.address1 || "",
+            city: formData.city || "",
+            postal_code: formData.postalCode || "",
+            country_code: "dk",
+            phone: formData.phone || undefined,
+          };
+      const billingAddr = {
+        first_name: formData.firstName || "Gæst",
+        last_name: formData.lastName || "Bruger",
+        address_1: formData.address1 || "",
+        city: formData.city || "",
+        postal_code: formData.postalCode || "",
+        country_code: "dk",
+        phone: formData.phone || undefined,
+      };
       await medusa.store.cart.update(cartId, {
-        email: "checkout@guapo.dk",
-        shipping_address: {
-          first_name: "Test",
-          last_name: "Bruger",
-          address_1: "Testvej 1",
-          city: "København",
-          postal_code: "1000",
-          country_code: "dk",
-        },
-        billing_address: {
-          first_name: "Test",
-          last_name: "Bruger",
-          address_1: "Testvej 1",
-          city: "København",
-          postal_code: "1000",
-          country_code: "dk",
-        },
+        email,
+        shipping_address: addr,
+        billing_address: billingAddr,
       });
 
-      // Add shipping method
       const { shipping_options } = await medusa.store.fulfillment
         .listCartOptions({ cart_id: cartId });
-
-      if (shipping_options?.length) {
+      const optionId = selectedShippingOptionId ?? shipping_options?.[0]?.id;
+      if (shipping_options?.length && optionId) {
         await medusa.store.cart.addShippingMethod(cartId, {
-          option_id: shipping_options[0].id,
+          option_id: optionId,
+          data: Object.keys(selectedShippingData).length ? selectedShippingData : undefined,
         });
+        setAppliedShippingOptionId(optionId);
       }
 
-      // Initiate payment session
       const { cart: updatedCart } = await medusa.store.cart.retrieve(cartId);
       const { payment_collection } = await medusa.store.payment.initiatePaymentSession(
         updatedCart,
@@ -91,6 +165,8 @@ export function CheckoutWithStripe({
       const session = payment_collection?.payment_sessions?.[0];
       const secret = session?.data?.client_secret as string | undefined;
       if (secret) {
+        lastAppliedFormDataRef.current = formDataSig;
+        setPaymentError(null);
         setCart({ id: cartId });
         setClientSecret(secret);
       } else {
@@ -101,7 +177,7 @@ export function CheckoutWithStripe({
     } catch (err) {
       setPaymentError(err instanceof Error ? err.message : "Could not initialize payment");
     }
-  }, [cartId, cart, clientSecret, locale]);
+  }, [cartId, cart, clientSecret, locale, selectedShippingOptionId, selectedShippingData, appliedShippingOptionId, formData]);
 
   const paymentContent =
     stripePromise && clientSecret && cart ? (
@@ -132,6 +208,11 @@ export function CheckoutWithStripe({
       onStepChange={(step) => step === 3 && ensureCartAndPayment()}
       paymentContent={paymentContent}
       paymentReady={!!clientSecret}
+      shippingOptions={shippingOptions}
+      selectedShippingOptionId={selectedShippingOptionId}
+      onShippingSelect={handleShippingSelect}
+      formData={formData}
+      onFormDataChange={setFormData}
     />
   );
 }
