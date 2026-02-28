@@ -102,8 +102,14 @@ export function CheckoutWithStripe({
       const hasServicePoint =
         selectedShippingData?.service_point_id &&
         selectedShippingData?.service_point_address;
-      if (!hasServicePoint && (!formData.address1?.trim() || !formData.postalCode?.trim() || !formData.city?.trim())) {
-        setPaymentError(locale === "da" ? "Udfyld venligst adresse, postnummer og by" : "Please fill in address, postal code and city");
+      const billingFieldsOk =
+        formData.address1?.trim() && formData.postalCode?.trim() && formData.city?.trim();
+      if (!hasServicePoint && !billingFieldsOk) {
+        setPaymentError(locale === "da" ? "Udfyld venligst leveringsadresse (adresse, postnummer og by)" : "Please fill in shipping address, postal code and city");
+        return;
+      }
+      if (!billingFieldsOk) {
+        setPaymentError(locale === "da" ? "Udfyld venligst fakturaadresse (adresse, postnummer og by)" : "Please fill in billing address, postal code and city");
         return;
       }
       const addr = hasServicePoint
