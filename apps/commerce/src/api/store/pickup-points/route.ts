@@ -42,7 +42,7 @@ function normalizePickupPoint(p: Record<string, unknown>): ShipmondoPickupPoint 
     longitude: p.longitude as number | undefined,
     latitude: p.latitude as number | undefined,
     agent: p.agent as string | undefined,
-    carrier_code: (p.carrier_code as string) ?? p.agent as string | undefined,
+    carrier_code: (p.carrier_code as string) ?? (p.agent as string | undefined),
     opening_hours: Array.isArray(p.opening_hours) ? (p.opening_hours as string[]) : undefined,
     in_delivery: p.in_delivery as boolean | undefined,
     out_delivery: p.out_delivery as boolean | undefined,

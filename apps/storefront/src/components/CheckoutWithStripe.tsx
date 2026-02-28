@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { medusa } from "@/lib/medusa";
@@ -56,6 +56,7 @@ export function CheckoutWithStripe({
   const [selectedShippingOptionId, setSelectedShippingOptionId] = useState<string | null>(null);
   const [selectedShippingData, setSelectedShippingData] = useState<Record<string, unknown>>({});
   const [appliedShippingOptionId, setAppliedShippingOptionId] = useState<string | null>(null);
+  const lastAppliedFormDataRef = useRef<string>("");
   const [formData, setFormData] = useState({
     email: "",
     firstName: "",
@@ -93,12 +94,18 @@ export function CheckoutWithStripe({
 
   const ensureCartAndPayment = useCallback(async () => {
     if (!cartId) return;
-    if (cart && clientSecret && appliedShippingOptionId === selectedShippingOptionId) return;
+    const formDataSig = `${formData.firstName}|${formData.lastName}|${formData.address1}|${formData.postalCode}|${formData.city}`;
+    const formDataUnchanged = lastAppliedFormDataRef.current === formDataSig;
+    if (cart && clientSecret && appliedShippingOptionId === selectedShippingOptionId && formDataUnchanged) return;
     try {
       const email = formData.email || "guest@guapo.dk";
       const hasServicePoint =
         selectedShippingData?.service_point_id &&
         selectedShippingData?.service_point_address;
+      if (!hasServicePoint && (!formData.address1?.trim() || !formData.postalCode?.trim() || !formData.city?.trim())) {
+        setPaymentError(locale === "da" ? "Udfyld venligst adresse, postnummer og by" : "Please fill in address, postal code and city");
+        return;
+      }
       const addr = hasServicePoint
         ? {
             first_name: formData.firstName || "Gæst",
@@ -152,6 +159,8 @@ export function CheckoutWithStripe({
       const session = payment_collection?.payment_sessions?.[0];
       const secret = session?.data?.client_secret as string | undefined;
       if (secret) {
+        lastAppliedFormDataRef.current = formDataSig;
+        setPaymentError(null);
         setCart({ id: cartId });
         setClientSecret(secret);
       } else {
