@@ -134,50 +134,68 @@ export default async function orderPlacedCreateSubscriptions({
 
   const now = new Date();
   for (const item of subscriptionItems) {
-    const cycleWeeks = (item.metadata as Record<string, unknown>)?.subscription_cycle as number;
-    const variantId = item.variant_id;
-    const quantity = item.quantity ?? 1;
+    try {
+      const cycleWeeks = (item.metadata as Record<string, unknown>)?.subscription_cycle as number;
+      if (
+        typeof cycleWeeks !== "number" ||
+        !Number.isInteger(cycleWeeks) ||
+        cycleWeeks <= 0
+      ) {
+        console.warn(
+          `[order-placed-create-subscriptions] Invalid cycle_weeks (${cycleWeeks}) for item ${item.id}, skipping.`
+        );
+        continue;
+      }
 
-    let discountPercent = DEFAULT_DISCOUNT_PERCENT;
-    const product = item.variant?.product;
-    if (product?.metadata) {
-      const pct = (product.metadata as Record<string, unknown>).subscription_discount_percent;
-      if (typeof pct === "number") discountPercent = pct;
-    }
+      const variantId = item.variant_id;
+      const quantity = item.quantity ?? 1;
 
-    const nextRenewal = new Date(now);
-    nextRenewal.setDate(nextRenewal.getDate() + cycleWeeks * 7);
+      let discountPercent = DEFAULT_DISCOUNT_PERCENT;
+      const product = item.variant?.product;
+      if (product?.metadata) {
+        const pct = (product.metadata as Record<string, unknown>).subscription_discount_percent;
+        if (typeof pct === "number") discountPercent = pct;
+      }
 
-    const [created] = await subscriptionService.createSubscriptions([
-      {
-        customer_id: order.customer_id,
-        status: "active",
-        cycle_weeks: cycleWeeks,
-        next_renewal_at: nextRenewal,
-        last_renewal_at: null,
-        delivery_count: 1,
-        stripe_customer_id: stripeCustomerId,
-        stripe_payment_method_id: stripePaymentMethodId,
-        discount_percent: discountPercent,
-        variant_id: variantId,
-        quantity,
-        shipping_address: order.shipping_address ?? {},
-        billing_address: order.billing_address ?? {},
-        shipping_option_id: shippingOptionId,
-        metadata: { order_id: orderId, line_item_id: item.id },
-      },
-    ]);
+      const nextRenewal = new Date(now);
+      nextRenewal.setDate(nextRenewal.getDate() + cycleWeeks * 7);
 
-    if (created?.id) {
-      const link = container.resolve<{
-        create: (links: LinkDefinition[]) => Promise<unknown>;
-      }>(ContainerRegistrationKeys.LINK);
-      await link.create([
+      const [created] = await subscriptionService.createSubscriptions([
         {
-          [SUBSCRIPTION_MODULE]: { subscription_id: created.id },
-          [Modules.ORDER]: { order_id: orderId },
+          customer_id: order.customer_id,
+          status: "active",
+          cycle_weeks: cycleWeeks,
+          next_renewal_at: nextRenewal,
+          last_renewal_at: null,
+          delivery_count: 1,
+          stripe_customer_id: stripeCustomerId,
+          stripe_payment_method_id: stripePaymentMethodId,
+          discount_percent: discountPercent,
+          variant_id: variantId,
+          quantity,
+          shipping_address: order.shipping_address ?? {},
+          billing_address: order.billing_address ?? {},
+          shipping_option_id: shippingOptionId,
+          metadata: { order_id: orderId, line_item_id: item.id },
         },
       ]);
+
+      if (created?.id) {
+        const link = container.resolve<{
+          create: (links: LinkDefinition[]) => Promise<unknown>;
+        }>(ContainerRegistrationKeys.LINK);
+        await link.create([
+          {
+            [SUBSCRIPTION_MODULE]: { subscription_id: created.id },
+            [Modules.ORDER]: { order_id: orderId },
+          },
+        ]);
+      }
+    } catch (err) {
+      console.error(
+        `[order-placed-create-subscriptions] Failed to create subscription for line item ${item.id}:`,
+        err instanceof Error ? err.message : String(err)
+      );
     }
   }
 }
