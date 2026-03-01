@@ -4,7 +4,7 @@ import type { LinkDefinition } from "@medusajs/framework/types";
 import { SUBSCRIPTION_MODULE } from "../modules/subscription";
 import type SubscriptionModuleService from "../modules/subscription/service";
 
-const DEFAULT_DISCOUNT_PERCENT = 5;
+const DEFAULT_DISCOUNT_PERCENT = 20;
 
 type OrderWithItems = {
   id: string;

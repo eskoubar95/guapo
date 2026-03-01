@@ -199,6 +199,8 @@
   },
   "auth": {
     "loginTitle": "Sign in",
+    "registerTitle": "Create account",
+    "closeLabel": "Close",
     "email": "Email",
     "password": "Password",
     "submitLogin": "Sign in",
@@ -207,7 +209,6 @@
     "noAccount": "Don't have an account?",
     "registerLink": "Create account",
     "orDivider": "or",
-    "registerTitle": "Create account",
     "firstName": "First name",
     "lastName": "Last name",
     "submitRegister": "Create account",

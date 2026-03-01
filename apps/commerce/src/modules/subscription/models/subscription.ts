@@ -24,7 +24,7 @@ export const Subscription = model.define("subscription", {
   delivery_count: model.number().default(0),
   stripe_customer_id: model.text(),
   stripe_payment_method_id: model.text(),
-  discount_percent: model.number().default(5),
+  discount_percent: model.number().default(20),
   variant_id: model.text(),
   quantity: model.number().default(1),
   shipping_address: model.json(), // Address object

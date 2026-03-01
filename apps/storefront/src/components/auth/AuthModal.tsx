@@ -17,6 +17,7 @@ export type AuthModalView = "login" | "register";
 export interface AuthModalLabels {
   loginTitle: string;
   registerTitle: string;
+  closeLabel: string;
   email: string;
   password: string;
   firstName: string;
@@ -100,18 +101,23 @@ export function AuthModal({
     return () => clearTimeout(t);
   }, [exiting, onClose]);
 
-  // Focus trap: save focus on open, move to first focusable, restore on close
+  // Focus trap: save focus on open, move to first focusable
   useEffect(() => {
     if (!isOpen || exiting) return;
     previousActiveElement.current = document.activeElement as HTMLElement | null;
     const raf = requestAnimationFrame(() => {
       const first = modalRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
-      first?.focus();
+      if (first) first.focus();
+      else modalRef.current?.focus();
     });
-    return () => {
-      cancelAnimationFrame(raf);
-      previousActiveElement.current?.focus?.();
-    };
+    return () => cancelAnimationFrame(raf);
+  }, [isOpen, exiting]);
+
+  // Restore focus only after modal is fully closed (not when exit animation starts)
+  useEffect(() => {
+    if (isOpen || exiting) return;
+    previousActiveElement.current?.focus?.();
+    previousActiveElement.current = null;
   }, [isOpen, exiting]);
 
   // Keep Tab/Shift+Tab inside modal
@@ -175,6 +181,7 @@ export function AuthModal({
           className={panelClasses}
           onClick={(e) => e.stopPropagation()}
           onKeyDown={handleKeyDown}
+          tabIndex={-1}
           role="dialog"
           aria-modal="true"
           aria-labelledby="auth-modal-title"
@@ -187,7 +194,7 @@ export function AuthModal({
               type="button"
               onClick={handleClose}
               className="p-2 rounded-lg hover:bg-muted transition-colors"
-              aria-label={locale === "da" ? "Luk" : "Close"}
+              aria-label={labels.closeLabel}
             >
               <X className="h-5 w-5 text-muted-foreground" />
             </button>

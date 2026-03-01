@@ -61,7 +61,8 @@ export async function getCustomerSubscription(
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
 
-  const res = await fetch(`${MEDUSA_URL}/store/subscriptions/${id}`, {
+  const encodedId = encodeURIComponent(id);
+  const res = await fetch(`${MEDUSA_URL}/store/subscriptions/${encodedId}`, {
     headers: {
       ...baseHeaders(),
       ...(cookieHeader && { Cookie: cookieHeader }),

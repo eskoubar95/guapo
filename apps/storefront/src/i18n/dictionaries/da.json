@@ -199,6 +199,8 @@
   },
   "auth": {
     "loginTitle": "Log ind",
+    "registerTitle": "Opret konto",
+    "closeLabel": "Luk",
     "email": "Email",
     "password": "Adgangskode",
     "submitLogin": "Log ind",
@@ -207,7 +209,6 @@
     "noAccount": "Har du ikke en konto?",
     "registerLink": "Opret konto",
     "orDivider": "eller",
-    "registerTitle": "Opret konto",
     "firstName": "Fornavn",
     "lastName": "Efternavn",
     "submitRegister": "Opret konto",

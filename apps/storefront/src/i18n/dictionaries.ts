@@ -196,6 +196,8 @@ export interface Dictionary {
   };
   auth: {
     loginTitle: string;
+    registerTitle: string;
+    closeLabel: string;
     email: string;
     password: string;
     submitLogin: string;
@@ -204,7 +206,6 @@ export interface Dictionary {
     noAccount: string;
     registerLink: string;
     orDivider: string;
-    registerTitle: string;
     firstName: string;
     lastName: string;
     submitRegister: string;
