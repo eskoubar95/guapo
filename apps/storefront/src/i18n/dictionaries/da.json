@@ -145,13 +145,13 @@
     }
   },
   "cart": {
-    "title": "Din kurv",
+    "title": "Indkøbskurv",
     "empty": "Din kurv er tom",
     "continueShopping": "Fortsæt med at shoppe",
     "checkout": "Gå til kassen",
-    "subtotal": "Subtotal",
+    "subtotal": "Varer i alt",
     "shipping": "Fragt",
-    "total": "Total",
+    "total": "Pris i alt (inkl. moms)",
     "summary": "Ordreoversigt",
     "remove": "Fjern",
     "decreaseQuantity": "Reducer antal",
@@ -162,7 +162,20 @@
     "discountCodePlaceholder": "Rabatkode",
     "apply": "Tilføj",
     "discountApplied": "Tilføjet",
-    "continueShoppingTitle": "Fortsæt med at shoppe"
+    "continueShoppingTitle": "Fortsæt med at shoppe",
+    "products": "Produkter",
+    "deliveryAndPickup": "Levering & Afhent",
+    "overview": "Oversigt",
+    "itemsTotal": "Varer i alt",
+    "subscriptionDiscount": "Abonnements rabat",
+    "freeShippingLabel": "FRI FRAGT",
+    "totalInclVat": "Pris i alt (inkl. moms)",
+    "continueShoppingButton": "Fortsæt med at handle",
+    "subscribeAndSave": "Abonner & spar 20%",
+    "youSave": "Du sparer {{amount}} kr.",
+    "deliveryLabel": "Levering:",
+    "everyXWeeks": "Hver {{weeks}}. uge",
+    "goToShop": "Gå til butikken"
   },
   "checkout": {
     "title": "Kassen",
@@ -186,6 +199,8 @@
   },
   "auth": {
     "loginTitle": "Log ind",
+    "registerTitle": "Opret konto",
+    "closeLabel": "Luk",
     "email": "Email",
     "password": "Adgangskode",
     "submitLogin": "Log ind",
@@ -194,7 +209,6 @@
     "noAccount": "Har du ikke en konto?",
     "registerLink": "Opret konto",
     "orDivider": "eller",
-    "registerTitle": "Opret konto",
     "firstName": "Fornavn",
     "lastName": "Efternavn",
     "submitRegister": "Opret konto",
@@ -243,7 +257,9 @@
     "benefitShipping": "Gratis levering på alle abonnementsordrer",
     "benefitFlexible": "Fleksibel levering - pause, skip eller annuller",
     "backToSubscriptions": "Tilbage til abonnementer",
-    "viewDetails": "Se detaljer"
+    "viewDetails": "Se detaljer",
+    "cancelConfirm": "Er du sikker på, at du vil annullere abonnementet?",
+    "cancelConfirmTitle": "Annuller abonnement"
   },
   "footer": {
     "support": "Support",

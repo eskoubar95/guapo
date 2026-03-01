@@ -145,10 +145,10 @@
     }
   },
   "cart": {
-    "title": "Your cart",
+    "title": "Shopping cart",
     "empty": "Your cart is empty",
     "continueShopping": "Continue shopping",
-    "checkout": "Checkout",
+    "checkout": "Go to checkout",
     "subtotal": "Subtotal",
     "shipping": "Shipping",
     "total": "Total",
@@ -160,9 +160,22 @@
     "subscribe": "Subscribe",
     "discountCodeLabel": "Have a discount code?",
     "discountCodePlaceholder": "Discount code",
-    "apply": "Apply",
+    "apply": "Add",
     "discountApplied": "Applied",
-    "continueShoppingTitle": "Continue shopping"
+    "continueShoppingTitle": "Continue shopping",
+    "products": "Products",
+    "deliveryAndPickup": "Delivery & Pickup",
+    "overview": "Overview",
+    "itemsTotal": "Items total",
+    "subscriptionDiscount": "Subscription discount",
+    "freeShippingLabel": "FREE SHIPPING",
+    "totalInclVat": "Total (incl. VAT)",
+    "continueShoppingButton": "Continue shopping",
+    "subscribeAndSave": "Subscribe & save 20%",
+    "youSave": "You save {{amount}} kr.",
+    "deliveryLabel": "Delivery:",
+    "everyXWeeks": "Every {{weeks}} weeks",
+    "goToShop": "Go to shop"
   },
   "checkout": {
     "title": "Checkout",
@@ -186,6 +199,8 @@
   },
   "auth": {
     "loginTitle": "Sign in",
+    "registerTitle": "Create account",
+    "closeLabel": "Close",
     "email": "Email",
     "password": "Password",
     "submitLogin": "Sign in",
@@ -194,7 +209,6 @@
     "noAccount": "Don't have an account?",
     "registerLink": "Create account",
     "orDivider": "or",
-    "registerTitle": "Create account",
     "firstName": "First name",
     "lastName": "Last name",
     "submitRegister": "Create account",
@@ -243,7 +257,9 @@
     "benefitShipping": "Free shipping on all subscription orders",
     "benefitFlexible": "Flexible delivery - pause, skip, or cancel",
     "backToSubscriptions": "Back to subscriptions",
-    "viewDetails": "View details"
+    "viewDetails": "View details",
+    "cancelConfirm": "Are you sure you want to cancel this subscription?",
+    "cancelConfirmTitle": "Cancel subscription"
   },
   "footer": {
     "support": "Support",

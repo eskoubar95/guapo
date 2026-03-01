@@ -22,9 +22,11 @@ type AuthLabels = {
 interface LoginFormProps {
   locale: string;
   labels: AuthLabels;
+  /** When provided, called on success instead of navigating to account (e.g. for modal flow). */
+  onSuccess?: () => void;
 }
 
-export function LoginForm({ locale, labels }: LoginFormProps) {
+export function LoginForm({ locale, labels, onSuccess }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,8 +49,13 @@ export function LoginForm({ locale, labels }: LoginFormProps) {
         setError(labels.errorLogin);
         return;
       }
-      router.push(`/${locale}/account`);
-      router.refresh();
+      if (onSuccess) {
+        onSuccess();
+        router.refresh();
+      } else {
+        router.push(`/${locale}/account`);
+        router.refresh();
+      }
     } catch {
       setError(labels.errorLogin);
     } finally {
@@ -67,8 +74,13 @@ export function LoginForm({ locale, labels }: LoginFormProps) {
         return;
       }
       if (typeof result === "string") {
-        router.push(`/${locale}/account`);
-        router.refresh();
+        if (onSuccess) {
+          onSuccess();
+          router.refresh();
+        } else {
+          router.push(`/${locale}/account`);
+          router.refresh();
+        }
         return;
       }
       setError(labels.errorLogin);

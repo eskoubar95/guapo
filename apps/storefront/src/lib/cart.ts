@@ -43,7 +43,7 @@ async function setCartId(cartId: string) {
 /** Medusa store cart shape (minimal for page usage) */
 export interface StoreCart {
   id?: string;
-  items?: unknown[];
+  items?: Array<{ id?: string; metadata?: Record<string, unknown> }>;
   subtotal?: number;
   shipping_total?: number;
   total?: number;
@@ -87,13 +87,30 @@ export async function getOrCreateCart(): Promise<string> {
   return cart.id;
 }
 
-export async function addToCart(variantId: string, quantity: number = 1) {
+export interface AddToCartOptions {
+  /** Subscription cycle in weeks (4, 8, or 12). When set, item is a subscription. */
+  subscription_cycle?: number;
+}
+
+export async function addToCart(
+  variantId: string,
+  quantity: number = 1,
+  options?: AddToCartOptions
+) {
   const cartId = await getOrCreateCart();
+
+  const body: Record<string, unknown> = {
+    variant_id: variantId,
+    quantity,
+  };
+  if (options?.subscription_cycle) {
+    body.metadata = { subscription_cycle: options.subscription_cycle };
+  }
 
   const res = await fetch(`${MEDUSA_URL}/store/carts/${cartId}/line-items`, {
     method: "POST",
     headers: headers(),
-    body: JSON.stringify({ variant_id: variantId, quantity }),
+    body: JSON.stringify(body),
   });
 
   const data = await res.json().catch(() => ({}));
@@ -131,6 +148,26 @@ export async function removeLineItem(lineItemId: string) {
   if (!res.ok) throw new Error("Failed to remove item");
   const { cart } = await res.json();
   return cart;
+}
+
+/** Set subscription on a line item: removes it and re-adds with or without subscription_cycle metadata. */
+export async function setLineItemSubscription(
+  lineItemId: string,
+  variantId: string,
+  quantity: number,
+  subscriptionCycleWeeks: number | null
+) {
+  await removeLineItem(lineItemId);
+  try {
+    await addToCart(variantId, quantity, subscriptionCycleWeeks ? { subscription_cycle: subscriptionCycleWeeks } : undefined);
+  } catch (error) {
+    try {
+      await addToCart(variantId, quantity);
+    } catch {
+      // Rollback failed; original error is rethrown
+    }
+    throw error;
+  }
 }
 
 export async function getCart(): Promise<StoreCart | null> {

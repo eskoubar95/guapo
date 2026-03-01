@@ -2,6 +2,8 @@ import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { getCustomerSubscriptions } from "@/lib/subscriptions";
+import { SubscriptionActions } from "@/components/subscription/SubscriptionActions";
 
 interface SubscriptionsPageProps {
   params: Promise<{ locale: string }>;
@@ -15,39 +17,19 @@ export async function generateMetadata({ params }: SubscriptionsPageProps): Prom
   };
 }
 
-// Placeholder subscriptions (will come from Medusa)
-const subscriptions = [
-  {
-    id: "SUB-001",
-    product: "Niacinamide Serum",
-    variant: "30ml",
-    price: 237,
-    cycle: 8,
-    status: "active",
-    nextDelivery: "2026-02-12",
-    deliveriesCompleted: 3,
-    minimumCommitment: 2,
-  },
-];
-
 const statusLabels: Record<string, { da: string; en: string; color: string }> = {
   active: { da: "Aktiv", en: "Active", color: "bg-green-100 text-green-800" },
   paused: { da: "Pauset", en: "Paused", color: "bg-yellow-100 text-yellow-800" },
+  on_hold: { da: "On hold", en: "On hold", color: "bg-red-100 text-red-800" },
   cancelled: { da: "Annulleret", en: "Cancelled", color: "bg-gray-100 text-gray-800" },
+  expired: { da: "Udløbet", en: "Expired", color: "bg-gray-100 text-gray-800" },
 };
 
 export default async function SubscriptionsPage({ params }: SubscriptionsPageProps) {
   const { locale } = await params;
   const dict = await getDictionary(locale as Locale);
   const localeKey = locale as "da" | "en";
-
-  const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: "DKK",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
+  const subscriptions = await getCustomerSubscriptions();
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(locale === "da" ? "da-DK" : "en-US", {
@@ -84,14 +66,18 @@ export default async function SubscriptionsPage({ params }: SubscriptionsPagePro
                 {/* Header */}
                 <div className="flex items-center justify-between bg-muted/50 p-4">
                   <div className="flex items-center gap-4">
-                    <div className="h-16 w-16 rounded-lg bg-gray-200" />
+                    <div className="h-16 w-16 rounded-lg bg-muted shrink-0" />
                     <div>
-                      <h3 className="font-medium text-foreground">{sub.product}</h3>
-                      <p className="text-sm text-muted-foreground">{sub.variant}</p>
+                      <h3 className="font-medium text-foreground">
+                        {locale === "da" ? "Abonnement" : "Subscription"} #{sub.id.slice(0, 8)}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {locale === "da" ? "Hver" : "Every"} {sub.cycle_weeks} {locale === "da" ? "uge" : "weeks"} • {sub.discount_percent}% {locale === "da" ? "rabat" : "discount"}
+                      </p>
                     </div>
                   </div>
-                  <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusLabels[sub.status].color}`}>
-                    {statusLabels[sub.status][localeKey]}
+                  <span className={`rounded-full px-3 py-1 text-xs font-medium ${(statusLabels[sub.status] ?? { da: "", en: "", color: "bg-gray-100 text-gray-800" }).color}`}>
+                    {(statusLabels[sub.status] ?? { da: sub.status, en: sub.status })[localeKey]}
                   </span>
                 </div>
 
@@ -100,71 +86,53 @@ export default async function SubscriptionsPage({ params }: SubscriptionsPagePro
                   <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                     <div>
                       <dt className="text-sm text-muted-foreground">
-                        {locale === "da" ? "Pris" : "Price"}
-                      </dt>
-                      <dd className="mt-1 font-medium text-foreground">{formatPrice(sub.price)}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-sm text-muted-foreground">
                         {locale === "da" ? "Frekvens" : "Frequency"}
                       </dt>
                       <dd className="mt-1 font-medium text-foreground">
-                        {locale === "da" ? `Hver ${sub.cycle}. uge` : `Every ${sub.cycle} weeks`}
+                        {locale === "da" ? `Hver ${sub.cycle_weeks}. uge` : `Every ${sub.cycle_weeks} weeks`}
                       </dd>
                     </div>
                     <div>
                       <dt className="text-sm text-muted-foreground">
                         {locale === "da" ? "Næste levering" : "Next delivery"}
                       </dt>
-                      <dd className="mt-1 font-medium text-foreground">{formatDate(sub.nextDelivery)}</dd>
+                      <dd className="mt-1 font-medium text-foreground">{formatDate(sub.next_renewal_at)}</dd>
                     </div>
                     <div>
                       <dt className="text-sm text-muted-foreground">
                         {locale === "da" ? "Leveringer" : "Deliveries"}
                       </dt>
-                      <dd className="mt-1 font-medium text-foreground">{sub.deliveriesCompleted}</dd>
+                      <dd className="mt-1 font-medium text-foreground">{sub.delivery_count}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm text-muted-foreground">
+                        {locale === "da" ? "Rabat" : "Discount"}
+                      </dt>
+                      <dd className="mt-1 font-medium text-foreground">{sub.discount_percent}%</dd>
                     </div>
                   </dl>
                 </div>
 
                 {/* Actions */}
                 <div className="flex flex-wrap items-center gap-4 border-t border-border p-4">
-                  <Link
-                    href={`/${locale}/account/subscriptions/${sub.id}`}
-                    className="text-sm font-medium text-primary hover:underline"
-                  >
-                    {dict.subscriptionDetail.viewDetails}
-                  </Link>
-                  {sub.status === "active" && (
-                    <>
-                      <button className="rounded-lg border border-input px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground">
-                        {locale === "da" ? "Skip næste levering" : "Skip next delivery"}
-                      </button>
-                      <button className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                        {locale === "da" ? "Pause abonnement" : "Pause subscription"}
-                      </button>
-                      <button className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                        {locale === "da" ? "Ændr frekvens" : "Change frequency"}
-                      </button>
-                    </>
-                  )}
-                  {sub.status === "paused" && (
-                    <button className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">
-                      {locale === "da" ? "Genoptag abonnement" : "Resume subscription"}
-                    </button>
-                  )}
-                  {sub.status === "active" && sub.deliveriesCompleted >= sub.minimumCommitment && (
-                    <button className="text-sm font-medium text-red-600 hover:text-red-700">
-                      {locale === "da" ? "Annuller abonnement" : "Cancel subscription"}
-                    </button>
-                  )}
-                  {sub.status === "active" && sub.deliveriesCompleted < sub.minimumCommitment && (
-                    <p className="text-sm text-muted-foreground">
-                      {locale === "da"
-                        ? `Kan annulleres efter ${sub.minimumCommitment - sub.deliveriesCompleted} leveringer`
-                        : `Can cancel after ${sub.minimumCommitment - sub.deliveriesCompleted} more deliveries`}
-                    </p>
-                  )}
+                  <SubscriptionActions
+                    subscriptionId={sub.id}
+                    status={sub.status}
+                    skipNext={sub.skip_next}
+                    deliveryCount={sub.delivery_count}
+                    minimumCommitment={2}
+                    locale={locale}
+                    dict={{
+                      skipNext: dict.subscriptionDetail.skipNext,
+                      pause: dict.subscriptionDetail.pause,
+                      resume: dict.subscriptionDetail.resume,
+                      cancel: dict.subscriptionDetail.cancel,
+                      viewDetails: dict.subscriptionDetail.viewDetails,
+                      cancelConfirm: dict.subscriptionDetail.cancelConfirm,
+                      cancelConfirmTitle: dict.subscriptionDetail.cancelConfirmTitle,
+                      cancelAfter: dict.subscriptionDetail.cancelAfter,
+                    }}
+                  />
                 </div>
               </div>
             ))}

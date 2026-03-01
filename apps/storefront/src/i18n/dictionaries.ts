@@ -160,6 +160,19 @@ export interface Dictionary {
     apply: string;
     discountApplied: string;
     continueShoppingTitle: string;
+    products: string;
+    deliveryAndPickup: string;
+    overview: string;
+    itemsTotal: string;
+    subscriptionDiscount: string;
+    freeShippingLabel: string;
+    totalInclVat: string;
+    continueShoppingButton: string;
+    subscribeAndSave: string;
+    youSave: string;
+    deliveryLabel: string;
+    everyXWeeks: string;
+    goToShop: string;
   };
   checkout: {
     title: string;
@@ -183,6 +196,8 @@ export interface Dictionary {
   };
   auth: {
     loginTitle: string;
+    registerTitle: string;
+    closeLabel: string;
     email: string;
     password: string;
     submitLogin: string;
@@ -191,7 +206,6 @@ export interface Dictionary {
     noAccount: string;
     registerLink: string;
     orDivider: string;
-    registerTitle: string;
     firstName: string;
     lastName: string;
     submitRegister: string;
@@ -241,6 +255,8 @@ export interface Dictionary {
     benefitFlexible: string;
     backToSubscriptions: string;
     viewDetails: string;
+    cancelConfirm: string;
+    cancelConfirmTitle: string;
   };
   footer: {
     support: string;

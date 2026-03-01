@@ -3,6 +3,8 @@ import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getCustomerSubscription } from "@/lib/subscriptions";
+import { SubscriptionActions } from "@/components/subscription/SubscriptionActions";
 
 interface SubscriptionDetailPageProps {
   params: Promise<{ locale: string; id: string }>;
@@ -19,69 +21,27 @@ export async function generateMetadata({ params }: SubscriptionDetailPageProps):
 const statusLabels: Record<string, { da: string; en: string; color: string }> = {
   active: { da: "Aktiv", en: "Active", color: "bg-green-100 text-green-800" },
   paused: { da: "Pauset", en: "Paused", color: "bg-yellow-100 text-yellow-800" },
+  on_hold: { da: "On hold", en: "On hold", color: "bg-red-100 text-red-800" },
   cancelled: { da: "Annulleret", en: "Cancelled", color: "bg-gray-100 text-gray-800" },
+  expired: { da: "Udløbet", en: "Expired", color: "bg-gray-100 text-gray-800" },
 };
-
-// Placeholder: will be replaced by Medusa subscription fetch
-function getSubscriptionById(id: string) {
-  const subs: Record<string, ReturnType<typeof makeSubscription>> = {
-    "SUB-001": makeSubscription("SUB-001", "Niacinamide Serum", "30ml", 237, 8, "active", "2026-02-12", 3, 2),
-  };
-  return subs[id] ?? null;
-}
-
-function makeSubscription(
-  id: string,
-  product: string,
-  variant: string,
-  price: number,
-  cycle: number,
-  status: string,
-  nextDelivery: string,
-  deliveriesCompleted: number,
-  minimumCommitment: number
-) {
-  return {
-    id,
-    product,
-    variant,
-    price,
-    cycle,
-    status,
-    nextDelivery,
-    deliveriesCompleted,
-    minimumCommitment,
-  };
-}
 
 export default async function SubscriptionDetailPage({ params }: SubscriptionDetailPageProps) {
   const { locale, id } = await params;
   const dict = await getDictionary(locale as Locale);
   const localeKey = locale as "da" | "en";
 
-  const sub = getSubscriptionById(id);
+  const sub = await getCustomerSubscription(id);
   if (!sub) notFound();
 
-  const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: "DKK",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return "–";
     return new Date(dateStr).toLocaleDateString(locale === "da" ? "da-DK" : "en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
   };
-
-  const cancelAfterText = dict.subscriptionDetail.cancelAfter.replace(
-    "{{count}}",
-    String(Math.max(0, sub.minimumCommitment - sub.deliveriesCompleted))
-  );
 
   return (
     <div className="max-w-3xl">
@@ -100,7 +60,7 @@ export default async function SubscriptionDetailPage({ params }: SubscriptionDet
               </Link>
             </li>
             <li>/</li>
-            <li className="text-foreground">{sub.product}</li>
+            <li className="text-foreground">{sub.id.slice(0, 8)}…</li>
           </ol>
         </nav>
 
@@ -110,8 +70,12 @@ export default async function SubscriptionDetailPage({ params }: SubscriptionDet
             <div className="flex items-center gap-4">
               <div className="h-16 w-16 shrink-0 rounded-lg bg-muted" />
               <div>
-                <h1 className="text-xl font-semibold text-foreground">{sub.product}</h1>
-                <p className="text-sm text-muted-foreground">{sub.variant}</p>
+                <h1 className="text-xl font-semibold text-foreground">
+                  {locale === "da" ? "Abonnement" : "Subscription"} #{sub.id.slice(0, 8)}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  {locale === "da" ? "Hver" : "Every"} {sub.cycle_weeks} {locale === "da" ? "uge" : "weeks"} • {sub.discount_percent}% {locale === "da" ? "rabat" : "discount"}
+                </p>
               </div>
             </div>
             <span
@@ -126,54 +90,46 @@ export default async function SubscriptionDetailPage({ params }: SubscriptionDet
             <h2 className="sr-only">{dict.subscriptionDetail.title}</h2>
             <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div>
-                <dt className="text-sm text-muted-foreground">{dict.subscriptionDetail.price}</dt>
-                <dd className="mt-1 font-medium text-foreground">{formatPrice(sub.price)}</dd>
-              </div>
-              <div>
                 <dt className="text-sm text-muted-foreground">{dict.subscriptionDetail.frequency}</dt>
                 <dd className="mt-1 font-medium text-foreground">
-                  {locale === "da" ? `Hver ${sub.cycle}. uge` : `Every ${sub.cycle} weeks`}
+                  {locale === "da" ? `Hver ${sub.cycle_weeks}. uge` : `Every ${sub.cycle_weeks} weeks`}
                 </dd>
               </div>
               <div>
                 <dt className="text-sm text-muted-foreground">{dict.subscriptionDetail.nextDelivery}</dt>
-                <dd className="mt-1 font-medium text-foreground">{formatDate(sub.nextDelivery)}</dd>
+                <dd className="mt-1 font-medium text-foreground">{formatDate(sub.next_renewal_at)}</dd>
               </div>
               <div>
                 <dt className="text-sm text-muted-foreground">{dict.subscriptionDetail.deliveries}</dt>
-                <dd className="mt-1 font-medium text-foreground">{sub.deliveriesCompleted}</dd>
+                <dd className="mt-1 font-medium text-foreground">{sub.delivery_count}</dd>
+              </div>
+              <div>
+                <dt className="text-sm text-muted-foreground">{locale === "da" ? "Rabat" : "Discount"}</dt>
+                <dd className="mt-1 font-medium text-foreground">{sub.discount_percent}%</dd>
               </div>
             </dl>
           </div>
 
           {/* Actions */}
           <div className="flex flex-wrap items-center gap-4 border-t border-border p-4">
-            {sub.status === "active" && (
-              <>
-                <button className="rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground">
-                  {dict.subscriptionDetail.skipNext}
-                </button>
-                <button className="rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground">
-                  {dict.subscriptionDetail.pause}
-                </button>
-                <button className="rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground">
-                  {dict.subscriptionDetail.changeFrequency}
-                </button>
-              </>
-            )}
-            {sub.status === "paused" && (
-              <button className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-                {dict.subscriptionDetail.resume}
-              </button>
-            )}
-            {sub.status === "active" && sub.deliveriesCompleted >= sub.minimumCommitment && (
-              <button className="text-sm font-medium text-destructive hover:text-destructive/90">
-                {dict.subscriptionDetail.cancel}
-              </button>
-            )}
-            {sub.status === "active" && sub.deliveriesCompleted < sub.minimumCommitment && (
-              <p className="text-sm text-muted-foreground">{cancelAfterText}</p>
-            )}
+            <SubscriptionActions
+              subscriptionId={sub.id}
+              status={sub.status}
+              skipNext={sub.skip_next}
+              deliveryCount={sub.delivery_count}
+              minimumCommitment={2}
+              locale={locale}
+              dict={{
+                skipNext: dict.subscriptionDetail.skipNext,
+                pause: dict.subscriptionDetail.pause,
+                resume: dict.subscriptionDetail.resume,
+                cancel: dict.subscriptionDetail.cancel,
+                viewDetails: dict.subscriptionDetail.viewDetails,
+                cancelConfirm: dict.subscriptionDetail.cancelConfirm,
+                cancelConfirmTitle: dict.subscriptionDetail.cancelConfirmTitle,
+                cancelAfter: dict.subscriptionDetail.cancelAfter,
+              }}
+            />
           </div>
         </div>
 

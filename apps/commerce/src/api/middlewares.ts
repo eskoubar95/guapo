@@ -22,5 +22,15 @@ export default defineMiddlewares({
         validateAndTransformBody(submitReviewSchema),
       ],
     },
+    {
+      matcher: "/store/subscriptions*",
+      method: "GET",
+      middlewares: [authenticate("customer", ["session", "bearer"])],
+    },
+    {
+      matcher: "/store/subscriptions*",
+      method: "POST",
+      middlewares: [authenticate("customer", ["session", "bearer"])],
+    },
   ],
 });
