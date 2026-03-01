@@ -4,11 +4,19 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Minus, Plus } from "lucide-react";
 import { addToCart } from "@/lib/cart";
+import { Button } from "@/components/ui/button";
+import { SubscriptionSelector } from "@/components/SubscriptionSelector";
 
 interface Variant {
   id: string;
   title: string;
   price: number;
+}
+
+interface SubscriptionConfig {
+  basePrice: number;
+  currency: string;
+  locale: string;
 }
 
 interface ProductPurchaseSectionProps {
@@ -19,7 +27,8 @@ interface ProductPurchaseSectionProps {
   addedLabel: string;
   decreaseQuantityAriaLabel?: string;
   increaseQuantityAriaLabel?: string;
-  children?: React.ReactNode;
+  purchaseOptionsLabel?: string;
+  subscriptionConfig?: SubscriptionConfig;
 }
 
 export function ProductPurchaseSection({
@@ -30,10 +39,13 @@ export function ProductPurchaseSection({
   addedLabel,
   decreaseQuantityAriaLabel = "Decrease quantity",
   increaseQuantityAriaLabel = "Increase quantity",
-  children,
+  purchaseOptionsLabel = "Purchase options",
+  subscriptionConfig,
 }: ProductPurchaseSectionProps) {
   const [selectedVariantId, setSelectedVariantId] = useState(variants[0]?.id ?? "");
   const [quantity, setQuantity] = useState(1);
+  const [purchaseType, setPurchaseType] = useState<"one-time" | "subscription">("one-time");
+  const [selectedCycle, setSelectedCycle] = useState(8);
   const [added, setAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -51,12 +63,21 @@ export function ProductPurchaseSection({
     setQuantity(newQuantity);
   };
 
+  const handleSubscriptionSelect = (type: "one-time" | "subscription", cycle?: number) => {
+    setPurchaseType(type);
+    if (cycle) setSelectedCycle(cycle);
+  };
+
   const handleAddToCart = () => {
     if (!selectedVariantId) return;
     setError(null);
     startTransition(async () => {
       try {
-        await addToCart(selectedVariantId, quantity);
+        const options =
+          purchaseType === "subscription" && subscriptionConfig
+            ? { subscription_cycle: selectedCycle }
+            : undefined;
+        await addToCart(selectedVariantId, quantity, options);
         setAdded(true);
         router.refresh();
         if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
@@ -123,18 +144,29 @@ export function ProductPurchaseSection({
         </div>
       </div>
 
-      {/* Subscription selector etc. (passed as children) */}
-      {children}
+      {/* Subscription selector (when subscriptionConfig provided) */}
+      {subscriptionConfig && (
+        <div className="mt-6">
+          <p className="mb-3 text-sm font-medium text-foreground">{purchaseOptionsLabel}</p>
+          <SubscriptionSelector
+            basePrice={subscriptionConfig.basePrice}
+            currency={subscriptionConfig.currency}
+            locale={subscriptionConfig.locale}
+            onSelect={handleSubscriptionSelect}
+          />
+        </div>
+      )}
 
-      {/* Add to cart */}
-      <button
+      {/* Add to cart – uses shared Button (pill/rounded-full) */}
+      <Button
         type="button"
         onClick={handleAddToCart}
         disabled={isPending || !selectedVariantId}
-        className="mt-6 w-full rounded-full bg-primary px-8 py-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="mt-6 w-full"
+        size="lg"
       >
         {isPending ? "..." : added ? addedLabel : addToCartLabel}
-      </button>
+      </Button>
       {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
     </>
   );

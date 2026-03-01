@@ -109,6 +109,9 @@ modules.push(
     resolve: "./src/modules/brand",
   },
   {
+    resolve: "./src/modules/subscription",
+  },
+  {
     resolve: './src/modules/payload',
     options: {
       serverUrl: process.env.PAYLOAD_SERVER_URL || 'http://localhost:3001',

@@ -20,9 +20,11 @@ type AuthLabels = {
 interface RegisterFormProps {
   locale: string;
   labels: AuthLabels;
+  /** When provided, called on success instead of navigating to account (e.g. for modal flow). */
+  onSuccess?: () => void;
 }
 
-export function RegisterForm({ locale, labels }: RegisterFormProps) {
+export function RegisterForm({ locale, labels, onSuccess }: RegisterFormProps) {
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -65,8 +67,13 @@ export function RegisterForm({ locale, labels }: RegisterFormProps) {
           email,
         });
       }
-      router.push(`/${locale}/account`);
-      router.refresh();
+      if (onSuccess) {
+        onSuccess();
+        router.refresh();
+      } else {
+        router.push(`/${locale}/account`);
+        router.refresh();
+      }
     } catch {
       setError(labels.errorRegister);
     } finally {

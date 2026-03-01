@@ -3,7 +3,6 @@ import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { SubscriptionSelector } from "@/components/SubscriptionSelector";
 import { ProductGallery } from "@/components/ProductGallery";
 import { ProductPageTabs } from "@/components/ProductPageTabs";
 import { KeyInformationCard } from "@/components/KeyInformationCard";
@@ -178,19 +177,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
               addedLabel={dict.products.added}
               decreaseQuantityAriaLabel={dict.products.decreaseQuantity}
               increaseQuantityAriaLabel={dict.products.increaseQuantity}
-            >
-              {/* Purchase options (one-time vs subscription) */}
-              <div className="mt-6">
-                <p className="mb-3 text-sm font-medium text-foreground">
-                  {dict.products.purchaseOptions}
-                </p>
-                <SubscriptionSelector
-                  basePrice={basePrice}
-                  currency="DKK"
-                  locale={locale}
-                />
-              </div>
-            </ProductPurchaseSection>
+              purchaseOptionsLabel={dict.products.purchaseOptions}
+              subscriptionConfig={{ basePrice, currency: "DKK", locale }}
+            />
 
             <PDPTrustStrip labels={dict.products.trustStrip} />
 

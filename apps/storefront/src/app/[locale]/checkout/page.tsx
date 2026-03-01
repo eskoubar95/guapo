@@ -3,7 +3,9 @@ import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { CheckoutWithStripe } from "@/components/CheckoutWithStripe";
+import { CheckoutAuthGate } from "@/components/checkout/CheckoutAuthGate";
 import { getCart } from "@/lib/cart";
+import { cartHasSubscriptionItems } from "@/lib/cart-utils";
 import { formatPrice } from "@/lib/format";
 import type { CartItem } from "@/components/cart/CartItems";
 
@@ -25,6 +27,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   const cart = await getCart();
   const cartId = cart?.id ?? null;
   const items = (cart?.items ?? []) as CartItem[];
+  const hasSubscriptionItems = cartHasSubscriptionItems(cart);
   const subtotal = cart?.subtotal ?? 0;
   const shipping = cart?.shipping_total ?? 0;
   const total = cart?.total ?? 0;
@@ -41,12 +44,15 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
         <div className="lg:grid lg:grid-cols-12 lg:gap-12">
           <div className="lg:col-span-7">
             <h1 className="text-2xl font-bold text-foreground">{dict.checkout.title}</h1>
-            <CheckoutWithStripe
-              locale={locale}
-              dict={{ checkout: dict.checkout }}
-              confirmationHref={`/${locale}/order-confirmation/placeholder`}
-              cartId={cartId}
-            />
+            <CheckoutAuthGate locale={locale} hasSubscriptionItems={hasSubscriptionItems} authLabels={dict.auth}>
+              <CheckoutWithStripe
+                locale={locale}
+                dict={{ checkout: dict.checkout }}
+                confirmationHref={`/${locale}/order-confirmation/placeholder`}
+                cartId={cartId}
+                hasSubscriptionItems={hasSubscriptionItems}
+              />
+            </CheckoutAuthGate>
           </div>
 
           {/* Order summary sidebar */}

@@ -41,6 +41,8 @@ interface CheckoutWithStripeProps {
   };
   confirmationHref: string;
   cartId: string | null;
+  /** When true, pass setup_future_usage for recurring (off-session) charges */
+  hasSubscriptionItems?: boolean;
 }
 
 export function CheckoutWithStripe({
@@ -48,6 +50,7 @@ export function CheckoutWithStripe({
   dict,
   confirmationHref,
   cartId,
+  hasSubscriptionItems = false,
 }: CheckoutWithStripeProps) {
   const [cart, setCart] = useState<{ id: string } | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -158,9 +161,12 @@ export function CheckoutWithStripe({
       }
 
       const { cart: updatedCart } = await medusa.store.cart.retrieve(cartId);
+      const sessionData = hasSubscriptionItems
+        ? { setup_future_usage: "off_session" as const }
+        : {};
       const { payment_collection } = await medusa.store.payment.initiatePaymentSession(
         updatedCart,
-        { provider_id: "pp_stripe_stripe", data: {} }
+        { provider_id: "pp_stripe_stripe", data: sessionData }
       );
       const session = payment_collection?.payment_sessions?.[0];
       const secret = session?.data?.client_secret as string | undefined;
@@ -177,7 +183,7 @@ export function CheckoutWithStripe({
     } catch (err) {
       setPaymentError(err instanceof Error ? err.message : "Could not initialize payment");
     }
-  }, [cartId, cart, clientSecret, locale, selectedShippingOptionId, selectedShippingData, appliedShippingOptionId, formData]);
+  }, [cartId, cart, clientSecret, locale, selectedShippingOptionId, selectedShippingData, appliedShippingOptionId, formData, hasSubscriptionItems]);
 
   const paymentContent =
     stripePromise && clientSecret && cart ? (

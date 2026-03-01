@@ -59,3 +59,43 @@ With Stripe and Medusa configured:
 4. Start storefront: `pnpm -C apps/storefront dev`
 5. Go to checkout, complete steps 1–3; use Stripe test card 4242 4242 4242 4242
 6. Confirm order is created and payment succeeds
+
+## 5. Subscription Renewal (M9)
+
+Subscriptions use Stripe off-session charging for renewals. When a subscription is due, the `subscription-renewal` job charges the saved payment method and creates a renewal order.
+
+### Flow
+
+1. **Checkout:** Subscription carts use `setup_future_usage: "off_session"` so Stripe saves the payment method to the customer.
+2. **Order placed:** The `order.placed` subscriber creates Subscription records with `stripe_customer_id` and `stripe_payment_method_id`.
+3. **Daily job:** `subscription-renewal` (cron: 8 AM) finds due subscriptions and runs the renewal workflow.
+4. **Renewal workflow:**
+   - Charge via `stripe.paymentIntents.create` (off_session, confirm: true)
+   - On success: Create Medusa order, link to subscription, advance `next_renewal_at`
+   - On failure: Set retry state (2 retries over ~3 days), then `on_hold`
+
+### Retry / Recovery
+
+- **Retry 1:** 1 day after payment failure
+- **Retry 2:** 3 days after initial failure  
+- **On hold:** After 2 failed retries; subscription is paused
+- **Expiration:** Subscriptions on hold for >30 days are set to `expired`
+
+Jobs:
+- `subscription-renewal`: 8 AM daily (due subscriptions)
+- `subscription-retry`: 9 AM daily (retry failed payments)
+- `subscription-expiration`: 10 AM daily (expire old on_hold)
+
+### Simulation (Staging)
+
+To test renewal flow without waiting for the cron:
+
+```bash
+# Get subscription ID from Medusa Admin → Subscriptions
+SUBSCRIPTION_ID=sub_xxx pnpm -C apps/commerce simulate-renewal
+# Or: pnpm -C apps/commerce simulate-renewal -- sub_xxx
+```
+
+**Test cards (Stripe):**
+- Success: 4242 4242 4242 4242
+- Decline: 4000 0000 0000 0002

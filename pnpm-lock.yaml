@@ -110,6 +110,12 @@ importers:
       '@medusajs/ui':
         specifier: 4.1.1
         version: 4.1.1(@types/react-dom@18.3.7(@types/react@18.3.27))(@types/react@18.3.27)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+      react-router-dom:
+        specifier: ^6.30.3
+        version: 6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      stripe:
+        specifier: ^17.4.0
+        version: 17.7.0
     devDependencies:
       '@medusajs/test-utils':
         specifier: latest
@@ -9322,6 +9328,10 @@ packages:
 
   stripe@15.12.0:
     resolution: {integrity: sha512-slTbYS1WhRJXVB8YXU8fgHizkUrM9KJyrw4Dd8pLEwzKHYyQTIE46EePC2MVbSDZdE24o1GdNtzmJV4PrPpmJA==}
+    engines: {node: '>=12.*'}
+
+  stripe@17.7.0:
+    resolution: {integrity: sha512-aT2BU9KkizY9SATf14WhhYVv2uOapBWX0OFWF4xvcj1mPaNotlSc2CsxpS4DS46ZueSppmCF5BX1sNYBtwBvfw==}
     engines: {node: '>=12.*'}
 
   stripe@19.1.0:
@@ -21552,6 +21562,11 @@ snapshots:
   strip-json-comments@5.0.3: {}
 
   stripe@15.12.0:
+    dependencies:
+      '@types/node': 20.19.30
+      qs: 6.14.1
+
+  stripe@17.7.0:
     dependencies:
       '@types/node': 20.19.30
       qs: 6.14.1

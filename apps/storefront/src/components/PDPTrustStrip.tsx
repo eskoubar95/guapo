@@ -14,7 +14,7 @@ export function PDPTrustStrip({ labels, className }: PDPTrustStripProps) {
   return (
     <div
       className={cn(
-        "grid grid-cols-3 gap-4 border-t border-border pt-6",
+        "grid grid-cols-3 gap-4 border-b border-[var(--accent)] pt-6",
         className
       )}
     >

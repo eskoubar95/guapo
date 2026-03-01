@@ -8,6 +8,7 @@
     "build": "medusa build",
     "seed": "medusa exec ./src/scripts/seed.ts",
     "sync:payload": "medusa exec ./src/scripts/sync-payload-products.ts",
+    "simulate-renewal": "medusa exec ./src/scripts/simulate-renewal.ts",
     "start": "medusa start",
     "dev": "medusa develop",
     "db:setup": "medusa db:setup",
@@ -18,6 +19,8 @@
     "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit --passWithNoTests"
   },
   "dependencies": {
+    "react-router-dom": "^6.30.3",
+    "stripe": "^17.4.0",
     "@lambdacurry/medusa-product-reviews": "^1.3.0",
     "@medusajs/admin-sdk": "2.13.1",
     "@medusajs/admin-shared": "2.13.1",
