@@ -34,6 +34,7 @@ class SubscriptionModuleService extends MedusaService({
     return updated;
   }
 
+  /** TODO: use atomic DB update (e.g. delivery_count = delivery_count + 1) to avoid races under concurrent workers. */
   async incrementDeliveryCount(id: string) {
     const sub = await this.retrieveSubscription(id);
     const [updated] = await this.updateSubscriptions([
@@ -46,6 +47,7 @@ class SubscriptionModuleService extends MedusaService({
     return updated;
   }
 
+  /** TODO: use atomic DB update for next_renewal_at to avoid races under concurrent workers. */
   async advanceNextRenewal(id: string) {
     const sub = await this.retrieveSubscription(id);
     const next = new Date(sub.next_renewal_at);

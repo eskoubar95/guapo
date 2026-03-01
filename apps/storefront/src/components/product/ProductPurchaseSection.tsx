@@ -52,6 +52,11 @@ export function ProductPurchaseSection({
   const router = useRouter();
   const addedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const selectedVariantPrice =
+    variants.find((v) => v.id === selectedVariantId)?.price ??
+    subscriptionConfig?.basePrice ??
+    0;
+
   useEffect(() => {
     return () => {
       if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
@@ -149,7 +154,7 @@ export function ProductPurchaseSection({
         <div className="mt-6">
           <p className="mb-3 text-sm font-medium text-foreground">{purchaseOptionsLabel}</p>
           <SubscriptionSelector
-            basePrice={subscriptionConfig.basePrice}
+            basePrice={selectedVariantPrice}
             currency={subscriptionConfig.currency}
             locale={subscriptionConfig.locale}
             onSelect={handleSubscriptionSelect}

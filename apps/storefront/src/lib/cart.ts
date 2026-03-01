@@ -158,7 +158,16 @@ export async function setLineItemSubscription(
   subscriptionCycleWeeks: number | null
 ) {
   await removeLineItem(lineItemId);
-  await addToCart(variantId, quantity, subscriptionCycleWeeks ? { subscription_cycle: subscriptionCycleWeeks } : undefined);
+  try {
+    await addToCart(variantId, quantity, subscriptionCycleWeeks ? { subscription_cycle: subscriptionCycleWeeks } : undefined);
+  } catch (error) {
+    try {
+      await addToCart(variantId, quantity);
+    } catch {
+      // Rollback failed; original error is rethrown
+    }
+    throw error;
+  }
 }
 
 export async function getCart(): Promise<StoreCart | null> {

@@ -88,7 +88,7 @@ export function CartItems({ items, locale, dict }: CartItemsProps) {
           ? item.metadata.subscription_cycle
           : 0;
         const isSubscription = cycle > 0;
-        const lineTotalOriginal = unitPrice * quantity;
+        const lineTotalOriginal = item.total ?? unitPrice * quantity;
         const discountAmount = isSubscription
           ? (lineTotalOriginal * SUBSCRIPTION_DISCOUNT_PERCENT) / 100
           : 0;

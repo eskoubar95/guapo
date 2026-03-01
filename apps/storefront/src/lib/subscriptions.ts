@@ -6,6 +6,7 @@ const MEDUSA_URL = (
   process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
 ).replace(/\/$/, "");
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
+const MEDUSA_FETCH_TIMEOUT_MS = 8000;
 
 function baseHeaders(): HeadersInit {
   return {
@@ -32,6 +33,7 @@ export async function getCustomerSubscriptions(): Promise<
   StoreSubscription[]
 > {
   const cookieStore = await cookies();
+  // Forward cookies so Medusa can resolve session; backend validates auth.
   const cookieHeader = cookieStore.toString();
 
   const res = await fetch(`${MEDUSA_URL}/store/subscriptions`, {
@@ -40,6 +42,7 @@ export async function getCustomerSubscriptions(): Promise<
       ...(cookieHeader && { Cookie: cookieHeader }),
     },
     cache: "no-store",
+    signal: AbortSignal.timeout(MEDUSA_FETCH_TIMEOUT_MS),
   });
 
   if (!res.ok) {
@@ -64,6 +67,7 @@ export async function getCustomerSubscription(
       ...(cookieHeader && { Cookie: cookieHeader }),
     },
     cache: "no-store",
+    signal: AbortSignal.timeout(MEDUSA_FETCH_TIMEOUT_MS),
   });
 
   if (!res.ok) {

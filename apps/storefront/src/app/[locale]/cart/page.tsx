@@ -34,7 +34,7 @@ export default async function CartPage({ params }: CartPageProps) {
 
   const subtotal = cart?.subtotal ?? 0;
   const shipping = cart?.shipping_total ?? 0;
-  const total = cart?.total ?? 0;
+  const total = cart?.total ?? subtotal + shipping;
 
   const subscriptionDiscountAmount = items.reduce((sum, item) => {
     const cycle = typeof (item.metadata as Record<string, unknown> | undefined)?.subscription_cycle === "number"
@@ -46,7 +46,7 @@ export default async function CartPage({ params }: CartPageProps) {
     return sum + (unitPrice * qty * SUBSCRIPTION_DISCOUNT_PERCENT) / 100;
   }, 0);
 
-  const displayTotal = subtotal - subscriptionDiscountAmount + shipping;
+  const displayTotal = Math.max(0, total - subscriptionDiscountAmount);
 
   return (
     <div className="min-h-full bg-muted/40">

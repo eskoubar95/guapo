@@ -73,6 +73,7 @@ export const runSubscriptionRenewalStep = createStep(
     const stripe = new Stripe(apiKey);
     let chargeSuccess = false;
     try {
+      // Medusa calculated_amount is in minor units (øre); Stripe DKK expects amount in øre. Round to nearest 100 øre.
       await stripe.paymentIntents.create({
         amount: Math.round(totalAmount / 100) * 100,
         currency: "dkk",

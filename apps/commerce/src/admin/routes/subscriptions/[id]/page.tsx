@@ -266,7 +266,7 @@ const SubscriptionDetailPage = () => {
             </div>
             {subscription.skip_next && (
               <div>
-                <Badge color="yellow">Skip next delivery</Badge>
+                <Badge color="orange">Skip next delivery</Badge>
               </div>
             )}
             {subscription.retry_count > 0 && (

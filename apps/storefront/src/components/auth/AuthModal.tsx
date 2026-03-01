@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,9 @@ import { LoginForm } from "@/app/[locale]/login/LoginForm";
 import { RegisterForm } from "@/app/[locale]/register/RegisterForm";
 
 const EXIT_DURATION_MS = 200;
+
+const FOCUSABLE_SELECTOR =
+  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 export type AuthModalView = "login" | "register";
 
@@ -49,6 +52,8 @@ export function AuthModal({
   const [view, setView] = useState<AuthModalView>(initialView);
   const [exiting, setExiting] = useState(false);
   const [animatedOpen, setAnimatedOpen] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (isOpen) setView(initialView);
@@ -95,6 +100,43 @@ export function AuthModal({
     return () => clearTimeout(t);
   }, [exiting, onClose]);
 
+  // Focus trap: save focus on open, move to first focusable, restore on close
+  useEffect(() => {
+    if (!isOpen || exiting) return;
+    previousActiveElement.current = document.activeElement as HTMLElement | null;
+    const raf = requestAnimationFrame(() => {
+      const first = modalRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+      first?.focus();
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      previousActiveElement.current?.focus?.();
+    };
+  }, [isOpen, exiting]);
+
+  // Keep Tab/Shift+Tab inside modal
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key !== "Tab" || !modalRef.current) return;
+      const focusables = Array.from(modalRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    },
+    []
+  );
+
   const handleSuccess = () => {
     refetch();
     onClose();
@@ -129,8 +171,10 @@ export function AuthModal({
       />
       <div className="relative flex items-center justify-center min-h-full p-4">
         <div
+          ref={modalRef}
           className={panelClasses}
           onClick={(e) => e.stopPropagation()}
+          onKeyDown={handleKeyDown}
           role="dialog"
           aria-modal="true"
           aria-labelledby="auth-modal-title"
