@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
-/* Guapo design tokens (spec/07 + design/Ecommercestorefrontdesign) — no ad-hoc hex in layout/components */
+/* Guapo design tokens (spec/07 + design/Ecommercestorefrontdesign) */
 :root {
-  --font-size: 16px;
+  --font-size: 14px;
 
   /* Neutral */
   --background: #ffffff;
@@ -54,7 +54,19 @@
   --spacing-12: 48px;
   --spacing-16: 64px;
 
-  /* Typography */
+  /* Typography scale — tuned for minimal, spacious UI */
+  --text-xs: 11px;
+  --text-xs-line-height: 15px;
+  --text-sm: 13px;
+  --text-sm-line-height: 18px;
+  --text-base: 14px;
+  --text-base-line-height: 22px;
+  --text-lg: 16px;
+  --text-lg-line-height: 24px;
+  --text-xl: 18px;
+  --text-xl-line-height: 26px;
+
+  /* Font weights */
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
@@ -70,6 +82,7 @@
   --color-surface-muted: var(--surface-muted);
   --color-border: var(--border);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -85,11 +98,28 @@
   --color-error: var(--error);
   --color-info: var(--info);
   --color-input: var(--input);
+  --color-input-background: var(--input-background);
   --color-ring: var(--ring);
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius: var(--radius);
+  --font-lexend: var(--font-lexend);
+}
+
+/* Form elements – shared radius (--radius-lg), soft border, consistent focus.
+   Use with Input/Button components; .form-input / .form-btn for ad-hoc forms. */
+.form-input {
+  border-radius: var(--radius-lg);
+  border-width: 1px;
+  border-color: var(--border);
+  background-color: var(--input-background);
+}
+.form-input:focus-visible {
+  border-color: var(--primary);
+}
+.form-btn {
+  border-radius: var(--radius-lg);
 }
 
 /* Focus: active border only, no focus ring (spec/07) */
@@ -107,17 +137,86 @@ button:focus-visible {
   outline: none;
 }
 
-/* Force light mode — Figma design is light-only. No auto dark. */
+/* Force light mode */
 html {
   color-scheme: light;
   background-color: #ffffff;
+  font-size: var(--font-size);
 }
 
 body {
   background: #ffffff;
-  color: var(--foreground);
+  color: var(--text-primary);
   font-size: var(--font-size);
+  line-height: var(--text-base-line-height);
+  overflow-x: hidden;
 }
+
+/* Section container: consistent horizontal padding across breakpoints */
+.section-container {
+  width: 100%;
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+@media (min-width: 640px) {
+  .section-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .section-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Heading typography: Lexend for headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-lexend), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--text-primary);
+}
+
+h1 {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--text-xl-line-height);
+  text-wrap: balance;
+}
+h2 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--text-lg-line-height);
+}
+
+/* Section headings (e.g. "Featured Products", "From the blog") — clearly visible as H2 */
+.section-heading {
+  font-size: 1.25rem;   /* 20px */
+  line-height: 1.4;
+  font-weight: 600;
+  font-family: var(--font-lexend), system-ui, sans-serif;
+  text-wrap: balance;
+}
+@media (min-width: 1024px) {
+  .section-heading {
+    font-size: 1.5rem;  /* 24px */
+  }
+}
+h3 {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--text-base-line-height);
+}
+h4 {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--text-sm-line-height);
+}
+
+/* Body text inherits from body: color + line-height set there. */
 
 /* Hide scrollbar for carousels (keep scroll behavior) */
 .scrollbar-hide {
@@ -128,5 +227,67 @@ body {
   display: none;
 }
 
-/* Design is light-only: no prefers-color-scheme override.
-   Design repo uses .dark class only when explicitly added, never auto. */
+/* Infinite horizontal scroll for brand logos */
+@keyframes scroll-x {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+.animate-scroll-x {
+  animation: scroll-x 30s linear infinite;
+  width: max-content;
+}
+.animate-scroll-x:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-scroll-x {
+    animation: none;
+  }
+}
+
+/* Skip link: visible on focus for keyboard/screen reader users */
+.skip-link {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.skip-link:focus {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 9999;
+  width: auto;
+  height: auto;
+  padding: 0.5rem 1rem;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Touch: reduce double-tap zoom delay, intentional tap highlight */
+html {
+  -webkit-tap-highlight-color: rgba(5, 21, 55, 0.08);
+}
+@media (hover: none) {
+  button, a, [role="button"] {
+    touch-action: manipulation;
+  }
+}
+
+/* Design is light-only: no prefers-color-scheme override. */

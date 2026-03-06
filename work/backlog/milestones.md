@@ -209,3 +209,30 @@ Milestones are the execution backbone for the MVP. Each milestone has a clear ob
 - Pakkeshop kan vælges ved checkout
 - Flat rate 39 DKK anvendt
 - Fulfillment/label-flow testet end-to-end
+
+## M11 — Storefront–CMS synergi og UX-polering
+
+**Objective:** Forbinde storefront med CMS (forside, menu, footer, blog), få søgning til at køre mod Medusa, stramme auth-UX med notifikationer, og sikre at sitemap-sider er design- og data-mæssigt konsistente.
+
+**In scope:**
+- Homepage fra Payload (globals/homepage); nav/footer fra Payload (Navigation global; footer fra CMS hvis modelleret, ellers dokumenter)
+- Blog list + artikel fra Payload
+- Søgning mod Medusa (ingen Algolia i MVP)
+- Auth-toast + evt. returnUrl; notifikations-/toast-system
+- Gennemgang af sider (design + UX + states) per sitemap
+
+**Out of scope:**
+- Ny funktionalitet ud over spec; ændringer i Payload/Medusa core (kun API-brug og evt. små CMS-felter til footer)
+- Algolia (senere forbedring; design er forberedt)
+
+**Exit criteria:**
+- Forside viser indhold fra CMS; redaktør kan ændre forsiden i Payload og se det på storefront
+- Menu og (hvis besluttet) footer styres fra CMS; storefront viser dem korrekt
+- Blog list + artikel hentes fra Payload; tom/fejl håndteres
+- Søgning viser reelle produkter fra Medusa; loading og "ingen resultater" vises
+- Auth-feedback (toast/returnUrl) fungerer; toast-system på plads
+- Sitemap-sider gennemgået; design-tokens, loading/empty/error states og data-kilde konsistente
+
+**Linear:** M11 oprettes som Linear Milestone Project; alle M11-tasks oprettes som issues og knyttes til projektet; status opdateres løbende (sync med work/linear/sync-config.md).
+
+**Branch:** Alt udvikling sker i branch `task/m11-storefront-cms-synergy`; merge til `staging` via PR.

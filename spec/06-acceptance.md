@@ -62,6 +62,7 @@ Use it as the project’s **ship gate** during planning and validation.
 - [ ] Email deliverability basics configured (SPF/DKIM/DMARC) and key emails render correctly
 - [ ] Consent gating works (no analytics/pixels before consent; correct behavior after)
 - [ ] Error/empty/loading states implemented for primary flows (search empty, cart empty, checkout errors, payment failed, subscription on hold)
+- [ ] **M11 Storefront–CMS synergi:** Forside hentes fra CMS (Payload Homepage global); menu (og evt. footer) fra CMS; blog list + artikel fra Payload; søgning viser produkter fra Medusa med loading/empty states; auth-feedback (toast/returnUrl) ved beskyttede routes; toast-system til brugerbeskeder; sitemap-sider gennemgået (design-tokens, states, data-kilde).
 - [ ] SEO checks:
   - [ ] structured data present on PDP/blog/FAQ where applicable
   - [ ] sitemap present

@@ -1,29 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
 
-interface Slide {
+export interface PromotionSliderSlideData {
   id: string;
-  variant: "dark" | "light-blue" | "light-warm";
-  badge?: string;
-  title: string;
-  subtitle?: string;
-  disclaimer?: string;
-  ctaText: string;
-  ctaHref: string;
-  ctaVariant?: "default" | "outline";
+  imageDesktopUrl: string;
+  imageTabletUrl?: string;
+  imageMobileUrl?: string;
+  href?: string;
 }
 
-const variantStyles = {
-  dark: "bg-gradient-to-r from-[#293241] to-[#3D5A80] text-white",
-  "light-blue": "bg-gradient-to-r from-[#E8F1F5] to-[#D0E8F2] text-foreground",
-  "light-warm": "bg-gradient-to-r from-[#F5F3F0] to-[#E8E6E1] text-foreground",
-};
-
 interface PromotionSliderProps {
-  slides: Slide[];
+  slides: PromotionSliderSlideData[];
   locale: string;
 }
 
@@ -40,66 +29,42 @@ export function PromotionSlider({ slides, locale }: PromotionSliderProps) {
   if (slides.length === 0) return null;
 
   const slide = slides[current];
+  const desktopUrl = slide.imageDesktopUrl;
+  const tabletUrl = slide.imageTabletUrl ?? desktopUrl;
+  const mobileUrl = slide.imageMobileUrl ?? tabletUrl ?? desktopUrl;
+  const href = slide.href
+    ? slide.href.startsWith("http")
+      ? slide.href
+      : `/${locale}${slide.href === "/" ? "" : slide.href.startsWith("/") ? slide.href : `/${slide.href}`}`
+    : undefined;
+
+  const content = (
+      <picture className="absolute inset-0 block w-full h-full">
+      <source media="(max-width: 767px)" srcSet={mobileUrl} />
+      <source media="(max-width: 1023px)" srcSet={tabletUrl} />
+      <img
+        src={desktopUrl}
+        alt=""
+        width={2560}
+        height={875}
+        className="w-full h-full object-cover rounded-xl"
+        fetchPriority={current === 0 ? "high" : undefined}
+      />
+    </picture>
+  );
 
   return (
-    <section className="py-6 bg-background">
-      <div className="container mx-auto px-4">
-        <div
-          className={`rounded-xl p-8 md:p-12 flex flex-col md:flex-row md:items-center md:justify-between gap-6 overflow-hidden ${variantStyles[slide.variant]}`}
-        >
-          <div>
-            {slide.badge && (
-              <span
-                className={`inline-block px-3 py-1 rounded-full text-sm mb-4 ${
-                  slide.variant === "dark" ? "bg-white/20" : "bg-primary/10 text-primary"
-                }`}
-              >
-                {slide.badge}
-              </span>
-            )}
-            <h2
-              className={`text-4xl md:text-6xl font-bold mb-2 ${
-                slide.variant === "dark" ? "text-white" : "text-primary"
-              }`}
-            >
-              {slide.title}
-            </h2>
-            {slide.subtitle && (
-              <p
-                className={
-                  slide.variant === "dark"
-                    ? "text-xl md:text-2xl text-white/90"
-                    : "text-lg text-text-secondary"
-                }
-              >
-                {slide.subtitle}
-              </p>
-            )}
-            {slide.disclaimer && (
-              <p
-                className={`text-sm mt-2 ${
-                  slide.variant === "dark" ? "text-white/70" : "text-text-muted"
-                }`}
-              >
-                {slide.disclaimer}
-              </p>
-            )}
-            <div className="mt-6">
-              <Link
-                href={`/${locale}${slide.ctaHref}`}
-                className={`inline-flex items-center justify-center gap-2 h-12 px-8 text-base font-medium rounded-lg border-2 focus-visible:outline-none focus-visible:border-primary ${
-                  slide.ctaVariant === "outline"
-                    ? "bg-transparent border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                    : slide.variant === "dark"
-                      ? "bg-white text-primary hover:bg-white/90 border-transparent"
-                      : "bg-primary text-primary-foreground hover:opacity-90 border-transparent"
-                }`}
-              >
-                {slide.ctaText}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </div>
-          </div>
+    <section className="py-6 sm:py-8 lg:py-10 bg-background">
+      <div className="section-container">
+        {/* Figma: desktop 2560×875 (≈2.93:1), mobile square (1:1) */}
+        <div className="relative rounded-lg sm:rounded-xl overflow-hidden aspect-square md:aspect-[2560/875] bg-muted">
+          {href ? (
+            <Link href={href} className="block absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset">
+              {content}
+            </Link>
+          ) : (
+            <div className="absolute inset-0">{content}</div>
+          )}
         </div>
         {slides.length > 1 && (
           <div className="flex justify-center gap-2 mt-4">

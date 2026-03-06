@@ -29,10 +29,35 @@ function medusaHeaders(): HeadersInit {
   return headers;
 }
 
+type BrandInfo = { name: string; handle: string };
+let brandLookup: Map<string, BrandInfo> | null = null;
+let brandLookupExpires = 0;
+
+async function getBrandLookup(): Promise<Map<string, BrandInfo>> {
+  if (brandLookup && Date.now() < brandLookupExpires) return brandLookup;
+  try {
+    const res = await fetch(`${MEDUSA_URL}/brands`, {
+      headers: medusaHeaders(),
+      next: { revalidate: 300 },
+    });
+    if (res.ok) {
+      const json = (await res.json()) as { brands?: Array<{ id: string; name?: string; handle?: string }> };
+      brandLookup = new Map(
+        (json.brands ?? []).map((b) => [b.id, { name: b.name ?? "", handle: b.handle ?? b.id }])
+      );
+      brandLookupExpires = Date.now() + 5 * 60 * 1000;
+      return brandLookup;
+    }
+  } catch { /* fall through */ }
+  return brandLookup ?? new Map();
+}
+
 interface MedusaProductResponse {
   id: string;
   handle?: string;
   title?: string;
+  subtitle?: string;
+  description?: string;
   metadata?: Record<string, unknown>;
   brand?: { id?: string; handle?: string; name?: string };
   thumbnail?: string;
@@ -45,21 +70,41 @@ interface MedusaProductResponse {
   categories?: Array<{ id?: string; handle?: string; name?: string }>;
 }
 
-function mapMedusaToProduct(p: MedusaProductResponse): Product {
+async function mapMedusaToProduct(p: MedusaProductResponse): Promise<Product> {
   const img = p.images?.[0]?.url ?? p.thumbnail ?? "";
-  const priceObj = p.variants?.[0]?.calculated_price;
+  const firstVariant = p.variants?.[0];
+  const priceObj = firstVariant?.calculated_price;
   const amount = priceObj?.calculated_amount;
   const priceDkk = amount != null ? Math.round(amount) : 0;
+
+  const rawVariant = firstVariant?.title ?? "";
+  const isDefaultVariant = !rawVariant || /^default(\s+variant)?$/i.test(rawVariant.trim());
+  const variantTitle = isDefaultVariant ? undefined : rawVariant;
+
+  let brandName = p.brand?.name ?? (p.metadata?.brand as string) ?? "";
+  let brandHandle: string | undefined = p.brand?.handle;
+  if (p.brand?.id) {
+    const lookup = await getBrandLookup();
+    const info = lookup.get(p.brand.id);
+    if (info) {
+      if (!brandName) brandName = info.name;
+      if (!brandHandle) brandHandle = info.handle;
+    }
+  }
+  const subtitle = p.subtitle || (p.metadata?.subtitle as string) || (p.metadata?.benefit as string) || "";
 
   const rating = p.metadata?.rating;
   const reviewCount = p.metadata?.reviewCount;
   return {
     id: p.handle ?? p.id,
     name: p.title ?? p.handle ?? p.id,
-    brand: (p.brand?.name ?? (p.metadata?.brand as string)) ?? "",
-    benefit: (p.metadata?.benefit as string) ?? "",
+    brand: brandName,
+    brandHandle: brandHandle || undefined,
+    benefit: subtitle,
     price: priceDkk,
     image: img,
+    variant: variantTitle,
+    subtitle: subtitle || undefined,
     ...(typeof rating === "number" && { rating }),
     ...(typeof reviewCount === "number" && { reviewCount }),
   };
@@ -86,7 +131,7 @@ export async function fetchProductsByCategory(
     const params = new URLSearchParams({
       category_id: categoryId,
       limit: "50",
-      fields: "id,handle,title,metadata,thumbnail,*images.url,*variants.calculated_price,*brand.*",
+      fields: "id,handle,title,subtitle,metadata,thumbnail,*images.url,*variants.title,*variants.calculated_price,*brand.*",
     });
     if (_sort === "price-asc") params.set("order", "variants.calculated_price:asc");
     else if (_sort === "price-desc") params.set("order", "variants.calculated_price:desc");
@@ -98,7 +143,7 @@ export async function fetchProductsByCategory(
     if (!res.ok) return { products: [], count: 0 };
     const json = (await res.json()) as { products?: MedusaProductResponse[]; count?: number };
     const list = json.products ?? [];
-    const products = list.map(mapMedusaToProduct);
+    const products = await Promise.all(list.map(mapMedusaToProduct));
     const result = { products, count: json.count ?? products.length };
     setCache(key, result);
     return result;
@@ -121,7 +166,7 @@ export async function fetchProductByHandle(handle: string): Promise<MedusaProduc
       handle,
       limit: "1",
       fields:
-        "id,handle,title,metadata,thumbnail,*images.url,*variants.id,*variants.title,*variants.calculated_price,*variants.options,*brand.id,*brand.handle,*brand.name,*categories.id,*categories.handle,*categories.name",
+        "id,handle,title,subtitle,metadata,thumbnail,*images.url,*variants.id,*variants.title,*variants.calculated_price,*variants.options,*brand.id,*brand.handle,*brand.name,*categories.id,*categories.handle,*categories.name",
     });
     const res = await fetch(`${MEDUSA_URL}/products?${params}`, {
       headers: medusaHeaders(),
@@ -135,6 +180,18 @@ export async function fetchProductByHandle(handle: string): Promise<MedusaProduc
   } catch {
     return null;
   }
+}
+
+/**
+ * Fetch products by handles from Medusa (for homepage featured sections).
+ * Returns products in the order of handles; skips missing.
+ */
+export async function fetchProductsByHandles(handles: string[]): Promise<Product[]> {
+  if (handles.length === 0) return [];
+  const uniq = [...new Set(handles)];
+  const results = await Promise.all(uniq.map((h) => fetchProductByHandle(h)));
+  const valid = results.filter((p): p is MedusaProductResponse => p !== null);
+  return Promise.all(valid.map(mapMedusaToProduct));
 }
 
 /**
@@ -160,7 +217,7 @@ export async function fetchProductsByBrand(
     if (!res.ok) return { products: [], count: 0 };
     const json = (await res.json()) as { products?: MedusaProductResponse[]; count?: number };
     const list = json.products ?? [];
-    const products = list.map(mapMedusaToProduct);
+    const products = await Promise.all(list.map(mapMedusaToProduct));
     const result = { products, count: json.count ?? products.length };
     setCache(key, result);
     return result;
@@ -170,7 +227,7 @@ export async function fetchProductsByBrand(
 }
 
 const PRODUCT_FIELDS =
-  "id,handle,title,metadata,thumbnail,*images.url,*variants.calculated_price,*brand.*";
+  "id,handle,title,subtitle,metadata,thumbnail,*images.url,*variants.title,*variants.calculated_price,*brand.*";
 
 /**
  * Fetch related products from the same category, excluding the current product.
@@ -201,7 +258,7 @@ export async function fetchRelatedProducts(
     const filtered = list
       .filter((p) => (p.handle ?? "") !== excludeHandle)
       .slice(0, limit);
-    const products = filtered.map(mapMedusaToProduct);
+    const products = await Promise.all(filtered.map(mapMedusaToProduct));
     const result = { products, count: products.length };
     setCache(key, result);
     return result;
@@ -238,7 +295,7 @@ export async function fetchRandomProducts(
     const filtered = list
       .filter((p) => (p.handle ?? "") !== excludeHandle)
       .slice(0, limit);
-    const products = filtered.map(mapMedusaToProduct);
+    const products = await Promise.all(filtered.map(mapMedusaToProduct));
     const result = { products, count: products.length };
     setCache(key, result);
     return result;
@@ -268,7 +325,7 @@ export async function fetchProductsBoughtTogether(
     if (!res.ok) return [];
     const json = (await res.json()) as { products?: MedusaProductResponse[] };
     const list = json.products ?? [];
-    const products = list.slice(0, limit).map(mapMedusaToProduct);
+    const products = await Promise.all(list.slice(0, limit).map(mapMedusaToProduct));
     setCache(key, products);
     return products;
   } catch {

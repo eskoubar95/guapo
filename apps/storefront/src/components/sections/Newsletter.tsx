@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { NewsletterForm } from "@/components/NewsletterForm";
 
-interface NewsletterProps {
+export interface NewsletterProps {
   title: string;
   description: string;
   placeholder: string;
   submitLabel: string;
+  locale: string;
 }
 
 export function Newsletter({
@@ -15,41 +15,26 @@ export function Newsletter({
   description,
   placeholder,
   submitLabel,
+  locale,
 }: NewsletterProps) {
-  const [email, setEmail] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: wire to CMS/email provider
-  };
-
   return (
-    <section id="newsletter" className="py-10 bg-white">
-      <div className="container mx-auto px-4">
+    <section id="newsletter" className="py-8 sm:py-10 lg:py-12 bg-white">
+      <div className="section-container">
         <div className="max-w-xl mx-auto text-center">
-          <h2 className="text-2xl font-semibold text-primary mb-2">
+          <h2 className="section-heading text-primary mb-2">
             {title}
           </h2>
-          <p className="text-muted-foreground mb-6 text-sm">
+          <p className="text-text-muted mb-6 text-sm">
             {description}
           </p>
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col sm:flex-row gap-2"
-          >
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+          <div className="text-left">
+            <NewsletterForm
+              locale={locale}
               placeholder={placeholder}
-              required
-              className="flex-1 px-4 py-3 bg-input-background border-2 border-border rounded-lg focus:border-primary focus:outline-none text-foreground text-sm"
-              aria-label={placeholder}
+              submitLabel={submitLabel}
+              layout="stacked"
             />
-            <Button type="submit" className="shrink-0">
-              {submitLabel}
-            </Button>
-          </form>
+          </div>
         </div>
       </div>
     </section>

@@ -40,7 +40,7 @@ export function CategoryStrip({ categories, locale }: CategoryStripProps) {
                   <span className="text-2xl">{cat.emoji ?? "✨"}</span>
                 )}
               </div>
-              <span className="text-xs text-center text-text-secondary group-hover:text-primary transition-colors font-medium">
+              <span className="text-xs text-center text-text-muted group-hover:text-primary transition-colors font-medium">
                 {cat.name}
               </span>
             </Link>

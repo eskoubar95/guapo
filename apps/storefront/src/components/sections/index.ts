@@ -11,3 +11,7 @@ export { ContentGrid } from "./ContentGrid";
 export { RoutineBlock } from "./RoutineBlock";
 export { CtaStrip } from "./CtaStrip";
 export { Newsletter } from "./Newsletter";
+export { HeroSection } from "./HeroSection";
+export { TestimonialsSection } from "./TestimonialsSection";
+export { BlogCarouselSection } from "./BlogCarouselSection";
+export { BrandsBannerSection } from "./BrandsBannerSection";

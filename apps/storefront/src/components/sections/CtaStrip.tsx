@@ -43,7 +43,7 @@ export function CtaStrip({
 }: CtaStripProps) {
   return (
     <section className={`py-8 lg:py-10 ${backgroundColor}`}>
-      <div className="container mx-auto px-4">
+      <div className="section-container">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
           {items.map((item, index) => {
             const Icon = item.icon;
@@ -54,7 +54,7 @@ export function CtaStrip({
               <Link
                 key={index}
                 href={href}
-                className="bg-gradient-to-br from-slate-50 to-sky-50/30 rounded-xl p-6 lg:p-8 border border-border hover:shadow-md transition-all"
+                className="bg-gradient-to-br from-slate-50 to-sky-50/30 rounded-xl p-6 lg:p-8 border border-border hover:shadow-md transition-shadow transition-colors"
               >
                 {Icon && (
                   <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
@@ -65,7 +65,7 @@ export function CtaStrip({
                   {item.title}
                 </h3>
                 {item.description && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-text-muted">
                     {item.description}
                   </p>
                 )}

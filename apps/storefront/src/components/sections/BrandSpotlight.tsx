@@ -64,19 +64,19 @@ export function BrandSpotlight({
 
   return (
     <section className={`py-8 lg:py-12 ${backgroundColor}`}>
-      <div className="container mx-auto px-4">
+      <div className="section-container">
         <div className="bg-white rounded-2xl p-6 lg:p-8 mb-6 border border-border">
           <div className="grid md:grid-cols-2 gap-6 items-center">
             <div>
-              <h2 className="text-2xl lg:text-3xl font-bold text-primary mb-3">
+              <h2 className="section-heading text-primary mb-3">
                 {brandName}
               </h2>
-              <p className="text-muted-foreground mb-6 text-sm lg:text-base">
+              <p className="text-text-muted mb-6 text-sm lg:text-base">
                 {description}
               </p>
               <Link
                 href={`/${locale}${brandPageLink}`}
-                className="inline-flex items-center justify-center gap-2 h-12 px-8 text-base font-medium border-2 border-border bg-background text-foreground hover:bg-surface hover:border-primary rounded-lg focus-visible:border-primary focus-visible:outline-none"
+                className="inline-flex items-center justify-center gap-2 h-12 px-8 text-base font-medium border-2 border-border bg-background text-text-primary hover:bg-surface hover:border-primary rounded-lg focus-visible:border-primary focus-visible:outline-none"
               >
                 Se alle produkter fra {brandName}
                 <ArrowRight className="ml-2 h-4 w-4" />

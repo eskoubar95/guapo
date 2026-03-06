@@ -26,11 +26,27 @@ import { Homepage } from './globals/Homepage'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+const storefrontUrl = process.env.STOREFRONT_URL || 'http://localhost:3000'
+
 export default buildConfig({
   admin: {
     user: Users.slug,
     importMap: {
       baseDir: path.resolve(dirname),
+    },
+    /** Live Preview: opens storefront in iframe with ?draft=1. Set STOREFRONT_URL in .env (e.g. http://localhost:3000). */
+    livePreview: {
+      url: ({ data, collectionConfig, globalConfig, locale }) => {
+        const loc = locale?.code ?? 'da'
+        if (globalConfig?.slug === 'homepage') return `${storefrontUrl}/${loc}?draft=1`
+        if (collectionConfig?.slug === 'pages' && data?.path) {
+          const pathSegment = data.path === 'home' ? '' : `/${(data as { path: string }).path}`
+          return `${storefrontUrl}/${loc}${pathSegment}?draft=1`
+        }
+        return `${storefrontUrl}/${loc}?draft=1`
+      },
+      collections: ['pages'],
+      globals: ['homepage'],
     },
   },
 
