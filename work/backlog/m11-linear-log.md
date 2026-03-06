@@ -23,7 +23,7 @@ Opret i Linear et **Project** (milestone-style) med:
 
 | Task   | Linear ID | Title | Status |
 |--------|-----------|-------|--------|
-| t11.1  | GUA-96    | [t11.1] Payload API til Homepage | Todo |
+| t11.1  | GUA-96    | [t11.1] Payload API til Homepage | Done |
 | t11.2  | GUA-97    | [t11.2] Payload API til Navigation | Todo |
 | t11.3  | GUA-98    | [t11.3] Footer fra CMS | Todo |
 | t11.4  | GUA-99    | [t11.4] Blog list + artikel fra Payload | Todo |

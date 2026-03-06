@@ -1684,7 +1684,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 **Workspace:** apps/storefront
 
-**Status:** backlog
+**Status:** done
 
 **Tags:** storefront, cms
 
