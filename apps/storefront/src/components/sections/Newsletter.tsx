@@ -19,7 +19,7 @@ export function Newsletter({
 }: NewsletterProps) {
   return (
     <section id="newsletter" className="py-8 sm:py-10 lg:py-12 bg-white">
-      <div className="section-container">
+      <div className="section-container min-w-0">
         <div className="max-w-xl mx-auto text-center">
           <h2 className="section-heading text-primary mb-2">
             {title}

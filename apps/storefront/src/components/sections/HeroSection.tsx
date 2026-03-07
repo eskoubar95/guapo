@@ -31,7 +31,7 @@ export function HeroSection({
 
   if (variant === "full" && backgroundImageUrl) {
     return (
-      <section className="relative py-12 lg:py-20 min-h-[320px] lg:min-h-[420px] flex items-center bg-background">
+      <section className="relative py-12 lg:py-20 min-h-[320px] lg:min-h-[420px] flex items-center bg-background overflow-hidden">
         <ImageWithFallback
           src={backgroundImageUrl}
           alt=""

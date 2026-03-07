@@ -36,9 +36,9 @@ export function ImageTextBreakoutSection({
   const isLeft = imagePosition === "left";
 
   return (
-    <section className="my-12 sm:my-16 lg:my-24 bg-background">
+    <section className="my-12 sm:my-16 lg:my-24 bg-background overflow-x-hidden">
       {/* Full-width band: no max-width, edge-to-edge with safe horizontal padding */}
-      <div className="w-screen relative left-1/2 -translate-x-1/2 overflow-visible">
+      <div className="w-screen max-w-[100vw] relative left-1/2 -translate-x-1/2 overflow-visible">
         {/* Mobile: stacked. Tablet (md)+: two columns, same layout as desktop with scaled image. */}
         <div className={`${bgClass} overflow-visible min-h-0 py-6 sm:py-8 md:py-0 md:h-[240px] lg:h-[280px] xl:h-[320px] relative`}>
           <div className="w-full h-full min-h-0 px-4 sm:px-6 lg:px-8 xl:px-10">

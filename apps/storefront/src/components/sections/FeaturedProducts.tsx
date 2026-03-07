@@ -64,7 +64,7 @@ export function FeaturedProducts({
   if (layout === "carousel") {
     return (
       <section className={`py-6 sm:py-8 lg:py-12 ${backgroundColor}`}>
-        <div className="section-container">
+        <div className="section-container min-w-0">
           <div className="mb-4 sm:mb-5 lg:mb-6 flex items-center justify-between gap-3">
             <h2 className="section-heading text-text-primary">
               {title}
@@ -125,7 +125,7 @@ export function FeaturedProducts({
 
   return (
     <section className={`py-6 sm:py-8 lg:py-12 ${backgroundColor}`}>
-      <div className="section-container">
+      <div className="section-container min-w-0">
         <div className="mb-4 sm:mb-5 lg:mb-6">
           <h2 className="section-heading text-text-primary">
             {title}

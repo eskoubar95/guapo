@@ -45,7 +45,7 @@ export function ContentBlockSection({
       )}
       {contentHtml && (
         <div
-          className="prose prose-neutral max-w-none text-text-muted prose-p:mb-3 prose-headings:font-semibold prose-headings:text-text-primary"
+          className="prose prose-neutral max-w-none text-text-muted prose-p:mb-3 prose-headings:font-semibold prose-headings:text-text-primary break-words"
           dangerouslySetInnerHTML={{ __html: contentHtml }}
         />
       )}

@@ -17,8 +17,8 @@ interface CategoryStripProps {
 export function CategoryStrip({ categories, locale }: CategoryStripProps) {
   return (
     <section className="py-8 bg-background">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center gap-6 overflow-x-auto pb-4 scrollbar-hide">
+      <div className="section-container min-w-0">
+        <div className="flex items-center gap-6 overflow-x-auto pb-4 scrollbar-hide min-w-0">
           {categories.map((cat) => (
             <Link
               key={cat.name}

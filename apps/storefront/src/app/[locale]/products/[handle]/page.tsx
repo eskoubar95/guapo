@@ -101,8 +101,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   );
 
   return (
-    <div className="min-h-full">
-      <main className="container mx-auto px-4 py-8">
+    <div className="min-h-full min-w-0 overflow-x-hidden">
+      <main className="section-container py-8">
         {/* Breadcrumb: Guapo > Category (if any) > Product */}
         <nav className="mb-6" aria-label="Breadcrumb">
           <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">

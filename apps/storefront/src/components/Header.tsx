@@ -74,9 +74,16 @@ export function Header({ locale, menuItems, ctaButton }: HeaderProps) {
               </button>
               <Link
                 href={base}
-                className="flex items-center font-semibold text-lg text-primary shrink-0"
+                className="flex items-center shrink-0"
+                aria-label="Guapo – forside"
               >
-                Guapo
+                <img
+                  src="/logos/GUAPO_default.svg"
+                  alt="Guapo"
+                  className="h-5 sm:h-6 w-auto"
+                  width={856}
+                  height={157}
+                />
               </Link>
             </div>
 

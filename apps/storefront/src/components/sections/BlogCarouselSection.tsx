@@ -61,7 +61,7 @@ export function BlogCarouselSection({
 
   return (
     <section className="py-6 sm:py-8 lg:py-12 bg-background">
-      <div className="section-container">
+      <div className="section-container min-w-0">
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="section-heading text-primary">{heading}</h2>
@@ -74,7 +74,7 @@ export function BlogCarouselSection({
           )}
         </div>
         <div className="relative">
-          <div ref={scrollRef} className="flex gap-4 lg:gap-5 overflow-x-auto scrollbar-hide scroll-smooth pb-2 items-stretch">
+          <div ref={scrollRef} className="flex gap-4 lg:gap-5 overflow-x-auto scrollbar-hide scroll-smooth pb-2 items-stretch min-w-0">
             {articles.map((a) => (
               <Link
                 key={a.slug ?? a.title ?? ""}

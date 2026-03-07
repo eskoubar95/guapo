@@ -55,11 +55,8 @@ export function BrandsBannerSection({
   if (displayType === "grid") {
     return (
       <section className="py-6 lg:py-8 bg-background">
-        <div className="section-container">
-          <div
-            className="grid items-center justify-items-center gap-4"
-            style={{ gridTemplateColumns: `repeat(${brandItems.length}, minmax(0, 1fr))` }}
-          >
+        <div className="section-container min-w-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 items-center justify-items-center gap-4">
             {brandItems.map((b, i) => brandLink(b, i, true))}
           </div>
         </div>
@@ -69,7 +66,7 @@ export function BrandsBannerSection({
 
   return (
     <section className="py-8 lg:py-10 bg-background overflow-hidden">
-      <div className="section-container">
+      <div className="section-container min-w-0">
         <div className="relative">
           <div className="flex items-center gap-10 md:gap-14 animate-scroll-x">
             {brandItems.map((b, i) => brandLink(b, i))}

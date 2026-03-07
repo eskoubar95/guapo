@@ -54,9 +54,16 @@ export function SidebarMenu({ isOpen, onClose, locale, menuItems }: SidebarMenuP
                 <Link
                   href={base}
                   onClick={onClose}
-                  className="font-semibold text-lg text-primary"
+                  className="shrink-0"
+                  aria-label="Guapo – forside"
                 >
-                  Guapo
+                  <img
+                    src="/logos/GUAPO_default.svg"
+                    alt="Guapo"
+                    className="h-6 w-auto"
+                    width={856}
+                    height={157}
+                  />
                 </Link>
                 <button
                   type="button"

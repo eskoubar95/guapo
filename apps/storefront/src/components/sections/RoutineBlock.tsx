@@ -70,7 +70,7 @@ export function RoutineBlock({
   if (layout === "carousel") {
     return (
       <section className={`py-8 lg:py-12 ${backgroundColor}`}>
-        <div className="container mx-auto px-4">
+        <div className="section-container min-w-0">
           <div className="text-center mb-5 lg:mb-6">
             <h2 className="section-heading text-primary mb-2">
               {title}
@@ -106,7 +106,7 @@ export function RoutineBlock({
             )}
             <div
               ref={scrollRef}
-              className="flex gap-3 lg:gap-4 overflow-x-auto scroll-smooth scrollbar-hide"
+              className="flex gap-3 lg:gap-4 overflow-x-auto scroll-smooth scrollbar-hide min-w-0"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
               {routines.map((routine) => (
@@ -141,7 +141,7 @@ export function RoutineBlock({
 
   return (
     <section className={`py-8 lg:py-12 ${backgroundColor}`}>
-      <div className="container mx-auto px-4">
+      <div className="section-container min-w-0">
         <div className="text-center mb-6 lg:mb-8">
           <h2 className="section-heading text-primary mb-2">
             {title}

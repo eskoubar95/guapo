@@ -81,7 +81,7 @@ export default async function LocaleLayout({
             menuItems={menuItems}
             ctaButton={nav?.ctaButton ?? undefined}
           />
-          <main id="main" className="flex-1">{children}</main>
+          <main id="main" className="flex-1 min-w-0 overflow-x-hidden">{children}</main>
           <Footer locale={locale} footer={footer} />
           <Toaster position="bottom-center" richColors closeButton />
         </AuthProvider>

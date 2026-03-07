@@ -64,7 +64,7 @@ export function BrandSpotlight({
 
   return (
     <section className={`py-8 lg:py-12 ${backgroundColor}`}>
-      <div className="section-container">
+      <div className="section-container min-w-0">
         <div className="bg-white rounded-2xl p-6 lg:p-8 mb-6 border border-border">
           <div className="grid md:grid-cols-2 gap-6 items-center">
             <div>
@@ -126,7 +126,7 @@ export function BrandSpotlight({
           )}
           <div
             ref={scrollRef}
-            className="flex gap-3 lg:gap-4 overflow-x-auto scroll-smooth scrollbar-hide"
+            className="flex gap-3 lg:gap-4 overflow-x-auto scroll-smooth scrollbar-hide min-w-0"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {products.map((product) => (

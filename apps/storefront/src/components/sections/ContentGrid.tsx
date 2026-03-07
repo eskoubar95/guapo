@@ -69,7 +69,7 @@ export function ContentGrid({
   if (layout === "carousel") {
     return (
       <section className="py-8 lg:py-12 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="section-container min-w-0">
           <div className="mb-5 lg:mb-6">
             <h2 className="section-heading text-primary mb-1">
               {title}
@@ -105,7 +105,7 @@ export function ContentGrid({
             )}
             <div
               ref={scrollRef}
-              className="flex gap-4 lg:gap-6 overflow-x-auto scroll-smooth scrollbar-hide"
+              className="flex gap-4 lg:gap-6 overflow-x-auto scroll-smooth scrollbar-hide min-w-0"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
               {content.map((item) => (
@@ -147,7 +147,7 @@ export function ContentGrid({
 
   return (
     <section className="py-8 lg:py-12 bg-white">
-      <div className="container mx-auto px-4">
+      <div className="section-container min-w-0">
         <div className="mb-5 lg:mb-6">
           <h2 className="section-heading text-primary mb-1">
             {title}

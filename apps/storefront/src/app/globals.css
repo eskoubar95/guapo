@@ -137,11 +137,12 @@ button:focus-visible {
   outline: none;
 }
 
-/* Force light mode */
+/* Force light mode + prevent horizontal scroll on mobile */
 html {
   color-scheme: light;
   background-color: #ffffff;
   font-size: var(--font-size);
+  overflow-x: hidden;
 }
 
 body {
@@ -150,6 +151,7 @@ body {
   font-size: var(--font-size);
   line-height: var(--text-base-line-height);
   overflow-x: hidden;
+  max-width: 100%;
 }
 
 /* Section container: consistent horizontal padding across breakpoints */

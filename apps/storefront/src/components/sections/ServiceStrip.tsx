@@ -123,14 +123,10 @@ export function ServiceStrip({
     : services.map((s) => ({ icon: s.icon, title: s.title, description: s.description, url: undefined }));
 
   if (variant === "cards") {
-    const cols = Math.min(items.length, 4);
     return (
       <section className={`py-6 sm:py-8 lg:py-10 ${backgroundColor}`}>
-        <div className="section-container">
-          <div
-            className="grid gap-4"
-            style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
-          >
+        <div className="section-container min-w-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {items.map((item, i) => (
               <CardItem key={i} {...item} />
             ))}

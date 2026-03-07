@@ -55,7 +55,7 @@ export function PromotionSlider({ slides, locale }: PromotionSliderProps) {
 
   return (
     <section className="py-6 sm:py-8 lg:py-10 bg-background">
-      <div className="section-container">
+      <div className="section-container min-w-0">
         {/* Figma: desktop 2560×875 (≈2.93:1), mobile square (1:1) */}
         <div className="relative rounded-lg sm:rounded-xl overflow-hidden aspect-square md:aspect-[2560/875] bg-muted">
           {href ? (
