@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { CheckoutWithStripe } from "@/components/CheckoutWithStripe";
 import { CheckoutAuthGate } from "@/components/checkout/CheckoutAuthGate";
-import { getCart } from "@/lib/cart";
+import { getCart } from "@/lib/cart-data";
 import { cartHasSubscriptionItems } from "@/lib/cart-utils";
 import { formatPrice } from "@/lib/format";
 import type { CartItem } from "@/components/cart/CartItems";

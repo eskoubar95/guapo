@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { getCart } from "@/lib/cart-data";
 
 const MEDUSA_URL = (
   process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
@@ -40,20 +41,13 @@ async function setCartId(cartId: string) {
 }
 
 /** Clear the cart cookie (call after order completion so next visit gets a fresh cart) */
-/** Medusa store cart shape (minimal for page usage) */
-export interface StoreCart {
-  id?: string;
-  items?: Array<{ id?: string; metadata?: Record<string, unknown> }>;
-  subtotal?: number;
-  shipping_total?: number;
-  total?: number;
-  completed_at?: string | null;
-}
-
 export async function clearCartId() {
   const cookieStore = await cookies();
   cookieStore.delete("cart_id");
 }
+
+/** Re-export for consumers that still import from cart (e.g. cart-utils) */
+export type { StoreCart } from "@/lib/cart-data";
 
 /** Remove all line items from the current cart (empties the cart). */
 export async function clearCart(): Promise<void> {
@@ -196,24 +190,3 @@ export async function setLineItemSubscription(
   }
 }
 
-export async function getCart(): Promise<StoreCart | null> {
-  try {
-    const cartId = await getCartId();
-    if (!cartId) return null;
-
-    const res = await fetch(`${MEDUSA_URL}/store/carts/${cartId}`, {
-      headers: headers(),
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const cart = (data as { cart?: StoreCart & { completed_at?: string | null } }).cart;
-    if (cart?.completed_at) {
-      await clearCartId();
-      return null;
-    }
-    return cart ?? null;
-  } catch {
-    return null;
-  }
-}

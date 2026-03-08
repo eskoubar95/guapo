@@ -3,7 +3,7 @@ import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { CartDiscountCode } from "@/components/CartDiscountCode";
-import { getCart } from "@/lib/cart";
+import { getCart } from "@/lib/cart-data";
 import { cartHasSubscriptionItems } from "@/lib/cart-utils";
 import { formatPrice } from "@/lib/format";
 import { CartItems } from "@/components/cart/CartItems";

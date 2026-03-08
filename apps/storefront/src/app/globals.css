@@ -260,6 +260,24 @@ h4 {
   }
 }
 
+/* Bottom drawer slide-up (e.g. AddToCartModal on mobile) */
+@keyframes drawer-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.animate-drawer-up {
+  animation: drawer-slide-up 0.3s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-drawer-up {
+    animation: none;
+  }
+}
+
 /* Skip link: visible on focus for keyboard/screen reader users */
 .skip-link {
   position: absolute;

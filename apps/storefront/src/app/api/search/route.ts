@@ -19,20 +19,29 @@ export async function GET(req: Request) {
       return NextResponse.json({ products: [], articles: [] });
     }
 
+    const fetchArticles = async (): Promise<{ docs?: Array<{ slug?: string; title?: string; excerpt?: string; publishedAt?: string }> }> => {
+      if (!PAYLOAD_URL) return { docs: [] };
+      try {
+        const r = await fetch(
+          `${PAYLOAD_URL}/api/storefront/articles?${new URLSearchParams({
+            q,
+            limit: String(ARTICLE_LIMIT),
+            sort: "-publishedAt",
+            locale,
+            "fallback-locale": "da",
+          })}`,
+          { headers: { "Content-Type": "application/json" }, next: { revalidate: 30 } }
+        );
+        if (!r.ok) return { docs: [] };
+        return (await r.json()) as { docs?: Array<{ slug?: string; title?: string; excerpt?: string; publishedAt?: string }> };
+      } catch {
+        return { docs: [] };
+      }
+    };
+
     const [products, articlesRes] = await Promise.all([
       fetchProductsByQuery(q, PRODUCT_LIMIT),
-      PAYLOAD_URL
-        ? fetch(
-            `${PAYLOAD_URL}/api/storefront/articles?${new URLSearchParams({
-              q,
-              limit: String(ARTICLE_LIMIT),
-              sort: "-publishedAt",
-              locale,
-              "fallback-locale": "da",
-            })}`,
-            { headers: { "Content-Type": "application/json" }, next: { revalidate: 30 } }
-          ).then((r) => r.json() as Promise<{ docs?: Array<{ slug?: string; title?: string; excerpt?: string; publishedAt?: string }> }>)
-        : Promise.resolve({ docs: [] }),
+      fetchArticles(),
     ]);
 
     const articles = (articlesRes.docs ?? []).map((a) => ({

@@ -44,11 +44,12 @@ export function ProductCard({ product, locale, className }: ProductCardProps) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!product.variantId) return;
+    const vid = product.variantId;
+    if (!vid) return;
     startTransition(async () => {
       try {
-        const cart = await addToCart(product.variantId, 1) as {
-          items?: Array<{ product_title?: string; title?: string; variant_title?: string; thumbnail?: string; unit_price?: number; quantity?: number }>;
+        const cart = await addToCart(vid, 1) as {
+          items?: Array<{ id?: string; product_title?: string; title?: string; variant_title?: string; thumbnail?: string; unit_price?: number; quantity?: number; metadata?: Record<string, unknown> }>;
           total?: number;
         } | undefined;
         await refreshCart();
@@ -62,6 +63,8 @@ export function ProductCard({ product, locale, className }: ProductCardProps) {
             unitPrice: last.unit_price ?? product.price,
             cartTotal: cart.total ?? 0,
             itemCount: cart.items.length,
+            lineItemId: last.id,
+            metadata: last.metadata,
           });
         }
       } catch {

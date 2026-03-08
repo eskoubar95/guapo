@@ -88,6 +88,7 @@ export function ProductPurchaseSection({
             : undefined;
         const cart = await addToCart(selectedVariantId, quantity, options) as {
           items?: Array<{
+            id?: string;
             product_title?: string;
             title?: string;
             variant_title?: string;
@@ -95,6 +96,7 @@ export function ProductPurchaseSection({
             thumbnail?: string;
             unit_price?: number;
             quantity?: number;
+            metadata?: Record<string, unknown>;
           }>;
           total?: number;
         } | undefined;
@@ -117,6 +119,8 @@ export function ProductPurchaseSection({
             unitPrice: last.unit_price ?? selectedVariantPrice,
             cartTotal: cart.total ?? 0,
             itemCount: cart.items.length,
+            lineItemId: last.id,
+            metadata: last.metadata,
           });
         }
       } catch (err) {

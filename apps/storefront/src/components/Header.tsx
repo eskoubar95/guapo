@@ -169,7 +169,7 @@ export function Header({ locale, dict, menuSections, promotionBar, ctaButton }: 
             </div>
 
             {/* Right: CTA (from CMS), Search (mobile), Favorites, Cart, Account */}
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-3 shrink-0">
               {showCta && (
                 <Link
                   href={ctaButton!.url!}

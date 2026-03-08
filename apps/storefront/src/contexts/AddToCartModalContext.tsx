@@ -12,11 +12,16 @@ export interface AddToCartModalData {
   unitPrice: number;
   cartTotal: number;
   itemCount: number;
+  /** Line item id for quantity updates (plus/minus) in modal */
+  lineItemId?: string;
+  metadata?: Record<string, unknown>;
 }
 
 interface AddToCartModalContextValue {
   openModal: (data: AddToCartModalData) => void;
   closeModal: () => void;
+  /** Update modal data after quantity change (so totals stay in sync) */
+  updateModalData: (patch: Partial<AddToCartModalData>) => void;
 }
 
 const AddToCartModalContext = createContext<AddToCartModalContextValue | null>(null);
@@ -38,8 +43,12 @@ export function AddToCartModalProvider({ children, locale, dict }: AddToCartModa
     setData(null);
   }, []);
 
+  const updateModalData = useCallback((patch: Partial<AddToCartModalData>) => {
+    setData((prev) => (prev ? { ...prev, ...patch } : null));
+  }, []);
+
   return (
-    <AddToCartModalContext.Provider value={{ openModal, closeModal }}>
+    <AddToCartModalContext.Provider value={{ openModal, closeModal, updateModalData }}>
       {children}
       {data && (
         <AddToCartModal
