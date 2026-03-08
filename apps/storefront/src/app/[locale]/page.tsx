@@ -128,7 +128,7 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
   if (hasCmsSections && sections) {
     const { resolvedProducts, resolvedArticles } = await resolveHomepageData(sections, validLocale);
     return (
-      <div className="min-h-full bg-background min-w-0 overflow-x-hidden">
+      <div className="min-h-full w-full bg-background min-w-0 overflow-x-clip">
         <HomePageSections
           sections={sections}
           locale={validLocale}
@@ -162,7 +162,7 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
   ];
 
   return (
-    <div className="min-h-full bg-background min-w-0 overflow-x-hidden">
+    <div className="min-h-full w-full bg-background min-w-0 overflow-x-clip">
       <HomePromoBars bar1={dict.home.promoBars.bar1} bar2={dict.home.promoBars.bar2} />
       <CategoryStrip categories={homeMockCategories} locale={validLocale} />
       <PromotionSlider slides={promoSliderSlides} locale={validLocale} />

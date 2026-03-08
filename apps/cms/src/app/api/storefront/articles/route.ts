@@ -1,8 +1,8 @@
 /**
  * GET /api/storefront/articles
  *
- * Returns published articles for storefront (blog list, blog carousel).
- * Query: locale (da|en), limit, sort, fallback-locale.
+ * Returns published articles for storefront (blog list, blog carousel, search).
+ * Query: locale (da|en), limit, sort, fallback-locale, q (optional search term).
  * Does not require auth (overrideAccess).
  */
 import { NextResponse } from 'next/server'
@@ -16,8 +16,19 @@ export async function GET(req: Request) {
     const fallbackLocale = (searchParams.get('fallback-locale') ?? 'da') as 'da' | 'en'
     const limit = Math.min(Number.parseInt(searchParams.get('limit') ?? '10', 10) || 10, 50)
     const sort = searchParams.get('sort') ?? '-publishedAt'
+    const q = searchParams.get('q')?.trim()
 
     const payload = await getPayload({ config })
+    const baseWhere: { status: { equals: string }; or?: Array<Record<string, unknown>> } = {
+      status: { equals: 'published' },
+    }
+    if (q && q.length > 0) {
+      baseWhere.or = [
+        { title: { contains: q } },
+        { excerpt: { contains: q } },
+      ]
+    }
+
     const result = await payload.find({
       collection: 'articles',
       locale,
@@ -25,9 +36,7 @@ export async function GET(req: Request) {
       depth: 1,
       limit,
       sort,
-      where: {
-        status: { equals: 'published' },
-      },
+      where: baseWhere,
       overrideAccess: true,
     })
 

@@ -1,57 +1,281 @@
 "use client";
 
 import Link from "next/link";
-import { X, ShoppingBag } from "lucide-react";
+import { useTransition, useState } from "react";
+import { useRouter } from "next/navigation";
+import { X, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { removeLineItem, updateLineItem, clearCart } from "@/lib/cart";
+import { formatPrice } from "@/lib/format";
+import { getFreeShippingThresholdDkk } from "@/lib/shipping-config";
+import { useCart } from "@/contexts/CartContext";
+import type { CartItem } from "@/components/cart/CartItems";
+import type { Dictionary } from "@/i18n/dictionaries";
+
+const SUBSCRIPTION_DISCOUNT_PERCENT = 20;
 
 interface CartDropdownProps {
   isOpen: boolean;
   onClose: () => void;
   locale: string;
+  dict: Dictionary;
 }
 
-// Mock - replace with real cart
-const mockCount = 0;
-
-export function CartDropdown({ isOpen, onClose, locale }: CartDropdownProps) {
+function CartDropdownItem({
+  item,
+  locale,
+  dict,
+  onRemove,
+  onQuantityChange,
+  isPending,
+}: {
+  item: CartItem;
+  locale: string;
+  dict: Dictionary;
+  onRemove: () => void;
+  onQuantityChange: (qty: number) => void;
+  isPending: boolean;
+}) {
+  const thumbnail = item.thumbnail || item.variant?.product?.thumbnail;
+  const title = item.product_title || item.title || "";
+  const variantTitle = (item.variant_title || item.variant?.title) ?? "";
+  const cycle = typeof item.metadata?.subscription_cycle === "number" ? item.metadata.subscription_cycle : 0;
+  const isSubscription = cycle > 0;
+  const unitPrice = item.unit_price ?? 0;
+  const quantity = item.quantity ?? 1;
+  const lineTotalOriginal = item.total ?? unitPrice * quantity;
+  const discountAmount = isSubscription ? (lineTotalOriginal * SUBSCRIPTION_DISCOUNT_PERCENT) / 100 : 0;
+  const lineTotal = lineTotalOriginal - discountAmount;
   const base = `/${locale}`;
+
+  return (
+    <div className="flex gap-3 py-3 border-b border-border last:border-b-0">
+      <div className="w-16 h-16 shrink-0 rounded-lg overflow-hidden bg-muted">
+        {thumbnail ? (
+          <img src={thumbnail} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-foreground truncate">
+          {title}
+        </p>
+        {variantTitle && (
+          <p className="text-xs text-muted-foreground truncate">{variantTitle}</p>
+        )}
+        {isSubscription && (
+          <p className="text-xs text-green-600 mt-0.5">{dict.cart.youSavePerTime}</p>
+        )}
+        {isSubscription && (
+          <p className="text-xs text-muted-foreground">{dict.cart.addedAsSubscription}</p>
+        )}
+        <div className="flex items-center gap-2 mt-1.5">
+          <div className="flex items-center border border-border rounded overflow-hidden">
+            <button
+              type="button"
+              onClick={() => onQuantityChange(quantity - 1)}
+              disabled={isPending || quantity <= 1}
+              className="p-1.5 hover:bg-surface disabled:opacity-40"
+              aria-label={dict.cart.decreaseQuantity}
+            >
+              <Minus className="h-3 w-3" />
+            </button>
+            <span className="px-2 py-1 text-xs font-medium min-w-6 text-center border-x border-border">
+              {quantity}
+            </span>
+            <button
+              type="button"
+              onClick={() => onQuantityChange(quantity + 1)}
+              disabled={isPending}
+              className="p-1.5 hover:bg-surface"
+              aria-label={dict.cart.increaseQuantity}
+            >
+              <Plus className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col items-end justify-between">
+        <button
+          type="button"
+          onClick={onRemove}
+          disabled={isPending}
+          className="p-1 hover:bg-surface rounded text-muted-foreground hover:text-foreground"
+          aria-label={dict.cart.remove}
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="text-right">
+          {discountAmount > 0 ? (
+            <>
+              <p className="text-sm font-semibold text-destructive">
+                {formatPrice(lineTotal, locale)}
+              </p>
+              <p className="text-xs text-muted-foreground line-through">
+                {formatPrice(lineTotalOriginal, locale)}
+              </p>
+            </>
+          ) : (
+            <p className="text-sm font-semibold text-foreground">
+              {formatPrice(lineTotalOriginal, locale)}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProps) {
+  const { cart, refreshCart } = useCart();
+  const [isPending, startTransition] = useTransition();
+  const [isClearing, setIsClearing] = useState(false);
+  const router = useRouter();
+  const base = `/${locale}`;
+  const items = (cart?.items ?? []) as CartItem[];
+
+  const subscriptionDiscountTotal = items.reduce((sum, item) => {
+    const cycle = typeof item.metadata?.subscription_cycle === "number" ? item.metadata.subscription_cycle : 0;
+    if (cycle === 0) return sum;
+    const total = item.total ?? (item.unit_price ?? 0) * (item.quantity ?? 1);
+    return sum + (total * SUBSCRIPTION_DISCOUNT_PERCENT) / 100;
+  }, 0);
+
+  const subtotal = cart?.subtotal ?? 0;
+  const total = cart?.total ?? subtotal;
+  const displayTotal = Math.max(0, (typeof total === "number" ? total : 0) - subscriptionDiscountTotal);
+  const freeShippingThresholdDkk = getFreeShippingThresholdDkk();
+  const hasFreeShipping = displayTotal >= freeShippingThresholdDkk;
+
+  const handleRemove = (lineItemId: string) => {
+    startTransition(async () => {
+      await removeLineItem(lineItemId);
+      router.refresh();
+      await refreshCart();
+    });
+  };
+
+  const handleQuantityChange = (
+    lineItemId: string,
+    newQty: number,
+    metadata?: Record<string, unknown>
+  ) => {
+    if (newQty < 1) return;
+    startTransition(async () => {
+      await updateLineItem(lineItemId, newQty, metadata);
+      router.refresh();
+      await refreshCart();
+    });
+  };
+
+  const handleClearCart = () => {
+    if (items.length === 0) return;
+    setIsClearing(true);
+    startTransition(async () => {
+      await clearCart();
+      await refreshCart();
+      router.refresh();
+      onClose();
+      setIsClearing(false);
+    });
+  };
 
   if (!isOpen) return null;
 
   return (
     <>
+      <div className="fixed inset-0 z-40" onClick={onClose} aria-hidden />
       <div
-        className="fixed inset-0 z-40"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div
-        className="absolute right-0 top-full mt-2 w-[320px] md:w-[400px] bg-background rounded-xl shadow-2xl border border-border z-50 overflow-hidden"
+        className="absolute right-0 top-full mt-2 w-[min(100vw-2rem,380px)] max-h-[min(85vh,520px)] flex flex-col bg-background rounded-xl shadow-2xl border border-border z-50 overflow-hidden"
         onMouseLeave={onClose}
         role="dialog"
-        aria-label="Kurv"
+        aria-label={dict.cart.itemsInCart}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <h3 className="font-semibold text-primary">Varer i kurven</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 hover:bg-surface rounded-lg transition-colors"
-            aria-label="Luk"
-          >
-            <X className="h-4 w-4 text-muted-foreground" />
-          </button>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+          <h3 className="font-semibold text-primary">{dict.cart.itemsInCart}</h3>
+          {items.length > 0 ? (
+            <button
+              type="button"
+              onClick={handleClearCart}
+              disabled={isClearing || isPending}
+              className="flex items-center gap-1.5 px-2.5 py-2 text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-lg transition-colors disabled:opacity-50"
+              aria-label={dict.cart.clearCart}
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="hidden sm:inline">{dict.cart.clearCart}</span>
+            </button>
+          ) : null}
         </div>
-        <div className="px-5 py-12 text-center">
-          <ShoppingBag className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground mb-4">Din kurv er tom</p>
-          <Link
-            href={`${base}/categories`}
-            onClick={onClose}
-            className="inline-flex items-center justify-center px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
-          >
-            Start med at handle
-          </Link>
-        </div>
+
+        {items.length > 0 ? (
+          <>
+            <div className="overflow-y-auto flex-1 px-4 py-2 max-h-[280px]">
+              {items.map((item) => (
+                <CartDropdownItem
+                  key={item.id}
+                  item={item}
+                  locale={locale}
+                  dict={dict}
+                  onRemove={() => handleRemove(item.id)}
+                  onQuantityChange={(qty) => handleQuantityChange(item.id, qty, item.metadata)}
+                  isPending={isPending}
+                />
+              ))}
+            </div>
+
+            <div className="border-t border-border px-4 py-3 space-y-1.5 shrink-0 bg-surface/30">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{dict.cart.subtotal}</span>
+                <span className="text-foreground">{formatPrice(subtotal, locale)}</span>
+              </div>
+              {subscriptionDiscountTotal > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{dict.cart.totalDiscount}</span>
+                  <span className="text-destructive font-medium">
+                    -{formatPrice(subscriptionDiscountTotal, locale)}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm items-center">
+                <span className="text-muted-foreground">{dict.cart.totalInclVat}</span>
+                <span className="font-semibold text-primary">{formatPrice(displayTotal, locale)}</span>
+              </div>
+              <div className="flex justify-end">
+                {hasFreeShipping ? (
+                  <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                    {dict.cart.freeShippingLabel}
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    {dict.cart.freeShippingProgress}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="p-4 shrink-0">
+              <Link
+                href={`${base}/cart`}
+                onClick={onClose}
+                className="block w-full py-3 rounded-lg bg-primary text-primary-foreground text-center text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                {dict.cart.goToCart}
+              </Link>
+            </div>
+          </>
+        ) : (
+          <div className="px-4 py-10 text-center">
+            <ShoppingBag className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground mb-4">{dict.cart.empty}</p>
+            <Link
+              href={`${base}/categories`}
+              onClick={onClose}
+              className="inline-flex items-center justify-center px-5 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90"
+            >
+              {dict.cart.goToShop}
+            </Link>
+          </div>
+        )}
       </div>
     </>
   );

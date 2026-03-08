@@ -68,3 +68,33 @@ export async function fetchLatestArticles(
     return [];
   }
 }
+
+/**
+ * Search articles by query string (title/excerpt). Returns empty array if CMS not configured or request fails.
+ */
+export async function fetchArticlesByQuery(
+  q: string,
+  locale: string,
+  limit = 10
+): Promise<PayloadArticleListItem[]> {
+  if (!PAYLOAD_URL || !q.trim()) return [];
+
+  try {
+    const params = new URLSearchParams({
+      q: q.trim(),
+      limit: String(limit),
+      sort: "-publishedAt",
+      locale,
+      "fallback-locale": "da",
+    });
+    const res = await fetch(`${PAYLOAD_URL}/api/storefront/articles?${params}`, {
+      headers: { "Content-Type": "application/json" },
+      next: { revalidate: 30 },
+    });
+    if (!res.ok) return [];
+    const json = (await res.json()) as { docs?: PayloadArticleListItem[] };
+    return json.docs ?? [];
+  } catch {
+    return [];
+  }
+}

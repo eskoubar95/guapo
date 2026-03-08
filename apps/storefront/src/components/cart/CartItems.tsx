@@ -44,10 +44,14 @@ export function CartItems({ items, locale, dict }: CartItemsProps) {
     });
   };
 
-  const handleQuantityChange = (lineItemId: string, newQuantity: number) => {
+  const handleQuantityChange = (
+    lineItemId: string,
+    newQuantity: number,
+    metadata?: Record<string, unknown>
+  ) => {
     if (newQuantity < 1) return;
     startTransition(async () => {
-      await updateLineItem(lineItemId, newQuantity);
+      await updateLineItem(lineItemId, newQuantity, metadata);
       router.refresh();
     });
   };
@@ -201,7 +205,7 @@ export function CartItems({ items, locale, dict }: CartItemsProps) {
                 <div className="flex items-center border border-border rounded-lg overflow-hidden">
                   <button
                     type="button"
-                    onClick={() => handleQuantityChange(item.id, quantity - 1)}
+                    onClick={() => handleQuantityChange(item.id, quantity - 1, item.metadata)}
                     disabled={isPending || quantity <= 1}
                     className="px-2.5 py-1.5 hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     aria-label={dict.cart.decreaseQuantity}
@@ -213,7 +217,7 @@ export function CartItems({ items, locale, dict }: CartItemsProps) {
                   </span>
                   <button
                     type="button"
-                    onClick={() => handleQuantityChange(item.id, quantity + 1)}
+                    onClick={() => handleQuantityChange(item.id, quantity + 1, item.metadata)}
                     disabled={isPending}
                     className="px-2.5 py-1.5 hover:bg-muted transition-colors"
                     aria-label={dict.cart.increaseQuantity}

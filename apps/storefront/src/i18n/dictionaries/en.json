@@ -9,6 +9,27 @@
     "signOut": "Sign out",
     "language": "Language"
   },
+  "search": {
+    "placeholder": "Search for products, brands or categories...",
+    "recentSearches": "Recent searches",
+    "clearRecent": "Clear",
+    "popularSearches": "Popular searches",
+    "shortcuts": "Shortcuts",
+    "bestsellers": "Bestsellers",
+    "bestsellersSub": "Most popular",
+    "newArrivals": "New arrivals",
+    "newArrivalsSub": "See what's new",
+    "products": "Products",
+    "articles": "Articles",
+    "resultsCount": "{{count}} results",
+    "resultCount": "1 result",
+    "noResults": "No results",
+    "tryDifferent": "Try searching for something else",
+    "searching": "Searching...",
+    "selectHint": "to select",
+    "closeHint": "ESC to close",
+    "minChars": "Type at least 2 characters"
+  },
   "home": {
     "hero": {
       "title": "Your skin deserves the best",
@@ -175,7 +196,29 @@
     "youSave": "You save {{amount}} kr.",
     "deliveryLabel": "Delivery:",
     "everyXWeeks": "Every {{weeks}} weeks",
-    "goToShop": "Go to shop"
+    "goToShop": "Go to shop",
+    "itemsInCart": "Items in cart",
+    "goToCart": "Go to cart",
+    "addedToCart": "Added to cart",
+    "shopVidere": "Continue shopping",
+    "seKurv": "View cart",
+    "totalDiscount": "Your total discount",
+    "freeShippingProgress": "Free shipping progress",
+    "addedAsSubscription": "Added as subscription",
+    "youSavePerTime": "You save 20% per delivery",
+    "cartTotalCount": "Cart ({{count}}) total",
+    "clearCart": "Clear cart"
+  },
+  "wishlist": {
+    "title": "My wishlist",
+    "empty": "Your wishlist is empty",
+    "addToWishlist": "Add to wishlist",
+    "removeFromWishlist": "Remove from wishlist",
+    "goToShop": "Go to shop",
+    "saveToAccount": "Save wishlist to my account",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "saved": "Saved."
   },
   "checkout": {
     "title": "Checkout",

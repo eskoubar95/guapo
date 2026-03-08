@@ -55,6 +55,15 @@ export async function clearCartId() {
   cookieStore.delete("cart_id");
 }
 
+/** Remove all line items from the current cart (empties the cart). */
+export async function clearCart(): Promise<void> {
+  const cart = await getCart();
+  const ids = (cart?.items ?? []).map((item) => item.id).filter((id): id is string => Boolean(id));
+  for (const lineItemId of ids) {
+    await removeLineItem(lineItemId);
+  }
+}
+
 export async function getOrCreateCart(): Promise<string> {
   const existing = await getCartId();
   if (existing) {
@@ -120,20 +129,37 @@ export async function addToCart(
   return (data as { cart: unknown }).cart;
 }
 
-export async function updateLineItem(lineItemId: string, quantity: number) {
+export async function updateLineItem(
+  lineItemId: string,
+  quantity: number,
+  metadata?: Record<string, unknown>
+) {
   const cartId = await getCartId();
   if (!cartId) throw new Error("No cart");
+
+  const quantityInt = Math.max(1, Math.floor(Number(quantity)));
+  const body: { quantity: number; metadata?: Record<string, unknown> } = {
+    quantity: quantityInt,
+  };
+  if (metadata != null && typeof metadata === "object") {
+    body.metadata = metadata;
+  }
 
   const res = await fetch(
     `${MEDUSA_URL}/store/carts/${cartId}/line-items/${lineItemId}`,
     {
       method: "POST",
       headers: headers(),
-      body: JSON.stringify({ quantity }),
+      body: JSON.stringify(body),
     }
   );
-  if (!res.ok) throw new Error("Failed to update item");
-  const { cart } = await res.json();
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = (data as { message?: string }).message;
+    throw new Error(msg && typeof msg === "string" ? msg : "Failed to update item");
+  }
+  const { cart } = data as { cart?: unknown };
   return cart;
 }
 

@@ -21,6 +21,11 @@
   --secondary: #eff4f9;
   --secondary-foreground: #051537;
 
+  /* Sidebar: divider/border with green tint (not the same gray as sidebar background) */
+  --sidebar-divider: rgba(76, 175, 147, 0.2);
+  /* Sidebar: hover background for menu items (same on flat and card – contrasts with both sidebar gray and white) */
+  --sidebar-item-hover: #f0f2f5;
+
   /* Semantic */
   --success: #4caf93;
   --warning: #f4b860;
@@ -81,6 +86,8 @@
   --color-surface: var(--surface);
   --color-surface-muted: var(--surface-muted);
   --color-border: var(--border);
+  --color-sidebar-divider: var(--sidebar-divider);
+  --color-sidebar-item-hover: var(--sidebar-item-hover);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
@@ -137,12 +144,14 @@ button:focus-visible {
   outline: none;
 }
 
-/* Force light mode + prevent horizontal scroll on mobile */
+/* Force light mode + prevent horizontal scroll on mobile.
+   Use overflow-x: clip (not hidden!) – clip prevents horizontal scroll
+   but does NOT create a new scroll container, so position: sticky still works. */
 html {
   color-scheme: light;
   background-color: #ffffff;
   font-size: var(--font-size);
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -150,7 +159,7 @@ body {
   color: var(--text-primary);
   font-size: var(--font-size);
   line-height: var(--text-base-line-height);
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100%;
 }
 
@@ -290,6 +299,21 @@ html {
   button, a, [role="button"] {
     touch-action: manipulation;
   }
+}
+
+/* Search modal: no focus border/ring on input or form (only one X = close modal) */
+.search-modal-form:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.search-modal-input,
+.search-modal-input:focus,
+.search-modal-input:focus-visible,
+.search-modal-input:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-color: transparent !important;
 }
 
 /* Design is light-only: no prefers-color-scheme override. */

@@ -122,11 +122,21 @@ export function ServiceStrip({
       }))
     : services.map((s) => ({ icon: s.icon, title: s.title, description: s.description, url: undefined }));
 
+  const count = Math.min(Math.max(1, items.length), 4);
+  const gridColsClass =
+    count === 1
+      ? "grid-cols-1"
+      : count === 2
+        ? "grid-cols-1 sm:grid-cols-2"
+        : count === 3
+          ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4";
+
   if (variant === "cards") {
     return (
-      <section className={`py-6 sm:py-8 lg:py-10 ${backgroundColor}`}>
-        <div className="section-container min-w-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className={`w-full py-6 sm:py-8 lg:py-10 ${backgroundColor}`}>
+        <div className="section-container min-w-0 w-full">
+          <div className={`grid w-full gap-4 ${gridColsClass}`}>
             {items.map((item, i) => (
               <CardItem key={i} {...item} />
             ))}
@@ -137,9 +147,9 @@ export function ServiceStrip({
   }
 
   return (
-    <section className={`py-5 sm:py-6 lg:py-6 ${backgroundColor}`}>
-      <div className="section-container">
-        <div className="grid grid-cols-2 lg:grid-cols-4">
+    <section className={`w-full py-5 sm:py-6 lg:py-6 ${backgroundColor}`}>
+      <div className="section-container w-full">
+        <div className={`grid w-full ${gridColsClass}`}>
           {items.map((item, index) => (
             <div
               key={index}

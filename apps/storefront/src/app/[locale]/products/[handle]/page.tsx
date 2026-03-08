@@ -8,6 +8,7 @@ import { ProductPageTabs } from "@/components/ProductPageTabs";
 import { KeyInformationCard } from "@/components/KeyInformationCard";
 import { PDPTrustStrip } from "@/components/PDPTrustStrip";
 import { ProductPurchaseSection } from "@/components/product/ProductPurchaseSection";
+import { WishlistButton } from "@/components/product/WishlistButton";
 import { fetchProductByHandle, fetchRecommendedProducts } from "@/lib/medusa-products";
 import { fetchPayloadProductByHandle } from "@/lib/payload-products";
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
@@ -101,7 +102,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   );
 
   return (
-    <div className="min-h-full min-w-0 overflow-x-hidden">
+    <div className="min-h-full min-w-0 overflow-x-clip">
       <main className="section-container py-8">
         {/* Breadcrumb: Guapo > Category (if any) > Product */}
         <nav className="mb-6" aria-label="Breadcrumb">
@@ -155,7 +156,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 {payloadProduct.brandName}
               </p>
             )}
-            <h1 className="text-3xl font-bold text-foreground">{title}</h1>
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="text-3xl font-bold text-foreground">{title}</h1>
+              <WishlistButton
+                productId={handle}
+                addLabel={dict.wishlist?.addToWishlist ?? "Tilføj til ønskeliste"}
+                removeLabel={dict.wishlist?.removeFromWishlist ?? "Fjern fra ønskeliste"}
+              />
+            </div>
             {payloadProduct?.subtitle && (
               <p className="mt-2 text-muted-foreground">{payloadProduct.subtitle}</p>
             )}

@@ -2,28 +2,41 @@
 
 import Link from "next/link";
 import { ShoppingCart, User, Menu, Search, Heart } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SidebarMenu } from "@/components/SidebarMenu";
 import { SearchModal } from "@/components/SearchModal";
 import { CartDropdown } from "@/components/CartDropdown";
-import type { NavMenuItem } from "@/lib/payload-navigation";
-import type { PayloadNavCtaButton } from "@/lib/payload-navigation";
+import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
+import type { NavSection } from "@/lib/payload-navigation";
+import type { PayloadNavCtaButton, PayloadNavPromotionBar } from "@/lib/payload-navigation";
+import type { Dictionary } from "@/i18n/dictionaries";
 
 interface HeaderProps {
   locale: string;
-  menuItems: NavMenuItem[];
+  dict: Dictionary;
+  menuSections: NavSection[];
+  promotionBar?: PayloadNavPromotionBar | null;
   ctaButton?: PayloadNavCtaButton | null;
 }
 
-export function Header({ locale, menuItems, ctaButton }: HeaderProps) {
+/** Hide nav only after scrolling past roughly the first section (hero/banner). */
+const FIRST_SECTION_SCROLL_THRESHOLD = 480;
+/** Min scroll down (px) to count as "scrolling down" (avoids jitter). */
+const SCROLL_DOWN_DELTA = 8;
+
+export function Header({ locale, dict, menuSections, promotionBar, ctaButton }: HeaderProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [cartCount] = useState(0); // TODO: Connect to cart
-  const [favoriteCount] = useState(0); // TODO: Connect to favorites
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const lastScrollYRef = useRef(0);
+  const { cartCount } = useCart();
+  const { wishlistCount } = useWishlist();
 
   const base = `/${locale}`;
   const showCta = ctaButton?.show && ctaButton?.label && ctaButton?.url;
+  const showPromo = promotionBar?.show && promotionBar?.text;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -36,27 +49,78 @@ export function Header({ locale, menuItems, ctaButton }: HeaderProps) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const y = window.scrollY;
+          const last = lastScrollYRef.current;
+
+          // Near top or not past first section: always show
+          if (y <= FIRST_SECTION_SCROLL_THRESHOLD) {
+            setHeaderVisible(true);
+            lastScrollYRef.current = y;
+            ticking = false;
+            return;
+          }
+
+          // Past first section: hide on scroll down, show on scroll up
+          const scrollingDown = y > last + SCROLL_DOWN_DELTA;
+          const scrollingUp = y < last;
+
+          if (scrollingUp) {
+            setHeaderVisible(true);
+          } else if (scrollingDown) {
+            setHeaderVisible(false);
+          }
+          lastScrollYRef.current = y;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
     <>
       <SidebarMenu
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         locale={locale}
-        menuItems={menuItems}
+        sections={menuSections}
       />
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         locale={locale}
+        dict={dict}
       />
 
-      <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-        {/* Top announcement bar */}
+      {/* Promotion bar: only at top of page, scrolls away (not part of sticky nav) */}
+      {showPromo && (
         <div className="bg-primary text-primary-foreground py-2 px-4 sm:px-6 text-center">
-          <p className="text-xs sm:text-sm">Fri fragt over 299 kr. • 30 dages returret</p>
+          {promotionBar!.url ? (
+            <Link
+              href={promotionBar!.url}
+              className="block text-xs sm:text-sm hover:underline focus:outline focus:underline"
+            >
+              {promotionBar!.text}
+            </Link>
+          ) : (
+            <p className="text-xs sm:text-sm">{promotionBar!.text}</p>
+          )}
         </div>
+      )}
 
-        {/* Main header */}
+      {/* Sticky main nav: hides after scrolling down past MIN_SCROLL_BEFORE_HIDE, shows when scrolling up */}
+      <header
+        className={`sticky top-0 z-40 w-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-transform duration-300 ease-out ${
+          headerVisible ? "translate-y-0" : "-translate-y-full"
+        }`}
+      >
         <div className="section-container">
           <div className="flex h-14 sm:h-16 items-center justify-between gap-4 sm:gap-6">
             {/* Left: Menu button + Logo */}
@@ -94,7 +158,7 @@ export function Header({ locale, menuItems, ctaButton }: HeaderProps) {
                 onClick={() => setIsSearchOpen(true)}
                 className="w-full flex items-center gap-3 px-4 py-2.5 h-10 bg-surface hover:bg-surface-muted border border-border rounded-lg transition-colors text-left group"
               >
-                <Search className="h-4 w-4 text-text-muted flex-shrink-0" />
+                <Search className="h-4 w-4 text-text-muted shrink-0" />
                 <span className="text-sm text-text-muted flex-1">
                   Søg efter produkter, brands eller hudproblemer...
                 </span>
@@ -124,20 +188,34 @@ export function Header({ locale, menuItems, ctaButton }: HeaderProps) {
               </button>
 
               <Link
-                href={`${base}/account`}
+                href={`${base}/wishlist`}
                 className="p-2 hover:bg-surface rounded-lg transition-colors relative inline-flex"
-                aria-label="Konto"
+                aria-label="Ønskeliste"
               >
                 <Heart className="h-5 w-5" />
-                {favoriteCount > 0 && (
+                {wishlistCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {favoriteCount}
+                    {wishlistCount}
                   </span>
                 )}
               </Link>
 
+              {/* Mobile/tablet: cart icon links directly to cart page */}
+              <Link
+                href={`${base}/cart`}
+                className="lg:hidden p-2 hover:bg-surface rounded-lg transition-colors relative inline-flex"
+                aria-label="Kurv"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+              {/* Desktop: hover dropdown */}
               <div
-                className="relative"
+                className="hidden lg:block relative"
                 onMouseEnter={() => setIsCartOpen(true)}
                 onMouseLeave={() => setIsCartOpen(false)}
               >
@@ -159,6 +237,7 @@ export function Header({ locale, menuItems, ctaButton }: HeaderProps) {
                   isOpen={isCartOpen}
                   onClose={() => setIsCartOpen(false)}
                   locale={locale}
+                  dict={dict}
                 />
               </div>
 

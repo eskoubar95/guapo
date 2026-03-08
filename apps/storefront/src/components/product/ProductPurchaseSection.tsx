@@ -6,6 +6,8 @@ import { Minus, Plus } from "lucide-react";
 import { addToCart } from "@/lib/cart";
 import { Button } from "@/components/ui/button";
 import { SubscriptionSelector } from "@/components/SubscriptionSelector";
+import { useAddToCartModal } from "@/contexts/AddToCartModalContext";
+import { useCart } from "@/contexts/CartContext";
 
 interface Variant {
   id: string;
@@ -51,6 +53,8 @@ export function ProductPurchaseSection({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const addedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { openModal } = useAddToCartModal();
+  const { refreshCart } = useCart();
 
   const selectedVariantPrice =
     variants.find((v) => v.id === selectedVariantId)?.price ??
@@ -82,11 +86,39 @@ export function ProductPurchaseSection({
           purchaseType === "subscription" && subscriptionConfig
             ? { subscription_cycle: selectedCycle }
             : undefined;
-        await addToCart(selectedVariantId, quantity, options);
+        const cart = await addToCart(selectedVariantId, quantity, options) as {
+          items?: Array<{
+            product_title?: string;
+            title?: string;
+            variant_title?: string;
+            variant?: { product?: { thumbnail?: string }; title?: string };
+            thumbnail?: string;
+            unit_price?: number;
+            quantity?: number;
+          }>;
+          total?: number;
+        } | undefined;
         setAdded(true);
         router.refresh();
+        await refreshCart();
         if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
         addedTimerRef.current = setTimeout(() => setAdded(false), 2000);
+
+        if (cart?.items?.length) {
+          const last = cart.items[cart.items.length - 1];
+          const productTitle = last.product_title ?? last.title ?? "";
+          const variantTitle = last.variant_title ?? last.variant?.title;
+          const thumbnail = last.thumbnail ?? last.variant?.product?.thumbnail;
+          openModal({
+            productTitle,
+            variantTitle,
+            thumbnail,
+            quantity: last.quantity ?? quantity,
+            unitPrice: last.unit_price ?? selectedVariantPrice,
+            cartTotal: cart.total ?? 0,
+            itemCount: cart.items.length,
+          });
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error");
       }

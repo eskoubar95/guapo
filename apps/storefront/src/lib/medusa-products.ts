@@ -104,6 +104,7 @@ async function mapMedusaToProduct(p: MedusaProductResponse): Promise<Product> {
     price: priceDkk,
     image: img,
     variant: variantTitle,
+    variantId: firstVariant?.id,
     subtitle: subtitle || undefined,
     ...(typeof rating === "number" && { rating }),
     ...(typeof reviewCount === "number" && { reviewCount }),
@@ -326,6 +327,41 @@ export async function fetchProductsBoughtTogether(
     const json = (await res.json()) as { products?: MedusaProductResponse[] };
     const list = json.products ?? [];
     const products = await Promise.all(list.slice(0, limit).map(mapMedusaToProduct));
+    setCache(key, products);
+    return products;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Search products by query string (Medusa Store API q param).
+ */
+export async function fetchProductsByQuery(
+  q: string,
+  limit = 12
+): Promise<Product[]> {
+  const trimmed = (q ?? "").trim();
+  if (!trimmed) return [];
+
+  const key = `medusa:search:${trimmed}:${limit}`;
+  const cached = getCached<Product[]>(key);
+  if (cached !== null) return cached;
+
+  try {
+    const params = new URLSearchParams({
+      q: trimmed,
+      limit: String(limit),
+      fields: PRODUCT_FIELDS,
+    });
+    const res = await fetch(`${MEDUSA_URL}/products?${params}`, {
+      headers: medusaHeaders(),
+      next: { revalidate: 30 },
+    });
+    if (!res.ok) return [];
+    const json = (await res.json()) as { products?: MedusaProductResponse[] };
+    const list = json.products ?? [];
+    const products = await Promise.all(list.map(mapMedusaToProduct));
     setCache(key, products);
     return products;
   } catch {

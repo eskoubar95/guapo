@@ -42,12 +42,30 @@ export interface PayloadNavChild {
   newTab?: boolean | null;
 }
 
+/** Icon key from Payload (optional per menu item). */
+export type PayloadNavIconKey =
+  | "none"
+  | "grid"
+  | "tag"
+  | "sparkles"
+  | "shopping-bag"
+  | "file-text"
+  | "home";
+
 /** Main menu item from Payload. */
 export interface PayloadNavMenuItem {
   label: string;
   type: "link" | "dropdown";
+  icon?: PayloadNavIconKey | string | null;
   link?: PayloadNavLink | null;
   children?: PayloadNavChild[] | null;
+}
+
+/** Promotion bar (top banner) from Payload. */
+export interface PayloadNavPromotionBar {
+  show?: boolean | null;
+  text?: string | null;
+  url?: string | null;
 }
 
 /** CTA button from Payload. */
@@ -57,10 +75,19 @@ export interface PayloadNavCtaButton {
   url?: string | null;
 }
 
+/** One section in menuSections (card = white box, flat = on sidebar background). */
+export interface PayloadNavMenuSection {
+  title?: string | null;
+  sectionStyle?: "card" | "flat" | null;
+  items?: PayloadNavMenuItem[] | null;
+}
+
 /** Navigation global response. */
 export interface PayloadNavigation {
   id?: number;
+  menuSections?: PayloadNavMenuSection[] | null;
   mainMenu?: PayloadNavMenuItem[] | null;
+  promotionBar?: PayloadNavPromotionBar | null;
   ctaButton?: PayloadNavCtaButton | null;
 }
 
@@ -70,6 +97,7 @@ export interface NavLinkItem {
   label: string;
   href: string;
   newTab?: boolean;
+  icon?: PayloadNavIconKey | string | null;
 }
 
 /** Normalized item for SidebarMenu: dropdown with children. */
@@ -77,9 +105,17 @@ export interface NavDropdownItem {
   type: "dropdown";
   label: string;
   children: Array< { label: string; href: string; newTab?: boolean } >;
+  icon?: PayloadNavIconKey | string | null;
 }
 
 export type NavMenuItem = NavLinkItem | NavDropdownItem;
+
+/** One block in the sidebar: optional title, style (card/flat), items. */
+export interface NavSection {
+  title?: string | null;
+  sectionStyle?: "card" | "flat";
+  items: NavMenuItem[];
+}
 
 function getPathFromPage(page: PayloadPage | number | null | undefined): string {
   if (!page) return "";
@@ -110,10 +146,12 @@ export function normalizeMainMenu(
   if (!mainMenu?.length) return [];
 
   return mainMenu.map((item) => {
+    const icon = item.icon && item.icon !== "none" ? item.icon : undefined;
     if (item.type === "dropdown" && item.children?.length) {
       return {
         type: "dropdown" as const,
         label: item.label,
+        icon,
         children: item.children.map((child) => ({
           label: child.label,
           href: resolveHref(
@@ -136,8 +174,32 @@ export function normalizeMainMenu(
       label: item.label,
       href,
       newTab: link?.newTab ?? false,
+      icon,
     };
   });
+}
+
+/**
+ * Normalize navigation to sections (one per white box). Uses menuSections if present, else one section from mainMenu.
+ */
+export function normalizeMenuSections(
+  locale: string,
+  nav: PayloadNavigation | null | undefined
+): NavSection[] {
+  if (!nav) return [];
+
+  const sections = nav.menuSections?.filter((s) => s?.items?.length);
+  if (sections?.length) {
+    return sections.map((s) => ({
+      title: s.title ?? undefined,
+      sectionStyle: s.sectionStyle === "flat" ? "flat" : "card",
+      items: normalizeMainMenu(locale, s.items),
+    }));
+  }
+
+  const mainItems = normalizeMainMenu(locale, nav.mainMenu);
+  if (!mainItems.length) return [];
+  return [{ sectionStyle: "card" as const, items: mainItems }];
 }
 
 /**

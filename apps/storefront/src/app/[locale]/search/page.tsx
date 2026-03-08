@@ -2,71 +2,62 @@ import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { fetchProductsByQuery } from "@/lib/medusa-products";
+import { fetchArticlesByQuery } from "@/lib/payload-articles";
+import { ProductCard } from "@/components/ProductCard";
 
 interface SearchPageProps {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ q?: string; category?: string }>;
+  searchParams: Promise<{ q?: string }>;
 }
 
 export async function generateMetadata({ params, searchParams }: SearchPageProps): Promise<Metadata> {
   const { locale } = await params;
   const { q } = await searchParams;
-  
   return {
-    title: q 
+    title: q
       ? `${locale === "da" ? "Søgeresultater for" : "Search results for"} "${q}"`
       : (locale === "da" ? "Søg" : "Search"),
-    robots: {
-      index: false, // Don't index search result pages
-    },
+    robots: { index: false },
   };
-}
-
-// Placeholder search results
-function searchProducts(query: string) {
-  // In production, this would call Medusa API
-  const allProducts = [
-    { id: "1", title: "Gentle Cleanser", price: "189", category: "cleansers" },
-    { id: "2", title: "Niacinamide Serum", price: "249", category: "serums" },
-    { id: "3", title: "Hydrating Moisturizer", price: "329", category: "moisturizers" },
-    { id: "4", title: "Daily SPF 50", price: "279", category: "spf" },
-  ];
-
-  if (!query) return allProducts;
-  
-  return allProducts.filter(p => 
-    p.title.toLowerCase().includes(query.toLowerCase())
-  );
 }
 
 export default async function SearchPage({ params, searchParams }: SearchPageProps) {
   const { locale } = await params;
-  const { q: query, category } = await searchParams;
+  const { q: query } = await searchParams;
   const dict = await getDictionary(locale as Locale);
-  
-  const results = searchProducts(query || "");
-  const filteredResults = category 
-    ? results.filter(p => p.category === category)
-    : results;
+  const trimmed = (query ?? "").trim();
+
+  const [products, articles] =
+    trimmed.length >= 2
+      ? await Promise.all([
+          fetchProductsByQuery(trimmed, 24),
+          fetchArticlesByQuery(trimmed, locale, 8),
+        ])
+      : [[], []];
+
+  const base = `/${locale}`;
+  const s = dict.search;
 
   return (
     <div className="min-h-full">
       <main className="container mx-auto px-4 py-8">
-        {/* Search form */}
-        <form action={`/${locale}/search`} method="GET" className="mb-8">
+        <form action={`${base}/search`} method="GET" className="mb-8">
           <div className="relative">
             <input
-              type="text"
+              type="search"
               name="q"
               defaultValue={query}
-              placeholder={locale === "da" ? "Søg efter produkter..." : "Search for products..."}
-              className="w-full rounded-lg border border-border px-4 py-3 pl-12 text-foreground placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+              placeholder={s.placeholder}
+              className="w-full rounded-lg border border-border bg-background px-4 py-3 pl-11 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              aria-label={dict.common.search}
             />
             <svg
-              className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400"
+              className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden
             >
               <path
                 strokeLinecap="round"
@@ -78,70 +69,80 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
           </div>
         </form>
 
-        {/* Results header */}
-        {query && (
-          <div className="mb-6">
-            <h1 className="text-xl font-bold text-foreground">
-              {locale === "da" ? "Søgeresultater for" : "Search results for"} "{query}"
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              {filteredResults.length} {locale === "da" ? "produkter fundet" : "products found"}
-            </p>
-          </div>
-        )}
-
-        {/* Category filter */}
-        <div className="mb-6 flex flex-wrap gap-2">
-          <Link
-            href={`/${locale}/search${query ? `?q=${encodeURIComponent(query)}` : ""}`}
-            className={`rounded-full px-4 py-2 text-sm ${
-              !category ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            {locale === "da" ? "Alle" : "All"}
-          </Link>
-          {["cleansers", "serums", "moisturizers", "spf"].map((cat) => (
-            <Link
-              key={cat}
-              href={`/${locale}/search?${query ? `q=${encodeURIComponent(query)}&` : ""}category=${cat}`}
-              className={`rounded-full px-4 py-2 text-sm capitalize ${
-                category === cat ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {cat}
-            </Link>
-          ))}
-        </div>
-
-        {/* Results grid */}
-        {filteredResults.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {filteredResults.map((product) => (
-              <Link
-                key={product.id}
-                href={`/${locale}/products/${product.id}`}
-                className="group"
-              >
-                <div className="aspect-square w-full rounded-lg bg-gray-100 transition-colors group-hover:bg-gray-200" />
-                <div className="mt-3">
-                  <h3 className="text-sm font-medium text-foreground group-hover:text-muted-foreground">
-                    {product.title}
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-500">{product.price} DKK</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+        {!trimmed ? (
+          <p className="text-muted-foreground">{s.minChars}</p>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-500">{dict.products.noResults}</p>
-            <Link
-              href={`/${locale}/categories`}
-              className="mt-4 inline-flex text-sm font-medium text-foreground hover:text-muted-foreground"
-            >
-              {locale === "da" ? "Se alle kategorier →" : "Browse all categories →"}
-            </Link>
-          </div>
+          <>
+            <div className="mb-6">
+              <h1 className="text-xl font-bold text-foreground">
+                {locale === "da" ? "Søgeresultater for" : "Search results for"} &quot;{query}&quot;
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {products.length} {locale === "da" ? "produkter" : "products"}
+                {articles.length > 0 &&
+                  ` · ${articles.length} ${locale === "da" ? "artikler" : "articles"}`}
+              </p>
+            </div>
+
+            {products.length > 0 && (
+              <section className="mb-10">
+                <h2 className="text-lg font-semibold text-foreground mb-4">{s.products}</h2>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                  {products.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      locale={locale}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {articles.length > 0 && (
+              <section>
+                <h2 className="text-lg font-semibold text-foreground mb-4">{s.articles}</h2>
+                <ul className="space-y-4">
+                  {articles.map((article, index) => (
+                    <li key={article.slug ?? article.id ?? index}>
+                      <Link
+                        href={`${base}/blog/${article.slug ?? ""}`}
+                        className="block p-4 rounded-lg border border-border hover:bg-surface transition-colors"
+                      >
+                        {article.publishedAt && (
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(article.publishedAt).toLocaleDateString(
+                              locale === "da" ? "da-DK" : "en-GB",
+                              { day: "numeric", month: "short", year: "numeric" }
+                            )}
+                          </p>
+                        )}
+                        <h3 className="font-medium text-foreground mt-0.5">{article.title}</h3>
+                        {article.excerpt && (
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                            {article.excerpt}
+                          </p>
+                        )}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {products.length === 0 && articles.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">{dict.search.noResults}</p>
+                <p className="text-sm text-muted-foreground mt-1">{s.tryDifferent}</p>
+                <Link
+                  href={`${base}/categories`}
+                  className="mt-4 inline-flex text-sm font-medium text-primary hover:underline"
+                >
+                  {locale === "da" ? "Se alle kategorier →" : "Browse all categories →"}
+                </Link>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

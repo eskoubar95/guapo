@@ -12,6 +12,27 @@ export interface Dictionary {
     signOut: string;
     language: string;
   };
+  search: {
+    placeholder: string;
+    recentSearches: string;
+    clearRecent: string;
+    popularSearches: string;
+    shortcuts: string;
+    bestsellers: string;
+    bestsellersSub: string;
+    newArrivals: string;
+    newArrivalsSub: string;
+    products: string;
+    articles: string;
+    resultsCount: string;
+    resultCount: string;
+    noResults: string;
+    tryDifferent: string;
+    searching: string;
+    selectHint: string;
+    closeHint: string;
+    minChars: string;
+  };
   home: {
     hero: {
       title: string;
@@ -173,6 +194,28 @@ export interface Dictionary {
     deliveryLabel: string;
     everyXWeeks: string;
     goToShop: string;
+    itemsInCart: string;
+    goToCart: string;
+    addedToCart: string;
+    shopVidere: string;
+    seKurv: string;
+    totalDiscount: string;
+    freeShippingProgress: string;
+    addedAsSubscription: string;
+    youSavePerTime: string;
+    cartTotalCount: string;
+    clearCart: string;
+  };
+  wishlist: {
+    title: string;
+    empty: string;
+    addToWishlist: string;
+    removeFromWishlist: string;
+    goToShop: string;
+    saveToAccount: string;
+    loading: string;
+    saving: string;
+    saved: string;
   };
   checkout: {
     title: string;
