@@ -326,6 +326,7 @@ export const sectionBlocks = [
           { label: 'Text + Image', value: 'text-image' },
           { label: 'Image + Text', value: 'image-text' },
           { label: 'Text Only (Centered)', value: 'text-only' },
+          { label: 'Text Only (Left-aligned)', value: 'text-only-left' },
           { label: 'Full Width Image with Overlay', value: 'full-width' },
         ],
       },
@@ -342,7 +343,10 @@ export const sectionBlocks = [
         type: 'upload',
         relationTo: 'media',
         admin: {
-          condition: (_: ConditionArg, siblingData: ConditionArg) => siblingData?.layout !== 'text-only',
+          condition: (_: ConditionArg, siblingData: ConditionArg) => {
+            const layout = siblingData?.layout as string | undefined;
+            return layout !== 'text-only' && layout !== 'text-only-left';
+          },
         },
       },
       {
@@ -830,8 +834,9 @@ export const sectionBlocks = [
           {
             name: 'iconType',
             type: 'select',
-            defaultValue: 'custom',
+            defaultValue: 'none',
             options: [
+              { label: 'Ingen (kun titel + undertitel)', value: 'none' },
               { label: 'Subscription (loop arrows)', value: 'subscription' },
               { label: 'Gift', value: 'gift' },
               { label: 'Newsletter (envelope)', value: 'newsletter' },
@@ -841,6 +846,7 @@ export const sectionBlocks = [
               { label: 'Headphones', value: 'headphones' },
               { label: 'Custom image', value: 'custom' },
             ],
+            admin: { description: 'Vælg "Ingen" for mission/vision-kort uden ikon.' },
           },
           {
             name: 'iconImage',
@@ -851,6 +857,87 @@ export const sectionBlocks = [
           { name: 'title', type: 'text', required: true },
           { name: 'subtitle', type: 'text' },
           { name: 'url', type: 'text', admin: { placeholder: '/path or full URL' } },
+        ],
+      },
+    ],
+  },
+
+  // Bullet columns (e.g. for About: "Hvorfor vælge os" with 2–3 columns of bullet lists)
+  {
+    slug: 'bullet-columns',
+    labels: {
+      singular: 'Bullet Columns',
+      plural: 'Bullet Columns',
+    },
+    fields: [
+      {
+        name: 'heading',
+        type: 'text',
+        admin: { placeholder: 'e.g. Hvorfor vælge os?' },
+      },
+      {
+        name: 'columns',
+        type: 'array',
+        minRows: 2,
+        maxRows: 4,
+        required: true,
+        fields: [
+          { name: 'columnHeading', type: 'text', admin: { description: 'Optional heading for this column' } },
+          {
+            name: 'items',
+            type: 'array',
+            required: true,
+            minRows: 1,
+            fields: [{ name: 'text', type: 'text', required: true }],
+            admin: { description: 'Bullet points for this column' },
+          },
+        ],
+      },
+      {
+        name: 'backgroundColor',
+        type: 'select',
+        defaultValue: 'white',
+        options: [
+          { label: 'White', value: 'white' },
+          { label: 'Light Gray', value: 'gray' },
+          { label: 'Brand Light', value: 'brand-light' },
+        ],
+      },
+    ],
+  },
+
+  // Value cards (e.g. Mission & Vision — two cards side by side)
+  {
+    slug: 'value-cards',
+    labels: {
+      singular: 'Value Cards (Mission / Vision)',
+      plural: 'Value Cards',
+    },
+    fields: [
+      {
+        name: 'heading',
+        type: 'text',
+        admin: { placeholder: 'e.g. Vores værdier' },
+      },
+      {
+        name: 'cards',
+        type: 'array',
+        minRows: 2,
+        maxRows: 4,
+        required: true,
+        fields: [
+          { name: 'title', type: 'text', required: true, admin: { placeholder: 'e.g. Vores mission' } },
+          { name: 'body', type: 'textarea', required: true, admin: { placeholder: 'Card content' } },
+        ],
+      },
+      {
+        name: 'backgroundColor',
+        type: 'select',
+        defaultValue: 'white',
+        options: [
+          { label: 'White', value: 'white' },
+          { label: 'Light Gray', value: 'gray' },
+          { label: 'Brand Light', value: 'brand-light' },
         ],
       },
     ],

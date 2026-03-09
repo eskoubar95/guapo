@@ -1,12 +1,14 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 /* Guapo design tokens (spec/07 + design/Ecommercestorefrontdesign) */
 :root {
   --font-size: 14px;
 
   /* Neutral */
-  --background: #ffffff;
-  --foreground: #0a0e1a;
   --surface: #f8f9fb;
   --surface-muted: #eff1f5;
   --border: #e8ecf2;
@@ -14,7 +16,7 @@
   --text-secondary: #4a5568;
   --text-muted: #7b8599;
 
-  /* Brand (Guapo logo dark navy) */
+  /* Brand (Guapo logo dark navy – spec/07) */
   --primary: #051537;
   --primary-hover: #0a2452;
   --primary-foreground: #ffffff;
@@ -39,7 +41,7 @@
   --accent-foreground: #051537;
   --destructive: #d64045;
   --destructive-foreground: #ffffff;
-  --input: transparent;
+  --input: #e8ecf2;
   --input-background: #f8f9fb;
   --ring: #051537;
 
@@ -75,6 +77,23 @@
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
+  --background: #ffffff;
+  --foreground: #0a0e1a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0e1a;
+  --chart-1: #6ba4d6;
+  --chart-2: #4caf93;
+  --chart-3: #f4b860;
+  --chart-4: #051537;
+  --chart-5: #7b8599;
+  --sidebar: #f8f9fb;
+  --sidebar-foreground: #0a0e1a;
+  --sidebar-primary: #051537;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eff4f9;
+  --sidebar-accent-foreground: #051537;
+  --sidebar-border: #e8ecf2;
+  --sidebar-ring: #051537;
 }
 
 @theme inline {
@@ -112,6 +131,27 @@
   --radius-lg: var(--radius-lg);
   --radius: var(--radius);
   --font-lexend: var(--font-lexend);
+  /* Use Inter (set by layout on body via inter.variable) for font-sans; fallback for html before body has it */
+  --font-sans: var(--font-inter, ui-sans-serif, system-ui, sans-serif);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 /* Form elements – shared radius (--radius-lg), soft border, consistent focus.
@@ -191,11 +231,22 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-primary);
 }
 
+/* Single canonical H1: page title, used site-wide (Hero, default pages, etc.) */
 h1 {
-  font-size: var(--text-xl);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--text-xl-line-height);
+  font-size: 2rem;       /* 32px mobile */
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   text-wrap: balance;
+}
+@media (min-width: 640px) {
+  h1 { font-size: 2.5rem; }   /* 40px */
+}
+@media (min-width: 1024px) {
+  h1 { font-size: 3rem; }     /* 48px */
+}
+@media (min-width: 1280px) {
+  h1 { font-size: 3.75rem; }  /* 60px */
 }
 h2 {
   font-size: var(--text-lg);
@@ -335,3 +386,41 @@ html {
 }
 
 /* Design is light-only: no prefers-color-scheme override. */
+
+/* Guapo is light-only; .dark kept so shadcn components don't break if used inside .dark */
+.dark {
+  --background: #ffffff;
+  --foreground: #0a0e1a;
+  --card: #ffffff;
+  --card-foreground: #0a0e1a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0e1a;
+  --primary: #051537;
+  --primary-foreground: #ffffff;
+  --secondary: #eff4f9;
+  --secondary-foreground: #051537;
+  --muted: #eff1f5;
+  --muted-foreground: #7b8599;
+  --accent: #eff4f9;
+  --accent-foreground: #051537;
+  --destructive: #d64045;
+  --border: #e8ecf2;
+  --input: #e8ecf2;
+  --ring: #051537;
+  --sidebar: #f8f9fb;
+  --sidebar-foreground: #0a0e1a;
+  --sidebar-primary: #051537;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eff4f9;
+  --sidebar-accent-foreground: #051537;
+  --sidebar-border: #e8ecf2;
+  --sidebar-ring: #051537;
+}
+
+/* Shadcn/base-ui: only minimal base so we don't override Guapo design (fonts, colors, focus). */
+@layer base {
+  body {
+    @apply bg-background;
+    color: var(--text-primary);
+  }
+}

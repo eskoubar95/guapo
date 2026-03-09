@@ -20,6 +20,8 @@ import { PromotionSlider } from "@/components/sections/PromotionSlider";
 import { ContentGrid } from "@/components/sections/ContentGrid";
 import { BrandSpotlight } from "@/components/sections/BrandSpotlight";
 import { ServiceStrip } from "@/components/sections/ServiceStrip";
+import { BulletColumnsSection } from "@/components/sections/BulletColumnsSection";
+import { ValueCardsSection } from "@/components/sections/ValueCardsSection";
 
 const PAYLOAD_URL = process.env.NEXT_PUBLIC_PAYLOAD_API_URL ?? process.env.PAYLOAD_API_URL ?? "";
 
@@ -59,6 +61,7 @@ export function HomePageSections({
           case "hero": {
             const hero = block as import("@/lib/payload-homepage").HeroBlock;
             const bgUrl = mediaUrl(hero.backgroundImage);
+            const isFirstHero = sections.findIndex((b) => b.blockType === "hero") === index;
             return (
               <HeroSection
                 key={key}
@@ -69,6 +72,7 @@ export function HomePageSections({
                 variant={hero.variant ?? "full"}
                 textPosition={hero.textPosition ?? "center"}
                 textColor={hero.textColor ?? "light"}
+                headingLevel={isFirstHero ? 1 : 2}
                 locale={locale}
               />
             );
@@ -148,15 +152,17 @@ export function HomePageSections({
               );
             }
             const contentHtml = lexicalToHtml(cb.content);
-            const hasContent = cb.heading || contentHtml || (imgUrl && layout !== "text-only") || (cb.cta?.show && cb.cta?.text);
+            const isTextOnly = layout === "text-only" || layout === "text-only-left";
+            const hasContent = cb.heading || contentHtml || (imgUrl && !isTextOnly) || (cb.cta?.show && cb.cta?.text);
             if (!hasContent) return null;
+            const contentLayout = layout === "text-only" ? "text-only" : layout === "text-only-left" ? "text-only-left" : layout === "image-text" ? "image-text" : "text-image";
             return (
               <ContentBlockSection
                 key={key}
                 heading={cb.heading ?? null}
                 contentHtml={contentHtml}
                 imageUrl={imgUrl || null}
-                layout={layout === "text-only" ? "text-only" : layout === "image-text" ? "image-text" : "text-image"}
+                layout={contentLayout}
                 backgroundColor={cb.backgroundColor ?? "white"}
                 cta={cb.cta}
                 locale={locale}
@@ -317,6 +323,34 @@ export function HomePageSections({
                 cmsItems={cmsItems}
                 variant={ss.variant === "cards" ? "cards" : "minimal"}
                 backgroundColor={ss.backgroundColor === "white" ? "bg-background" : "bg-surface-muted/30"}
+              />
+            );
+          }
+
+          case "bullet-columns": {
+            const bc = block as import("@/lib/payload-homepage").BulletColumnsBlock;
+            const columns = bc.columns ?? [];
+            if (columns.length === 0) return null;
+            return (
+              <BulletColumnsSection
+                key={key}
+                heading={bc.heading ?? null}
+                columns={columns}
+                backgroundColor={bc.backgroundColor ?? "white"}
+              />
+            );
+          }
+
+          case "value-cards": {
+            const vc = block as import("@/lib/payload-homepage").ValueCardsBlock;
+            const cards = vc.cards ?? [];
+            if (cards.length === 0) return null;
+            return (
+              <ValueCardsSection
+                key={key}
+                heading={vc.heading ?? null}
+                cards={cards}
+                backgroundColor={vc.backgroundColor ?? "white"}
               />
             );
           }

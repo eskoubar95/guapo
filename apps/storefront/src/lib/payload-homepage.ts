@@ -90,7 +90,7 @@ export interface TestimonialsBlock extends HomepageBlockBase {
 
 export interface ContentBlockBlock extends HomepageBlockBase {
   blockType: "content-block";
-  layout?: "text-image" | "image-text" | "text-only" | "full-width" | null;
+  layout?: "text-image" | "image-text" | "text-only" | "text-only-left" | "full-width" | null;
   heading?: string | null;
   content?: unknown;
   image?: PayloadMedia | number | null;
@@ -202,6 +202,25 @@ export interface ServiceStripBlock extends HomepageBlockBase {
   items?: ServiceStripItem[] | null;
 }
 
+export interface BulletColumnsColumn {
+  columnHeading?: string | null;
+  items?: { text: string }[] | null;
+}
+
+export interface BulletColumnsBlock extends HomepageBlockBase {
+  blockType: "bullet-columns";
+  heading?: string | null;
+  columns?: BulletColumnsColumn[] | null;
+  backgroundColor?: "white" | "gray" | "brand-light" | null;
+}
+
+export interface ValueCardsBlock extends HomepageBlockBase {
+  blockType: "value-cards";
+  heading?: string | null;
+  cards?: { title: string; body: string }[] | null;
+  backgroundColor?: "white" | "gray" | "brand-light" | null;
+}
+
 export type HomepageSection =
   | HeroBlock
   | FeaturedProductsBlock
@@ -215,7 +234,9 @@ export type HomepageSection =
   | PromotionSliderBlock
   | InspirationGuidesBlock
   | BrandSpotlightBlock
-  | ServiceStripBlock;
+  | ServiceStripBlock
+  | BulletColumnsBlock
+  | ValueCardsBlock;
 
 export interface PayloadHomepageMeta {
   title?: string | null;

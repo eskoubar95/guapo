@@ -12,7 +12,7 @@ export interface ContentBlockSectionProps {
   heading?: string | null;
   contentHtml: string;
   imageUrl?: string | null;
-  layout: "text-image" | "image-text" | "text-only" | "full-width";
+  layout: "text-image" | "image-text" | "text-only" | "text-only-left" | "full-width";
   backgroundColor?: "white" | "gray" | "brand-light" | null;
   cta?: { show?: boolean | null; text?: string | null; url?: string | null };
   locale: string;
@@ -78,6 +78,18 @@ export function ContentBlockSection({
       <section className={`py-8 sm:py-10 lg:py-14 ${bgClass}`}>
         <div className="section-container">
           <div className="max-w-3xl mx-auto text-center">
+            {textBlock}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (layout === "text-only-left") {
+    return (
+      <section className={`py-8 sm:py-10 lg:py-14 ${bgClass}`}>
+        <div className="section-container">
+          <div className="w-full text-left">
             {textBlock}
           </div>
         </div>

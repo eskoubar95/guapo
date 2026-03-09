@@ -62,17 +62,20 @@ interface ResolvedItem {
 
 /* ── Minimal variant ──────────────────────────────────────── */
 function MinimalCard({ icon: Icon, iconImageUrl, title, description, url }: ResolvedItem) {
+  const hasIcon = Icon || iconImageUrl;
   const content = (
     <div className="flex flex-col items-center text-center gap-1.5">
-      <span className="text-primary/80">
-        {iconImageUrl ? (
-          <ImageWithFallback src={iconImageUrl} alt="" className="w-5 h-5 object-contain" />
-        ) : Icon ? (
-          <Icon className="h-5 w-5" strokeWidth={1.5} />
-        ) : null}
-      </span>
+      {hasIcon && (
+        <span className="text-primary/80">
+          {iconImageUrl ? (
+            <ImageWithFallback src={iconImageUrl} alt="" className="w-5 h-5 object-contain" />
+          ) : Icon ? (
+            <Icon className="h-5 w-5" strokeWidth={1.5} />
+          ) : null}
+        </span>
+      )}
       <span className="text-[13px] font-medium text-text-primary leading-tight tracking-tight">{title}</span>
-      <span className="text-[11px] text-text-muted/70 leading-tight">{description}</span>
+      {description && <span className="text-[11px] text-text-muted/70 leading-tight">{description}</span>}
     </div>
   );
   const cls = "flex items-center justify-center py-4 px-2 transition-colors hover:text-primary focus-visible:text-primary focus-visible:outline-none";
@@ -82,19 +85,22 @@ function MinimalCard({ icon: Icon, iconImageUrl, title, description, url }: Reso
 
 /* ── Cards variant ────────────────────────────────────────── */
 function CardItem({ icon: Icon, iconImageUrl, title, description, url }: ResolvedItem) {
+  const hasIcon = Icon || iconImageUrl;
   const content = (
     <div className="flex flex-col gap-4 p-6 h-full">
-      <div className="w-10 h-10 rounded-full bg-muted/60 flex items-center justify-center shrink-0">
-        {iconImageUrl ? (
-          <ImageWithFallback src={iconImageUrl} alt="" className="w-5 h-5 object-contain" />
-        ) : Icon ? (
-          <Icon className="h-[18px] w-[18px] text-text-primary" strokeWidth={1.5} />
-        ) : null}
-      </div>
+      {hasIcon && (
+        <div className="w-10 h-10 rounded-full bg-muted/60 flex items-center justify-center shrink-0">
+          {iconImageUrl ? (
+            <ImageWithFallback src={iconImageUrl} alt="" className="w-5 h-5 object-contain" />
+          ) : Icon ? (
+            <Icon className="h-[18px] w-[18px] text-text-primary" strokeWidth={1.5} />
+          ) : null}
+        </div>
+      )}
       <div>
-        <h3 className="text-sm font-semibold text-text-primary leading-tight">{title}</h3>
+        <h3 className="text-base font-semibold text-text-primary leading-tight">{title}</h3>
         {description && (
-          <p className="text-xs text-text-muted mt-1 leading-relaxed">{description}</p>
+          <p className="text-sm text-text-muted mt-2 leading-relaxed">{description}</p>
         )}
       </div>
     </div>

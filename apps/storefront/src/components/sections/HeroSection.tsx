@@ -12,6 +12,8 @@ interface HeroSectionProps {
   variant?: "full" | "split" | "video";
   textPosition?: "left" | "center" | "right";
   textColor?: "light" | "dark";
+  /** 1 = page title (one per page), 2 = section heading */
+  headingLevel?: 1 | 2;
   locale: string;
 }
 
@@ -23,11 +25,13 @@ export function HeroSection({
   variant = "full",
   textPosition = "center",
   textColor = "light",
+  headingLevel = 1,
   locale,
 }: HeroSectionProps) {
   const isLight = textColor === "light";
   const textCls = isLight ? "text-primary-foreground" : "text-text-primary";
   const overlayCls = isLight ? "bg-black/50" : "bg-white/40";
+  const HeadingTag = headingLevel === 1 ? "h1" : "h2";
 
   if (variant === "full" && backgroundImageUrl) {
     return (
@@ -44,7 +48,7 @@ export function HeroSection({
               textPosition === "center" ? "text-center mx-auto" : textPosition === "right" ? "text-right ml-auto" : ""
             }`}
           >
-            <h1 className={`text-3xl md:text-5xl font-bold mb-4 ${textCls}`}>{heading}</h1>
+            <HeadingTag className={`mb-4 ${textCls}`}>{heading}</HeadingTag>
             {subheading && <p className={`text-lg md:text-xl mb-6 ${isLight ? "text-primary-foreground/90" : "text-text-muted"}`}>{subheading}</p>}
             {cta?.text && (
               <Link
@@ -65,11 +69,46 @@ export function HeroSection({
     );
   }
 
+  if (variant === "split" && backgroundImageUrl) {
+    return (
+      <section className="py-10 lg:py-14 bg-white">
+        <div className="section-container">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <div className="relative rounded-xl overflow-hidden bg-muted aspect-[4/3] min-h-[240px] order-2 lg:order-1">
+              <ImageWithFallback
+                src={backgroundImageUrl}
+                alt=""
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex flex-col justify-center order-1 lg:order-2 text-left">
+              <HeadingTag className="mb-4 tracking-tight">
+                {heading}
+              </HeadingTag>
+              {subheading && (
+                <p className="text-lg text-text-muted mb-6">{subheading}</p>
+              )}
+              {cta?.text && (
+                <Link
+                  href={cta.url?.startsWith("http") ? cta.url : `/${locale}/${(cta.url ?? "categories").replace(/^\//, "")}`}
+                  className="inline-flex items-center gap-2 h-12 px-8 text-base font-medium rounded-lg bg-primary text-primary-foreground hover:opacity-90 border-2 border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  {cta.text}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-12 lg:py-16 bg-surface-muted/50">
       <div className="section-container">
         <div className={`max-w-3xl ${textPosition === "center" ? "text-center mx-auto" : ""}`}>
-          <h1 className="text-3xl lg:text-5xl font-bold text-primary mb-4">{heading}</h1>
+          <HeadingTag className="mb-4 text-primary">{heading}</HeadingTag>
           {subheading && <p className="text-text-muted mb-6">{subheading}</p>}
           {cta?.text && (
             <Link
