@@ -1,0 +1,25 @@
+---
+description: Secrets, auth boundaries, safe defaults across apps
+alwaysApply: true
+---
+
+# Security
+
+## Secrets
+
+- Never commit API keys, tokens, passwords, or real `.env` values. Use `env.example` / `env.template` for names only.
+- Do not log or echo secrets; redact in examples and docs.
+
+## APIs
+
+- **Medusa store API:** assume **untrusted clients**; validate input, enforce customer/session rules on protected routes, avoid leaking internal IDs or stack traces in production errors.
+- **Admin / Payload:** require authentication for destructive or sensitive operations; do not expose admin-only fields on public REST/GraphQL responses.
+
+## Storefront
+
+- Server-only secrets stay in server components, route handlers, or server actions — never `NEXT_PUBLIC_*` unless intentionally public (e.g. publishable key).
+- OAuth/callback URLs and redirect validation: follow existing auth patterns in the repo.
+
+## Dependencies
+
+- Prefer pinned or lockfile-resolved versions for production; review new packages for supply-chain risk when adding sensitive paths (payment, auth).

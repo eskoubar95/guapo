@@ -1,0 +1,73 @@
+---
+description: File size limits, splitting React/Next code, TypeScript & React hygiene (all apps)
+alwaysApply: true
+---
+
+# Code structure & hygiene (React, Next.js, TypeScript)
+
+Applies to **all** React/Next/TypeScript UI in the repo (storefront, CMS, admin dashboards, shared components). Use when writing or refactoring UI and adjacent logic so files stay maintainable.
+
+## File size — when to stop growing
+
+| Context | Guideline |
+|---------|-----------|
+| Page or multi-step flow (checkout, wizard, settings) | **≤ ~250 lines** in the route entry; move steps out |
+| Single-purpose component (card, form section, modal) | **≤ ~150 lines**; split sections into child components |
+| Hooks (`use*.ts`) | **≤ ~120 lines**; compose smaller hooks |
+| Pure utilities / mappers (`lib/*.ts`) | **≤ ~400 lines**; split by domain (`cart-*.ts`, `checkout-*.ts`) |
+| **Red flag** | **> ~400 lines** in one `.tsx`: treat as tech debt — split before adding features |
+
+These are targets, not hard CI limits; the goal is **one clear responsibility per file**.
+
+## How to split (without creating a mess)
+
+1. **By UI slice** — e.g. checkout: `ShippingStep.tsx`, `ReviewStep.tsx`, `PaymentStep.tsx` + thin `CheckoutSteps.tsx` that only wires step state.
+2. **By hook** — stateful logic → `useCheckoutShipping.ts`, `usePickupPoints.ts`; components mostly render + call hooks.
+3. **By types** — shared props/DTOs → `checkout.types.ts` or colocated `types.ts` in the feature folder.
+4. **By server data** — async loaders in `lib/` or `getXxxData.ts`; keep `page.tsx` as composition + `generateMetadata`, not 200 lines of fetch/transform.
+
+Prefer **feature folders** over one giant file:
+
+```text
+components/checkout/
+  CheckoutSteps.tsx          # thin orchestrator
+  steps/
+    ShippingStep.tsx
+    ReviewStep.tsx
+  hooks/
+    usePickupPoints.ts
+  checkout.types.ts
+```
+
+## Next.js App Router
+
+- **`page.tsx` / `layout.tsx`:** async server component when possible; delegate to small components and shared loaders.
+- **`'use client'`:** push to **leaf** files (inputs, buttons, Stripe wrapper); keep parents as server components that pass serializable props.
+- **Colocation:** optional `_components/` under a route segment for page-only UI.
+- **Do not** duplicate the same fetch in layout + page without **`React.cache()`** on the shared loader.
+
+## React good practice
+
+- **Do not** define components **inside** another component’s body (new function identity every render → remounts, broken state).
+- **Do not** inline huge JSX blocks — extract named components or `renderX()` only if static; prefer separate files for non-trivial blocks.
+- **Lists:** map to a small **row/presentational** component in its own file when rows have logic or > ~15 lines of JSX.
+- **Props:** prefer explicit interfaces; avoid passing entire API responses when only 3 fields are needed (smaller client bundles, clearer contracts).
+
+## TypeScript
+
+- **Props / API shapes:** `interface` for object shapes; keep near usage or in `*.types.ts`.
+- **Avoid `any`** — use `unknown` + narrowing or Zod-inferred types where validated.
+- **Enums:** prefer `as const` objects + union type unless enum is required by an external API.
+- **Pure helpers** (formatting, mapping): `function` keyword, single responsibility, easy to unit test.
+
+## Imports & barrels
+
+- Prefer **direct imports** from the module you need (e.g. `@/components/ui/button`) to avoid pulling large barrels into client bundles.
+- Shared UI stays in `components/ui/` (Shadcn/Radix); feature-specific UI in `components/<feature>/`.
+
+## Summary checklist before merging large UI work
+
+- [ ] No new **400+ line** `.tsx` files; existing giants shrink when touched.
+- [ ] Steps / tabs / accordions split into **named files**, not one mega return.
+- [ ] Heavy logic lives in **hooks** or **server loaders**, not inline in JSX.
+- [ ] Client boundary is **minimal** (small `'use client'` leaves).

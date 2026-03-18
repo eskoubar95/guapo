@@ -1,0 +1,24 @@
+---
+description: Monorepo boundaries — storefront, Medusa commerce, Payload CMS
+alwaysApply: true
+---
+
+# Architecture
+
+## Apps
+
+| App | Path | Role |
+|-----|------|------|
+| Storefront | `apps/storefront` | Next.js customer UI, i18n routes, composes Medusa + Payload data |
+| Commerce | `apps/commerce` | Medusa — carts, orders, payments, subscriptions, shipping, product catalog for sale |
+| CMS | `apps/cms` | Payload — pages, articles, navigation, homepage, editorial product copy; live preview to storefront |
+
+## Source of truth
+
+- **Prices, inventory, cart, checkout, orders, subscriptions, shipping options:** Medusa only.
+- **Marketing copy, SEO text, layout content, nav/footer, homepage sections:** Payload. Reference Medusa entities by ID/handle where needed; do not duplicate commerce state in CMS.
+- **Customer-facing URLs:** Storefront (`/da/...`, `/en/...`).
+
+## Cross-app changes
+
+When a feature touches more than one app, state which app owns persistence and which only reads/displays. Avoid implementing the same business rule in both Medusa and Payload.
