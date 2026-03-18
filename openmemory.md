@@ -34,9 +34,17 @@ This file is a lightweight index of project facts and conventions that are usefu
 - **Commerce backend**: Medusa (products, carts, orders, subscriptions)
 - **CMS**: Payload (static pages, blog/articles, landing pages, nav/footer links, PDP guidance fields, homepage composition via page builder)
 - **Payments**: Stripe (recurring required for subscriptions)
-- **Shipping**: Shipmondo (parcel shop only in MVP; GLS+DAO; flat rate 39 DKK; returns 14 days, customer-paid label)
+- **Shipping**: Shipmondo pakkeshop (GLS/DAO/PostNord); priser via `calculatePrice` + **price_bands** / flat i option-JSON; vægt fra context eller DB (`cart_line_item`×`product_variant.weight`). Flat 39 DKK kun fallback uden bands/vægt.
 - **Hosting/DB**: Railway for compute (storefront + medusa-server + medusa-worker + payload + redis); Supabase Postgres for DB; Railway Redis for Medusa requirements
 - **Supplier**: Qogita (investigation; decision later)
+
+## Cursor rules (`.cursor/rules/`)
+- **architecture.mdc** — monorepo boundaries (always apply).
+- **medusa-commerce.mdc** — `apps/commerce/**`: workflows, Zod, layer patterns.
+- **storefront-next.mdc** — `apps/storefront/**`: RSC, SDK, parallel fetch, file size.
+- **payload-cms.mdc** — `apps/cms/**`: access control, locales, content vs commerce.
+- **security.mdc** — secrets and API boundaries (always apply).
+- **code-structure.mdc** — file size targets, splitting Next/React features, TypeScript hygiene (always apply; all apps).
 
 ## Patterns
 - **Focus styling**: Do **not** use focus rings. Use **active/focus borders** as the focus indicator (especially on inputs). See `spec/07-design-system.md`.

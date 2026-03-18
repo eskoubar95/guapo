@@ -13,7 +13,7 @@ export function getFreeShippingThresholdDkk(): number {
   return Number.isFinite(n) && n > 0 ? n : DEFAULT_THRESHOLD_DKK;
 }
 
-/** Cart totals from Medusa are in øre. Use this for comparison with threshold. */
+/** Returns threshold in øre (minor units) – useful if an øre-based amount needs comparing. */
 export function getFreeShippingThresholdOre(): number {
   return getFreeShippingThresholdDkk() * 100;
 }

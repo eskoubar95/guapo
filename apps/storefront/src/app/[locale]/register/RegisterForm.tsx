@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { medusa } from "@/lib/medusa";
+import { getSafeReturnUrl } from "@/lib/auth-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,9 +23,11 @@ interface RegisterFormProps {
   labels: AuthLabels;
   /** When provided, called on success instead of navigating to account (e.g. for modal flow). */
   onSuccess?: () => void;
+  /** After register, redirect here if valid (same-origin path). */
+  returnUrl?: string;
 }
 
-export function RegisterForm({ locale, labels, onSuccess }: RegisterFormProps) {
+export function RegisterForm({ locale, labels, onSuccess, returnUrl }: RegisterFormProps) {
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -32,6 +35,9 @@ export function RegisterForm({ locale, labels, onSuccess }: RegisterFormProps) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const defaultDestination = `/${locale}/account`;
+  const destination = getSafeReturnUrl(returnUrl, defaultDestination);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +77,7 @@ export function RegisterForm({ locale, labels, onSuccess }: RegisterFormProps) {
         onSuccess();
         router.refresh();
       } else {
-        router.push(`/${locale}/account`);
+        router.push(destination);
         router.refresh();
       }
     } catch {

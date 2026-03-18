@@ -34,6 +34,18 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
     });
   }
 
+  const MINIMUM_COMMITMENT_DELIVERIES = 2;
+  const deliveryCount = subscription.delivery_count ?? 0;
+  if (deliveryCount < MINIMUM_COMMITMENT_DELIVERIES) {
+    return res.status(400).json({
+      message:
+        "Du skal modtage mindst to leveringer, før du kan afslutte abonnementet.",
+      code: "MINIMUM_COMMITMENT_NOT_MET",
+      delivery_count: deliveryCount,
+      minimum_required: MINIMUM_COMMITMENT_DELIVERIES,
+    });
+  }
+
   const updated = await subscriptionService.cancel(id);
   res.json({ subscription: updated });
 };

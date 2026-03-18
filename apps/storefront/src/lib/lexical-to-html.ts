@@ -1,6 +1,6 @@
 /**
  * Minimal Lexical JSON to HTML serializer for Payload CMS richText fields.
- * Handles root, paragraph, text, heading, list, link. Safe for dangerouslySetInnerHTML.
+ * Handles root, paragraph, text, heading, list, link, table. Safe for dangerouslySetInnerHTML.
  */
 
 type LexicalNode = {
@@ -59,6 +59,21 @@ function renderNode(node: LexicalNode): string {
     }
     case "linebreak":
       return "<br />";
+    case "table":
+      return children
+        ? `<table class="w-full border-collapse border border-border my-4 text-left text-sm"><tbody>${children}</tbody></table>`
+        : "";
+    case "tablerow":
+      return children ? `<tr class="border-b border-border">${children}</tr>` : "";
+    case "tablecell": {
+      const headerState = typeof (node as { headerState?: number }).headerState === "number" ? (node as { headerState: number }).headerState : 0;
+      const tag = headerState > 0 ? "th" : "td";
+      const cellClass =
+        tag === "th"
+          ? "border border-border bg-surface px-3 py-2 font-semibold"
+          : "border border-border px-3 py-2";
+      return children ? `<${tag} class="${cellClass}">${children}</${tag}>` : `<${tag} class="${cellClass}"></${tag}>`;
+    }
     default:
       return children || text;
   }

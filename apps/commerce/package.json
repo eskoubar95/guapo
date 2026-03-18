@@ -8,7 +8,12 @@
     "build": "medusa build",
     "seed": "medusa exec ./src/scripts/seed.ts",
     "sync:payload": "medusa exec ./src/scripts/sync-payload-products.ts",
+    "sync:shipmondo": "medusa exec ./src/scripts/sync-shipmondo-options.ts",
+    "link:shipmondo": "medusa exec ./src/scripts/link-shipmondo-to-location.ts",
     "simulate-renewal": "medusa exec ./src/scripts/simulate-renewal.ts",
+    "simulate-subscription-from-order": "medusa exec ./src/scripts/simulate-subscription-from-order.ts",
+    "simulate-e2e": "medusa exec ./src/scripts/simulate-e2e-subscription.ts",
+    "seed-subscription-promo": "medusa exec ./src/scripts/seed-subscription-promotion.ts",
     "start": "medusa start",
     "dev": "medusa develop",
     "db:setup": "medusa db:setup",
@@ -19,8 +24,6 @@
     "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit --passWithNoTests"
   },
   "dependencies": {
-    "react-router-dom": "^6.30.3",
-    "stripe": "^17.4.0",
     "@lambdacurry/medusa-product-reviews": "^1.3.0",
     "@medusajs/admin-sdk": "2.13.1",
     "@medusajs/admin-shared": "2.13.1",
@@ -32,9 +35,13 @@
     "@medusajs/icons": "2.13.1",
     "@medusajs/medusa": "2.13.1",
     "@medusajs/types": "2.13.1",
-    "@medusajs/ui": "4.1.1"
+    "@medusajs/ui": "4.1.1",
+    "pg": "^8.16.3",
+    "react-router-dom": "^6.30.3",
+    "stripe": "^17.4.0"
   },
   "devDependencies": {
+    "@types/pg": "^8.11.10",
     "@medusajs/test-utils": "latest",
     "@swc/core": "^1.5.7",
     "@swc/jest": "^0.2.36",

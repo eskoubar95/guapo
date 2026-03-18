@@ -1,0 +1,373 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import type { StoreOrderDetail, StoreOrderDetailItem } from "@/lib/orders";
+import type { Dictionary } from "@/i18n/dictionaries";
+
+const ORDER_STORAGE_KEY = "guapo_order_";
+
+function toMajor(amount: number | undefined): number {
+  if (amount == null) return 0;
+  return amount / 100;
+}
+
+/** If value looks like major units (e.g. 150 or 150.5 for DKK), convert to minor for consistent display. */
+function ensureMinorAmount(value: number | undefined, fromSessionStorage: boolean): number | undefined {
+  if (value == null || !fromSessionStorage) return value;
+  if (typeof value !== "number" || !Number.isFinite(value)) return value;
+  if (value >= 10000) return value;
+  if (value > 0 && value < 100000) return Math.round(value * 100);
+  return value;
+}
+
+/** Normalize order from sessionStorage or API (may be camelCase or partial). When fromSessionStorage, amounts may be in major units. */
+function normalizeOrder(raw: unknown, fromSessionStorage = false): StoreOrderDetail | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const id = String(o.id ?? "");
+  if (!id) return null;
+  const rawItems = Array.isArray(o.items) ? (o.items as Record<string, unknown>[]) : [];
+  const items = rawItems.map((item) => {
+    const up = item.unit_price as number | undefined;
+    const tot = item.total as number | undefined;
+    return {
+      id: String(item.id ?? ""),
+      title: item.title as string | undefined,
+      variant_id: item.variant_id as string | undefined,
+      quantity: item.quantity as number | undefined,
+      unit_price: ensureMinorAmount(up, fromSessionStorage) ?? up,
+      total: ensureMinorAmount(tot, fromSessionStorage) ?? tot,
+      metadata: (item.metadata as Record<string, unknown>) ?? {},
+      is_subscription_line:
+        typeof (item.metadata as Record<string, unknown>)?.subscription_cycle === "number" ||
+        Boolean(item.is_subscription_line),
+    };
+  });
+  const totalRaw = o.total as number | undefined;
+  const shippingRaw = (o.shipping_total ?? (o as Record<string, unknown>).shippingTotal) as number | undefined;
+  return {
+    id,
+    display_id: o.display_id as number | undefined,
+    status: o.status as string | undefined,
+    created_at: (o.created_at ?? (o as Record<string, unknown>).createdAt) as string | undefined,
+    total: ensureMinorAmount(totalRaw, fromSessionStorage) ?? totalRaw,
+    currency_code: (o.currency_code ?? (o as Record<string, unknown>).currency_code) as string | undefined,
+    shipping_total: ensureMinorAmount(shippingRaw, fromSessionStorage) ?? shippingRaw,
+    shipping_address: (o.shipping_address ?? (o as Record<string, unknown>).shipping_address) as Record<string, unknown> | undefined,
+    is_renewal: Boolean(o.is_renewal),
+    items,
+    tracking_url: (o.tracking_url as string | null) ?? null,
+    tracking_number: (o.tracking_number as string | null) ?? null,
+    metadata: (o.metadata as Record<string, unknown>) ?? undefined,
+  };
+}
+
+function formatShippingAddress(addr: Record<string, unknown> | undefined): string {
+  if (!addr || typeof addr !== "object") return "";
+  const parts = [
+    addr.address_1,
+    addr.address_2,
+    [addr.postal_code, addr.city].filter(Boolean).join(" "),
+    addr.province,
+    addr.country_code,
+  ].filter((p) => p != null && String(p).trim() !== "");
+  return parts.map((p) => String(p)).join(", ");
+}
+
+interface OrderConfirmationContentProps {
+  orderId: string;
+  locale: string;
+  dict: Dictionary;
+  initialOrder: StoreOrderDetail | null;
+}
+
+export function OrderConfirmationContent({
+  orderId,
+  locale,
+  dict,
+  initialOrder,
+}: OrderConfirmationContentProps) {
+  const [order, setOrder] = useState<StoreOrderDetail | null>(initialOrder);
+  const [loading, setLoading] = useState(!initialOrder);
+
+  useEffect(() => {
+    if (initialOrder) {
+      setOrder(initialOrder);
+      setLoading(false);
+      return;
+    }
+    let done = false;
+    try {
+      const stored = sessionStorage.getItem(`${ORDER_STORAGE_KEY}${orderId}`);
+      if (stored) {
+        const parsed = JSON.parse(stored) as unknown;
+        const normalized = normalizeOrder(parsed, true);
+        if (normalized) {
+          setOrder(normalized);
+          sessionStorage.removeItem(`${ORDER_STORAGE_KEY}${orderId}`);
+          done = true;
+        }
+      }
+    } catch (_) {}
+    if (!done) {
+      const base = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "";
+      const key = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "";
+      if (base && typeof window !== "undefined") {
+        fetch(`${base.replace(/\/$/, "")}/store/orders/${encodeURIComponent(orderId)}`, {
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+            ...(key && { "x-publishable-api-key": key }),
+          },
+        })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data: { order?: unknown } | null) => {
+            if (data?.order) {
+              const normalized = normalizeOrder(data.order);
+              if (normalized) setOrder(normalized);
+            }
+          })
+          .catch(() => {});
+      }
+    }
+    setLoading(false);
+  }, [orderId, initialOrder]);
+
+  const oc = dict.orderConfirmation;
+  const hasOrder = !!order && (order.items?.length ?? 0) > 0;
+  const hasSubscriptionLines =
+    hasOrder && !!order?.items?.some((i: StoreOrderDetailItem) => i.is_subscription_line);
+  const showSubscription = hasSubscriptionLines || order?.is_renewal === true;
+  const deliveryAddress = formatShippingAddress(order?.shipping_address);
+  const itemsSubtotal =
+    hasOrder && order
+      ? (order.items ?? []).reduce(
+          (sum, i) => sum + (i.total ?? (i.unit_price ?? 0) * (i.quantity ?? 1)),
+          0
+        )
+      : 0;
+
+  const formatPrice = (amount: number, currencyCode?: string) => {
+    const currency = (currencyCode ?? "dkk").toUpperCase();
+    return new Intl.NumberFormat(locale === "da" ? "da-DK" : "en-US", {
+      style: "currency",
+      currency: currency === "DKK" ? "DKK" : currency,
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const formatDate = (dateStr: string | undefined) => {
+    if (!dateStr) return "–";
+    return new Date(dateStr).toLocaleDateString(locale === "da" ? "da-DK" : "en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <span className="sr-only">{oc.confirming}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-6 pb-8">
+      {/* Order number + meta */}
+      <div className="rounded-xl border border-border bg-card px-5 py-5 sm:px-6 sm:py-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{oc.orderNumber}</span>
+            <span className="font-mono text-lg font-semibold text-foreground">
+              #{order?.display_id ?? orderId.slice(-12)}
+            </span>
+            {order?.is_renewal && (
+              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                {dict.account?.orderRenewalLabel ??
+                  (locale === "da" ? "Abonnementsfornyelse" : "Subscription renewal")}
+              </span>
+            )}
+          </div>
+          <dl className="flex flex-wrap gap-6 text-sm">
+            <div>
+              <dt className="text-xs text-muted-foreground">{oc.orderDate}</dt>
+              <dd className="font-medium text-foreground">{formatDate(order?.created_at)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">{oc.status}</dt>
+              <dd className="font-medium text-foreground capitalize">{order?.status ?? "–"}</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
+      {!order && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
+          {oc.orderLoadError}{" "}
+          <Link href={`/${locale}/account/orders`} className="font-medium underline">
+            {dict.account?.orders ?? (locale === "da" ? "Mine ordre" : "My orders")}
+          </Link>
+        </div>
+      )}
+
+      {hasOrder && order && (
+        <>
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="border-b border-border bg-muted/40 px-5 py-3.5 sm:px-6">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {oc.summary}
+              </h2>
+            </div>
+            <div className="p-5 sm:p-6">
+              <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">{oc.items}</h3>
+              <ul className="divide-y divide-border">
+                {order.items.map((item) => (
+                  <li
+                    key={item.id}
+                    className="flex flex-col gap-1 py-4 first:pt-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium text-foreground">
+                        {item.quantity ?? 1}× {item.title ?? "–"}
+                      </span>
+                      {item.is_subscription_line && (
+                        <span className="ml-2 inline-flex rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                          {dict.account?.orderSubscriptionLineLabel ??
+                            (locale === "da" ? "Abonnement" : "Subscription")}
+                        </span>
+                      )}
+                      {item.unit_price != null && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {formatPrice(toMajor(item.unit_price), order.currency_code)}{" "}
+                          {locale === "da" ? "pr. stk." : "each"}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-sm font-semibold text-foreground tabular-nums shrink-0">
+                      {formatPrice(
+                        toMajor(item.total ?? (item.unit_price ?? 0) * (item.quantity ?? 1)),
+                        order.currency_code
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <dl className="mt-5 space-y-2.5 border-t border-border pt-5 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">{oc.subtotal}</dt>
+                  <dd className="font-medium text-foreground tabular-nums">
+                    {formatPrice(toMajor(itemsSubtotal), order.currency_code)}
+                  </dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">{oc.shipping}</dt>
+                  <dd className="font-medium text-foreground tabular-nums">
+                    {order.shipping_total != null
+                      ? toMajor(order.shipping_total) === 0
+                        ? oc.freeShipping
+                        : formatPrice(toMajor(order.shipping_total), order.currency_code)
+                      : oc.freeShipping}
+                  </dd>
+                </div>
+                <div className="flex justify-between border-t border-border pt-4 text-base font-semibold">
+                  <dt className="text-foreground">{oc.total}</dt>
+                  <dd className="text-foreground tabular-nums">
+                    {formatPrice(toMajor(order.total), order.currency_code)}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          {deliveryAddress && (
+            <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                {oc.deliveryAddress}
+              </h3>
+              <p className="text-sm text-foreground leading-relaxed">{deliveryAddress}</p>
+            </div>
+          )}
+
+          {order.metadata && (order.metadata.payment_last4 != null || order.metadata.payment_brand != null) && (
+            <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                {oc.paymentMethod}
+              </h3>
+              <dl className="space-y-1.5 text-sm">
+                {order.metadata.payment_brand != null && (
+                  <div>
+                    <dt className="text-muted-foreground">{oc.paymentCardBrand}</dt>
+                    <dd className="font-medium text-foreground capitalize">
+                      {String(order.metadata.payment_brand).toLowerCase()}
+                    </dd>
+                  </div>
+                )}
+                {order.metadata.payment_last4 != null && (
+                  <div>
+                    <dt className="text-muted-foreground">{oc.paymentCardEnding}</dt>
+                    <dd className="font-mono font-medium text-foreground">
+                      •••• {String(order.metadata.payment_last4)}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+          )}
+
+          {showSubscription && (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 sm:p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-primary mb-2">{oc.subscriptionTitle}</h3>
+              <p className="text-sm text-muted-foreground mb-4">{oc.subscriptionText}</p>
+              <Link
+                href={`/${locale}/account/subscriptions`}
+                className="inline-flex items-center text-sm font-medium text-primary hover:underline"
+              >
+                {oc.manageSubscriptions} →
+              </Link>
+            </div>
+          )}
+
+          {order.tracking_url && (
+            <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                {oc.tracking}
+              </h3>
+              {order.tracking_number && (
+                <p className="text-sm text-muted-foreground mb-2 font-mono">
+                  {order.tracking_number}
+                </p>
+              )}
+              <a
+                href={order.tracking_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex text-sm font-medium text-primary hover:underline"
+              >
+                {oc.trackPackage} →
+              </a>
+            </div>
+          )}
+        </>
+      )}
+
+      <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-center sm:gap-4">
+        <Link
+          href={`/${locale}/account/orders/${orderId}`}
+          className="inline-flex justify-center rounded-lg border border-input bg-background px-6 py-3.5 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+        >
+          {oc.viewOrder}
+        </Link>
+        <Link
+          href={`/${locale}/categories`}
+          className="inline-flex justify-center rounded-lg bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+        >
+          {oc.continueShopping}
+        </Link>
+      </div>
+    </div>
+  );
+}

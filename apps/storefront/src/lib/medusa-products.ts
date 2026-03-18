@@ -12,6 +12,9 @@ const MEDUSA_URL =
 const CACHE_TTL_MS = 60 * 1000;
 const cache = new Map<string, { data: unknown; expires: number }>();
 
+let cachedRegionId: string | null = null;
+let regionIdExpires = 0;
+
 function getCached<T>(key: string): T | null {
   const entry = cache.get(key);
   if (!entry || Date.now() > entry.expires) return null;
@@ -27,6 +30,36 @@ function medusaHeaders(): HeadersInit {
   const key = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
   if (key) headers["x-publishable-api-key"] = key;
   return headers;
+}
+
+async function getRegionId(): Promise<string | null> {
+  if (cachedRegionId && Date.now() < regionIdExpires) return cachedRegionId;
+  try {
+    const res = await fetch(`${MEDUSA_URL}/regions?currency_code=dkk`, {
+      headers: medusaHeaders(),
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const regions = data.regions ?? data;
+    const id = Array.isArray(regions) ? regions[0]?.id : regions?.id;
+    if (id) {
+      cachedRegionId = id;
+      regionIdExpires = Date.now() + 5 * 60 * 1000;
+    }
+    return id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function appendPricingParams(params: URLSearchParams): Promise<void> {
+  return getRegionId().then((regionId) => {
+    if (regionId) {
+      params.set("region_id", regionId);
+      params.set("country_code", "dk");
+    }
+  });
 }
 
 type BrandInfo = { name: string; handle: string };
@@ -65,7 +98,12 @@ interface MedusaProductResponse {
   variants?: Array<{
     id?: string;
     title?: string;
-    calculated_price?: { calculated_amount?: number };
+    calculated_price?: {
+      calculated_amount?: number;
+      calculated_amount_with_tax?: number;
+      is_calculated_price_tax_inclusive?: boolean;
+    };
+    options?: Array<{ id?: string; value?: string; option?: { title?: string } }>;
   }>;
   categories?: Array<{ id?: string; handle?: string; name?: string }>;
 }
@@ -74,7 +112,7 @@ async function mapMedusaToProduct(p: MedusaProductResponse): Promise<Product> {
   const img = p.images?.[0]?.url ?? p.thumbnail ?? "";
   const firstVariant = p.variants?.[0];
   const priceObj = firstVariant?.calculated_price;
-  const amount = priceObj?.calculated_amount;
+  const amount = priceObj?.calculated_amount_with_tax ?? priceObj?.calculated_amount;
   const priceDkk = amount != null ? Math.round(amount) : 0;
 
   const rawVariant = firstVariant?.title ?? "";
@@ -134,6 +172,7 @@ export async function fetchProductsByCategory(
       limit: "50",
       fields: "id,handle,title,subtitle,metadata,thumbnail,*images.url,*variants.title,*variants.calculated_price,*brand.*",
     });
+    await appendPricingParams(params);
     if (_sort === "price-asc") params.set("order", "variants.calculated_price:asc");
     else if (_sort === "price-desc") params.set("order", "variants.calculated_price:desc");
     else if (_sort === "newest") params.set("order", "created_at:desc");
@@ -169,6 +208,7 @@ export async function fetchProductByHandle(handle: string): Promise<MedusaProduc
       fields:
         "id,handle,title,subtitle,metadata,thumbnail,*images.url,*variants.id,*variants.title,*variants.calculated_price,*variants.options,*brand.id,*brand.handle,*brand.name,*categories.id,*categories.handle,*categories.name",
     });
+    await appendPricingParams(params);
     const res = await fetch(`${MEDUSA_URL}/products?${params}`, {
       headers: medusaHeaders(),
       next: { revalidate: 60 },
@@ -208,6 +248,11 @@ export async function fetchProductsByBrand(
 
   try {
     const url = new URL(`${MEDUSA_URL}/products/by-brand/${encodeURIComponent(brandHandle)}`);
+    const regionId = await getRegionId();
+    if (regionId) {
+      url.searchParams.set("region_id", regionId);
+      url.searchParams.set("country_code", "dk");
+    }
     if (_sort === "price-asc") url.searchParams.set("order", "variants.calculated_price:asc");
     else if (_sort === "price-desc") url.searchParams.set("order", "variants.calculated_price:desc");
     else if (_sort === "newest") url.searchParams.set("order", "created_at:desc");
@@ -249,6 +294,7 @@ export async function fetchRelatedProducts(
       limit: String(Math.min(limit + 5, 50)),
       fields: PRODUCT_FIELDS,
     });
+    await appendPricingParams(params);
     const res = await fetch(`${MEDUSA_URL}/products?${params}`, {
       headers: medusaHeaders(),
       next: { revalidate: 60 },
@@ -286,6 +332,7 @@ export async function fetchRandomProducts(
       offset: "0",
       fields: PRODUCT_FIELDS,
     });
+    await appendPricingParams(params);
     const res = await fetch(`${MEDUSA_URL}/products?${params}`, {
       headers: medusaHeaders(),
       next: { revalidate: 60 },
@@ -319,6 +366,7 @@ export async function fetchProductsBoughtTogether(
 
   try {
     const params = new URLSearchParams({ limit: String(limit), fields: PRODUCT_FIELDS });
+    await appendPricingParams(params);
     const res = await fetch(`${MEDUSA_URL}/products-bought-together/${productId}?${params}`, {
       headers: medusaHeaders(),
       next: { revalidate: 60 },
@@ -354,6 +402,7 @@ export async function fetchProductsByQuery(
       limit: String(limit),
       fields: PRODUCT_FIELDS,
     });
+    await appendPricingParams(params);
     const res = await fetch(`${MEDUSA_URL}/products?${params}`, {
       headers: medusaHeaders(),
       next: { revalidate: 30 },

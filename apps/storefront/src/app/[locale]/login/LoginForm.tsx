@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { medusa } from "@/lib/medusa";
+import { getSafeReturnUrl } from "@/lib/auth-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,15 +25,20 @@ interface LoginFormProps {
   labels: AuthLabels;
   /** When provided, called on success instead of navigating to account (e.g. for modal flow). */
   onSuccess?: () => void;
+  /** After login, redirect here if valid (same-origin path). */
+  returnUrl?: string;
 }
 
-export function LoginForm({ locale, labels, onSuccess }: LoginFormProps) {
+export function LoginForm({ locale, labels, onSuccess, returnUrl }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const defaultDestination = `/${locale}/account`;
+  const destination = getSafeReturnUrl(returnUrl, defaultDestination);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +59,7 @@ export function LoginForm({ locale, labels, onSuccess }: LoginFormProps) {
         onSuccess();
         router.refresh();
       } else {
-        router.push(`/${locale}/account`);
+        router.push(destination);
         router.refresh();
       }
     } catch {
@@ -67,8 +73,11 @@ export function LoginForm({ locale, labels, onSuccess }: LoginFormProps) {
     setError(null);
     setGoogleLoading(true);
     try {
-      const callbackUrl = typeof window !== "undefined" ? `${window.location.origin}/${locale}/auth/google/callback` : "";
-      const result = await medusa.auth.login("customer", "google", callbackUrl ? { callback_url: callbackUrl } : {});
+      const baseCallback = typeof window !== "undefined" ? `${window.location.origin}/${locale}/auth/google/callback` : "";
+      if (typeof window !== "undefined" && returnUrl) {
+        sessionStorage.setItem("guapo_google_return_url", returnUrl);
+      }
+      const result = await medusa.auth.login("customer", "google", baseCallback ? { callback_url: baseCallback } : {});
       if (typeof result === "object" && result.location) {
         window.location.href = result.location;
         return;
@@ -78,7 +87,7 @@ export function LoginForm({ locale, labels, onSuccess }: LoginFormProps) {
           onSuccess();
           router.refresh();
         } else {
-          router.push(`/${locale}/account`);
+          router.push(destination);
           router.refresh();
         }
         return;

@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { medusa } from "@/lib/medusa";
+import { getSafeReturnUrl } from "@/lib/auth-utils";
 
 /**
  * Decode JWT payload without verification (Medusa already validated the token).
@@ -30,6 +31,13 @@ export default function GoogleCallbackPage() {
     let cancelled = false;
     const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
     const queryParams = Object.fromEntries(searchParams.entries());
+    const returnUrlFromQuery = searchParams.get("returnUrl") ?? "";
+    const returnUrlFromStorage = typeof window !== "undefined" ? sessionStorage.getItem("guapo_google_return_url") : null;
+    if (typeof window !== "undefined" && returnUrlFromStorage) {
+      sessionStorage.removeItem("guapo_google_return_url");
+    }
+    const returnUrl = returnUrlFromQuery || returnUrlFromStorage || "";
+    const destination = getSafeReturnUrl(returnUrl, `/${locale}/account`);
 
     const validateCallback = async () => {
       try {
@@ -47,7 +55,7 @@ export default function GoogleCallbackPage() {
         }
 
         if (!cancelled) {
-          window.location.href = `/${locale}/account`;
+          window.location.href = destination;
         }
       } catch (err) {
         if (!cancelled) {

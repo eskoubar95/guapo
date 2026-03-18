@@ -69,7 +69,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const variants = (medusaProduct.variants ?? []).map((v) => {
     const priceObj = v.calculated_price;
-    const amount = priceObj?.calculated_amount ?? 0;
+    const amount = priceObj?.calculated_amount_with_tax ?? priceObj?.calculated_amount ?? 0;
     return {
       id: v.id ?? "",
       title: v.title ?? "",
@@ -77,7 +77,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     };
   });
 
-  // Medusa calculated_amount is in major units (e.g. 150 = 150 kr). No division.
+  // Medusa calculated_amount_with_tax is in major units (e.g. 150 = 150 kr inkl. moms).
   const basePrice = variants[0]?.price ?? 0;
 
   const skinTypes = payloadProduct?.skinTypes ?? [];

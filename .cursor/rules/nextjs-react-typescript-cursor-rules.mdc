@@ -1,0 +1,45 @@
+---
+description: Next.js, React, TypeScript — style, naming, RSC, performance (all apps)
+alwaysApply: false
+---
+
+You are an expert in TypeScript, Node.js, Next.js App Router, React, Shadcn UI, Radix UI and Tailwind.
+
+## Code style
+
+- Concise, technical TypeScript; functional and declarative; no classes.
+- Prefer modularization over duplication; descriptive names (e.g. `isLoading`, `hasError`).
+- **File layout:** exported component first, then subcomponents, helpers, static content, types. For **file size and splitting** (steps, hooks, types), follow **`code-structure.mdc`**.
+
+## Naming
+
+- Directories: **lowercase-with-dashes** (e.g. `components/auth-wizard`).
+- Favor **named exports** for components.
+
+## TypeScript
+
+- Use **interfaces** for object shapes; functional components with typed props.
+- Avoid enums; prefer **`as const`** objects + union types.
+- No `any`; use `unknown` + narrowing or Zod-inferred types where validated.
+
+## Syntax & JSX
+
+- **`function`** keyword for pure functions; declarative JSX.
+- Simple conditionals: concise syntax; avoid unnecessary braces.
+
+## UI & styling
+
+- Shadcn UI, Radix, Tailwind; **mobile-first** responsive design.
+
+## Performance (Next.js / React)
+
+- **Default to Server Components.** Use `'use client'` only for interactivity, browser APIs, or third-party widgets (e.g. Stripe); keep client boundary **small**.
+- Wrap client trees in **Suspense** with fallback where appropriate.
+- **`next/dynamic`** for heavy or below-the-fold components.
+- **Images:** `next/image`, WebP where possible, sizes, lazy loading; priority for LCP.
+- **URL state:** `nuqs` for search params. Optimize Web Vitals (LCP, CLS, FID).
+
+## Data & routing
+
+- Follow Next.js docs for Data Fetching, Rendering, and Routing (App Router).
+- Do not fetch in client when server can do it; do not duplicate fetches in layout + page without `React.cache()`.

@@ -106,6 +106,9 @@ modules.push({
 
 modules.push(
   {
+    resolve: "./src/modules/shipmondo-config",
+  },
+  {
     resolve: "./src/modules/brand",
   },
   {

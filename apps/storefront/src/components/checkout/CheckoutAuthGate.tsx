@@ -25,8 +25,8 @@ export function CheckoutAuthGate({
   if (needsAuth) {
     return (
       <>
-        <div className="rounded-lg border border-border bg-muted/30 p-8 text-center">
-          <p className="text-lg font-medium text-foreground">
+        <div className="rounded-lg border border-border bg-card p-6 sm:p-8 text-center">
+          <p className="text-base font-medium text-foreground">
             {locale === "da"
               ? "Du skal oprette en konto for at abonnere."
               : "You need to create an account to subscribe."}
@@ -36,14 +36,14 @@ export function CheckoutAuthGate({
               ? "Din kurv indeholder abonnementsprodukter. Log ind eller opret en konto for at fortsætte."
               : "Your cart contains subscription products. Log in or create an account to continue."}
           </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-4">
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
             <button
               type="button"
               onClick={() => {
                 setAuthModalView("login");
                 setAuthModalOpen(true);
               }}
-              className="rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:opacity-90"
+              className="rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary-hover transition-colors"
             >
               {locale === "da" ? "Log ind" : "Log in"}
             </button>
@@ -53,7 +53,7 @@ export function CheckoutAuthGate({
                 setAuthModalView("register");
                 setAuthModalOpen(true);
               }}
-              className="rounded-lg border-2 border-primary px-6 py-3 text-sm font-medium text-primary hover:bg-primary/10"
+              className="rounded-lg border-2 border-primary px-6 py-3 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
             >
               {locale === "da" ? "Opret konto" : "Create account"}
             </button>

@@ -55,12 +55,14 @@ export function ProductCard({ product, locale, className }: ProductCardProps) {
         await refreshCart();
         if (cart?.items?.length) {
           const last = cart.items[cart.items.length - 1];
+          const qty = last.quantity ?? 1;
+          const lineTotal = last.total ?? (last.unit_price ?? 0) * qty;
           openModal({
             productTitle: last.product_title ?? last.title ?? product.name,
             variantTitle: last.variant_title ?? product.variant,
             thumbnail: last.thumbnail ?? product.image,
-            quantity: last.quantity ?? 1,
-            unitPrice: last.unit_price ?? product.price,
+            quantity: qty,
+            unitPrice: qty > 0 ? lineTotal / qty : (last.unit_price ?? product.price),
             cartTotal: cart.total ?? 0,
             itemCount: cart.items.length,
             lineItemId: last.id,

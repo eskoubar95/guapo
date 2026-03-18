@@ -170,23 +170,30 @@ export async function removeLineItem(lineItemId: string) {
   return cart;
 }
 
-/** Set subscription on a line item: removes it and re-adds with or without subscription_cycle metadata. */
+/**
+ * Toggle subscription on a line item by updating its metadata in-place.
+ * Polls the cart briefly after the API call to let the async cart.updated
+ * subscriber finish applying/removing the line item adjustment.
+ */
 export async function setLineItemSubscription(
   lineItemId: string,
-  variantId: string,
+  _variantId: string,
   quantity: number,
   subscriptionCycleWeeks: number | null
 ) {
-  await removeLineItem(lineItemId);
-  try {
-    await addToCart(variantId, quantity, subscriptionCycleWeeks ? { subscription_cycle: subscriptionCycleWeeks } : undefined);
-  } catch (error) {
-    try {
-      await addToCart(variantId, quantity);
-    } catch {
-      // Rollback failed; original error is rethrown
-    }
-    throw error;
+  const metadata = subscriptionCycleWeeks
+    ? { subscription_cycle: subscriptionCycleWeeks }
+    : { subscription_cycle: null };
+
+  await updateLineItem(lineItemId, quantity, metadata);
+
+  const expectDiscount = subscriptionCycleWeeks !== null && subscriptionCycleWeeks > 0;
+  for (let i = 0; i < 5; i++) {
+    await new Promise((r) => setTimeout(r, 250));
+    const cart = await getCart();
+    if (!cart) break;
+    const hasDiscount = (cart.discount_total ?? 0) > 0;
+    if (hasDiscount === expectDiscount) break;
   }
 }
 

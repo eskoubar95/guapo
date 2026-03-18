@@ -108,15 +108,14 @@ export function ProductPurchaseSection({
 
         if (cart?.items?.length) {
           const last = cart.items[cart.items.length - 1];
-          const productTitle = last.product_title ?? last.title ?? "";
-          const variantTitle = last.variant_title ?? last.variant?.title;
-          const thumbnail = last.thumbnail ?? last.variant?.product?.thumbnail;
+          const qty = last.quantity ?? quantity;
+          const lineTotal = last.total ?? (last.unit_price ?? 0) * qty;
           openModal({
-            productTitle,
-            variantTitle,
-            thumbnail,
-            quantity: last.quantity ?? quantity,
-            unitPrice: last.unit_price ?? selectedVariantPrice,
+            productTitle: last.product_title ?? last.title ?? "",
+            variantTitle: last.variant_title ?? last.variant?.title,
+            thumbnail: last.thumbnail ?? last.variant?.product?.thumbnail,
+            quantity: qty,
+            unitPrice: qty > 0 ? lineTotal / qty : (last.unit_price ?? selectedVariantPrice),
             cartTotal: cart.total ?? 0,
             itemCount: cart.items.length,
             lineItemId: last.id,

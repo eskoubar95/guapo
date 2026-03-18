@@ -88,14 +88,38 @@ Jobs:
 
 ### Simulation (Staging)
 
-To test renewal flow without waiting for the cron:
+Use Stripe **test mode** (sk_test_…, pk_test_…) so no real charges occur.
+
+**Test cards (Stripe):**
+- Success: `4242 4242 4242 4242`
+- Decline: `4000 0000 0000 0002`
+
+**1. Simulate subscription creation from an existing order**
+
+If an order was placed with subscription line items but no subscription was created (e.g. before a fix), re-run the subscription-creation logic without a new checkout:
 
 ```bash
-# Get subscription ID from Medusa Admin → Subscriptions
+# From repo root; order_id from Medusa Admin → Orders or from order-confirmation URL
+ORDER_ID=order_01XXX pnpm -C apps/commerce simulate-subscription-from-order
+# Or: pnpm -C apps/commerce simulate-subscription-from-order -- order_01XXX
+```
+
+This emits `order.placed` for that order; the subscriber runs and creates subscription(s) using the order’s Stripe payment (customer + payment_method). Logs show payment_collections, Stripe IDs, and created subscription IDs. Safe to run multiple times (idempotent if order already has subscriptions).
+
+**2. Simulate renewal (charge + new order)**
+
+After you have a subscription ID (from step 1 or from a real checkout):
+
+```bash
 SUBSCRIPTION_ID=sub_xxx pnpm -C apps/commerce simulate-renewal
 # Or: pnpm -C apps/commerce simulate-renewal -- sub_xxx
 ```
 
-**Test cards (Stripe):**
-- Success: 4242 4242 4242 4242
-- Decline: 4000 0000 0000 0002
+This runs the renewal workflow: Stripe off-session charge → create Medusa order → advance `next_renewal_at`. Use test mode so the charge is a test payment.
+
+### E2E verification checklist (automatic renewal)
+
+1. **Initial subscription order:** Log in, add a product as subscription (e.g. 8 weeks), complete checkout with test card 4242… Success. In Medusa Admin → Subscriptions, confirm one active subscription with `stripe_customer_id` and `stripe_payment_method_id` set.
+2. **Simulate renewal:** Run `pnpm -C apps/commerce simulate-renewal` with that subscription ID. Confirm a new order is created and linked to the subscription; `next_renewal_at` advances.
+3. **Failure path:** Create a subscription (or use one), then in Stripe Dashboard set the payment method to a card that will decline (e.g. 4000 0000 0000 0002). Run simulate-renewal; confirm retry state is set and after 2 retries subscription goes `on_hold`.
+4. **Cron:** In production, ensure the worker runs the `subscription-renewal` job (cron 8 AM). No manual charge is required; renewals run automatically.

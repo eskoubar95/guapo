@@ -24,7 +24,7 @@ export const Subscription = model.define("subscription", {
   delivery_count: model.number().default(0),
   stripe_customer_id: model.text(),
   stripe_payment_method_id: model.text(),
-  discount_percent: model.number().default(20),
+  discount_percent: model.number().default(5),
   variant_id: model.text(),
   quantity: model.number().default(1),
   shipping_address: model.json(), // Address object
@@ -36,6 +36,8 @@ export const Subscription = model.define("subscription", {
   next_retry_at: model.dateTime().nullable(),
   skip_next: model.boolean().default(false),
   on_hold_at: model.dateTime().nullable(),
+  // Subscription grouping: when multiple subs are merged they share the same group_id
+  group_id: model.text().nullable(),
 }).indexes([
   { on: ["customer_id"] },
   { on: ["status"] },

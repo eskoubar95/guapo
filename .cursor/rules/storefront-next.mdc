@@ -1,0 +1,31 @@
+---
+description: Next.js storefront — RSC, Medusa SDK, performance, file size
+globs: apps/storefront/**
+alwaysApply: false
+---
+
+# Storefront (apps/storefront)
+
+## Backend integration
+
+- Talk to Medusa via **`@medusajs/js-sdk`** and the shared client in `src/lib/medusa.ts` (publishable key, `NEXT_PUBLIC_MEDUSA_BACKEND_URL`).
+- Custom store endpoints: use `medusa.client.fetch` or SDK extensions consistently; do not scatter raw `fetch` URLs without a single base pattern.
+- Payload/content: use existing `lib/payload-*.ts` helpers; pass `locale` (`da` / `en`) for localized APIs.
+
+## Server Components & data fetching
+
+- Default to **Server Components**. Use `'use client'` only for interactivity, browser APIs, Stripe, or local state.
+- **Parallelize** independent loads: start async work then `Promise.all` (avoid sequential waterfalls).
+- Shared server loaders used from layout + page: wrap with **`React.cache()`** so one request does not duplicate the same fetch.
+- Choose cache explicitly: `cache: 'no-store'` vs `revalidate` vs static per data freshness needs.
+
+## Performance & bundles
+
+- Heavy or rare UI (modals, checkout sub-steps, maps): prefer **`next/dynamic`** with loading fallback.
+- Minimize props passed from server to client components (serialize only what the client needs).
+- **Structure & file size:** follow **`code-structure.mdc`** (line budgets, splitting steps/hooks/types, React/TS hygiene).
+
+## UX / design system
+
+- Focus: use **border** states on inputs, not focus rings (see project design spec).
+- Ecommerce UX: align with storefront skill references when building cart, checkout, PLP, PDP.

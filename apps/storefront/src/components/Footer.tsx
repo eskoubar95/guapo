@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Linkedin } from "lucide-react";
+import { CookieTrigger } from "@/components/cookie-consent";
 import {
   SiFacebook,
   SiInstagram,
@@ -112,7 +113,10 @@ export function Footer({ locale, footer }: FooterProps) {
         </div>
 
         <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="text-sm text-text-muted">{copyright}</div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-text-muted">
+            <span>{copyright}</span>
+            <CookieTrigger className="text-text-muted hover:text-primary" />
+          </div>
           <div className="flex items-center gap-4">
             {socialLinks.map((s) => {
               const Icon = s.platform

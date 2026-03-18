@@ -25,6 +25,12 @@ export interface ShipmondoPickupPoint {
   out_delivery?: boolean;
 }
 
+function toNumber(v: unknown): number | undefined {
+  if (v == null) return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 /** Normalize service_point format to pickup_point format (number/id for compatibility) */
 function normalizePickupPoint(p: Record<string, unknown>): ShipmondoPickupPoint {
   const id = String(p.id ?? p.number ?? "");
@@ -38,9 +44,9 @@ function normalizePickupPoint(p: Record<string, unknown>): ShipmondoPickupPoint 
     zipcode: (p.zipcode as string) ?? "",
     city: (p.city as string) ?? "",
     country: (p.country as string) ?? "DK",
-    distance: p.distance as number | undefined,
-    longitude: p.longitude as number | undefined,
-    latitude: p.latitude as number | undefined,
+    distance: toNumber(p.distance),
+    longitude: toNumber(p.longitude ?? p.lon ?? p.lng),
+    latitude: toNumber(p.latitude ?? p.lat),
     agent: p.agent as string | undefined,
     carrier_code: (p.carrier_code as string) ?? (p.agent as string | undefined),
     opening_hours: Array.isArray(p.opening_hours) ? (p.opening_hours as string[]) : undefined,
@@ -75,6 +81,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const carrier_code = one(req.query.carrier_code) ?? "gls";
   const country_code = (one(req.query.country_code) ?? "DK").toUpperCase();
   const zipcode = one(req.query.zipcode);
+  const address = one(req.query.address);
   if (!zipcode || zipcode.length < 3) {
     return res.status(400).json({
       message: "zipcode required (min 3 characters)",
@@ -109,6 +116,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
       url.searchParams.set("carrier_code", carrier_code);
       url.searchParams.set("country_code", country_code);
       url.searchParams.set("zipcode", zipcode);
+      if (address?.trim()) url.searchParams.set("address", address.trim());
       if (limit != null && limit > 0) url.searchParams.set("limit", String(limit));
 
       const response = await fetchWithTimeout(url.toString());
@@ -149,6 +157,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     url.searchParams.set("carrier_code", carrier_code);
     url.searchParams.set("country_code", country_code);
     url.searchParams.set("zipcode", zipcode);
+    if (address?.trim()) url.searchParams.set("address", address.trim());
     if (limit != null && limit > 0) url.searchParams.set("limit", String(limit));
 
     const auth = Buffer.from(`${apiUser}:${apiKey}`).toString("base64");

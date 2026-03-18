@@ -11,6 +11,8 @@ import { fetchNavigation, normalizeMenuSections } from "@/lib/payload-navigation
 import type { NavSection } from "@/lib/payload-navigation";
 import { fetchFooter, resolveFooter } from "@/lib/payload-footer";
 import { Toaster } from "sonner";
+import { CookieConsentWrapper } from "@/components/CookieConsentWrapper";
+import { AuthAwareShell } from "@/components/AuthAwareShell";
 import "../globals.css";
 
 const inter = Inter({
@@ -79,23 +81,23 @@ export default async function LocaleLayout({
         className={`${inter.variable} ${lexend.variable} font-sans antialiased bg-white text-foreground flex min-h-screen flex-col`}
         suppressHydrationWarning
       >
-        <AuthProvider>
-          <CartAndModalProviders locale={locale} dict={dict}>
-            <a href="#main" className="skip-link">
-              {locale === "da" ? "Spring til indhold" : "Skip to main content"}
-            </a>
-            <Header
+        <CookieConsentWrapper locale={locale}>
+          <AuthProvider>
+            <CartAndModalProviders locale={locale} dict={dict}>
+            <AuthAwareShell
               locale={locale}
               dict={dict}
               menuSections={menuSections}
               promotionBar={nav?.promotionBar ?? undefined}
               ctaButton={nav?.ctaButton ?? undefined}
-            />
-            <main id="main" className="flex-1 min-w-0 overflow-x-clip">{children}</main>
-            <Footer locale={locale} footer={footer} />
+              footer={footer}
+            >
+              {children}
+            </AuthAwareShell>
             <Toaster position="bottom-center" richColors closeButton />
-          </CartAndModalProviders>
-        </AuthProvider>
+            </CartAndModalProviders>
+          </AuthProvider>
+        </CookieConsentWrapper>
       </body>
     </html>
   );

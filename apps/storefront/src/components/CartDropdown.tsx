@@ -11,8 +11,6 @@ import { useCart } from "@/contexts/CartContext";
 import type { CartItem } from "@/components/cart/CartItems";
 import type { Dictionary } from "@/i18n/dictionaries";
 
-const SUBSCRIPTION_DISCOUNT_PERCENT = 20;
-
 interface CartDropdownProps {
   isOpen: boolean;
   onClose: () => void;
@@ -42,9 +40,9 @@ function CartDropdownItem({
   const isSubscription = cycle > 0;
   const unitPrice = item.unit_price ?? 0;
   const quantity = item.quantity ?? 1;
-  const lineTotalOriginal = item.total ?? unitPrice * quantity;
-  const discountAmount = isSubscription ? (lineTotalOriginal * SUBSCRIPTION_DISCOUNT_PERCENT) / 100 : 0;
-  const lineTotal = lineTotalOriginal - discountAmount;
+  const lineTotalOriginal = item.original_total ?? unitPrice * quantity;
+  const discountAmount = item.discount_total ?? 0;
+  const lineTotal = item.total ?? lineTotalOriginal - discountAmount;
   const base = `/${locale}`;
 
   return (
@@ -134,18 +132,16 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
   const base = `/${locale}`;
   const items = (cart?.items ?? []) as CartItem[];
 
-  const subscriptionDiscountTotal = items.reduce((sum, item) => {
-    const cycle = typeof item.metadata?.subscription_cycle === "number" ? item.metadata.subscription_cycle : 0;
-    if (cycle === 0) return sum;
-    const total = item.total ?? (item.unit_price ?? 0) * (item.quantity ?? 1);
-    return sum + (total * SUBSCRIPTION_DISCOUNT_PERCENT) / 100;
-  }, 0);
-
-  const subtotal = cart?.subtotal ?? 0;
-  const total = cart?.total ?? subtotal;
-  const displayTotal = Math.max(0, (typeof total === "number" ? total : 0) - subscriptionDiscountTotal);
+  const c = cart as { original_item_total?: number; tax_total?: number; discount_total?: number } | null;
+  const originalItemTotal = c?.original_item_total ?? 0;
+  const taxTotal = c?.tax_total ?? 0;
+  const discountTotal = c?.discount_total ?? 0;
+  const total = cart?.total ?? 0;
+  const itemTotalInclTax = originalItemTotal > 0
+    ? originalItemTotal
+    : (cart?.subtotal ?? 0) + ((cart as { item_tax_total?: number } | null)?.item_tax_total ?? 0);
   const freeShippingThresholdDkk = getFreeShippingThresholdDkk();
-  const hasFreeShipping = displayTotal >= freeShippingThresholdDkk;
+  const hasFreeShipping = total >= freeShippingThresholdDkk;
 
   const handleRemove = (lineItemId: string) => {
     startTransition(async () => {
@@ -226,29 +222,38 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
             <div className="border-t border-border px-4 py-3 space-y-1.5 shrink-0 bg-surface/30">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{dict.cart.subtotal}</span>
-                <span className="text-foreground">{formatPrice(subtotal, locale)}</span>
+                <span className="text-foreground">{formatPrice(itemTotalInclTax, locale)}</span>
               </div>
-              {subscriptionDiscountTotal > 0 && (
+              {discountTotal > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{dict.cart.totalDiscount}</span>
                   <span className="text-destructive font-medium">
-                    -{formatPrice(subscriptionDiscountTotal, locale)}
+                    -{formatPrice(discountTotal, locale)}
                   </span>
                 </div>
               )}
-              <div className="flex justify-between text-sm items-center">
-                <span className="text-muted-foreground">{dict.cart.totalInclVat}</span>
-                <span className="font-semibold text-primary">{formatPrice(displayTotal, locale)}</span>
-              </div>
-              <div className="flex justify-end">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{dict.cart.shipping}</span>
                 {hasFreeShipping ? (
-                  <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                  <span className="text-green-600 font-medium text-xs dark:text-green-400">
                     {dict.cart.freeShippingLabel}
                   </span>
                 ) : (
-                  <span className="text-xs text-muted-foreground">
-                    {dict.cart.freeShippingProgress}
+                  <span className="text-muted-foreground text-xs">
+                    {locale === "da" ? "Beregnes ved kassen" : "Calculated at checkout"}
                   </span>
+                )}
+              </div>
+              <div className="border-t border-border pt-2 mt-1">
+                <div className="flex justify-between text-sm items-center">
+                  <span className="font-medium text-foreground">{dict.cart.totalInclVat}</span>
+                  <span className="font-semibold text-primary">{formatPrice(total, locale)}</span>
+                </div>
+                {taxTotal > 0 && (
+                  <div className="flex justify-between text-xs text-muted-foreground mt-0.5">
+                    <span>{locale === "da" ? "Heraf moms (25%)" : "Incl. VAT (25%)"}</span>
+                    <span>{formatPrice(taxTotal, locale)}</span>
+                  </div>
                 )}
               </div>
             </div>
