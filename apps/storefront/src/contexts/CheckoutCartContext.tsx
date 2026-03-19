@@ -12,7 +12,7 @@ type CheckoutCartContextValue = {
   setLiveCart: (cart: StoreCart | null) => void;
   /** Effective cart for display: live when available, else initial. */
   cart: StoreCart | null;
-  /** Selected shipping option amount (from listCartOptions), e.g. in minor units. Fallback when cart has no shipping_total. */
+  /** Selected shipping option amount in major units (DKK). Fallback when cart has no shipping_total. */
   selectedShippingAmount: number | null;
   setSelectedShippingAmount: (amount: number | null) => void;
 };

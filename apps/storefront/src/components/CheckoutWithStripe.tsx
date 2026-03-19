@@ -10,6 +10,7 @@ import { medusa } from "@/lib/medusa";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCheckoutCart } from "@/contexts/CheckoutCartContext";
 import { CheckoutSteps, type CheckoutStepNum } from "./CheckoutSteps";
+import type { CheckoutPaymentMethodChoice } from "./checkout-payment-types";
 import { StripePaymentForm } from "./StripePaymentForm";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { CartItem } from "@/components/cart/CartItems";
@@ -53,8 +54,13 @@ export function CheckoutWithStripe({
   const [stripeLoading, setStripeLoading] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState<CheckoutStepNum>(1);
+  const [paymentMethodChoice, setPaymentMethodChoice] =
+    useState<CheckoutPaymentMethodChoice>("card");
   const goToStepRef = useRef<((s: CheckoutStepNum) => void) | null>(null);
+  const currentStepRef = useRef<CheckoutStepNum>(1);
+  currentStepRef.current = currentStep;
   const lastAppliedFormDataRef = useRef<string>("");
+  const lastAppliedPaymentChoiceRef = useRef<string>("");
   const prefillDoneRef = useRef(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -105,6 +111,12 @@ export function CheckoutWithStripe({
     if (pp?.zipcode) setInitialPickupZipcode(pp.zipcode);
     if (pp?.id) setInitialPickupPointId(String(pp.id));
   }, [customer]);
+
+  useEffect(() => {
+    if (hasSubscriptionItems) {
+      setPaymentMethodChoice("card");
+    }
+  }, [hasSubscriptionItems]);
 
   useEffect(() => {
     if (!cartId) return;
@@ -186,7 +198,16 @@ export function CheckoutWithStripe({
     if (!cartId) return;
     const formDataSig = `${formData.firstName}|${formData.lastName}|${formData.address1}|${formData.postalCode}|${formData.city}`;
     const formDataUnchanged = lastAppliedFormDataRef.current === formDataSig;
-    if (cart && clientSecret && appliedShippingOptionId === selectedShippingOptionId && formDataUnchanged) return;
+    const choice = hasSubscriptionItems ? "card" : paymentMethodChoice;
+    if (
+      cart &&
+      clientSecret &&
+      appliedShippingOptionId === selectedShippingOptionId &&
+      formDataUnchanged &&
+      lastAppliedPaymentChoiceRef.current === choice
+    ) {
+      return;
+    }
 
     setStripeLoading(true);
     setPaymentError(null);
@@ -258,9 +279,19 @@ export function CheckoutWithStripe({
       }
 
       const { cart: updatedCart } = await medusa.store.cart.retrieve(cartId);
-      const sessionData = hasSubscriptionItems
-        ? { setup_future_usage: "off_session" as const }
-        : {};
+      const pc = updatedCart as {
+        payment_collection?: { id?: string };
+        payment_collection_id?: string;
+      };
+      const paymentCollectionId =
+        pc.payment_collection?.id ?? pc.payment_collection_id ?? undefined;
+      const pmChoice = hasSubscriptionItems ? "card" : paymentMethodChoice;
+      const sessionData: Record<string, unknown> = {
+        cart_id: cartId,
+        payment_method_choice: pmChoice,
+        ...(paymentCollectionId ? { payment_collection_id: paymentCollectionId } : {}),
+        ...(hasSubscriptionItems ? { setup_future_usage: "off_session" as const } : {}),
+      };
       const { payment_collection } = await medusa.store.payment.initiatePaymentSession(
         updatedCart,
         { provider_id: "pp_stripe_stripe", data: sessionData }
@@ -269,6 +300,7 @@ export function CheckoutWithStripe({
       const secret = session?.data?.client_secret as string | undefined;
       if (secret) {
         lastAppliedFormDataRef.current = formDataSig;
+        lastAppliedPaymentChoiceRef.current = pmChoice;
         setPaymentError(null);
         setCart({ id: cartId });
         setClientSecret(secret);
@@ -290,7 +322,19 @@ export function CheckoutWithStripe({
     } finally {
       setStripeLoading(false);
     }
-  }, [cartId, cart, clientSecret, locale, selectedShippingOptionId, selectedShippingData, appliedShippingOptionId, formData, hasSubscriptionItems, dict.checkout]);
+  }, [
+    cartId,
+    cart,
+    clientSecret,
+    locale,
+    selectedShippingOptionId,
+    selectedShippingData,
+    appliedShippingOptionId,
+    formData,
+    hasSubscriptionItems,
+    paymentMethodChoice,
+    dict.checkout,
+  ]);
 
   const paymentContent =
     stripePromise && clientSecret && cart ? (
@@ -323,10 +367,20 @@ export function CheckoutWithStripe({
       </div>
     );
 
-  const handleStepChange = useCallback((step: CheckoutStepNum) => {
-    setCurrentStep(step);
-    if (step >= 2) ensureCartAndPayment();
-  }, [ensureCartAndPayment]);
+  const handleStepChange = useCallback(
+    (step: CheckoutStepNum) => {
+      if (currentStepRef.current === 3 && step === 2) {
+        setClientSecret(null);
+        setCart(null);
+        lastAppliedPaymentChoiceRef.current = "";
+      }
+      setCurrentStep(step);
+      if (step === 3) {
+        void ensureCartAndPayment();
+      }
+    },
+    [ensureCartAndPayment],
+  );
 
   const handleHeaderBack = useCallback(() => {
     if (currentStep === 2) goToStepRef.current?.(1);
@@ -371,6 +425,8 @@ export function CheckoutWithStripe({
         hasSubscriptionItems={hasSubscriptionItems}
         isGuest={!customer}
         paymentProcessing={paymentProcessing}
+        selectedPaymentMethod={paymentMethodChoice}
+        onPaymentMethodChange={setPaymentMethodChoice}
       />
     </>
   );

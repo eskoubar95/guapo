@@ -58,7 +58,13 @@ export function StripePaymentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <PaymentElement options={{ layout: "tabs" }} />
+      <PaymentElement
+        options={{
+          layout: { type: "accordion", defaultCollapsed: false },
+          /** Show Apple Pay / Google Pay when Stripe + browser allow (needs HTTPS + verified domain for Apple Pay on web). */
+          wallets: { applePay: "auto", googlePay: "auto" },
+        }}
+      />
       <button
         type="submit"
         disabled={!stripe || loading || !termsAccepted}

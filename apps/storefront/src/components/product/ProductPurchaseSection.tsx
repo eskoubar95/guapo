@@ -97,6 +97,7 @@ export function ProductPurchaseSection({
             unit_price?: number;
             quantity?: number;
             metadata?: Record<string, unknown>;
+            total?: number;
           }>;
           total?: number;
         } | undefined;

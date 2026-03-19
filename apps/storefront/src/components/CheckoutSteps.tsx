@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Check, RotateCw, MapPin, Pencil, Lock, CreditCard, Smartphone } from "lucide-react";
 import { fetchAllPickupPoints, extractZipcodeFromAddress, enrichWithDistance, type PickupPoint } from "@/lib/pickup-points";
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import type { ShippingOption } from "./CheckoutWithStripe";
+import type { CheckoutPaymentMethodChoice } from "./checkout-payment-types";
 import type { Dictionary } from "@/i18n/dictionaries";
 
 export type CheckoutStepNum = 1 | 2 | 3;
@@ -62,11 +64,11 @@ interface CheckoutStepsProps {
   /** When true, show "guest checkout" note (no account created). */
   isGuest?: boolean;
   onRegisterGoToStep?: (fn: (step: CheckoutStepNum) => void) => void;
+  selectedPaymentMethod?: CheckoutPaymentMethodChoice;
+  onPaymentMethodChange?: (method: CheckoutPaymentMethodChoice) => void;
 }
 
 type CarrierCode = "gls" | "dao" | "pdk";
-type PaymentMethodChoice = "card" | "mobilepay" | "klarna";
-
 const STEPS: { num: CheckoutStepNum; labelKey: "shipping" | "review" | "payment" }[] = [
   { num: 1, labelKey: "shipping" },
   { num: 2, labelKey: "review" },
@@ -76,11 +78,8 @@ const STEPS: { num: CheckoutStepNum; labelKey: "shipping" | "review" | "payment"
 export function CheckoutSteps({
   locale,
   dict,
-  confirmationHref,
   onStepChange,
   paymentContent,
-  paymentReady,
-  paymentLoading = false,
   paymentProcessing = false,
   shippingOptions = [],
   selectedShippingOptionId = null,
@@ -104,11 +103,12 @@ export function CheckoutSteps({
   hasSubscriptionItems = false,
   isGuest = false,
   onRegisterGoToStep,
+  selectedPaymentMethod = "card",
+  onPaymentMethodChange,
 }: CheckoutStepsProps) {
   const [step, setStep] = useState<CheckoutStepNum>(1);
   const [contactConfirmed, setContactConfirmed] = useState(false);
   const [selectedCarrier, setSelectedCarrier] = useState<CarrierCode>("gls");
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodChoice>("card");
   const [searchAddress, setSearchAddress] = useState("");
   const [pickupPoints, setPickupPoints] = useState<PickupPoint[]>([]);
   const [pickupLoading, setPickupLoading] = useState(false);
@@ -123,14 +123,14 @@ export function CheckoutSteps({
     o.name.toLowerCase().includes("pakkeshop") || o.name.toLowerCase().includes("gls")
   ) ?? shippingOptions[0];
 
-  function getOptionForCarrier(carrier: CarrierCode) {
+  const getOptionForCarrier = useCallback((carrier: CarrierCode) => {
     if (carrier === "pdk") return shippingOptions.find((o) => o.name.toLowerCase().includes("postnord"));
     if (carrier === "dao") return shippingOptions.find((o) => o.name.toLowerCase().includes("dao"));
     return shippingOptions.find((o) => o.name.toLowerCase().includes("gls"));
-  }
+  }, [shippingOptions]);
 
   useEffect(() => {
-    if (!onShippingSelect || !shippingOptions.length) return;
+    if (!onShippingSelect || !pakkeshopOption) return;
     const carrier: CarrierCode = selectedPoint?.carrier_code === "pdk" ? "pdk" : selectedPoint?.carrier_code === "dao" ? "dao" : "gls";
     const option = selectedPoint ? getOptionForCarrier(carrier) ?? pakkeshopOption : pakkeshopOption;
     if (option) {
@@ -143,27 +143,7 @@ export function CheckoutSteps({
         carrier_code: selectedPoint.carrier_code ?? "gls",
       } : {});
     }
-  }, [pakkeshopOption, selectedPoint, onShippingSelect, shippingOptions]);
-
-  const searchPickupPoints = useCallback(async (addressOverride?: string) => {
-    const raw = (addressOverride ?? searchAddress).trim();
-    const zip = extractZipcodeFromAddress(raw) || raw.slice(0, 4);
-    if (!zip || zip.length < 3) return;
-    setPickupLoading(true);
-    setPickupPoints([]);
-    try {
-      const points = await fetchAllPickupPoints({
-        zipcode: zip,
-        country_code: "DK",
-        address: raw.length > 4 ? raw : undefined,
-      });
-      const enriched = await enrichWithDistance(points, raw);
-      setPickupPoints(enriched);
-      setSelectedPoint(null);
-    } finally {
-      setPickupLoading(false);
-    }
-  }, [searchAddress]);
+  }, [pakkeshopOption, selectedPoint, onShippingSelect, getOptionForCarrier]);
 
   const selectPoint = useCallback((point: PickupPoint) => {
     setSelectedPoint(point);
@@ -175,6 +155,7 @@ export function CheckoutSteps({
   useEffect(() => {
     if (pickupPrefillDoneRef.current || !initialPickupZipcode) return;
     pickupPrefillDoneRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchAddress(initialPickupZipcode);
     setPickupLoading(true);
     fetchAllPickupPoints({ zipcode: initialPickupZipcode, country_code: "DK" })
@@ -207,6 +188,7 @@ export function CheckoutSteps({
       : `${zip}${city ? ` ${city}` : ""}`.trim();
     if (!combined || searchAddress.trim() === combined) return;
     skipNextDebounceRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchAddress(combined);
     setPickupLoading(true);
     setPickupPoints([]);
@@ -226,7 +208,7 @@ export function CheckoutSteps({
     } else {
       setPickupLoading(false);
     }
-  }, [sheetOpen]);
+  }, [sheetOpen, formData.address1, formData.postalCode, formData.city, searchAddress]);
 
   // Debounced search when user types in address field (skip when address was just set from form on sheet open)
   useEffect(() => {
@@ -277,7 +259,13 @@ export function CheckoutSteps({
     formData.postalCode.trim() &&
     formData.city.trim();
 
-  const paymentMethods: { id: PaymentMethodChoice; label: string; sub: string; icon: React.ReactNode; disabled?: boolean }[] = [
+  const paymentMethods: {
+    id: CheckoutPaymentMethodChoice;
+    label: string;
+    sub: string;
+    icon: React.ReactNode;
+    disabled?: boolean;
+  }[] = [
     {
       id: "card",
       label: locale === "da" ? "Kortbetaling" : "Card payment",
@@ -447,7 +435,7 @@ export function CheckoutSteps({
                             : pakkeshopOption;
                           const amt = opt?.amount;
                           return amt != null && amt > 0
-                            ? `${(amt / 100).toFixed(0)} DKK`
+                            ? formatPrice(amt, locale)
                             : locale === "da"
                               ? "Beregnes"
                               : "Calculated";
@@ -525,7 +513,9 @@ export function CheckoutSteps({
                   key={pm.id}
                   type="button"
                   disabled={pm.disabled}
-                  onClick={() => !pm.disabled && setSelectedPaymentMethod(pm.id)}
+                  onClick={() => {
+                    if (!pm.disabled) onPaymentMethodChange?.(pm.id);
+                  }}
                   className={cn(
                     "flex w-full items-center gap-3.5 rounded-lg border-2 p-3.5 text-left transition-colors",
                     pm.disabled
@@ -782,7 +772,7 @@ export function CheckoutSteps({
                                       const carrier: CarrierCode = point.carrier_code === "pdk" ? "pdk" : point.carrier_code === "dao" ? "dao" : "gls";
                                       const opt = getOptionForCarrier(carrier);
                                       const amt = opt?.amount;
-                                      return amt != null && amt > 0 ? `${(amt / 100).toFixed(0)} DKK` : (locale === "da" ? "Beregnes" : "Calculated");
+                                      return amt != null && amt > 0 ? formatPrice(amt, locale) : (locale === "da" ? "Beregnes" : "Calculated");
                                     })()}
                                   </span>
                                 </div>

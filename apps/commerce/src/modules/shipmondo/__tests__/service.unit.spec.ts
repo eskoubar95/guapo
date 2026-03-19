@@ -166,11 +166,11 @@ describe("ShipmondoFulfillmentService", () => {
       const resultLow = await service.calculatePrice(optionData as any, undefined, {
         items: [{ quantity: 1, variant: { weight: 500 } }],
       });
-      expect(resultLow.calculated_amount).toBe(3900);
+      expect(resultLow.calculated_amount).toBe(39);
       const resultMid = await service.calculatePrice(optionData as any, undefined, {
         items: [{ quantity: 2, variant: { weight: 1500 } }],
       });
-      expect(resultMid.calculated_amount).toBe(4900);
+      expect(resultMid.calculated_amount).toBe(49);
     });
 
     it("uses top-level price_bands on option JSON (seed / flat Admin shape)", async () => {
@@ -185,7 +185,7 @@ describe("ShipmondoFulfillmentService", () => {
       const r = await service.calculatePrice(optionData as any, undefined, {
         items: [{ quantity: 1, variant: { weight: 800 } }],
       });
-      expect(r.calculated_amount).toBe(2900);
+      expect(r.calculated_amount).toBe(29);
     });
 
     it("reads flat_amount_minor from option root (matches seed shape)", async () => {
@@ -195,7 +195,7 @@ describe("ShipmondoFulfillmentService", () => {
         undefined,
         undefined
       );
-      expect(result.calculated_amount).toBe(4200);
+      expect(result.calculated_amount).toBe(42);
     });
 
     it("uses optionData.data.flat_amount_minor when present and no price_bands", async () => {
@@ -205,7 +205,7 @@ describe("ShipmondoFulfillmentService", () => {
         undefined,
         undefined
       );
-      expect(result.calculated_amount).toBe(4500);
+      expect(result.calculated_amount).toBe(45);
     });
 
     it("falls back to env when no option data (SHIPMONDO_FLAT_RATE_MINOR)", async () => {
@@ -213,7 +213,7 @@ describe("ShipmondoFulfillmentService", () => {
       delete process.env.SHIPMONDO_PRICE_BANDS;
       const service = createService();
       const result = await service.calculatePrice();
-      expect(result.calculated_amount).toBe(4900);
+      expect(result.calculated_amount).toBe(49);
       process.env.SHIPMONDO_FLAT_RATE_MINOR = "";
     });
 
@@ -226,14 +226,14 @@ describe("ShipmondoFulfillmentService", () => {
       const result = await service.calculatePrice(undefined, undefined, {
         items: [{ quantity: 1, variant: { weight: 500 } }],
       });
-      expect(result.calculated_amount).toBe(3900);
+      expect(result.calculated_amount).toBe(39);
       process.env.SHIPMONDO_PRICE_BANDS = "";
     });
 
     it("uses amount_minor from optionData when provided (no data object)", async () => {
       const service = createService();
       const result = await service.calculatePrice({ amount_minor: 2500 }, undefined, undefined);
-      expect(result.calculated_amount).toBe(2500);
+      expect(result.calculated_amount).toBe(25);
     });
 
     it("returns default flat rate when no option data and no env (fallback)", async () => {
@@ -242,7 +242,7 @@ describe("ShipmondoFulfillmentService", () => {
       const service = createService();
       const result = await service.calculatePrice();
       expect(result).toEqual({
-        calculated_amount: 3900,
+        calculated_amount: 39,
         is_calculated_price_tax_inclusive: true,
       });
     });

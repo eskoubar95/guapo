@@ -87,6 +87,10 @@ function getBaseUrl(sandbox: boolean): string {
     : "https://app.shipmondo.com/api/public/v3";
 }
 
+function minorToMajor(amountMinor: number): number {
+  return Math.round(amountMinor) / 100;
+}
+
 /** Parse weight_intervals from API response (from_weight, to_weight, description). */
 function parseWeightIntervals(raw: unknown): ShipmondoWeightInterval[] | undefined {
   if (!Array.isArray(raw) || raw.length === 0) return undefined;
@@ -243,13 +247,20 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
       if (!Array.isArray(parsed)) return [];
       const bands: ShipmondoPriceBand[] = parsed
         .filter(
-          (b): b is ShipmondoPriceBand =>
+          (b): b is { max_grams: number; amount_minor?: number; amount_major?: number } =>
             typeof b === "object" &&
             b != null &&
-            typeof (b as ShipmondoPriceBand).max_grams === "number" &&
-            typeof (b as ShipmondoPriceBand).amount_minor === "number"
+            typeof (b as { max_grams?: number }).max_grams === "number" &&
+            (typeof (b as { amount_minor?: number }).amount_minor === "number" ||
+              typeof (b as { amount_major?: number }).amount_major === "number")
         )
-        .map((b) => ({ max_grams: Math.max(0, b.max_grams), amount_minor: Math.max(0, Math.round(b.amount_minor)) }));
+        .map((b) => ({
+          max_grams: Math.max(0, b.max_grams),
+          amount_minor:
+            typeof b.amount_minor === "number" && !Number.isNaN(b.amount_minor)
+              ? Math.max(0, Math.round(b.amount_minor))
+              : Math.max(0, Math.round((b.amount_major ?? 0) * 100)),
+        }));
       return bands.sort((a, b) => a.max_grams - b.max_grams);
     } catch {
       return [];
@@ -276,13 +287,20 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
     if (!Array.isArray(raw)) return [];
     return raw
       .filter(
-        (b): b is ShipmondoPriceBand =>
+        (b): b is { max_grams: number; amount_minor?: number; amount_major?: number } =>
           typeof b === "object" &&
           b != null &&
-          typeof (b as ShipmondoPriceBand).max_grams === "number" &&
-          typeof (b as ShipmondoPriceBand).amount_minor === "number"
+          typeof (b as { max_grams?: number }).max_grams === "number" &&
+          (typeof (b as { amount_minor?: number }).amount_minor === "number" ||
+            typeof (b as { amount_major?: number }).amount_major === "number")
       )
-      .map((b) => ({ max_grams: Math.max(0, b.max_grams), amount_minor: Math.max(0, Math.round(b.amount_minor)) }));
+      .map((b) => ({
+        max_grams: Math.max(0, b.max_grams),
+        amount_minor:
+          typeof b.amount_minor === "number" && !Number.isNaN(b.amount_minor)
+            ? Math.max(0, Math.round(b.amount_minor))
+            : Math.max(0, Math.round((b.amount_major ?? 0) * 100)),
+      }));
   }
 
   /**
@@ -324,12 +342,20 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
     if (nested && typeof nested === "object" && nested !== null) {
       const n = (nested as Record<string, unknown>).flat_amount_minor;
       if (typeof n === "number" && !Number.isNaN(n) && n >= 0) return Math.round(n);
+      const m = (nested as Record<string, unknown>).flat_amount_major;
+      if (typeof m === "number" && !Number.isNaN(m) && m >= 0) return Math.round(m * 100);
     }
     if (typeof optionData.flat_amount_minor === "number" && optionData.flat_amount_minor >= 0) {
       return Math.round(optionData.flat_amount_minor);
     }
+    if (typeof optionData.flat_amount_major === "number" && optionData.flat_amount_major >= 0) {
+      return Math.round(optionData.flat_amount_major * 100);
+    }
     if (typeof optionData.amount_minor === "number" && optionData.amount_minor >= 0) {
       return Math.round(optionData.amount_minor);
+    }
+    if (typeof optionData.amount_major === "number" && optionData.amount_major >= 0) {
+      return Math.round(optionData.amount_major * 100);
     }
     return null;
   }
@@ -515,15 +541,16 @@ WHERE cli.cart_id = $1 AND cli.deleted_at IS NULL AND COALESCE(cli.requires_ship
   }
 
   /**
-   * Calculate shipping price. Primary source: option.data (Admin) – price_bands or flat_amount_minor.
-   * Fallback: optionData.amount_minor / data.amount_minor, then env SHIPMONDO_PRICE_BANDS / SHIPMONDO_FLAT_RATE_MINOR.
+   * Calculate shipping price in MAJOR units (DKK), as expected by Medusa v2.
+   * Input compatibility: accepts legacy minor fields (amount_minor / flat_amount_minor / price_bands[].amount_minor)
+   * and optional major fields (amount_major / flat_amount_major / price_bands[].amount_major).
    */
   async calculatePrice(
     optionData?: Record<string, unknown>,
     data?: Record<string, unknown>,
     context?: Record<string, unknown>
   ): Promise<CalculatedShippingOptionPrice> {
-    const flatFromOption =
+    const flatFromOptionMinor =
       this.getFlatAmountFromOption(optionData) ??
       (typeof data?.amount_minor === "number" && data.amount_minor >= 0
         ? Math.round(data.amount_minor)
@@ -533,20 +560,20 @@ WHERE cli.cart_id = $1 AND cli.deleted_at IS NULL AND COALESCE(cli.requires_ship
     const weightGrams = await this.resolveWeightGramsForPricing(context);
 
     if (bandsFromOption.length > 0 && weightGrams > 0) {
-      const fromBands = this.priceFromBands(weightGrams, bandsFromOption);
-      if (fromBands !== null) {
-        return { calculated_amount: fromBands, is_calculated_price_tax_inclusive: true };
+      const fromBandsMinor = this.priceFromBands(weightGrams, bandsFromOption);
+      if (fromBandsMinor !== null) {
+        return { calculated_amount: minorToMajor(fromBandsMinor), is_calculated_price_tax_inclusive: true };
       }
     }
-    if (flatFromOption !== null) {
-      return { calculated_amount: flatFromOption, is_calculated_price_tax_inclusive: true };
+    if (flatFromOptionMinor !== null) {
+      return { calculated_amount: minorToMajor(flatFromOptionMinor), is_calculated_price_tax_inclusive: true };
     }
-    const amount =
+    const amountMinor =
       weightGrams > 0
         ? this.getPriceForWeightGrams(weightGrams, bandsFromOption.length ? bandsFromOption : undefined)
         : this.getFlatRateMinor();
     return {
-      calculated_amount: amount,
+      calculated_amount: minorToMajor(amountMinor),
       is_calculated_price_tax_inclusive: true,
     };
   }

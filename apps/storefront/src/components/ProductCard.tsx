@@ -49,7 +49,7 @@ export function ProductCard({ product, locale, className }: ProductCardProps) {
     startTransition(async () => {
       try {
         const cart = await addToCart(vid, 1) as {
-          items?: Array<{ id?: string; product_title?: string; title?: string; variant_title?: string; thumbnail?: string; unit_price?: number; quantity?: number; metadata?: Record<string, unknown> }>;
+          items?: Array<{ id?: string; product_title?: string; title?: string; variant_title?: string; thumbnail?: string; unit_price?: number; quantity?: number; metadata?: Record<string, unknown>; total?: number }>;
           total?: number;
         } | undefined;
         await refreshCart();

@@ -68,12 +68,13 @@ if (process.env.STRIPE_API_KEY) {
     options: {
       providers: [
         {
-          resolve: "@medusajs/medusa/payment-stripe",
+          resolve: "./src/modules/payment-stripe-guapo",
           id: "stripe",
           options: {
             apiKey: process.env.STRIPE_API_KEY,
             webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
-            automatic_payment_methods: true,
+            // Explicit payment_method_types per checkout (no automatic_payment_methods on PI)
+            automatic_payment_methods: false,
           },
         },
       ],

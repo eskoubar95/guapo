@@ -6,7 +6,6 @@ import { useCheckoutCart } from "@/contexts/CheckoutCartContext";
 import { formatPrice } from "@/lib/format";
 import {
   lineAmountForDisplay,
-  normalizeShippingForDisplay,
 } from "@/lib/cart-display";
 import type { CartItem } from "@/components/cart/CartItems";
 import type { Dictionary } from "@/i18n/dictionaries";
@@ -39,10 +38,10 @@ export function CheckoutOrderSummary({
     originalItemTotal > 0 ? originalItemTotal : subtotal + itemTaxTotal;
   const displayItemTotalInclTax = lineAmountForDisplay(itemTotalInclTaxRaw);
   const discountTotal = lineAmountForDisplay(discountTotalRaw);
-  /** Fragt inkl. moms (provider / Medusa i øre eller DKK). */
+  /** Fragt inkl. moms i major units (DKK). */
   const shippingCommitted = selectedShippingAmount != null && selectedShippingAmount > 0;
   const shippingTotal = shippingCommitted
-    ? normalizeShippingForDisplay(selectedShippingAmount)
+    ? selectedShippingAmount
     : 0;
   /**
    * Total inkl. moms: varer (allerede inkl. moms) − rabat + fragt (inkl. moms).
