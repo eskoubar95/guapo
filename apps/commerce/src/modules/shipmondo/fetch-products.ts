@@ -2,46 +2,9 @@
  * Standalone fetch of Shipmondo products (GET /products) for sync script.
  * Uses same types and parsing as the fulfillment provider.
  */
-import type { ShipmondoProduct, ShipmondoWeightInterval } from "./service";
-
-function getBaseUrl(sandbox: boolean): string {
-  return sandbox
-    ? "https://sandbox.shipmondo.com/api/public/v3"
-    : "https://app.shipmondo.com/api/public/v3";
-}
-
-function parseWeightIntervals(raw: unknown): ShipmondoWeightInterval[] | undefined {
-  if (!Array.isArray(raw) || raw.length === 0) return undefined;
-  const out: ShipmondoWeightInterval[] = [];
-  for (const item of raw) {
-    if (item == null || typeof item !== "object") continue;
-    const o = item as Record<string, unknown>;
-    const from = Number(o.from_weight);
-    const to = Number(o.to_weight);
-    if (!Number.isNaN(from) && !Number.isNaN(to) && from >= 0 && to >= 0) {
-      out.push({
-        from_weight: Math.round(from),
-        to_weight: Math.round(to),
-        description: typeof o.description === "string" ? o.description : undefined,
-      });
-    }
-  }
-  return out.length > 0 ? out : undefined;
-}
-
-function normalizeProduct(
-  p: Record<string, unknown> & { code: string; service_point_product: boolean }
-): ShipmondoProduct {
-  const product: ShipmondoProduct = {
-    code: p.code,
-    service_point_product: p.service_point_product,
-    name: typeof p.name === "string" ? p.name : undefined,
-    carrier_code: typeof p.carrier_code === "string" ? p.carrier_code : undefined,
-  };
-  const intervals = parseWeightIntervals(p.weight_intervals);
-  if (intervals?.length) product.weight_intervals = intervals;
-  return product;
-}
+import { getBaseUrl } from "./lib/env";
+import { normalizeProduct } from "./lib/products";
+import type { ShipmondoProduct } from "./types";
 
 export type FetchShipmondoProductsOptions = {
   apiUser: string;

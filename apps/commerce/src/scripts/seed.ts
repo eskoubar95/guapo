@@ -86,6 +86,7 @@ export default async function seed({ container }: ExecArgs) {
               city: "Copenhagen",
               country_code: "DK",
               address_1: "Warehouse Street 1",
+              postal_code: "2100",
             },
           },
         ],

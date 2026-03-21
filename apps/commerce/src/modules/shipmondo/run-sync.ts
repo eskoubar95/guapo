@@ -2,7 +2,7 @@ import { createShippingOptionsWorkflow } from "@medusajs/medusa/core-flows";
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
 import type { MedusaContainer } from "@medusajs/framework/types";
 import { fetchShipmondoProducts } from "./fetch-products";
-import type { ShipmondoProduct } from "./service";
+import type { ShipmondoProduct } from "./types";
 
 const SHIPMONDO_CONFIG_MODULE = "shipmondo_config";
 const PROVIDER_ID = "shipmondo_shipmondo";

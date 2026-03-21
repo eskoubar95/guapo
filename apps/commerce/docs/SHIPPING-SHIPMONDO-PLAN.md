@@ -1,5 +1,7 @@
 # Plan: Shipmondo + Medusa shipping synkronisering
 
+> **Historisk / forældet:** Dette dokument beskriver en **ældre** arkitektur (fx hardcoded 39 kr, fælles “Pakkeshop”-option, ingen vægt-DB). Den **aktuelle** integration (dynamiske carriers, `price_bands`, kurvvægt fra DB, sandbox, webhooks, `verify:shipmondo`) er dokumenteret i **[SHIPMONDO.md](./SHIPMONDO.md)** og i koden under `src/modules/shipmondo/`. Behold denne fil kun som arkiv over oprindelige faser; brug den ikke som eneste sandhed for nye opgaver.
+
 Dette dokument beskriver **nuværende tilstand**, **huller** og en **faset plan** for at få shipping (Shipmondo, Medusa Admin, priser, vægt) 100 % synkroniseret uden hardcoding. Planen anbefales læst og godkendt før implementering.
 
 ---

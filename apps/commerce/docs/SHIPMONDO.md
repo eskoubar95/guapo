@@ -2,6 +2,8 @@
 
 This document describes the Shipmondo API v3 integration for parcel shop (pakkeshop) shipping in Denmark. Used by the custom Medusa Fulfillment Module Provider in `src/modules/shipmondo/`.
 
+**Module layout:** `types.ts` (shared types); `lib/env.ts` (timeouts, label format, `getBaseUrl`, `minorToMajor`); `lib/labels.ts` (shipment/label coercion, Medusa Admin label URLs); `lib/pricing.ts` (price bands, flat rate, cart/context weight); `lib/products.ts` (normalize `GET /products` rows); `service.ts` (fulfillment provider orchestration). Re-exports for external callers: `service.ts` still exports label helpers + `shipmondoLabelFormat` for the Admin label PDF route.
+
 ## Overview
 
 - **API version:** v3 (REST)
@@ -69,9 +71,10 @@ For **label-oprettelse** (fulfillment) bruges fuld API-adgang:
 | **Production** | `https://app.shipmondo.com/api/public/v3/` |
 | **Sandbox** | `https://sandbox.shipmondo.com/api/public/v3/` |
 
-- **Sandbox:** Request access from Shipmondo support (reason, email, name). You receive separate login/API credentials. Supports GLS Denmark and dao. Unlimited test shipments; no real charges. Use `SHIPMONDO_SANDBOX=true` and sandbox base URL.
+- **Sandbox:** [Officiel sandbox-guide](https://shipmondo.dev/docs/sandbox): adgang fås ved at kontakte Shipmondo support (navn, e-mail, begrundelse); derefter login på [sandbox.shipmondo.com](https://sandbox.shipmondo.com/account/login/) med **egne sandbox-credentials** og API-nøgler der matcher. Fiktiv saldo, “unlimited” test-bookinger (ikke performance-test). Dokumenterede carriers i sandbox inkl. **GLS Denmark**, dao, PostNord m.fl. — men **forbindelsesfejl** til en carrier kan stadig opstå midlertidigt; se fejlsøgning nedenfor. Shop-import workers kører **ikke** i sandbox; Medusa → `POST /shipments` påvirkes ikke af det.
 - **Production:** Use production base URL and production API keys from [API access](https://app.shipmondo.com/main/app/#/setting/api).
 - **Transition:** When moving to live, switch the base URL from sandbox to production and use production keys.
+- **Connectivity check:** From `apps/commerce` run `pnpm verify:shipmondo` (calls `GET /products?country_code=DK` with your configured base URL and Basic Auth).
 
 ## Endpoints Used by Guapo
 
@@ -145,6 +148,7 @@ Creates a shipment and can return label/label URL. Required for fulfillment: sen
 ```json
 {
   "own_agreement": false,
+  "label_format": "10x19_pdf",
   "product_code": "GLSDK_SD",
   "service_codes": "EMAIL_NT",
   "automatic_select_service_point": false,
@@ -177,12 +181,31 @@ Creates a shipment and can return label/label URL. Required for fulfillment: sen
 }
 ```
 
+- **label_format:** `"10x19_pdf"` (label-printer), `"a4_pdf"` (A4), `"zpl"` (Zebra). **Kræves** for at Shipmondo inkluderer label-PDF i API-svaret. Styres via **`SHIPMONDO_LABEL_FORMAT`** env (default `10x19_pdf`).
 - **weight** in `parcels`: grams (e.g. 2000 = 2 kg).
 - **service_point_id:** From `/pickup_points` response (`number` or `id`).
-- **print:** `false` to only create shipment and get label data (no print client).
+- **print:** `false` = do not send til Shipmondo Print Client (anbefalet til API-integration). `true` hvis jeres konto kræver det — sæt **`SHIPMONDO_SHIPMENT_PRINT=true`**.
 - **reference:** Order ID or external reference.
 
-Response includes shipment `id`, tracking info, and label URL or base64 label data depending on request/account.
+Response includes shipment `id`, tracking info, and label PDF under **`labels[].base64`** with **`file_format`** (typisk `pdf`) — se [Shipmondo API: POST shipments](https://shipmondo.dev/api-reference#/operations/shipments_post). Guapo læser også **`label_base64`** på root, **`parcels[].label_base64`**, og **`parcels[].labels[].base64`** (nogle carrier-svar lægger PDF under parcel).
+
+### 3b. Get labels (dedicated endpoint)
+
+**GET** `/shipments/{id}/labels?label_format=10x19_pdf`
+
+Dedikeret label-endpoint (se [Shipmondo PHP SDK](https://github.com/shipmondo/shipmondo_php_sdk)). Guapo bruger dette som **primær** fallback når POST-svaret ikke indeholder label-PDF, og som kilde i `getFulfillmentDocuments`. Endpointet returnerer labels-arrayet direkte i stedet for hele shipment-objektet.
+
+Hvis label stadig mangler efter polling: sæt **`SHIPMONDO_DEBUG_SHIPMENT_RESPONSE=true`** og genopret fulfillment — log viser kun **nøgler** (ingen base64), så I kan se om Shipmondo returnerer et andet feltnavn. Prøv evt. **`SHIPMONDO_SHIPMENT_PRINT=true`** hvis jeres konto kun udleverer PDF via Print Client.
+
+**Labelless / E-label (fx dao, Bring, nogle flows):** API’et returnerer **ingen** `labels[]` med PDF — I får i stedet et **`labelless_code`** (skrives på pakken). Se [Shipmondo: labelless](https://shipmondo.com/dictionary/labelless/). Guapo gemmer **`labelless_code`** og evt. **`gls_colli_id`** på fulfillment **`data`**, så I kan vise dem i pakkeflow (Medusa Admin viser ikke automatisk labelless-kode som erstatning for **Label**-linket). Når `labelless_code` er sat, logger provideren **info** (ikke warning) om manglende PDF.
+
+### Medusa Admin: label i fulfillment-kortet
+
+Standard **Medusa Admin** (dashboard) viser under **Tracking** et link **Label** (fast tekst) og et link med **trackingnummer** som klikbart, når `tracking_url` er ikke-tom — se `@medusajs/dashboard` `order-fulfillment-section`. Derfor sætter Guapo en **fallback tracking-URL** (fx GLS sporingslink), hvis Shipmondo returnerer tom `tracking_url`, så pakkenummeret stadig er synligt som link.
+
+**Label-PDF:** Store `data:application/pdf;base64,…` URL’er i `label_url` giver ofte **sort/blank side** i browseren (længdegrænser). Når **`MEDUSA_BACKEND_URL`** er sat, gemmes i stedet et **proxy-link** til `GET /admin/shipmondo/shipments/{shipment_id}/label`, som streamer PDF fra Shipmondo (kræver admin-login). Hvis env ikke er sat (fx tests), falder provideren tilbage til data-URL.
+
+Gamle fulfillments med forkert/ tom `label_url` opdateres ikke automatisk; opret evt. ny fulfillment efter deploy.
 
 ### 4. Get shipment (tracking / label)
 
@@ -227,6 +250,10 @@ GLS kræver ofte `service_codes`: `EMAIL_NT` (email notification). DAO/PostNord:
 | `SHIPMONDO_SERVICE_CODES` | **(Fallback)** Service codes til POST /shipments hvis option.data ikke har service_codes (default: EMAIL_NT). |
 | `SHIPMONDO_CHECKOUT_CARRIER_CODES` | Valgfri CSV (default i kode: GLS+DAO+PostNord). Sæt `__API__` for dynamisk liste fra API. |
 | `SHIPMONDO_POSTNORD_PRODUCT_CODE` | PostNord Shipmondo product code (default `POSTDK_SD` hvis uændret). |
+| `SHIPMONDO_LABEL_FORMAT` | Label-format i POST body og GET /labels (`10x19_pdf`, `a4_pdf`, `zpl`, `compact_pdf`). Default `10x19_pdf`. **Kræves** for at API returnerer PDF. |
+| `SHIPMONDO_SHIPMENT_PRINT` | `true` → `print: true` på POST /shipments (Print Client). Default `false`; label hentes stadig med GET når API returnerer den. |
+| `SHIPMONDO_LABEL_GET_MAX_ATTEMPTS` | Antal **GET** `/shipments/{id}/labels` forsøg når POST mangler PDF (default **5**, max 15). |
+| `SHIPMONDO_LABEL_GET_RETRY_MS` | Pause mellem GET-forsøg i ms (default **3000**, min 200). |
 
 Se `env.template` for fuld liste. **Priser og hvilke carriers der bruges styres i Medusa Admin / database; kun API-nøgler og drift (SANDBOX, DRY_RUN, SENDER_*) skal være i env.**
 
@@ -326,6 +353,7 @@ Scriptet finder alle stock locations og opretter link til `shipmondo_shipmondo`.
 4. **Option data (Admin):** I optionens provider-data kan du sætte: `price_bands` (fx `[{ "max_grams": 2000, "amount_minor": 3900 }]`), `flat_amount_minor`, `service_codes`, `product_code`.
 5. **Zoner:** Option i en service zone der matcher leveringsland (fx Denmark).
 6. **Vægt på produkter:** Variant **weight** (gram) udfyldt, så beregning og label bruger korrekt vægt.
+7. **Shipping profile → Metadata (afsender til Shipmondo):** Standard-Admin har ikke metadata på **Location**, men har det på **Shipping profile**. Gå til **Settings → Locations → Shipping profiles** → den profil dine Shipmondo-options bruger (fx *Default Shipping Profile*) → **Metadata**. Sæt mindst **`sender_email`** (gyldig e-mail til carrier). Valgfrit: **`sender_name`**, **`sender_phone`**. Alle shipping options under samme profil deler disse felter (de joines via `shipping_option.shipping_profile_id`).
 
 ## Test uden sandbox og uden at købe labels
 
@@ -333,7 +361,7 @@ For at teste hele integrationen **uden** at anmode om sandbox og **uden** at kø
 
 1. **Opret Shipping Module Key** i [Shipmondo](https://app.shipmondo.com/main/app/#/setting/api) (Settings → Shipping Module Key / Delivery Checkout). Sæt `SHIPMONDO_SHIPPING_MODULE_KEY` i commerce `.env`.
 2. **Sæt `SHIPMONDO_DRY_RUN=true`** i commerce `.env`. Fulfillment simuleres; ingen rigtige labels oprettes.
-3. **Sæt API User + Key** (`SHIPMONDO_API_USER`, `SHIPMONDO_API_KEY`) hvis du vil teste med Basic Auth fallback, eller lad dem være tomme hvis du kun bruger Shipping Module Key — fulfillment vil stadig køre i dry-run.
+3. **Sæt API User + Key** (`SHIPMONDO_API_USER`, `SHIPMONDO_API_KEY`) hvis du vil teste med Basic Auth fallback til pakkeshop-søgning. Med **kun** Shipping Module Key og **uden** dry-run vil **fulfillment i Admin fejle** (provider kræver API-nøgler til `POST /shipments`).
 4. Kør seed, start commerce og storefront, og test hele flowet (checkout → pakkeshop-valg → betaling → ordre → fulfillment i Admin).
 
 ## End-to-end test (M10 acceptance)
@@ -360,6 +388,31 @@ Uden Shipmondo-credentials registreres Shipmondo-provideren ikke; appen starter 
 ## Shipping address for pakkeshop
 
 For pakkeshop-ordrer sættes **shipping address** på ordren til **pakkeshop-adressen** (det sted, hvor pakken fysisk leveres). Billing address forbliver kundens egen adresse. Det er korrekt registreret sådan i Medusa og bruges korrekt af Shipmondo-provideren ved label-oprettelse.
+
+## Webhooks (Shipmondo → Medusa)
+
+Optional push-updates when Shipmondo changes a shipment (requires Shipmondo webhook feature / plan — see [webhook requirements](https://shipmondo.dev/docs/webhooks/requirements-and-structure)).
+
+1. I Shipmondo: opret webhook med HTTPS URL: `https://<din-commerce-host>/hooks/shipmondo` og den **encryption key** du også lægger i env.
+2. Sæt `SHIPMONDO_WEBHOOK_ENCRYPTION_KEY` i commerce `.env` (samme streng som i Shipmondo).
+3. Medusa modtager `POST` med body `{ "data": "<JWT>" }`; JWT verificeres med HS256 og fulfillment `data` opdateres med bl.a. `shipmondo_pkg_no`, `shipmondo_tracking_url` for Shipmondo-fulfillments på den ordre, hvis JWT-payloadens `data.reference` matcher Medusa **order id** (fx `order_01...` — samme som `reference` ved Shipmondo `POST /shipments`).
+
+Hvis env-variablen ikke er sat, returnerer endpointet `200` med `{ ok: true, configured: false }` (så eksterne health checks ikke fejler).
+
+## Store: rate limiting (pickup + shipping pricing)
+
+`GET /store/pickup-points` og `GET /store/shipping-options-with-pricing` har et **blødt** per-IP loft (standard **120** requests pr. minut) for at begrænse misbrug som åben proxy mod Shipmondo. Konfigurer via `SHIPMONDO_STORE_RATE_LIMIT_MAX` eller slå fra med `SHIPMONDO_STORE_RATE_LIMIT_DISABLED=true`.
+
+**Bemærk:** Øvrige `/store/*`-routes bruger allerede Medusas publishable API key middleware.
+
+## Fejlsøgning: Fulfillment fejler efter opgradering
+
+- **Meddelelse om manglende API-nøgler:** Sæt `SHIPMONDO_API_USER` og `SHIPMONDO_API_KEY` (sandbox- eller production-keys matchende `SHIPMONDO_SANDBOX`), eller brug `SHIPMONDO_DRY_RUN=true` til test uden API.
+- **Shipmondo API fejl:** Provider **kaster** nu `MedusaError` — Medusa ruller fulfillment-oprettelse tilbage (slettet kladdelignende fulfillment), så I ikke får “succes” uden label. Tjek commerce logs og Shipmondo respons.
+- **`500` / `Shipmondo shipment failed: This operation was aborted` eller `timed out after …ms`:** Integrationen brugte en **10s timeout** på alle Shipmondo-kald; **`POST /shipments`** kan tage længere (fx ~12s når GLS bookes), så `fetch` blev afbrudt **efter** Shipmondo havde oprettet forsendelsen — derfor ser du fejl i Admin, men forsendelse i Shipmondo. **Fix (implementeret):** `POST /shipments` har nu **60s** standard-timeout (`SHIPMONDO_SHIPMENT_TIMEOUT_MS`). Tjek Shipmondo før du opretter fulfillment igen, så du undgår dubletter.
+- **`422` / `product_code invalid or missing`:** Medusas `shipping_option_id` er et internt `so_…`-id, ikke en Shipmondo-kode. Provideren udleder `product_code` fra ordrens fragtmetode-`data` (gemmes ved checkout), fra shipping optionens `data` i databasen (`id` eller `product_code`), eller fra selve fulfillment-`data`. Sørg for at shipping options i Admin har korrekt provider-data (fx `id: "GLSDK_SD"` eller `product_code`), og at nye ordrer gennemløber checkout efter opdatering, så `product_code` kommer med på fragtmetoden. **Sandbox:** verificér at produktkoder findes med `GET /products?country_code=DK` i sandbox (kan afvige fra produktion).
+- **`422` / sender blank / `Receiver email is required`:** **Afsenderadresse** fra **stock location** for fulfillment-**location** (Settings → Locations — adressefelterne i “Edit location”). **Afsender-e-mail til carrier:** Standard-Admin har **ikke** metadata på location; brug i stedet **Settings → Locations → Shipping profiles → [dit Shipmondo-profil] → Metadata** med mindst **`sender_email`** (gyldig e-mail). Valgfrit i samme metadata: **`sender_name`**, **`sender_phone`**. Disse læses via shipping option → shipping profile. **`SHIPMONDO_SENDER_*`** i `.env` er **overrides** ovenpå. **`SHIPMONDO_SANDBOX=true`** udfylder resterende huller med placeholders (kun lokal test). **Modtager-e-mail:** `order.email` eller `order.customer.email`.
+- **`422` / `Connection to GLS could not be established` (eller tilsvarende for DAO/PostNord):** Det er **ikke** en Medusa-/Guapo-valideringsfejl — Shipmondo har accepteret kaldet, men **carrier-backend** (her GLS) svarer ikke efter retries. Ifølge [Shipmondo Sandbox](https://shipmondo.dev/docs/sandbox) er **GLS Denmark** (sammen med bl.a. dao og PostNord DK) **understøttet** i sandbox — så fejlen betyder ikke automatisk “GLS findes ikke i sandbox”. Typiske årsager: midlertidig fejl mellem Shipmondo og carrier, **sandbox-konto** der mangler aktivering/opsætning af produktet hos Shipmondo, eller at I ikke bruger **dedikerede sandbox API-nøgler** + `SHIPMONDO_SANDBOX=true` (se samme guide: sandbox kræver adgang via **support** og login på [sandbox.shipmondo.com](https://sandbox.shipmondo.com/account/login/)). **Handling:** prøv igen senere, book med **anden carrier** i sandbox (fx `DAO_SD`) for at isolere GLS, eller skriv til **Shipmondo support** med tidspunkt og fuld fejltekst.
 
 ---
 
