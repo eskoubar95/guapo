@@ -26,23 +26,7 @@ export function getPriceBandsFromEnv(): ShipmondoPriceBand[] {
   try {
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
-    const bands: ShipmondoPriceBand[] = parsed
-      .filter(
-        (b): b is { max_grams: number; amount_minor?: number; amount_major?: number } =>
-          typeof b === "object" &&
-          b != null &&
-          typeof (b as { max_grams?: number }).max_grams === "number" &&
-          (typeof (b as { amount_minor?: number }).amount_minor === "number" ||
-            typeof (b as { amount_major?: number }).amount_major === "number")
-      )
-      .map((b) => ({
-        max_grams: Math.max(0, b.max_grams),
-        amount_minor:
-          typeof b.amount_minor === "number" && !Number.isNaN(b.amount_minor)
-            ? Math.max(0, Math.round(b.amount_minor))
-            : Math.max(0, Math.round((b.amount_major ?? 0) * 100)),
-      }));
-    return bands.sort((a, b) => a.max_grams - b.max_grams);
+    return parsePriceBandsArray(parsed).sort((a, b) => a.max_grams - b.max_grams);
   } catch {
     return [];
   }

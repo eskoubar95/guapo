@@ -1,5 +1,7 @@
 # Design Repo Alignment Analysis
 
+> **Historisk:** Submodule `design/Ecommercestorefrontdesign` er fjernet fra monorepoet (2026-03). Dokumentet er arkiv.
+
 Analysis of `design/Ecommercestorefrontdesign` vs `apps/storefront` — alignment with Figma design.
 
 ## 1. Layout & Structure

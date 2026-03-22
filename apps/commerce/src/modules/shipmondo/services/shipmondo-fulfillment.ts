@@ -30,10 +30,7 @@ import {
   PRODUCTS_CACHE_TTL_MS,
   getBaseUrl,
   minorToMajor,
-  parsePositiveIntCapped,
   shipmondoLabelFormat,
-  shipmondoLabelPollDelayMs,
-  sleepMs,
 } from "../lib/env";
 import {
   coerceLabelsEndpointResponse,
@@ -46,25 +43,26 @@ import {
   resolveLabelUrlForMedusaAdmin,
   resolveMedusaLabelUrlFromShipmondoShipment,
 } from "../lib/labels";
+import { pollShipmondoForLabel } from "../lib/label-polling";
 import {
   getFlatAmountFromOption,
   getFlatRateMinorFromEnv,
   getPriceBandsFromOptionData,
   getPriceForWeightGrams,
-  getTotalWeightGramsForFulfillmentItems,
   getWeightFromContext,
   priceFromBands,
 } from "../lib/pricing";
 import { normalizeProduct } from "../lib/products";
 import {
+  buildShipmondoReceiverParty,
+  buildShipmondoShipmentPostBody,
+} from "../lib/shipment-builder";
+import {
   assertSenderComplete,
   buildSenderParty,
-  normalizeDkPostalDigits,
   resolveOrderContactEmail,
 } from "../lib/sender";
 import type { ShipmondoOptions, ShipmondoProduct } from "../types";
-
-let productsCache: { products: ShipmondoProduct[]; expiresAt: number } | null = null;
 
 type InjectedDependencies = { logger: Logger };
 
@@ -75,6 +73,7 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
   protected options_: ShipmondoOptions;
   protected baseUrl_: string;
   private cartWeightGramsCache_ = new Map<string, { grams: number; expiresAt: number }>();
+  private productsCache_: { products: ShipmondoProduct[]; expiresAt: number } | null = null;
 
   constructor({ logger }: InjectedDependencies, options: ShipmondoOptions) {
     super();
@@ -84,15 +83,28 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
   }
 
   private req<T>(method: string, path: string, body?: object): Promise<T> {
-    return shipmondoRequest<T>(this.baseUrl_, this.options_.apiUser, this.options_.apiKey, this.logger_, method, path, body);
+    return shipmondoRequest<T>(
+      this.baseUrl_,
+      this.options_.apiUser,
+      this.options_.apiKey,
+      this.logger_,
+      method,
+      path,
+      body
+    );
   }
 
   private async fetchProducts(): Promise<ShipmondoProduct[]> {
     const now = Date.now();
-    if (productsCache && productsCache.expiresAt > now) return productsCache.products;
+    if (this.productsCache_ && this.productsCache_.expiresAt > now) {
+      return this.productsCache_.products;
+    }
     if (!this.options_.apiUser || !this.options_.apiKey) return [];
     try {
-      const raw = await this.req<ShipmondoProduct[] | { products?: ShipmondoProduct[] }>("GET", "/products?country_code=DK");
+      const raw = await this.req<ShipmondoProduct[] | { products?: ShipmondoProduct[] }>(
+        "GET",
+        "/products?country_code=DK"
+      );
       const list = Array.isArray(raw) ? raw : raw?.products ?? [];
       const products = list
         .filter(
@@ -100,10 +112,12 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
             typeof p?.code === "string" && p.service_point_product === true
         )
         .map(normalizeProduct);
-      productsCache = { products, expiresAt: now + PRODUCTS_CACHE_TTL_MS };
+      this.productsCache_ = { products, expiresAt: now + PRODUCTS_CACHE_TTL_MS };
       return products;
     } catch (e) {
-      this.logger_.warn(`Shipmondo fetchProducts failed: ${e instanceof Error ? e.message : String(e)}; using fallback options`);
+      this.logger_.warn(
+        `Shipmondo fetchProducts failed: ${e instanceof Error ? e.message : String(e)}; using fallback options`
+      );
       return [];
     }
   }
@@ -153,7 +167,8 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
     _context: Record<string, unknown>
   ): Promise<Record<string, unknown>> {
     const servicePointId = data?.service_point_id ?? optionData?.service_point_id;
-    const productCode = extractProductCodeFromOptionLikeData(data) ?? extractProductCodeFromOptionLikeData(optionData);
+    const productCode =
+      extractProductCodeFromOptionLikeData(data) ?? extractProductCodeFromOptionLikeData(optionData);
     const out: Record<string, unknown> = { ...data };
     if (typeof servicePointId === "string" && servicePointId) out.service_point_id = servicePointId;
     if (productCode) out.product_code = productCode;
@@ -171,7 +186,9 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
   ): Promise<CalculatedShippingOptionPrice> {
     const flatFromOptionMinor =
       getFlatAmountFromOption(optionData) ??
-      (typeof data?.amount_minor === "number" && data.amount_minor >= 0 ? Math.round(data.amount_minor) : null);
+      (typeof data?.amount_minor === "number" && data.amount_minor >= 0
+        ? Math.round(data.amount_minor)
+        : null);
     const bandsFromOption = getPriceBandsFromOptionData(optionData);
     const weightGrams = await this.resolveWeightGramsForPricing(context);
 
@@ -184,9 +201,10 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
     if (flatFromOptionMinor !== null) {
       return { calculated_amount: minorToMajor(flatFromOptionMinor), is_calculated_price_tax_inclusive: true };
     }
-    const amountMinor = weightGrams > 0
-      ? getPriceForWeightGrams(weightGrams, bandsFromOption.length ? bandsFromOption : undefined)
-      : getFlatRateMinorFromEnv();
+    const amountMinor =
+      weightGrams > 0
+        ? getPriceForWeightGrams(weightGrams, bandsFromOption.length ? bandsFromOption : undefined)
+        : getFlatRateMinorFromEnv();
     return { calculated_amount: minorToMajor(amountMinor), is_calculated_price_tax_inclusive: true };
   }
 
@@ -200,7 +218,9 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
     const optionId = (fulfillment as { shipping_option_id?: string })?.shipping_option_id;
 
     const dbShippingRow =
-      looksLikeMedusaShippingOptionId(optionId) ? await getShippingOptionRowFromDb(optionId!, this.logger_) : null;
+      looksLikeMedusaShippingOptionId(optionId)
+        ? await getShippingOptionRowFromDb(optionId!, this.logger_)
+        : null;
     const dbOptionData = dbShippingRow?.optionData ?? null;
     const profileSenderHints = dbShippingRow?.profileSenderHints ?? null;
     const fulfillmentOptionData = (fulfillment as { option?: { data?: Record<string, unknown> } })?.option?.data;
@@ -222,15 +242,20 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
     }
 
     const optionDataForServiceCodes =
-      (fulfillmentOptionData && typeof fulfillmentOptionData === "object" ? fulfillmentOptionData : null) ?? dbOptionData;
+      (fulfillmentOptionData && typeof fulfillmentOptionData === "object" ? fulfillmentOptionData : null) ??
+      dbOptionData;
     const serviceCodes =
       (data?.service_codes as string) ??
-      (typeof optionDataForServiceCodes?.service_codes === "string" ? optionDataForServiceCodes.service_codes : undefined) ??
+      (typeof optionDataForServiceCodes?.service_codes === "string"
+        ? optionDataForServiceCodes.service_codes
+        : undefined) ??
       process.env.SHIPMONDO_SERVICE_CODES ??
       DEFAULT_SERVICE_CODES;
 
     if (process.env.SHIPMONDO_DRY_RUN === "true") {
-      this.logger_.info(`Shipmondo dry-run: would create shipment (product=${productCode}, service_point=${servicePointId ?? "auto"})`);
+      this.logger_.info(
+        `Shipmondo dry-run: would create shipment (product=${productCode}, service_point=${servicePointId ?? "auto"})`
+      );
       return {
         data: { dry_run: true, service_point_id: servicePointId, product_code: productCode, order_id: order?.id },
         labels: [{ tracking_number: "DRY-RUN", tracking_url: "", label_url: "" }],
@@ -261,38 +286,21 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
     const sender = buildSenderParty(receiverEmail, stockSender, profileSenderHints, !!this.options_.sandbox);
     assertSenderComplete(sender);
 
-    const shippingAddress = orderRecord?.shipping_address ?? orderRecord?.delivery_address;
-    const addr = shippingAddress as Record<string, unknown> | undefined;
-    const receiverPostalRaw = (servicePointId
-      ? ((data?.service_point_zipcode as string) ?? (addr?.postal_code as string) ?? "")
-      : ((addr?.postal_code as string) ?? "")) || "";
-    const receiverPostal = normalizeDkPostalDigits(receiverPostalRaw) || receiverPostalRaw.replace(/\s/g, "");
-
-    const receiver = {
-      type: "receiver" as const,
-      name: (addr?.first_name && addr?.last_name ? `${addr.first_name} ${addr.last_name}`.trim() : (addr?.company ?? "Customer")) as string,
-      address1: servicePointId ? ((data?.service_point_address ?? data?.service_point_name) as string) ?? "Pakkeshop" : (addr?.address_1 as string) ?? "",
-      postal_code: receiverPostal,
-      city: servicePointId ? ((data?.service_point_city as string) ?? (addr?.city as string) ?? "") : ((addr?.city as string) ?? ""),
-      country_code: ((addr?.country_code as string) ?? "DK").toUpperCase(),
-      email: receiverEmail,
-      mobile: (addr?.phone as string) ?? "",
-    };
+    const receiver = buildShipmondoReceiverParty(data, servicePointId, orderRecord, receiverEmail);
 
     try {
       const labelFormat = shipmondoLabelFormat();
-      const body = {
-        own_agreement: false,
-        label_format: labelFormat,
-        product_code: productCode,
-        service_codes: serviceCodes,
-        automatic_select_service_point: !servicePointId,
-        ...(servicePointId && { service_point_id: servicePointId }),
-        parties: [sender, receiver],
-        parcels: [{ weight: getTotalWeightGramsForFulfillmentItems(items) }],
-        reference: String(order?.id ?? "unknown"),
-        print: process.env.SHIPMONDO_SHIPMENT_PRINT === "true",
-      };
+      const body = buildShipmondoShipmentPostBody({
+        labelFormat,
+        productCode,
+        serviceCodes,
+        servicePointId,
+        sender: sender as Record<string, unknown>,
+        receiver,
+        items,
+        orderId: order?.id,
+        printShipment: process.env.SHIPMONDO_SHIPMENT_PRINT === "true",
+      });
 
       const postRaw = await this.req<unknown>("POST", "/shipments", body);
       const shipment = coerceShipmondoShipmentRecord(postRaw);
@@ -304,7 +312,15 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
 
       let labelPayload: Record<string, unknown> = shipment;
       if (!resolveMedusaLabelUrlFromShipmondoShipment(shipment) && shipmentNumericId != null) {
-        labelPayload = await this.pollForLabel(shipment, shipmentNumericId, labelFormat, pkgNo, trackingUrl);
+        labelPayload = await pollShipmondoForLabel(
+          this.logger_,
+          (method, path, reqBody) => this.req(method, path, reqBody),
+          shipment,
+          shipmentNumericId,
+          labelFormat,
+          pkgNo,
+          trackingUrl
+        );
       }
 
       const labels: CreateFulfillmentResult["labels"] = [];
@@ -322,8 +338,12 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
           shipment_id: shipmentNumericId,
           pkg_no: pkgNo,
           tracking_url: trackingUrl || undefined,
-          ...(extractShipmondoLabellessCode(labelPayload) ? { labelless_code: extractShipmondoLabellessCode(labelPayload) } : {}),
-          ...(extractShipmondoGlsColliId(labelPayload) ? { gls_colli_id: extractShipmondoGlsColliId(labelPayload) } : {}),
+          ...(extractShipmondoLabellessCode(labelPayload)
+            ? { labelless_code: extractShipmondoLabellessCode(labelPayload) }
+            : {}),
+          ...(extractShipmondoGlsColliId(labelPayload)
+            ? { gls_colli_id: extractShipmondoGlsColliId(labelPayload) }
+            : {}),
         },
         labels,
       };
@@ -335,63 +355,12 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
     }
   }
 
-  private async pollForLabel(
-    shipment: Record<string, unknown>,
-    shipmentNumericId: number,
-    labelFormat: string,
-    pkgNo: string | undefined,
-    trackingUrl: string
-  ): Promise<Record<string, unknown>> {
-    const maxAttempts = parsePositiveIntCapped("SHIPMONDO_LABEL_GET_MAX_ATTEMPTS", 5, 15);
-    const delayMs = shipmondoLabelPollDelayMs();
-    const labelsPath = `/shipments/${shipmentNumericId}/labels?label_format=${encodeURIComponent(labelFormat)}`;
-    let labelPayload: Record<string, unknown> = shipment;
-
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      if (attempt > 0) await sleepMs(delayMs);
-      try {
-        const labelsRaw = await this.req<unknown>("GET", labelsPath);
-        const labelsPayload = coerceLabelsEndpointResponse(labelsRaw);
-        if (labelsPayload) {
-          labelPayload = { ...shipment, ...labelsPayload };
-          debugLogShipmondoShipmentLabelShape(this.logger_, labelPayload, `GET ${labelsPath} (label poll ${attempt + 1}/${maxAttempts})`);
-          if (resolveMedusaLabelUrlFromShipmondoShipment(labelPayload)) break;
-        }
-      } catch {
-        try {
-          const gotRaw = await this.req<unknown>("GET", `/shipments/${shipmentNumericId}`);
-          const got = coerceShipmondoShipmentRecord(gotRaw);
-          debugLogShipmondoShipmentLabelShape(this.logger_, got, `GET /shipments/${shipmentNumericId} (label poll fallback ${attempt + 1}/${maxAttempts})`);
-          if (Object.keys(got).length > 0) labelPayload = got;
-          if (resolveMedusaLabelUrlFromShipmondoShipment(labelPayload)) break;
-        } catch (e2) {
-          this.logger_.warn(`Shipmondo: label poll ${attempt + 1}/${maxAttempts} failed: ${e2 instanceof Error ? e2.message : String(e2)}`);
-        }
-      }
-    }
-
-    if (!resolveMedusaLabelUrlFromShipmondoShipment(labelPayload)) {
-      const labelless = extractShipmondoLabellessCode(labelPayload);
-      if (labelless) {
-        this.logger_.info(
-          `Shipmondo: shipment ${shipmentNumericId} has no label PDF in JSON (labelless / E-label flow). ` +
-            `labelless_code is stored on fulfillment data. pkg/tracking: ${pkgNo ?? "—"} / ${trackingUrl || "—"}. ` +
-            "For a downloadable PDF in some setups, try SHIPMONDO_SHIPMENT_PRINT=true or use Shipmondo UI."
-        );
-      } else {
-        this.logger_.warn(
-          `Shipmondo: no label PDF/URL in POST/GET after ${maxAttempts} attempt(s) for shipment ${shipmentNumericId}. ` +
-            "Carrier may expose the label only in the Shipmondo UI for a short delay; try getFulfillmentDocuments later or increase SHIPMONDO_LABEL_GET_MAX_ATTEMPTS / SHIPMONDO_LABEL_GET_RETRY_MS."
-        );
-      }
-    }
-    return labelPayload;
-  }
-
   async cancelFulfillment(data: Record<string, unknown>): Promise<unknown> {
     const id = data?.shipment_id as number | undefined;
     if (id != null && this.options_.apiUser && this.options_.apiKey) {
-      try { await this.req("DELETE", `/shipments/${id}`); } catch (e) {
+      try {
+        await this.req("DELETE", `/shipments/${id}`);
+      } catch (e) {
         this.logger_.warn(`Shipmondo cancelFulfillment: ${e instanceof Error ? e.message : String(e)}`);
       }
     }
@@ -403,13 +372,18 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
     if (id == null || !this.options_.apiUser || !this.options_.apiKey) return [];
     const labelFormat = shipmondoLabelFormat();
     try {
-      const labelsRaw = await this.req<unknown>("GET", `/shipments/${id}/labels?label_format=${encodeURIComponent(labelFormat)}`);
+      const labelsRaw = await this.req<unknown>(
+        "GET",
+        `/shipments/${id}/labels?label_format=${encodeURIComponent(labelFormat)}`
+      );
       const labelsPayload = coerceLabelsEndpointResponse(labelsRaw);
       if (labelsPayload) {
         const url = resolveLabelUrlForMedusaAdmin(labelsPayload, id);
         if (url) return [{ name: "label", url }] as never[];
       }
-    } catch { /* fall through */ }
+    } catch {
+      /* fall through */
+    }
     try {
       const raw = await this.req<unknown>("GET", `/shipments/${id}`);
       const shipment = coerceShipmondoShipmentRecord(raw);
@@ -426,8 +400,12 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
     return { data: { ...fulfillment }, labels: [] };
   }
 
-  async getReturnDocuments(_data: Record<string, unknown>): Promise<never[]> { return []; }
-  async getShipmentDocuments(data: Record<string, unknown>): Promise<never[]> { return this.getFulfillmentDocuments(data); }
+  async getReturnDocuments(_data: Record<string, unknown>): Promise<never[]> {
+    return [];
+  }
+  async getShipmentDocuments(data: Record<string, unknown>): Promise<never[]> {
+    return this.getFulfillmentDocuments(data);
+  }
   async retrieveDocuments(fulfillmentData: Record<string, unknown>, _documentType: string): Promise<void> {
     await this.getFulfillmentDocuments(fulfillmentData);
   }

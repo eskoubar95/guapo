@@ -1,10 +1,12 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework";
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
 import type { LinkDefinition } from "@medusajs/framework/types";
+import { resolveQuery } from "../lib/container-types";
+import { resolveStripeCustomerAndPaymentMethodFromOrder } from "../lib/stripe-helpers";
 import { SUBSCRIPTION_MODULE } from "../modules/subscription";
 import type SubscriptionModuleService from "../modules/subscription/service";
+import { getSubscriptionDiscountPercentWithProductOverride } from "../lib/subscription-discount";
 
-const DEFAULT_DISCOUNT_PERCENT = 5
 const ALLOWED_CYCLE_WEEKS = [4, 8, 12] as const
 
 type OrderWithItems = {
@@ -45,13 +47,7 @@ export default async function orderPlacedCreateSubscriptions({
   const logWarn = (msg: string) => logger?.warn?.(msg) ?? console.warn(`[order-placed-create-subscriptions] ${msg}`)
   const logErr = (msg: string) => logger?.error?.(msg) ?? console.error(`[order-placed-create-subscriptions] ${msg}`)
 
-  const query = container.resolve(ContainerRegistrationKeys.QUERY) as {
-    graph: (opts: {
-      entity: string;
-      fields: string[];
-      filters?: Record<string, unknown>;
-    }) => Promise<{ data: unknown[] }>;
-  };
+  const query = resolveQuery(container);
 
   const { data: orders } = await query.graph({
     entity: "order",
@@ -97,63 +93,32 @@ export default async function orderPlacedCreateSubscriptions({
     return;
   }
 
-  // Get Stripe payment_method and customer from payment data.
-  // The order↔payment_collection link lives in medusa.order_payment_collection.
-  // query.graph on order with "payment_collections.*" resolves the link correctly.
   let stripeCustomerId: string | null = null;
   let stripePaymentMethodId: string | null = null;
 
   try {
-    // 1) Fetch payment_collection ids via the linked field (plural: payment_collections).
-    const { data: ordersWithPay } = await query.graph({
-      entity: "order",
-      fields: ["id", "payment_collections.id"],
-      filters: { id: orderId },
-    });
-    type OrderWithPayCols = { id: string; payment_collections?: Array<{ id: string }> };
-    const payColIds = (ordersWithPay as OrderWithPayCols[])?.[0]?.payment_collections?.map((pc) => pc.id) ?? [];
-    log(`Payment collections for order: [${payColIds.join(", ")}]`)
-    if (payColIds.length === 0) {
-      logWarn("No payment_collections linked to order.")
-      throw new Error("No payment_collection")
-    }
-
-    // 2) Load payments via Payment module (avoids provider strategy resolution issues).
-    type PaymentModuleType = {
-      listPayments: (filters: Record<string, unknown>, config?: { take?: number }) => Promise<Array<{ id: string; data?: Record<string, unknown>; provider_id?: string }>>;
-    };
-    const paymentModule = container.resolve(Modules.PAYMENT) as PaymentModuleType;
-    const payments = await paymentModule.listPayments(
-      { payment_collection_id: payColIds },
-      { take: 50 },
+    const resolved = await resolveStripeCustomerAndPaymentMethodFromOrder(
+      container,
+      orderId,
+      50
     );
-    log(`Found ${payments?.length ?? 0} payment(s) across ${payColIds.length} collection(s)`)
-    const stripePayment = payments?.find(
-      (p) => p.provider_id === "pp_stripe_stripe" || String(p?.provider_id ?? "").includes("stripe")
-    );
-
-    if (stripePayment?.data) {
-      const d = stripePayment.data as Record<string, unknown>;
-      stripePaymentMethodId = (d.payment_method as string) ?? (d.payment_method_id as string) ?? null;
-      stripeCustomerId = (d.customer as string) ?? (d.customer_id as string) ?? null;
-      log(`Stripe payment found: customer=${stripeCustomerId}, pm=${stripePaymentMethodId}`)
-
-      if (!stripePaymentMethodId) {
-        const piId = (d.id as string) ?? (d.payment_intent as string);
-        if (piId && process.env.STRIPE_API_KEY) {
-          const Stripe = (await import("stripe")).default;
-          const stripe = new Stripe(process.env.STRIPE_API_KEY);
-          const pi = await stripe.paymentIntents.retrieve(piId);
-          stripePaymentMethodId = typeof pi.payment_method === "string" ? pi.payment_method : pi.payment_method?.id ?? null;
-          stripeCustomerId = typeof pi.customer === "string" ? pi.customer : pi.customer?.id ?? null;
-          log(`Fetched from Stripe API: customer=${stripeCustomerId}, pm=${stripePaymentMethodId}`)
-        }
-      }
+    stripeCustomerId = resolved.customerId;
+    stripePaymentMethodId = resolved.paymentMethodId;
+    log(`Payment collections for order: [${resolved.payColIds.join(", ")}]`);
+    if (resolved.payColIds.length === 0) {
+      logWarn("No payment_collections linked to order.");
     } else {
-      logWarn("No Stripe payment found in payment collections.")
+      log(
+        `Found Stripe resolution: customer=${stripeCustomerId}, pm=${stripePaymentMethodId}`
+      );
+    }
+    if (resolved.payColIds.length > 0 && !stripePaymentMethodId) {
+      logWarn("No Stripe payment found in payment collections.");
     }
   } catch (err) {
-    logWarn(`Could not get Stripe payment info: ${err instanceof Error ? err.message : String(err)}`)
+    logWarn(
+      `Could not get Stripe payment info: ${err instanceof Error ? err.message : String(err)}`
+    );
   }
 
   if (!stripeCustomerId || !stripePaymentMethodId) {
@@ -179,28 +144,11 @@ export default async function orderPlacedCreateSubscriptions({
       const variantId = item.variant_id;
       const quantity = item.quantity ?? 1;
 
-      // Read discount from SUBSCRIPTION-5PCT promotion, fall back to product metadata or default
-      let discountPercent = DEFAULT_DISCOUNT_PERCENT;
-      try {
-        const promoModule = container.resolve(Modules.PROMOTION) as {
-          listPromotions: (f: { code?: string[] }, c?: { take?: number; relations?: string[] }) => Promise<Array<{ application_method?: { value?: number } | null }>>;
-        };
-        const promos = await promoModule.listPromotions(
-          { code: ["SUBSCRIPTION-5PCT"] },
-          { take: 1, relations: ["application_method"] }
-        );
-        const promoValue = promos?.[0]?.application_method?.value;
-        if (typeof promoValue === "number" && promoValue > 0) {
-          discountPercent = promoValue;
-        }
-      } catch {
-        /* use default */
-      }
       const product = item.variant?.product;
-      if (product?.metadata) {
-        const pct = (product.metadata as Record<string, unknown>).subscription_discount_percent;
-        if (typeof pct === "number") discountPercent = pct;
-      }
+      const discountPercent = await getSubscriptionDiscountPercentWithProductOverride(
+        container,
+        product?.metadata as Record<string, unknown> | null | undefined
+      );
 
       const nextRenewal = new Date(now);
       nextRenewal.setDate(nextRenewal.getDate() + cycleWeeks * 7);

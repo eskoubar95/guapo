@@ -6,6 +6,7 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { medusa } from "@/lib/medusa";
 import { ProductCard, type Product } from "@/components/ProductCard";
+import { productCardA11yFromDict } from "@/components/product-card-a11y";
 import type { Dictionary } from "@/i18n/dictionaries";
 
 const WISHLIST_METADATA_KEY = "wishlist_handles";
@@ -16,6 +17,7 @@ interface WishlistPageContentProps {
 }
 
 export function WishlistPageContent({ locale, dict }: WishlistPageContentProps) {
+  const productCardA11y = productCardA11yFromDict(dict);
   const { wishlistIds, refresh, mergeIds } = useWishlist();
   const { customer, isAuthenticated, refetch: refetchCustomer } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
@@ -137,7 +139,7 @@ export function WishlistPageContent({ locale, dict }: WishlistPageContentProps) 
           <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
             {products.map((product) => (
               <li key={product.id}>
-                <ProductCard product={product} locale={locale} />
+                <ProductCard product={product} locale={locale} labels={productCardA11y} />
               </li>
             ))}
           </ul>

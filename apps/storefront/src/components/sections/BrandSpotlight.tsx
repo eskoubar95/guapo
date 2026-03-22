@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { ProductCard, type Product } from "@/components/ProductCard";
+import type { ProductCardA11yLabels } from "@/components/product-card-a11y";
 import { useRef, useState, useEffect } from "react";
 
 interface BrandSpotlightProps {
@@ -14,6 +15,7 @@ interface BrandSpotlightProps {
   brandPageLink: string;
   locale: string;
   backgroundColor?: string;
+  productCardA11y?: ProductCardA11yLabels;
 }
 
 export function BrandSpotlight({
@@ -24,6 +26,7 @@ export function BrandSpotlight({
   brandPageLink,
   locale,
   backgroundColor = "bg-background",
+  productCardA11y,
 }: BrandSpotlightProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeft, setShowLeft] = useState(false);
@@ -134,7 +137,7 @@ export function BrandSpotlight({
                 key={product.id}
                 className="flex-shrink-0 w-[45%] sm:w-[30%] md:w-[23%] lg:w-[15%]"
               >
-                <ProductCard product={product} locale={locale} />
+                <ProductCard product={product} locale={locale} labels={productCardA11y} />
               </div>
             ))}
           </div>

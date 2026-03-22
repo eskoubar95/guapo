@@ -231,22 +231,22 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-primary);
 }
 
-/* Single canonical H1: page title, used site-wide (Hero, default pages, etc.) */
+/* Single canonical H1: page title for bare <h1> (explicit text-* on pages overrides this) */
 h1 {
-  font-size: 2rem;       /* 32px mobile */
+  font-size: 1.75rem;      /* 28px mobile — slightly calmer than 2rem for long titles */
   line-height: 1.2;
   font-weight: 700;
   letter-spacing: -0.02em;
   text-wrap: balance;
 }
 @media (min-width: 640px) {
-  h1 { font-size: 2.5rem; }   /* 40px */
+  h1 { font-size: 2.125rem; } /* 34px */
 }
 @media (min-width: 1024px) {
-  h1 { font-size: 3rem; }     /* 48px */
+  h1 { font-size: 2.5rem; }    /* 40px */
 }
 @media (min-width: 1280px) {
-  h1 { font-size: 3.75rem; }  /* 60px */
+  h1 { font-size: 3rem; }     /* 48px */
 }
 h2 {
   font-size: var(--text-lg);

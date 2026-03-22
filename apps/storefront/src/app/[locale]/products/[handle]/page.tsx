@@ -12,6 +12,7 @@ import { WishlistButton } from "@/components/product/WishlistButton";
 import { fetchProductByHandle, fetchRecommendedProducts } from "@/lib/medusa-products";
 import { fetchPayloadProductByHandle } from "@/lib/payload-products";
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
+import { productCardA11yFromDict } from "@/components/product-card-a11y";
 import { ProductReviewsSection } from "@/components/ProductReviewsSection";
 
 interface ProductPageProps {
@@ -43,6 +44,7 @@ export async function generateMetadata({
 export default async function ProductPage({ params }: ProductPageProps) {
   const { locale, handle } = await params;
   const dict = await getDictionary(locale as Locale);
+  const productCardA11y = productCardA11yFromDict(dict);
   const localeKey = locale as "da" | "en";
 
   const [medusaProduct, payloadProduct] = await Promise.all([
@@ -228,6 +230,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             products={recommendedProducts}
             locale={locale}
             layout="carousel"
+            productCardA11y={productCardA11y}
           />
         )}
       </main>

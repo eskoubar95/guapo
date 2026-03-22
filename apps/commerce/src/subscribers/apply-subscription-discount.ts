@@ -1,10 +1,6 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework";
 import { Modules } from "@medusajs/framework/utils";
-
-const PROMO_CODE = "SUBSCRIPTION-5PCT";
-const DEFAULT_DISCOUNT_PCT = 5;
-
-let cachedPromotionValue: number | null = null;
+import { getSubscriptionDiscountPercent, SUBSCRIPTION_PROMO_CODE } from "../lib/subscription-discount";
 
 type CartLineItem = {
   id: string;
@@ -31,35 +27,6 @@ type CartModuleService = {
   deleteLineItemAdjustments: (ids: string[]) => Promise<void>;
 };
 
-async function getDiscountPercent(container: {
-  resolve: (key: string) => unknown;
-}): Promise<number> {
-  if (cachedPromotionValue !== null) return cachedPromotionValue;
-
-  try {
-    const promoModule = container.resolve(Modules.PROMOTION) as {
-      listPromotions: (
-        filters: { code?: string[] },
-        config?: { take?: number; relations?: string[] }
-      ) => Promise<
-        Array<{ application_method?: { value?: number } | null }>
-      >;
-    };
-    const promos = await promoModule.listPromotions(
-      { code: [PROMO_CODE] },
-      { take: 1, relations: ["application_method"] }
-    );
-    const value = promos?.[0]?.application_method?.value;
-    if (typeof value === "number" && value > 0) {
-      cachedPromotionValue = value;
-      return value;
-    }
-  } catch {
-    /* fallback */
-  }
-  return DEFAULT_DISCOUNT_PCT;
-}
-
 export default async function applySubscriptionDiscount({
   event,
   container,
@@ -80,7 +47,7 @@ export default async function applySubscriptionDiscount({
     return;
   }
 
-  const discountPct = await getDiscountPercent(container);
+  const discountPct = await getSubscriptionDiscountPercent(container);
   const adjustmentsToAdd: Array<{
     item_id: string;
     code: string;
@@ -100,7 +67,7 @@ export default async function applySubscriptionDiscount({
     const isSubscription = cycle > 0;
 
     const existingAdj = (item.adjustments ?? []).find(
-      (adj) => adj.code === PROMO_CODE
+      (adj) => adj.code === SUBSCRIPTION_PROMO_CODE
     );
 
     if (isSubscription && !existingAdj) {
@@ -109,7 +76,7 @@ export default async function applySubscriptionDiscount({
       if (amount > 0) {
         adjustmentsToAdd.push({
           item_id: item.id,
-          code: PROMO_CODE,
+          code: SUBSCRIPTION_PROMO_CODE,
           amount,
           description: `Abonnementsrabat ${discountPct}%`,
         });

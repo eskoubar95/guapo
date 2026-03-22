@@ -67,10 +67,12 @@ export const Pages: CollectionConfig = {
         { label: 'Default (content only)', value: 'default' },
         { label: 'Homepage (sections)', value: 'homepage' },
         { label: 'Landing (sections)', value: 'landing' },
+        { label: 'Blog index (article list)', value: 'blog-index' },
       ],
       admin: {
         position: 'sidebar',
-        description: 'Homepage = sections shown at "/". Landing = sections (e.g. campaign). Default = rich text only.',
+        description:
+          'Homepage = sections at "/". Landing = campaign sections. Default = rich text. Blog index = intro + all news articles (storefront).',
       },
     },
     {
@@ -108,8 +110,10 @@ export const Pages: CollectionConfig = {
       required: false,
       localized: true,
       admin: {
-        condition: (_, siblingData) => siblingData?.pageType === 'default',
-        description: 'Required for default (content) pages, e.g. terms, privacy.',
+        condition: (_, siblingData) =>
+          siblingData?.pageType === 'default' || siblingData?.pageType === 'blog-index',
+        description:
+          'Rich text body. Required for default pages; optional intro above the article list for blog index.',
       },
     },
     {
@@ -122,7 +126,7 @@ export const Pages: CollectionConfig = {
       admin: {
         condition: (_, siblingData) =>
           siblingData?.pageType === 'homepage' || siblingData?.pageType === 'landing',
-        description: 'Build sections for homepage or landing pages. Reorder and add blocks.',
+        description: 'Build sections for homepage or landing pages only.',
       },
     },
   ],

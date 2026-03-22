@@ -1,25 +1,38 @@
 import type { Logger } from "@medusajs/framework/types";
-import { Client } from "pg";
+import { Pool, type PoolClient } from "pg";
 
 import { DEFAULT_WEIGHT_GRAMS_PER_ITEM, ENABLED_PRODUCTS_CACHE_TTL_MS } from "./env";
 
 /** Cache for enabled product codes from DB (null = not loaded or error = return all). */
 let enabledProductCodesCache: { codes: string[] | null; expiresAt: number } | null = null;
 
+let pgPool: Pool | null = null;
+
+function getPgPool(): Pool | null {
+  const url = process.env.DATABASE_URL;
+  if (!url || typeof url !== "string") return null;
+  if (!pgPool) {
+    pgPool = new Pool({
+      connectionString: url,
+      max: 3,
+    });
+  }
+  return pgPool;
+}
+
 function getDbSchema(): string | null {
   const schema = (process.env.DATABASE_SCHEMA || "medusa").trim();
   return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(schema) ? schema : null;
 }
 
-async function withPgClient<T>(fn: (client: Client) => Promise<T>): Promise<T> {
-  const url = process.env.DATABASE_URL;
-  if (!url || typeof url !== "string") throw new Error("DATABASE_URL not set");
-  const client = new Client({ connectionString: url });
+async function withPgPool<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  const pool = getPgPool();
+  if (!pool) throw new Error("DATABASE_URL not set");
+  const client = await pool.connect();
   try {
-    await client.connect();
     return await fn(client);
   } finally {
-    await client.end().catch(() => {});
+    client.release();
   }
 }
 
@@ -29,9 +42,10 @@ export async function getEnabledProductCodes(logger: Logger): Promise<string[] |
     return enabledProductCodesCache.codes;
   }
   try {
-    const codes = await withPgClient(async (client) => {
+    const schema = getDbSchema() ?? "medusa";
+    const codes = await withPgPool(async (client) => {
       const res = await client.query<{ product_code: string }>({
-        text: `SELECT product_code FROM medusa.shipmondo_enabled_products WHERE enabled = true ORDER BY display_order ASC NULLS LAST, product_code`,
+        text: `SELECT product_code FROM "${schema}".shipmondo_enabled_products WHERE enabled = true ORDER BY display_order ASC NULLS LAST, product_code`,
       });
       return res.rows.map((r) => r.product_code).filter(Boolean);
     });
@@ -62,7 +76,7 @@ export async function getShippingOptionRowFromDb(
   const schema = getDbSchema();
   if (!schema) return null;
   try {
-    return await withPgClient(async (client) => {
+    return await withPgPool(async (client) => {
       const res = await client.query<{ option_data: unknown; profile_metadata: unknown }>({
         text: `SELECT so.data AS option_data, sp.metadata AS profile_metadata
 FROM "${schema}".shipping_option so
@@ -124,7 +138,7 @@ export async function getStockLocationSenderFromDb(
   const schema = getDbSchema();
   if (!schema) return null;
   try {
-    return await withPgClient(async (client) => {
+    return await withPgPool(async (client) => {
       const res = await client.query<{
         location_name: string;
         metadata: unknown;
@@ -166,15 +180,12 @@ LIMIT 1`,
   }
 }
 
-export async function getCartWeightGramsFromDb(
-  cartId: string,
-  logger: Logger
-): Promise<number> {
+export async function getCartWeightGramsFromDb(cartId: string, logger: Logger): Promise<number> {
   if (process.env.SHIPMONDO_SKIP_CART_WEIGHT_DB === "true") return 0;
   const schema = getDbSchema();
   if (!schema) return 0;
   try {
-    return await withPgClient(async (client) => {
+    return await withPgPool(async (client) => {
       const res = await client.query<{ quantity: unknown; weight: unknown }>({
         text: `SELECT cli.quantity, pv.weight
 FROM "${schema}".cart_line_item cli

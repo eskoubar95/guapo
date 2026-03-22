@@ -4,26 +4,14 @@
  */
 
 import type { Product } from "@/components/ProductCard";
+import { getCached, readCache, setCache } from "@/lib/server-cache";
 
 const MEDUSA_URL =
   (process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000").replace(/\/$/, "") +
   "/store";
 
-const CACHE_TTL_MS = 60 * 1000;
-const cache = new Map<string, { data: unknown; expires: number }>();
-
 let cachedRegionId: string | null = null;
 let regionIdExpires = 0;
-
-function getCached<T>(key: string): T | null {
-  const entry = cache.get(key);
-  if (!entry || Date.now() > entry.expires) return null;
-  return entry.data as T;
-}
-
-function setCache(key: string, data: unknown): void {
-  cache.set(key, { data, expires: Date.now() + CACHE_TTL_MS });
-}
 
 function medusaHeaders(): HeadersInit {
   const headers: HeadersInit = { "Content-Type": "application/json" };
@@ -198,8 +186,8 @@ export async function fetchProductsByCategory(
  */
 export async function fetchProductByHandle(handle: string): Promise<MedusaProductResponse | null> {
   const key = `medusa:product:${handle}`;
-  const cached = getCached<MedusaProductResponse | null>(key);
-  if (cached !== null) return cached;
+  const cached = readCache<MedusaProductResponse | null>(key);
+  if (cached.hit) return cached.value;
 
   try {
     const params = new URLSearchParams({

@@ -1,6 +1,3 @@
-"use client";
-
-import { usePathname } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import type { NavSection } from "@/lib/payload-navigation";
@@ -16,6 +13,8 @@ interface AuthAwareShellProps {
   promotionBar?: PayloadNavPromotionBar | null;
   ctaButton?: PayloadNavCtaButton | null;
   footer: ResolvedFooter | null;
+  /** When true, render only main (no header/footer) — login, register, checkout. */
+  minimalShell: boolean;
 }
 
 export function AuthAwareShell({
@@ -26,14 +25,9 @@ export function AuthAwareShell({
   promotionBar,
   ctaButton,
   footer,
+  minimalShell,
 }: AuthAwareShellProps) {
-  const pathname = usePathname();
-  const segments = pathname?.split("/").filter(Boolean) ?? [];
-  const lastSegment = segments[segments.length - 1];
-  const isAuthPage = lastSegment === "login" || lastSegment === "register";
-  const isCheckoutPage = lastSegment === "checkout";
-
-  if (isAuthPage || isCheckoutPage) {
+  if (minimalShell) {
     return (
       <main id="main" className="flex-1 min-w-0 overflow-x-clip">
         {children}

@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { fetchProductsByQuery } from "@/lib/medusa-products";
 import { fetchArticlesByQuery } from "@/lib/payload-articles";
 import { ProductCard } from "@/components/ProductCard";
+import { productCardA11yFromDict } from "@/components/product-card-a11y";
 
 interface SearchPageProps {
   params: Promise<{ locale: string }>;
@@ -38,6 +39,7 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
 
   const base = `/${locale}`;
   const s = dict.search;
+  const productCardA11y = productCardA11yFromDict(dict);
 
   return (
     <div className="min-h-full">
@@ -93,6 +95,7 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
                       key={product.id}
                       product={product}
                       locale={locale}
+                      labels={productCardA11y}
                     />
                   ))}
                 </div>

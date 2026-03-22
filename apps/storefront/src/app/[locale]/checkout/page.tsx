@@ -8,7 +8,6 @@ import { CheckoutOrderSummary } from "@/components/checkout/CheckoutOrderSummary
 import { CheckoutCartProvider } from "@/contexts/CheckoutCartContext";
 import { getCart } from "@/lib/cart-data";
 import { cartHasSubscriptionItems } from "@/lib/cart-utils";
-import type { CartItem } from "@/components/cart/CartItems";
 import type { StoreCart } from "@/lib/cart-data";
 import { ShoppingBag } from "lucide-react";
 
@@ -29,7 +28,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   const dict = await getDictionary(locale as Locale);
   const cart = await getCart();
   const cartId = cart?.id ?? null;
-  const items = (cart?.items ?? []) as CartItem[];
+  const items = cart?.items ?? [];
   const hasSubscriptionItems = cartHasSubscriptionItems(cart);
   const c = cart as StoreCart | null;
   const itemCount = items.reduce((sum, i) => sum + (i.quantity ?? 1), 0);
@@ -64,10 +63,8 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
             <CheckoutWithStripe
               locale={locale}
               dict={dict}
-              confirmationHref={`/${locale}/order-confirmation/placeholder`}
               cartId={cartId}
               hasSubscriptionItems={hasSubscriptionItems}
-              items={items}
             />
           </CheckoutAuthGate>
 

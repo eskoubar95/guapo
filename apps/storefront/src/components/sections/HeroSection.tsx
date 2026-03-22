@@ -48,7 +48,11 @@ export function HeroSection({
               textPosition === "center" ? "text-center mx-auto" : textPosition === "right" ? "text-right ml-auto" : ""
             }`}
           >
-            <HeadingTag className={`mb-4 ${textCls}`}>{heading}</HeadingTag>
+            <HeadingTag
+              className={`mb-4 text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl ${textCls}`}
+            >
+              {heading}
+            </HeadingTag>
             {subheading && <p className={`text-lg md:text-xl mb-6 ${isLight ? "text-primary-foreground/90" : "text-text-muted"}`}>{subheading}</p>}
             {cta?.text && (
               <Link
@@ -82,7 +86,7 @@ export function HeroSection({
               />
             </div>
             <div className="flex flex-col justify-center order-1 lg:order-2 text-left">
-              <HeadingTag className="mb-4 tracking-tight">
+              <HeadingTag className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
                 {heading}
               </HeadingTag>
               {subheading && (
@@ -108,7 +112,9 @@ export function HeroSection({
     <section className="py-12 lg:py-16 bg-surface-muted/50">
       <div className="section-container">
         <div className={`max-w-3xl ${textPosition === "center" ? "text-center mx-auto" : ""}`}>
-          <HeadingTag className="mb-4 text-primary">{heading}</HeadingTag>
+          <HeadingTag className="mb-4 text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-5xl">
+            {heading}
+          </HeadingTag>
           {subheading && <p className="text-text-muted mb-6">{subheading}</p>}
           {cta?.text && (
             <Link

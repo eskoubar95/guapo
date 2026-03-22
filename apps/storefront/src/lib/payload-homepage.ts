@@ -3,20 +3,9 @@
  * Fetches from PAYLOAD_API_URL/api/storefront/globals/homepage.
  */
 
+import { getCached, setCache } from "@/lib/server-cache";
+
 const PAYLOAD_URL = process.env.PAYLOAD_API_URL?.replace(/\/$/, "");
-
-const CACHE_TTL_MS = 60 * 1000;
-const cache = new Map<string, { data: unknown; expires: number }>();
-
-function getCached<T>(key: string): T | null {
-  const entry = cache.get(key);
-  if (!entry || Date.now() > entry.expires) return null;
-  return entry.data as T;
-}
-
-function setCache(key: string, data: unknown): void {
-  cache.set(key, { data, expires: Date.now() + CACHE_TTL_MS });
-}
 
 /** Populated media from Payload (simplified for storefront). */
 export interface PayloadMedia {
@@ -262,7 +251,7 @@ export interface PayloadPage {
   title?: string | null;
   slug?: string | null;
   path?: string | null;
-  pageType?: "default" | "homepage" | "landing" | null;
+  pageType?: "default" | "homepage" | "landing" | "blog-index" | null;
   meta?: PayloadHomepageMeta;
   content?: unknown;
   sections?: HomepageSection[] | null;
@@ -286,6 +275,10 @@ export async function fetchPageByPath(
   if (!PAYLOAD_URL) return null;
 
   const { draft = false } = options;
+  const key = `payload:page:${path}:${locale}:${draft}`;
+  const cached = getCached<PayloadPage | null>(key);
+  if (cached !== null) return cached;
+
   try {
     const params = new URLSearchParams({
       path,
@@ -307,6 +300,7 @@ export async function fetchPageByPath(
     if (!res.ok) return null;
 
     const data = (await res.json()) as PayloadPage;
+    setCache(key, data);
     return data;
   } catch {
     return null;

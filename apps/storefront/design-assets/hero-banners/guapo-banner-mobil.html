@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<title>Guapo — Hero Banner Mobil 800×800</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #051537;
+    --border: #e8ecf2;
+    --text-sec: #4a5568;
+    --text-muted: #7b8599;
+    --rose: #c05878;
+    --rose-light: #f8f0f3;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #eef0f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 120px;
+  }
+
+  .banner-mobile {
+    position: relative;
+    width: 800px;
+    height: 800px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  /* Striber kun i lys zone — undgår “grå” navy i skiftet til mørk bund */
+  .banner-mobile::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      -52deg,
+      transparent 0px,
+      transparent 37px,
+      rgba(5, 21, 55, 0.032) 37px,
+      rgba(5, 21, 55, 0.032) 41px
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 44.5%,
+      transparent 45%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 44.5%,
+      transparent 45%
+    );
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Lidt mere plads til produktzonen */
+  .mob-top {
+    position: relative;
+    flex: 0 0 44%;
+    background: var(--rose-light);
+    padding: 37px 45px 29px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    z-index: 2;
+  }
+
+  .mob-eyebrow {
+    position: relative;
+    z-index: 1;
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--primary);
+    opacity: 0.5;
+    margin-bottom: 16px;
+  }
+
+  .mob-headline {
+    position: relative;
+    z-index: 1;
+    font-family: 'Lexend', sans-serif;
+    font-size: 62px;
+    font-weight: 700;
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    color: var(--primary);
+    margin-bottom: 16px;
+  }
+
+  .mob-headline em {
+    font-style: normal;
+    color: var(--rose);
+  }
+
+  .mob-subline {
+    position: relative;
+    z-index: 1;
+    font-size: 25px;
+    font-weight: 500;
+    line-height: 1.45;
+    color: var(--primary);
+    opacity: 0.72;
+    max-width: 34ch;
+  }
+
+  /* Bund: flad navy mod lys top — intet bølge-SVG */
+  .mob-bottom {
+    position: relative;
+    flex: 1;
+    z-index: 2;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-end;
+    min-height: 0;
+    padding: 12px 0 29px;
+  }
+
+  .mob-bottom-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: var(--primary);
+  }
+
+  /* Let dybde i bunden uden at lysne topkanten */
+  .mob-bottom-bg::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 55%;
+    z-index: 1;
+    background: linear-gradient(
+      to top,
+      rgba(13, 36, 86, 0.55) 0%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
+
+  .mob-bottom-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background-image: repeating-linear-gradient(
+      -52deg,
+      transparent 0px,
+      transparent 37px,
+      rgba(255, 255, 255, 0.025) 37px,
+      rgba(255, 255, 255, 0.025) 41px
+    );
+  }
+
+  /* Prismærke: fast nederst til venstre — deltager ikke i flex, så produktet kan centreres */
+  .mob-price-tag {
+    position: absolute;
+    left: 25px;
+    bottom: 21px;
+    z-index: 8;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 21px 29px 25px 33px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 16px 49px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(12px);
+    max-width: 46%;
+  }
+
+  .mob-price-tag::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 16px;
+    bottom: 16px;
+    width: 6px;
+    border-radius: 4px;
+    background: var(--rose);
+  }
+
+  .mob-price-label {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .mob-price-figures {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .mob-price-num {
+    font-family: 'Lexend', sans-serif;
+    font-size: 57px;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    letter-spacing: -0.02em;
+  }
+
+  .mob-price-suffix {
+    font-size: 27px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  /* Scene: flaske centreret på hele bredden; pris ligger absolut til venstre */
+  .mob-product-stage {
+    position: relative;
+    z-index: 5;
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    min-height: 0;
+    padding: 0 25px 25px;
+    width: 100%;
+  }
+
+  .mob-product-stack {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    width: 100%;
+    max-height: 100%;
+  }
+
+  /* Rosa “spot” bag produktet */
+  .mob-product-stack::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 6%;
+    transform: translateX(-50%);
+    width: 468px;
+    height: 468px;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      rgba(192, 88, 120, 0.42) 0%,
+      rgba(192, 88, 120, 0.12) 42%,
+      transparent 70%
+    );
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .mob-product-shot {
+    position: relative;
+    z-index: 2;
+    height: min(525px, 52vh);
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: bottom center;
+    display: block;
+    filter: drop-shadow(0 37px 74px rgba(0, 0, 0, 0.55));
+  }
+
+  /* DBA oven på produktet (overlap mod øvre-højre på flasken) */
+  .mob-badge {
+    position: absolute;
+    z-index: 6;
+    width: 168px;
+    height: 168px;
+    right: 2%;
+    top: 6%;
+    transform: translate(18%, -8%) rotate(6deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .mob-badge img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 16px 41px rgba(0, 0, 0, 0.45));
+  }
+</style>
+</head>
+<body>
+
+<div class="banner-mobile">
+
+  <div class="mob-top">
+    <div class="mob-eyebrow">Prisvindende K-beauty serum</div>
+    <div class="mob-headline">
+      Anua <em>Niacinamide</em> 10<br />
+      TXA 4
+    </div>
+    <p class="mob-subline">
+      Mørk plet — mørk fortid. Klarhed der føles, fra første pump.
+    </p>
+  </div>
+
+  <div class="mob-bottom">
+    <div class="mob-bottom-bg" aria-hidden="true"></div>
+
+    <div class="mob-product-stage">
+      <div class="mob-price-tag" aria-label="Lav pris, 125 kroner">
+        <span class="mob-price-label">Lav pris</span>
+        <div class="mob-price-figures">
+          <span class="mob-price-num">125</span>
+          <span class="mob-price-suffix">kr.</span>
+        </div>
+      </div>
+
+      <div class="mob-product-stack">
+        <img
+          class="mob-product-shot"
+          src="./anua-niacinamide-serum.png"
+          alt="Anua Niacinamide 10 TXA 4 Serum"
+          width="256"
+          height="256"
+        />
+        <div class="mob-badge">
+          <img src="./DBA2025-Badge.svg" alt="Danish Beauty Award 2025" width="168" height="168" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

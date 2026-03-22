@@ -2,10 +2,16 @@
 
 This log captures **actual decisions** made during specification and delivery. Keep entries short and unambiguous.
 
+## 2026-03-21 — Remove `design/` submodule; hero HTML under storefront
+- **Decision**: Remove the git submodule `design/Ecommercestorefrontdesign` from this monorepo. Static hero banner sources live at `apps/storefront/design-assets/hero-banners/` (HTML/CSS for screenshot → image → Payload). `.gitmodules` removed when the last submodule was dropped.
+- **Why**: Fewer moving parts; no `git submodule update` on clone; hero workflow does not need the full Vite design app in-tree.
+- **Consequences**: Historical docs that reference `design/Ecommercestorefrontdesign` describe an old layout; the Figma export repo may still exist at `github.com/eskoubar95/Ecommercestorefrontdesign` outside this tree.
+- **Where**: This file; `openmemory.md`; `apps/storefront/design-assets/hero-banners/README.md`
+
 ## 2026-01-31 — Design repo placement: submodule at `design/Ecommercestorefrontdesign`
-- **Decision**: The design repo `eskoubar95/Ecommercestorefrontdesign` is included in the monorepo as a **git submodule** at path `design/Ecommercestorefrontdesign`. Design files are available there; Guapo storefront references and refactors from this path.
-- **Why**: Submodule keeps design source traceable and updatable (`git submodule update`); avoids copying large export history into the main repo.
-- **Consequences**: After clone, run `git submodule update --init` to fetch design files. CI and local setup must init submodule if storefront build depends on design assets.
+- **Decision**: The design repo `eskoubar95/Ecommercestorefrontdesign` was included in the monorepo as a **git submodule** at path `design/Ecommercestorefrontdesign`. **Superseded 2026-03-21:** submodule removed; see entry above.
+- **Why (historical)**: Submodule kept design source traceable and updatable; avoids copying large export history into the main repo.
+- **Consequences (obsolete)**: ~~After clone, run `git submodule update --init`~~ — submodule removed 2026-03-21.
 - **Where**: This file; `spec/07-design-system.md`
 
 ## 2026-01-31 — Design source: Figma export in separate repo

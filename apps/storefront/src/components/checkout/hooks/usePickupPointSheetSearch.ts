@@ -1,0 +1,115 @@
+"use client";
+
+import { useEffect, type MutableRefObject } from "react";
+import {
+  fetchAllPickupPoints,
+  extractZipcodeFromAddress,
+  enrichWithDistance,
+  type PickupPoint,
+} from "@/lib/pickup-points";
+import type { CheckoutFormData } from "@/components/checkout/steps/checkout-form.types";
+
+interface UsePickupPointSheetSearchParams {
+  sheetOpen: boolean;
+  searchAddress: string;
+  setSearchAddress: (v: string) => void;
+  formData: CheckoutFormData;
+  skipNextDebounceRef: MutableRefObject<boolean>;
+  debounceRef: MutableRefObject<ReturnType<typeof setTimeout> | null>;
+  mountedRef: MutableRefObject<boolean>;
+  setPickupLoading: (v: boolean) => void;
+  setPickupPoints: (p: PickupPoint[]) => void;
+  setSelectedPoint: (p: PickupPoint | null) => void;
+}
+
+/**
+ * When the pickup sheet opens: sync search from address fields, and debounced search on typing.
+ */
+/* eslint-disable react-hooks/exhaustive-deps -- intentional deps match legacy useCheckoutPickup (avoid refetch loops) */
+export function usePickupPointSheetSearch({
+  sheetOpen,
+  searchAddress,
+  setSearchAddress,
+  formData,
+  skipNextDebounceRef,
+  debounceRef,
+  mountedRef,
+  setPickupLoading,
+  setPickupPoints,
+  setSelectedPoint,
+}: UsePickupPointSheetSearchParams): void {
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const addr = (formData.address1 ?? "").trim();
+    const zip = (formData.postalCode ?? "").trim().replace(/\D/g, "").slice(0, 4);
+    const city = (formData.city ?? "").trim();
+    const hasAddress = addr.length > 0 || (zip.length >= 3 && city.length > 0);
+    if (!hasAddress) return;
+    const combined = addr
+      ? `${addr}${zip ? `, ${zip}` : ""}${city ? ` ${city}` : ""}`.trim()
+      : `${zip}${city ? ` ${city}` : ""}`.trim();
+    if (!combined || searchAddress.trim() === combined) return;
+    skipNextDebounceRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync sheet search with address fields
+    setSearchAddress(combined);
+    setPickupLoading(true);
+    setPickupPoints([]);
+    const zipForSearch =
+      zip.length >= 3 ? zip : extractZipcodeFromAddress(combined) || combined.slice(0, 4);
+    if (zipForSearch.length >= 3) {
+      void fetchAllPickupPoints({
+        zipcode: zipForSearch,
+        country_code: "DK",
+        address: combined.length > 4 ? combined : undefined,
+      })
+        .then((points) => enrichWithDistance(points, combined || zipForSearch))
+        .then((points) => {
+          if (!mountedRef.current) return;
+          setPickupPoints(points);
+          setSelectedPoint(null);
+        })
+        .finally(() => {
+          if (mountedRef.current) setPickupLoading(false);
+        });
+    } else {
+      setPickupLoading(false);
+    }
+  }, [sheetOpen, formData.address1, formData.postalCode, formData.city, searchAddress]);
+
+  useEffect(() => {
+    if (!sheetOpen) return;
+    if (skipNextDebounceRef.current) {
+      skipNextDebounceRef.current = false;
+      return;
+    }
+    const zip =
+      extractZipcodeFromAddress(searchAddress) ||
+      searchAddress.trim().replace(/\D/g, "").slice(0, 4);
+    if (zip.length < 3) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      debounceRef.current = null;
+      setPickupLoading(true);
+      setPickupPoints([]);
+      const addr = searchAddress.trim();
+      void fetchAllPickupPoints({
+        zipcode: zip,
+        country_code: "DK",
+        address: addr.length > 4 ? addr : undefined,
+      })
+        .then((points) => enrichWithDistance(points, addr || zip))
+        .then((points) => {
+          if (!mountedRef.current) return;
+          setPickupPoints(points);
+          setSelectedPoint(null);
+        })
+        .finally(() => {
+          if (mountedRef.current) setPickupLoading(false);
+        });
+    }, 400);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [sheetOpen, searchAddress]);
+}
+/* eslint-enable react-hooks/exhaustive-deps */

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard, type Product } from "@/components/ProductCard";
+import type { ProductCardA11yLabels } from "@/components/product-card-a11y";
 import { useRef, useState, useEffect } from "react";
 
 interface FeaturedProductsProps {
@@ -13,6 +14,7 @@ interface FeaturedProductsProps {
   viewAllText?: string;
   backgroundColor?: string;
   layout?: "grid" | "carousel";
+  productCardA11y?: ProductCardA11yLabels;
 }
 
 export function FeaturedProducts({
@@ -23,6 +25,7 @@ export function FeaturedProducts({
   viewAllText = "Se alle",
   backgroundColor = "bg-background",
   layout = "carousel",
+  productCardA11y,
 }: FeaturedProductsProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeft, setShowLeft] = useState(false);
@@ -113,7 +116,7 @@ export function FeaturedProducts({
                   key={product.id}
                   className="flex-shrink-0 w-[calc(50%-6px)] min-w-[140px] sm:w-[30%] md:w-[23%] lg:w-[22%]"
                 >
-                  <ProductCard product={product} locale={locale} />
+                  <ProductCard product={product} locale={locale} labels={productCardA11y} />
                 </div>
               ))}
             </div>
@@ -137,6 +140,7 @@ export function FeaturedProducts({
               key={product.id}
               product={product}
               locale={locale}
+              labels={productCardA11y}
             />
           ))}
         </div>
