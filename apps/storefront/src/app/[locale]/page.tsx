@@ -22,7 +22,7 @@ import {
 } from "@/lib/home-mock";
 import { fetchHomepage, fetchPageByPath } from "@/lib/payload-homepage";
 import { resolveHomepageData } from "@/lib/resolve-homepage-data";
-import type { HomepageSection } from "@/lib/payload-homepage";
+import { productCardA11yFromDict } from "@/components/product-card-a11y";
 
 interface HomePageProps {
   params: Promise<{ locale: string }>;
@@ -36,16 +36,18 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
   const validLocale = locale as Locale;
   const draft = draftParam === "1" || draftParam === "true";
 
-  // Prefer Page with path "home" (Pages collection) over Homepage global
+  // Prefer Page with path "home" (Pages collection) over Homepage global — avoid double CMS fetch when page wins
   const homePage = await fetchPageByPath("home", validLocale, { draft });
   const sectionsFromPage =
     homePage?.pageType === "homepage" && homePage?.sections?.length
       ? homePage.sections
       : null;
-  const homepage = await fetchHomepage(validLocale, { draft });
-  const sectionsFromGlobal = homepage?.sections;
-  const sections = sectionsFromPage ?? sectionsFromGlobal ?? null;
+  const sections =
+    sectionsFromPage ??
+    (await fetchHomepage(validLocale, { draft }))?.sections ??
+    null;
   const hasCmsSections = sections && sections.length > 0;
+  const productCardA11y = productCardA11yFromDict(dict);
 
   if (hasCmsSections && sections) {
     const { resolvedProducts, resolvedArticles } = await resolveHomepageData(sections, validLocale);
@@ -56,6 +58,12 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
           locale={validLocale}
           resolvedProducts={resolvedProducts}
           resolvedArticles={resolvedArticles}
+          productCardA11y={productCardA11y}
+          promoSliderLabels={{
+            previousSlide: dict.home.promoSlider.previousSlide,
+            nextSlide: dict.home.promoSlider.nextSlide,
+            goToSlide: dict.home.promoSlider.goToSlide,
+          }}
         />
       </div>
     );
@@ -87,13 +95,22 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
     <div className="min-h-full w-full bg-background min-w-0 overflow-x-clip">
       <HomePromoBars bar1={dict.home.promoBars.bar1} bar2={dict.home.promoBars.bar2} />
       <CategoryStrip categories={homeMockCategories} locale={validLocale} />
-      <PromotionSlider slides={promoSliderSlides} locale={validLocale} />
+      <PromotionSlider
+        slides={promoSliderSlides}
+        locale={validLocale}
+        labels={{
+          previousSlide: dict.home.promoSlider.previousSlide,
+          nextSlide: dict.home.promoSlider.nextSlide,
+          goToSlide: dict.home.promoSlider.goToSlide,
+        }}
+      />
       <FeaturedProducts
         title={dict.home.editorPicks}
         products={featuredProducts}
         locale={validLocale}
         layout="carousel"
         backgroundColor="bg-background"
+        productCardA11y={productCardA11y}
       />
       <CampaignSection
         title={dict.home.campaign.title}
@@ -111,6 +128,7 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
         viewAllText="Se alle"
         backgroundColor="bg-gradient-to-b from-surface-muted/50 to-background"
         layout="carousel"
+        productCardA11y={productCardA11y}
       />
       <RoutineBlock
         title={dict.home.routine.title}
@@ -127,6 +145,7 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
         viewAllLink="/categories"
         backgroundColor="bg-gradient-to-b from-surface-muted/20 to-background"
         layout="carousel"
+        productCardA11y={productCardA11y}
       />
       <ContentGrid
         title={dict.home.content.title}
@@ -143,6 +162,7 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
         brandPageLink="/brands/the-ordinary"
         locale={validLocale}
         backgroundColor="bg-gradient-to-b from-surface-muted/20 to-surface-muted/30"
+        productCardA11y={productCardA11y}
       />
       <CtaStrip locale={validLocale} backgroundColor="bg-background" />
       <ServiceStrip backgroundColor="bg-gradient-to-br from-surface-muted/40 to-surface-muted/20" />

@@ -28,7 +28,8 @@
     "searching": "Searching...",
     "selectHint": "to select",
     "closeHint": "ESC to close",
-    "minChars": "Type at least 2 characters"
+    "minChars": "Type at least 2 characters",
+    "viewAllResults": "View all results"
   },
   "home": {
     "hero": {
@@ -51,6 +52,9 @@
       }
     },
     "promoSlider": {
+      "previousSlide": "Previous slide",
+      "nextSlide": "Next slide",
+      "goToSlide": "Go to slide",
       "slide1": {
         "badge": "Valid 26–29 Jan",
         "title": "25%",
@@ -279,7 +283,23 @@
     "confirmPakkeshop": "Confirm pickup point",
     "chooseCarrier": "Choose delivery carrier",
     "searchAddressPlaceholder": "Search by address, postcode or city",
-    "openingHours": "Opening hours"
+    "openingHours": "Opening hours",
+    "paymentDetailsHint": "Enter your payment details below.",
+    "processingPaymentTitle": "Processing your payment",
+    "processingPaymentSubtitle": "Please wait while we process your order. Do not close this window.",
+    "cardPaymentLabel": "Card payment",
+    "cardPaymentNetworks": "Visa, Mastercard",
+    "mobilePayPaymentSub": "Pay with MobilePay",
+    "klarnaPaymentSub": "Buy now, pay later",
+    "subscriptionPaymentRestriction": "MobilePay and Klarna are not available for subscription orders.",
+    "termsAcceptBeforeTermsLink": "I accept the ",
+    "termsAcceptAfterTermsBeforePrivacyLink": ". I accept that my order is only binding once confirmed via an order confirmation email. I accept that paid and uncollected packages are returned to sender. I am informed that Guapo processes my personal data according to the ",
+    "termsAcceptAfterPrivacyLink": " for customers.",
+    "guestFirstNamePlaceholder": "Guest",
+    "guestLastNamePlaceholder": "Customer",
+    "mobilePayLabel": "MobilePay",
+    "klarnaLabel": "Klarna",
+    "paymentInitFailed": "Could not initialize payment"
   },
   "auth": {
     "backLink": "Back",
@@ -338,7 +358,8 @@
     "searchPickupPoint": "Search pickup point",
     "pickupPointSaved": "Pickup point saved",
     "pickupPointError": "Could not save pickup point. Please try again.",
-    "change": "Change"
+    "change": "Change",
+    "cancel": "Cancel"
   },
   "orderConfirmation": {
     "title": "Thank you for your order!",
@@ -388,6 +409,22 @@
     "viewDetails": "View details",
     "cancelConfirm": "Are you sure you want to cancel this subscription?",
     "cancelConfirmTitle": "Cancel subscription"
+  },
+  "blog": {
+    "title": "Blog",
+    "intro": "Explore our articles about skincare, ingredients, and tips for healthier skin.",
+    "empty": "No articles yet.",
+    "readMore": "Read more",
+    "backToBlog": "Back to blog",
+    "featuredHeading": "Latest",
+    "moreArticles": "More articles",
+    "categories": {
+      "skincare-tips": "Skincare tips",
+      "product-guides": "Product guides",
+      "ingredients": "Ingredients",
+      "routines": "Routines",
+      "news": "News & updates"
+    }
   },
   "footer": {
     "support": "Support",

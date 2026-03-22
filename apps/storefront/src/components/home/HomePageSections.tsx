@@ -5,6 +5,7 @@
 
 import type { HomepageSection, PayloadMedia } from "@/lib/payload-homepage";
 import type { Product } from "@/components/ProductCard";
+import type { ProductCardA11yLabels } from "@/components/product-card-a11y";
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
 import { CategoryStrip } from "@/components/sections/CategoryStrip";
 import { CampaignSection } from "@/components/sections/CampaignSection";
@@ -22,6 +23,7 @@ import { BrandSpotlight } from "@/components/sections/BrandSpotlight";
 import { ServiceStrip } from "@/components/sections/ServiceStrip";
 import { BulletColumnsSection } from "@/components/sections/BulletColumnsSection";
 import { ValueCardsSection } from "@/components/sections/ValueCardsSection";
+import type { PromotionSliderLabels } from "@/components/sections/PromotionSlider";
 
 const PAYLOAD_URL = process.env.NEXT_PUBLIC_PAYLOAD_API_URL ?? process.env.PAYLOAD_API_URL ?? "";
 
@@ -42,6 +44,10 @@ export interface HomePageSectionsProps {
   resolvedProducts?: Record<string, Product[]>;
   /** Resolved articles for blog-carousel blocks, keyed by block key */
   resolvedArticles?: Record<string, BlogCarouselArticle[]>;
+  /** A11y labels for product cards (from dictionary). */
+  productCardA11y: ProductCardA11yLabels;
+  /** Promotion slider arrows / dots (from dictionary). */
+  promoSliderLabels: PromotionSliderLabels;
 }
 
 export function HomePageSections({
@@ -49,6 +55,8 @@ export function HomePageSections({
   locale,
   resolvedProducts = {},
   resolvedArticles = {},
+  productCardA11y,
+  promoSliderLabels,
 }: HomePageSectionsProps) {
   if (!sections?.length) return null;
 
@@ -93,6 +101,7 @@ export function HomePageSections({
                 viewAllText={viewAll?.text}
                 layout={fp.displayType === "grid" ? "grid" : "carousel"}
                 backgroundColor="bg-background"
+                productCardA11y={productCardA11y}
               />
             );
           }
@@ -251,7 +260,9 @@ export function HomePageSections({
               })
               .filter((s): s is NonNullable<typeof s> => s != null);
             if (slides.length === 0) return null;
-            return <PromotionSlider key={key} slides={slides} locale={locale} />;
+            return (
+              <PromotionSlider key={key} slides={slides} locale={locale} labels={promoSliderLabels} />
+            );
           }
 
           case "inspiration-guides": {
@@ -299,6 +310,7 @@ export function HomePageSections({
                 brandPageLink={brandPagePath}
                 locale={locale}
                 backgroundColor="bg-gradient-to-b from-surface-muted/20 to-surface-muted/30"
+                productCardA11y={productCardA11y}
               />
             );
           }

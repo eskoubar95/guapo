@@ -2,7 +2,7 @@ export { AnnouncementBar } from "./AnnouncementBar";
 export { HomePromoBars } from "./HomePromoBars";
 export { CategoryStrip } from "./CategoryStrip";
 export { PromotionBanner } from "./PromotionBanner";
-export { PromotionSlider } from "./PromotionSlider";
+export { PromotionSlider, type PromotionSliderLabels } from "./PromotionSlider";
 export { FeaturedProducts } from "./FeaturedProducts";
 export { CampaignSection } from "./CampaignSection";
 export { ServiceStrip } from "./ServiceStrip";

@@ -12,6 +12,9 @@ import { HomePageSections } from "@/components/home/HomePageSections";
 import { lexicalToHtml } from "@/lib/lexical-to-html";
 import type { Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
+import { productCardA11yFromDict } from "@/components/product-card-a11y";
+import { ArticleFeed } from "@/components/blog/ArticleFeed";
+import { fetchLatestArticles } from "@/lib/payload-articles";
 
 interface PayloadPageProps {
   params: Promise<{ locale: string; path: string[] }>;
@@ -106,6 +109,7 @@ export default async function PayloadPageRoute({ params, searchParams }: Payload
       );
     }
     const { resolvedProducts, resolvedArticles } = await resolveHomepageData(sections, validLocale);
+    const productCardA11y = productCardA11yFromDict(dict);
     return (
       <div className="min-h-full w-full bg-background min-w-0 overflow-x-clip">
         <HomePageSections
@@ -113,7 +117,32 @@ export default async function PayloadPageRoute({ params, searchParams }: Payload
           locale={validLocale}
           resolvedProducts={resolvedProducts}
           resolvedArticles={resolvedArticles}
+          productCardA11y={productCardA11y}
+          promoSliderLabels={{
+            previousSlide: dict.home.promoSlider.previousSlide,
+            nextSlide: dict.home.promoSlider.nextSlide,
+            goToSlide: dict.home.promoSlider.goToSlide,
+          }}
         />
+      </div>
+    );
+  }
+
+  if (page.pageType === "blog-index") {
+    const articles = await fetchLatestArticles(validLocale, 50);
+    const introHtml = page.content ? lexicalToHtml(page.content) : "";
+    const pageTitle = (page.title as string) ?? undefined;
+    return (
+      <div className="min-h-full w-full bg-background min-w-0 overflow-x-clip">
+        <main className="section-container py-8 sm:py-10 lg:py-12">
+          <ArticleFeed
+            articles={articles}
+            locale={validLocale}
+            dict={dict}
+            pageTitle={pageTitle}
+            introHtml={introHtml || undefined}
+          />
+        </main>
       </div>
     );
   }

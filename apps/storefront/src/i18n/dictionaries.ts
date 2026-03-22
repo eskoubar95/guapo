@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Locale } from "./config";
 
 // Dictionary structure for type safety
@@ -32,6 +33,7 @@ export interface Dictionary {
     selectHint: string;
     closeHint: string;
     minChars: string;
+    viewAllResults: string;
   };
   home: {
     hero: {
@@ -48,6 +50,9 @@ export interface Dictionary {
       bar2: { text: string; subtext: string };
     };
     promoSlider: {
+      previousSlide: string;
+      nextSlide: string;
+      goToSlide: string;
       slide1: {
         badge: string;
         title: string;
@@ -277,6 +282,22 @@ export interface Dictionary {
     chooseCarrier: string;
     searchAddressPlaceholder: string;
     openingHours: string;
+    paymentDetailsHint: string;
+    processingPaymentTitle: string;
+    processingPaymentSubtitle: string;
+    cardPaymentLabel: string;
+    cardPaymentNetworks: string;
+    mobilePayPaymentSub: string;
+    klarnaPaymentSub: string;
+    subscriptionPaymentRestriction: string;
+    termsAcceptBeforeTermsLink: string;
+    termsAcceptAfterTermsBeforePrivacyLink: string;
+    termsAcceptAfterPrivacyLink: string;
+    guestFirstNamePlaceholder: string;
+    guestLastNamePlaceholder: string;
+    mobilePayLabel: string;
+    klarnaLabel: string;
+    paymentInitFailed: string;
   };
   auth: {
     loginTitle: string;
@@ -336,6 +357,7 @@ export interface Dictionary {
     pickupPointSaved: string;
     pickupPointError: string;
     change: string;
+    cancel: string;
   };
   orderConfirmation: {
     title: string;
@@ -386,6 +408,22 @@ export interface Dictionary {
     cancelConfirm: string;
     cancelConfirmTitle: string;
   };
+  blog: {
+    title: string;
+    intro: string;
+    empty: string;
+    readMore: string;
+    backToBlog: string;
+    featuredHeading: string;
+    moreArticles: string;
+    categories: {
+      "skincare-tips": string;
+      "product-guides": string;
+      ingredients: string;
+      routines: string;
+      news: string;
+    };
+  };
   footer: {
     support: string;
     policies: string;
@@ -402,6 +440,6 @@ const dictionaries: Record<Locale, () => Promise<Dictionary>> = {
   en: () => import("./dictionaries/en.json").then((module) => module.default),
 };
 
-export const getDictionary = async (locale: Locale): Promise<Dictionary> => {
+export const getDictionary = cache(async (locale: Locale): Promise<Dictionary> => {
   return dictionaries[locale]();
-};
+});

@@ -28,7 +28,8 @@
     "searching": "Søger...",
     "selectHint": "for at vælge",
     "closeHint": "ESC for at lukke",
-    "minChars": "Skriv mindst 2 tegn"
+    "minChars": "Skriv mindst 2 tegn",
+    "viewAllResults": "Se alle resultater"
   },
   "home": {
     "hero": {
@@ -51,6 +52,9 @@
       }
     },
     "promoSlider": {
+      "previousSlide": "Forrige slide",
+      "nextSlide": "Næste slide",
+      "goToSlide": "Gå til slide",
       "slide1": {
         "badge": "Gælder 26. - 29. jan.",
         "title": "25%",
@@ -279,7 +283,23 @@
     "confirmPakkeshop": "Bekræft pakkeshop",
     "chooseCarrier": "Vælg leveringsudbyder",
     "searchAddressPlaceholder": "Søg på adresse, postnr. eller by",
-    "openingHours": "Åbningstider"
+    "openingHours": "Åbningstider",
+    "paymentDetailsHint": "Udfyld dine betalingsoplysninger nedenfor.",
+    "processingPaymentTitle": "Behandler din betaling",
+    "processingPaymentSubtitle": "Vent venligst mens vi behandler din ordre. Luk ikke vinduet.",
+    "cardPaymentLabel": "Kortbetaling",
+    "cardPaymentNetworks": "Visa, Mastercard",
+    "mobilePayPaymentSub": "Betal med MobilePay",
+    "klarnaPaymentSub": "Køb nu, betal senere",
+    "subscriptionPaymentRestriction": "MobilePay og Klarna er ikke tilgængelige for abonnementsordrer.",
+    "termsAcceptBeforeTermsLink": "Jeg accepterer ",
+    "termsAcceptAfterTermsBeforePrivacyLink": ". Jeg accepterer, at min bestilling først er bindende for butikken, når vi bekræftiger og en ordrebekræftelse er sendt. Jeg godkender, at betalte og uafhentede pakker returneres afsender. Jeg er informeret om, at Guapo behandler mine personoplysninger iht. ",
+    "termsAcceptAfterPrivacyLink": " for kunder.",
+    "guestFirstNamePlaceholder": "Gæst",
+    "guestLastNamePlaceholder": "Bruger",
+    "mobilePayLabel": "MobilePay",
+    "klarnaLabel": "Klarna",
+    "paymentInitFailed": "Kunne ikke starte betaling"
   },
   "auth": {
     "backLink": "Tilbage",
@@ -338,7 +358,8 @@
     "searchPickupPoint": "Søg pakkeshop",
     "pickupPointSaved": "Pakkeshop gemt",
     "pickupPointError": "Kunne ikke gemme pakkeshop. Prøv igen.",
-    "change": "Skift"
+    "change": "Skift",
+    "cancel": "Annuller"
   },
   "orderConfirmation": {
     "title": "Tak for din ordre!",
@@ -388,6 +409,22 @@
     "viewDetails": "Se detaljer",
     "cancelConfirm": "Er du sikker på, at du vil annullere abonnementet?",
     "cancelConfirmTitle": "Annuller abonnement"
+  },
+  "blog": {
+    "title": "Blog",
+    "intro": "Udforsk vores artikler om hudpleje, ingredienser og tips til en sundere hud.",
+    "empty": "Ingen artikler endnu.",
+    "readMore": "Læs mere",
+    "backToBlog": "Tilbage til blog",
+    "featuredHeading": "Seneste",
+    "moreArticles": "Flere artikler",
+    "categories": {
+      "skincare-tips": "Hudplejetips",
+      "product-guides": "Produktguider",
+      "ingredients": "Ingredienser",
+      "routines": "Rutiner",
+      "news": "Nyheder"
+    }
   },
   "footer": {
     "support": "Support",
