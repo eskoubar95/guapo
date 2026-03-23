@@ -10,8 +10,11 @@ import { CartItems } from "@/components/cart/CartItems";
 import { CartCheckoutGate } from "@/components/cart/CartCheckoutGate";
 import { CartMobileDrawer } from "@/components/cart/CartMobileDrawer";
 import type { CartItem } from "@/components/cart/CartItems";
-import type { StoreCart } from "@/lib/cart-data";
-import { lineAmountForDisplay } from "@/lib/cart-display";
+import {
+  getCartItemsOriginalTotal,
+  getCartItemsTotal,
+  getCartDiscountTotal,
+} from "@/lib/cart-display";
 
 interface CartPageProps {
   params: Promise<{ locale: string }>;
@@ -33,29 +36,16 @@ export default async function CartPage({ params }: CartPageProps) {
   const items = (cart?.items ?? []) as CartItem[];
   const hasSubscriptionItems = cartHasSubscriptionItems(cart);
 
-  const c = cart as StoreCart | null;
-  const originalItemTotal = c?.original_item_total ?? 0;
-  const shippingTotal = c?.shipping_total ?? 0;
-  const taxTotal = c?.tax_total ?? 0;
-  const discountTotal = c?.discount_total ?? 0;
-  const total = c?.total ?? 0;
-
-  const itemTotalInclTax = originalItemTotal > 0
-    ? originalItemTotal
-    : (c?.subtotal ?? 0) + (c?.item_tax_total ?? 0);
-
   const itemCount = items.reduce((sum, i) => sum + (i.quantity ?? 1), 0);
 
-  const displayItemTotal = lineAmountForDisplay(itemTotalInclTax);
-  const displayDiscount = lineAmountForDisplay(discountTotal);
-  // In cart no shipping method is chosen yet – total is items only; shipping is shown as "Beregnes ved kassen".
-  const displayTotal = displayItemTotal - displayDiscount;
+  const displayItemOriginalTotal = getCartItemsOriginalTotal(cart);
+  const displayDiscount = getCartDiscountTotal(cart);
+  const displayTotal = getCartItemsTotal(cart);
   const displayTax = Math.round((displayTotal - displayTotal / 1.25) * 100) / 100;
 
   return (
     <div className="min-h-full bg-surface/50">
       <main className="section-container py-6 lg:py-10">
-        {/* Page heading — section-heading size, not full H1 */}
         <div className="mb-6 lg:mb-8">
           <h1 className="section-heading text-primary">
             {locale === "da" ? "Din indkøbskurv" : "Your Shopping Cart"}
@@ -70,7 +60,6 @@ export default async function CartPage({ params }: CartPageProps) {
         {items.length > 0 ? (
           <>
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-              {/* Products column */}
               <div className="lg:col-span-7 xl:col-span-8">
                 <div className="bg-card rounded-lg border border-border">
                   <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-5 sm:py-5">
@@ -91,12 +80,10 @@ export default async function CartPage({ params }: CartPageProps) {
                       items={items}
                       locale={locale}
                       dict={dict}
-                      itemTotalInclTaxDisplay={displayItemTotal}
                     />
                   </div>
                 </div>
 
-                {/* Discount code — own card below products */}
                 <div className="bg-card rounded-lg border border-border p-4 sm:p-5 mt-4">
                   <CartDiscountCode
                     label={dict.cart.discountCodeLabel}
@@ -107,7 +94,6 @@ export default async function CartPage({ params }: CartPageProps) {
                 </div>
               </div>
 
-              {/* Sidebar — hidden on mobile, shown via CartMobileDrawer instead */}
               <div className="hidden lg:block lg:col-span-5 xl:col-span-4">
                 <div className="bg-card rounded-lg border border-border sticky top-24">
                   <div className="p-4 sm:p-5 space-y-2">
@@ -117,10 +103,10 @@ export default async function CartPage({ params }: CartPageProps) {
 
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">{dict.cart.itemsTotal}</span>
-                        <span className="text-foreground tabular-nums">{formatPrice(displayItemTotal, locale)}</span>
+                        <span className="text-foreground tabular-nums">{formatPrice(displayItemOriginalTotal, locale)}</span>
                       </div>
 
-                      {discountTotal > 0 && (
+                      {displayDiscount > 0 && (
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">{dict.cart.subscriptionDiscount}</span>
                           <span className="text-success font-medium tabular-nums">
@@ -154,7 +140,6 @@ export default async function CartPage({ params }: CartPageProps) {
                       </div>
                   </div>
 
-                  {/* Sidebar CTA */}
                   <div className="p-4 sm:p-5 border-t border-border space-y-2">
                     <CartCheckoutGate
                       locale={locale}
@@ -174,11 +159,10 @@ export default async function CartPage({ params }: CartPageProps) {
               </div>
             </div>
 
-            {/* Mobile bottom-sheet drawer — replaces static sticky bar */}
             <CartMobileDrawer
               locale={locale}
               total={displayTotal}
-              itemTotalInclTax={displayItemTotal}
+              itemTotalInclTax={displayItemOriginalTotal}
               discountTotal={displayDiscount}
               shippingTotal={0}
               taxTotal={displayTax}

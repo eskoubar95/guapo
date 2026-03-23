@@ -5,6 +5,12 @@ import { Heart, ShoppingCart } from "lucide-react";
 import { useTransition } from "react";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { addToCart } from "@/lib/cart";
+import {
+  getCartItemsTotal,
+  getLineUnitPrice,
+} from "@/lib/cart-display";
+import type { StoreCart } from "@/lib/cart-data";
+import { fetchClientStoreCart, resolveAddedLineItem } from "@/lib/fetch-client-cart";
 import { useAddToCartModal } from "@/contexts/AddToCartModalContext";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
@@ -55,22 +61,18 @@ export function ProductCard({ product, locale, className, labels }: ProductCardP
     if (!vid) return;
     startTransition(async () => {
       try {
-        const cart = await addToCart(vid, 1) as {
-          items?: Array<{ id?: string; product_title?: string; title?: string; variant_title?: string; thumbnail?: string; unit_price?: number; quantity?: number; metadata?: Record<string, unknown>; total?: number }>;
-          total?: number;
-        } | undefined;
+        const addCart = (await addToCart(vid, 1)) as StoreCart | undefined;
         await refreshCart();
-        if (cart?.items?.length) {
-          const last = cart.items[cart.items.length - 1];
-          const qty = last.quantity ?? 1;
-          const lineTotal = last.total ?? (last.unit_price ?? 0) * qty;
+        const cart = (await fetchClientStoreCart()) ?? addCart;
+        const last = resolveAddedLineItem(cart, addCart, vid);
+        if (cart?.items?.length && last) {
           openModal({
             productTitle: last.product_title ?? last.title ?? product.name,
             variantTitle: last.variant_title ?? product.variant,
             thumbnail: last.thumbnail ?? product.image,
-            quantity: qty,
-            unitPrice: qty > 0 ? lineTotal / qty : (last.unit_price ?? product.price),
-            cartTotal: cart.total ?? 0,
+            quantity: last.quantity ?? 1,
+            unitPrice: getLineUnitPrice(last) || product.price,
+            cartTotal: getCartItemsTotal(cart),
             itemCount: cart.items.length,
             lineItemId: last.id,
             metadata: last.metadata,

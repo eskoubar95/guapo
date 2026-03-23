@@ -77,3 +77,37 @@ export async function getSubscriptionDiscountPercentWithProductOverride(
   }
   return discountPercent;
 }
+
+export type SubscriptionDiscountLineInput = {
+  unit_price?: number | null;
+  quantity?: number | null;
+  is_tax_inclusive?: boolean | null;
+};
+
+/**
+ * Adjustment amount for a subscription discount on a cart line item.
+ *
+ * Medusa adjustments reduce the **ex-VAT subtotal**. Medusa then recomputes
+ * tax on the reduced subtotal automatically, so the customer-facing discount
+ * is the adjustment amount PLUS its tax effect.
+ *
+ * Example (DK 25% moms, 5% subscription discount):
+ *   unit_price = 100 DKK (ex-VAT, is_tax_inclusive=false)
+ *   → adjustment = 100 × 5% = 5 DKK
+ *   → Medusa: subtotal 95, tax 23.75, total 118.75 (= 125 − 6.25 inkl. moms)
+ *
+ *   unit_price = 150 DKK (inkl. moms, is_tax_inclusive=true)
+ *   → ex-VAT base = 150 / 1.25 = 120
+ *   → adjustment = 120 × 5% = 6 DKK
+ *   → Medusa: subtotal 114, tax 28.50, total 142.50 (= 150 − 7.50 inkl. moms)
+ */
+export function computeSubscriptionLineAdjustmentAmount(
+  item: SubscriptionDiscountLineInput,
+  discountPct: number
+): number {
+  const qty = item.quantity ?? 1;
+  const unitPrice = item.unit_price ?? 0;
+  const gross = unitPrice * qty;
+  const exVatBase = item.is_tax_inclusive ? gross / 1.25 : gross;
+  return Math.round(exVatBase * (discountPct / 100) * 100) / 100;
+}

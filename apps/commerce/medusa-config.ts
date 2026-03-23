@@ -116,6 +116,9 @@ modules.push(
     resolve: "./src/modules/subscription",
   },
   {
+    resolve: "./src/modules/guapo-free-shipping",
+  },
+  {
     resolve: './src/modules/payload',
     options: {
       serverUrl: process.env.PAYLOAD_SERVER_URL || 'http://localhost:3001',

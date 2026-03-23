@@ -1,7 +1,7 @@
 /**
- * Free shipping threshold — configurable per environment.
+ * Fallback threshold when Medusa `/store/free-shipping-config` is unavailable.
+ * Primary source: Medusa `guapo_free_shipping_setting` + `useFreeShippingStatus`.
  * Set NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD_DKK in .env.local (e.g. 499).
- * Later this can be wired to Medusa region/shipping options or CMS.
  */
 const DEFAULT_THRESHOLD_DKK = 499;
 

@@ -4,13 +4,17 @@ import Link from "next/link";
 import { useState } from "react";
 import { X, Minus, Plus } from "lucide-react";
 import { formatPrice } from "@/lib/format";
+import type { StoreCart } from "@/lib/cart-data";
+import {
+  getCartItemsTotal,
+  getLineUnitPrice,
+} from "@/lib/cart-display";
 import { getFreeShippingThresholdDkk } from "@/lib/shipping-config";
 import { useAddToCartModal } from "@/contexts/AddToCartModalContext";
 import { useCart } from "@/contexts/CartContext";
 import type { AddToCartModalData } from "@/contexts/AddToCartModalContext";
 import type { Dictionary } from "@/i18n/dictionaries";
 
-/** Medusa cart amounts in this project are in DKK (not øre). */
 interface AddToCartModalProps {
   data: AddToCartModalData;
   locale: string;
@@ -47,13 +51,14 @@ export function AddToCartModal({ data, locale, dict, onClose }: AddToCartModalPr
       });
       if (!updateRes.ok) throw new Error("Update failed");
       const cartRes = await fetch("/api/cart");
-      const cart = (await cartRes.json()) as { items?: Array<{ id?: string; quantity?: number }>; total?: number } | null;
+      const cart = (await cartRes.json()) as StoreCart | null;
       if (cart?.items) {
         const item = cart.items.find((i) => i.id === data.lineItemId);
         updateModalData({
           quantity: item?.quantity ?? newQty,
-          cartTotal: cart.total ?? data.cartTotal,
+          cartTotal: getCartItemsTotal(cart),
           itemCount: cart.items.length,
+          ...(item ? { unitPrice: getLineUnitPrice(item) } : {}),
         });
       }
       await refreshCart();
@@ -71,13 +76,11 @@ export function AddToCartModal({ data, locale, dict, onClose }: AddToCartModalPr
         onClick={onClose}
         aria-hidden
       />
-      {/* Desktop: centered modal. Mobile: bottom drawer with full content */}
       <div
         className="fixed left-0 right-0 bottom-0 z-50 flex w-full min-h-[70vh] max-h-[90vh] flex-col rounded-t-2xl border border-border border-b-0 bg-background shadow-2xl animate-drawer-up md:min-h-0 md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:max-h-none md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-xl md:border-b md:animate-none"
         role="dialog"
         aria-labelledby="add-to-cart-title"
       >
-        {/* Header: fixed at top on mobile */}
         <div className="flex shrink-0 items-center justify-between border-b border-border/60 bg-background px-4 py-3 md:border-0 md:px-6 md:pt-6 md:pb-5">
           <div className="flex items-center gap-2.5 text-green-600">
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-green-100 text-sm font-bold">
@@ -97,12 +100,9 @@ export function AddToCartModal({ data, locale, dict, onClose }: AddToCartModalPr
           </button>
         </div>
 
-        {/* Drawer handle (mobile only) */}
         <div className="mx-auto h-1 w-10 shrink-0 rounded-full bg-muted-foreground/20 md:hidden" aria-hidden />
 
-        {/* Scrollable body: product, total, free shipping, actions */}
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-2 sm:px-6 sm:pb-8 md:px-6 md:pb-8 md:pt-0">
-        {/* Added product row */}
         <div className="flex items-center gap-3 py-3 border-b border-border/80">
           <div className="w-14 h-14 shrink-0 rounded-md overflow-hidden bg-muted/80">
             {data.thumbnail ? (
@@ -165,12 +165,10 @@ export function AddToCartModal({ data, locale, dict, onClose }: AddToCartModalPr
           </div>
         </div>
 
-        {/* Cart total */}
         <p className="text-base font-semibold text-primary mt-4">
           {dict.cart.cartTotalCount.replace("{{count}}", String(data.itemCount))} : {formatPrice(data.cartTotal, locale)}
         </p>
 
-        {/* Free shipping progress */}
         <div className="mt-5">
           <div className="flex justify-between text-sm text-muted-foreground mb-1.5">
             <span>{formatPrice(0, locale)}</span>
@@ -187,7 +185,6 @@ export function AddToCartModal({ data, locale, dict, onClose }: AddToCartModalPr
           </p>
         </div>
 
-        {/* Actions */}
         <div className="flex gap-4 mt-6">
           <button
             type="button"

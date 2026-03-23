@@ -1,7 +1,12 @@
 "use client";
 
 import { formatPrice } from "@/lib/format";
-import { lineAmountForDisplay } from "@/lib/cart-display";
+import {
+  getLineOriginalTotal,
+  getLineTotal,
+  getLineDiscount,
+  isLineDiscounted,
+} from "@/lib/cart-display";
 import { Minus, Plus, X, ChevronDown, RotateCw } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { CartItem } from "./CartItems";
@@ -13,8 +18,6 @@ interface CartItemRowProps {
   locale: string;
   dict: Dictionary;
   isPending: boolean;
-  itemTotalInclTaxDisplay?: number;
-  sumRawLineTotals: number;
   onRemove: (lineItemId: string) => void;
   onQuantityChange: (
     lineItemId: string,
@@ -30,8 +33,6 @@ export function CartItemRow({
   locale,
   dict,
   isPending,
-  itemTotalInclTaxDisplay,
-  sumRawLineTotals,
   onRemove,
   onQuantityChange,
   onSubscriptionToggle,
@@ -45,22 +46,11 @@ export function CartItemRow({
     ? item.metadata.subscription_cycle
     : 0;
   const isSubscription = cycle > 0;
-  const rawLineOriginal = item.original_total ?? (item.unit_price ?? 0) * quantity;
-  const discountAmountRaw = item.discount_total ?? 0;
-  const discountAmount = lineAmountForDisplay(discountAmountRaw);
-  const lineRawDisplay = lineAmountForDisplay(rawLineOriginal);
-  const lineTotalOriginal =
-    itemTotalInclTaxDisplay != null && sumRawLineTotals > 0
-      ? Math.round((itemTotalInclTaxDisplay * (lineRawDisplay / sumRawLineTotals)) * 100) / 100
-      : lineRawDisplay;
-  const lineTotal =
-    discountAmountRaw > 0
-      ? item.total != null
-        ? itemTotalInclTaxDisplay != null && sumRawLineTotals > 0
-          ? Math.round((itemTotalInclTaxDisplay * (lineAmountForDisplay(item.total) / sumRawLineTotals)) * 100) / 100
-          : lineAmountForDisplay(item.total)
-        : lineTotalOriginal - discountAmount
-      : lineTotalOriginal;
+
+  const lineTotalOriginal = getLineOriginalTotal(item);
+  const lineTotal = getLineTotal(item);
+  const discountAmount = getLineDiscount(item);
+  const showDiscounted = isLineDiscounted(item);
 
   return (
     <div className="py-4 sm:py-5 first:pt-0 last:pb-0">
@@ -173,7 +163,7 @@ export function CartItemRow({
             </div>
 
             <div className="text-right shrink-0">
-              {isSubscription && discountAmount > 0 ? (
+              {showDiscounted ? (
                 <div className="flex items-baseline gap-2 justify-end">
                   <span className="text-sm font-semibold text-foreground tabular-nums">
                     {formatPrice(lineTotal, locale)}

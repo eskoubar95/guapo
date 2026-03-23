@@ -5,6 +5,8 @@ import { resolveDiscountPercentForRenewal } from "../../lib/subscription-discoun
 import { buildRenewalOrderCreateInput } from "../../lib/subscription-renewal/build-renewal-order";
 import { chargeStripeSubscriptionRenewal } from "../../lib/subscription-renewal/charge-stripe-renewal";
 import { resolveRenewalPricingFromInitialOrder } from "../../lib/subscription-renewal/resolve-renewal-price";
+import { GUAPO_FREE_SHIPPING_MODULE } from "../../modules/guapo-free-shipping";
+import type GuapoFreeShippingModuleService from "../../modules/guapo-free-shipping/service";
 import { SUBSCRIPTION_MODULE } from "../../modules/subscription";
 import type SubscriptionModuleService from "../../modules/subscription/service";
 
@@ -18,7 +20,6 @@ export type RunSubscriptionRenewalOutput = {
   skipped?: boolean;
 };
 
-const FREE_SHIPPING_THRESHOLD_DKK = 499;
 const SHIPPING_FLAT_DKK = 39;
 const STRIPE_DKK_MINIMUM_ORE = 250;
 
@@ -29,6 +30,9 @@ export const runSubscriptionRenewalStep = createStep(
     { container }
   ): Promise<StepResponse<RunSubscriptionRenewalOutput>> => {
     const subscriptionService = container.resolve<SubscriptionModuleService>(SUBSCRIPTION_MODULE);
+    const freeShippingSettings = container.resolve(
+      GUAPO_FREE_SHIPPING_MODULE
+    ) as GuapoFreeShippingModuleService;
     const link = resolveLink(container);
     const query = resolveQuery(container);
 
@@ -109,8 +113,21 @@ export const runSubscriptionRenewalStep = createStep(
     const discount = discountPercent / 100;
     const unitPriceDkk = rawPriceDkk * (1 - discount);
     const itemsTotalDkk = unitPriceDkk * (sub.quantity ?? 1);
+    let freeShippingThresholdDkk = Number.POSITIVE_INFINITY;
+    try {
+      const fs = await freeShippingSettings.getSettingsOrDefaults();
+      if (
+        fs.enabled &&
+        typeof fs.threshold_amount === "number" &&
+        fs.threshold_amount > 0
+      ) {
+        freeShippingThresholdDkk = fs.threshold_amount;
+      }
+    } catch {
+      freeShippingThresholdDkk = 499;
+    }
     const shippingDkk =
-      itemsTotalDkk > 0 && itemsTotalDkk < FREE_SHIPPING_THRESHOLD_DKK ? SHIPPING_FLAT_DKK : 0;
+      itemsTotalDkk > 0 && itemsTotalDkk < freeShippingThresholdDkk ? SHIPPING_FLAT_DKK : 0;
     const totalDkk = itemsTotalDkk + shippingDkk;
     const stripeAmountOre = Math.round(totalDkk * 100);
 

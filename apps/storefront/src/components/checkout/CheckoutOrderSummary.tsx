@@ -5,8 +5,14 @@ import { RotateCw } from "lucide-react";
 import { useCheckoutCart } from "@/contexts/CheckoutCartContext";
 import { formatPrice } from "@/lib/format";
 import {
-  lineAmountForDisplay,
+  getCartItemsOriginalTotal,
+  getCartItemsTotal,
+  getCartDiscountTotal,
+  getLineOriginalTotal,
+  getLineTotal,
+  isLineDiscounted,
 } from "@/lib/cart-display";
+import type { StoreCart } from "@/lib/cart-data";
 import type { CartItem } from "@/components/cart/CartItems";
 import type { Dictionary } from "@/i18n/dictionaries";
 
@@ -26,48 +32,24 @@ export function CheckoutOrderSummary({
   const items = (cart?.items ?? []) as CartItem[];
   if (items.length === 0) return null;
 
-  const c = cart as Record<string, unknown> | null | undefined;
-  const num = (key: string, alt?: string) =>
-    (c && (Number(c[key]) ?? Number(alt && c[alt]))) || 0;
+  const itemsOriginalTotal = getCartItemsOriginalTotal(cart as StoreCart);
+  const discountTotal = getCartDiscountTotal(cart as StoreCart);
+  const itemsTotal = getCartItemsTotal(cart as StoreCart);
 
-  const originalItemTotal = num("original_item_total", "originalItemTotal");
-  const discountTotalRaw = num("discount_total", "discountTotal");
-  const subtotal = num("subtotal");
-  const itemTaxTotal = num("item_tax_total", "itemTaxTotal");
-  const itemTotalInclTaxRaw =
-    originalItemTotal > 0 ? originalItemTotal : subtotal + itemTaxTotal;
-  const displayItemTotalInclTax = lineAmountForDisplay(itemTotalInclTaxRaw);
-  const discountTotal = lineAmountForDisplay(discountTotalRaw);
-  /** Fragt inkl. moms i major units (DKK). */
   const shippingCommitted = selectedShippingAmount != null && selectedShippingAmount > 0;
-  const shippingTotal = shippingCommitted
-    ? selectedShippingAmount
-    : 0;
-  /**
-   * Total inkl. moms: varer (allerede inkl. moms) − rabat + fragt (inkl. moms).
-   * cart.tax_total must NOT be added — it is the VAT portion already inside those amounts.
-   */
-  const itemsAfterDiscount = displayItemTotalInclTax - discountTotal;
+  const shippingTotal = shippingCommitted ? selectedShippingAmount : 0;
+
   const effectiveTotal = shippingCommitted
-    ? itemsAfterDiscount + shippingTotal
-    : itemsAfterDiscount;
-  /** Moms i alt (25% inkl.): andel af varer efter rabat + andel af fragt. */
+    ? itemsTotal + shippingTotal
+    : itemsTotal;
+
   const vatTotalDisplay =
     Math.round(
-      (itemsAfterDiscount * VAT_SHARE_OF_GROSS_25 +
+      (itemsTotal * VAT_SHARE_OF_GROSS_25 +
         shippingTotal * VAT_SHARE_OF_GROSS_25) *
         100
     ) / 100;
   const shippingIsFree = shippingCommitted && shippingTotal === 0;
-
-  const sumRawLineTotals = items.reduce((s, item) => {
-    const q = item.quantity ?? 1;
-    const raw =
-      item.total ??
-      item.original_total ??
-      (item.unit_price ?? 0) * q;
-    return s + lineAmountForDisplay(raw);
-  }, 0);
 
   return (
     <div className="mt-8 rounded-lg border border-border bg-card p-4 sm:p-5">
@@ -92,38 +74,9 @@ export function CheckoutOrderSummary({
                   .subscription_cycle as number
               : 0;
           const isSubscription = cycle > 0;
-          const qty = item.quantity ?? 1;
-          const ext = item as CartItem & {
-            subtotal?: number;
-            tax_total?: number;
-            original_total?: number;
-            discount_total?: number;
-          };
-          const lineTotalOriginal =
-            ext.original_total ?? (item.unit_price ?? 0) * qty;
-          const lineDiscount = ext.discount_total ?? 0;
-          const lineRawDisplay = lineAmountForDisplay(
-            item.total ?? ext.original_total ?? (item.unit_price ?? 0) * qty
-          );
-          const lineTotalInclBase =
-            ext.subtotal != null && ext.tax_total != null
-              ? lineAmountForDisplay(ext.subtotal + ext.tax_total)
-              : sumRawLineTotals > 0
-                ? Math.round(
-                    (displayItemTotalInclTax * (lineRawDisplay / sumRawLineTotals)) *
-                      100
-                  ) / 100
-                : lineRawDisplay;
-          const lineTotal =
-            lineDiscount > 0 && item.total != null
-              ? sumRawLineTotals > 0
-                ? Math.round(
-                    (displayItemTotalInclTax *
-                      (lineAmountForDisplay(item.total) / sumRawLineTotals)) *
-                      100
-                  ) / 100
-                : lineAmountForDisplay(item.total)
-              : lineTotalInclBase - lineAmountForDisplay(lineDiscount);
+          const lineTotalOriginal = getLineOriginalTotal(item);
+          const lineTotal = getLineTotal(item);
+          const showDiscounted = isLineDiscounted(item);
 
           return (
             <li key={item.id} className="flex gap-3 py-3 first:pt-0">
@@ -159,12 +112,18 @@ export function CheckoutOrderSummary({
                 </div>
               </div>
               <div className="text-right shrink-0 flex flex-col justify-center">
-                <p className="text-sm font-medium text-foreground tabular-nums">
-                  {formatPrice(lineTotal, locale)}
-                </p>
-                {isSubscription && lineDiscount > 0 && (
-                  <p className="text-xs text-muted-foreground line-through tabular-nums">
-                    {formatPrice(lineAmountForDisplay(lineTotalOriginal), locale)}
+                {showDiscounted ? (
+                  <>
+                    <p className="text-sm font-medium text-foreground tabular-nums">
+                      {formatPrice(lineTotal, locale)}
+                    </p>
+                    <p className="text-xs text-muted-foreground line-through tabular-nums">
+                      {formatPrice(lineTotalOriginal, locale)}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm font-medium text-foreground tabular-nums">
+                    {formatPrice(lineTotalOriginal, locale)}
                   </p>
                 )}
               </div>
@@ -177,7 +136,7 @@ export function CheckoutOrderSummary({
         <div className="flex justify-between text-sm">
           <dt className="text-muted-foreground">{dict.cart.subtotal}</dt>
           <dd className="text-foreground tabular-nums">
-            {formatPrice(displayItemTotalInclTax, locale)}
+            {formatPrice(itemsOriginalTotal, locale)}
           </dd>
         </div>
         {discountTotal > 0 && (

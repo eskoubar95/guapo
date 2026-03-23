@@ -78,10 +78,10 @@ export async function getCart(): Promise<StoreCart | null> {
     const cartId = await getCartId();
     if (!cartId) return null;
 
-    const res = await fetch(`${MEDUSA_URL}/store/carts/${cartId}`, {
-      headers: headers(),
-      cache: "no-store",
-    });
+    const res = await fetch(
+      `${MEDUSA_URL}/store/carts/${cartId}?fields=+items.*`,
+      { headers: headers(), cache: "no-store" }
+    );
     if (!res.ok) return null;
     const data = await res.json();
     const cart = (data as { cart?: StoreCart & { completed_at?: string | null } }).cart;

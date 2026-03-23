@@ -6,6 +6,14 @@ import { useRouter } from "next/navigation";
 import { X, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { removeLineItem, updateLineItem, clearCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
+import {
+  getCartItemsOriginalTotal,
+  getCartItemsTotal,
+  getCartDiscountTotal,
+  getLineOriginalTotal,
+  getLineTotal,
+  isLineDiscounted,
+} from "@/lib/cart-display";
 import { getFreeShippingThresholdDkk } from "@/lib/shipping-config";
 import { useCart } from "@/contexts/CartContext";
 import type { CartItem } from "@/components/cart/CartItems";
@@ -38,12 +46,11 @@ function CartDropdownItem({
   const variantTitle = (item.variant_title || item.variant?.title) ?? "";
   const cycle = typeof item.metadata?.subscription_cycle === "number" ? item.metadata.subscription_cycle : 0;
   const isSubscription = cycle > 0;
-  const unitPrice = item.unit_price ?? 0;
   const quantity = item.quantity ?? 1;
-  const lineTotalOriginal = item.original_total ?? unitPrice * quantity;
-  const discountAmount = item.discount_total ?? 0;
-  const lineTotal = item.total ?? lineTotalOriginal - discountAmount;
-  const base = `/${locale}`;
+
+  const lineTotalOriginal = getLineOriginalTotal(item);
+  const lineTotal = getLineTotal(item);
+  const showDiscounted = isLineDiscounted(item);
 
   return (
     <div className="flex gap-3 py-3 border-b border-border last:border-b-0">
@@ -104,9 +111,9 @@ function CartDropdownItem({
           <X className="h-4 w-4" />
         </button>
         <div className="text-right">
-          {discountAmount > 0 ? (
+          {showDiscounted ? (
             <>
-              <p className="text-sm font-semibold text-destructive">
+              <p className="text-sm font-semibold text-foreground">
                 {formatPrice(lineTotal, locale)}
               </p>
               <p className="text-xs text-muted-foreground line-through">
@@ -132,16 +139,12 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
   const base = `/${locale}`;
   const items = (cart?.items ?? []) as CartItem[];
 
-  const c = cart as { original_item_total?: number; tax_total?: number; discount_total?: number } | null;
-  const originalItemTotal = c?.original_item_total ?? 0;
-  const taxTotal = c?.tax_total ?? 0;
-  const discountTotal = c?.discount_total ?? 0;
-  const total = cart?.total ?? 0;
-  const itemTotalInclTax = originalItemTotal > 0
-    ? originalItemTotal
-    : (cart?.subtotal ?? 0) + ((cart as { item_tax_total?: number } | null)?.item_tax_total ?? 0);
+  const subtotalInclVat = getCartItemsOriginalTotal(cart);
+  const discountTotal = getCartDiscountTotal(cart);
+  const totalInclVat = getCartItemsTotal(cart);
+  const taxTotal = cart?.tax_total ?? 0;
   const freeShippingThresholdDkk = getFreeShippingThresholdDkk();
-  const hasFreeShipping = total >= freeShippingThresholdDkk;
+  const hasFreeShipping = totalInclVat >= freeShippingThresholdDkk;
 
   const handleRemove = (lineItemId: string) => {
     startTransition(async () => {
@@ -222,7 +225,7 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
             <div className="border-t border-border px-4 py-3 space-y-1.5 shrink-0 bg-surface/30">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{dict.cart.subtotal}</span>
-                <span className="text-foreground">{formatPrice(itemTotalInclTax, locale)}</span>
+                <span className="text-foreground">{formatPrice(subtotalInclVat, locale)}</span>
               </div>
               {discountTotal > 0 && (
                 <div className="flex justify-between text-sm">
@@ -247,7 +250,9 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
               <div className="border-t border-border pt-2 mt-1">
                 <div className="flex justify-between text-sm items-center">
                   <span className="font-medium text-foreground">{dict.cart.totalInclVat}</span>
-                  <span className="font-semibold text-primary">{formatPrice(total, locale)}</span>
+                  <span className="font-semibold text-primary">
+                    {formatPrice(totalInclVat, locale)}
+                  </span>
                 </div>
                 {taxTotal > 0 && (
                   <div className="flex justify-between text-xs text-muted-foreground mt-0.5">

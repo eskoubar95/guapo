@@ -1,13 +1,18 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework";
 import { Modules } from "@medusajs/framework/utils";
-import { getSubscriptionDiscountPercent, SUBSCRIPTION_PROMO_CODE } from "../lib/subscription-discount";
+import {
+  computeSubscriptionLineAdjustmentAmount,
+  getSubscriptionDiscountPercent,
+  SUBSCRIPTION_PROMO_CODE,
+} from "../lib/subscription-discount";
 
 type CartLineItem = {
   id: string;
   unit_price: number;
   quantity: number;
+  is_tax_inclusive?: boolean | null;
   metadata?: Record<string, unknown> | null;
-  adjustments?: Array<{ id: string; code?: string | null }> | null;
+  adjustments?: Array<{ id: string; code?: string | null; amount?: number }> | null;
 };
 
 type CartModuleService = {
@@ -66,23 +71,32 @@ export default async function applySubscriptionDiscount({
         : 0;
     const isSubscription = cycle > 0;
 
-    const existingAdj = (item.adjustments ?? []).find(
+    const existing = (item.adjustments ?? []).filter(
       (adj) => adj.code === SUBSCRIPTION_PROMO_CODE
     );
 
-    if (isSubscription && !existingAdj) {
-      const amount =
-        (item.unit_price ?? 0) * (item.quantity ?? 1) * (discountPct / 100);
-      if (amount > 0) {
-        adjustmentsToAdd.push({
-          item_id: item.id,
-          code: SUBSCRIPTION_PROMO_CODE,
-          amount,
-          description: `Abonnementsrabat ${discountPct}%`,
-        });
+    if (isSubscription) {
+      const amount = computeSubscriptionLineAdjustmentAmount(item, discountPct);
+      if (amount <= 0) {
+        adjustmentIdsToRemove.push(...existing.map((a) => a.id));
+        continue;
       }
-    } else if (!isSubscription && existingAdj) {
-      adjustmentIdsToRemove.push(existingAdj.id);
+
+      const alreadyCorrect =
+        existing.length === 1 &&
+        Math.abs((existing[0].amount ?? 0) - amount) < 0.01;
+
+      if (alreadyCorrect) continue;
+
+      adjustmentIdsToRemove.push(...existing.map((a) => a.id));
+      adjustmentsToAdd.push({
+        item_id: item.id,
+        code: SUBSCRIPTION_PROMO_CODE,
+        amount,
+        description: `Abonnementsrabat ${discountPct}%`,
+      });
+    } else {
+      adjustmentIdsToRemove.push(...existing.map((a) => a.id));
     }
   }
 

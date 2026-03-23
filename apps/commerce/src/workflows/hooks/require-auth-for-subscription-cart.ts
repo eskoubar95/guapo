@@ -1,5 +1,6 @@
 import { completeCartWorkflow } from "@medusajs/medusa/core-flows"
 import { MedusaError, Modules } from "@medusajs/framework/utils"
+import { computeSubscriptionLineAdjustmentAmount } from "../../lib/subscription-discount"
 
 const PROMO_CODE = "SUBSCRIPTION-5PCT"
 const DEFAULT_DISCOUNT_PCT = 5
@@ -8,6 +9,7 @@ type CartItem = {
   id: string
   unit_price?: number
   quantity?: number
+  is_tax_inclusive?: boolean | null
   metadata?: Record<string, unknown> | null
   adjustments?: Array<{ id: string; code?: string | null }> | null
 }
@@ -73,7 +75,7 @@ completeCartWorkflow.hooks.validate(
     for (const item of subscriptionItems) {
       const hasAdj = (item.adjustments ?? []).some((adj) => adj.code === PROMO_CODE)
       if (hasAdj) continue
-      const amount = (item.unit_price ?? 0) * (item.quantity ?? 1) * (discountPct / 100)
+      const amount = computeSubscriptionLineAdjustmentAmount(item, discountPct)
       if (amount > 0) {
         toAdd.push({
           item_id: item.id,

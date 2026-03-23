@@ -15,6 +15,10 @@ export interface ClientCart {
   subtotal?: number;
   shipping_total?: number;
   total?: number;
+  tax_total?: number;
+  discount_total?: number;
+  item_total?: number;
+  original_item_total?: number;
 }
 
 interface CartContextValue {

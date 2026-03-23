@@ -2,7 +2,6 @@
 
 import { useTransition } from "react";
 import { removeLineItem, updateLineItem, setLineItemSubscription } from "@/lib/cart";
-import { lineAmountForDisplay } from "@/lib/cart-display";
 import { useRouter } from "next/navigation";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { CartItemRow } from "./CartItemRow";
@@ -20,6 +19,8 @@ export interface CartItem {
   };
   unit_price?: number;
   quantity?: number;
+  subtotal?: number;
+  tax_total?: number;
   total?: number;
   discount_total?: number;
   original_total?: number;
@@ -31,25 +32,11 @@ interface CartItemsProps {
   items: CartItem[];
   locale: string;
   dict: Dictionary;
-  /** Cart-level item total incl. VAT (DKK). When set, each line shows its share so all prices are consumer-facing incl. VAT. */
-  itemTotalInclTaxDisplay?: number;
 }
 
-export function CartItems({ items, locale, dict, itemTotalInclTaxDisplay }: CartItemsProps) {
+export function CartItems({ items, locale, dict }: CartItemsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-
-  const sumRawLineTotals =
-    itemTotalInclTaxDisplay != null
-      ? items.reduce(
-          (s, i) =>
-            s +
-            lineAmountForDisplay(
-              i.total ?? i.original_total ?? (i.unit_price ?? 0) * (i.quantity ?? 1)
-            ),
-          0
-        )
-      : 0;
 
   const handleRemove = (lineItemId: string) => {
     startTransition(async () => {
@@ -97,8 +84,6 @@ export function CartItems({ items, locale, dict, itemTotalInclTaxDisplay }: Cart
           locale={locale}
           dict={dict}
           isPending={isPending}
-          itemTotalInclTaxDisplay={itemTotalInclTaxDisplay}
-          sumRawLineTotals={sumRawLineTotals}
           onRemove={handleRemove}
           onQuantityChange={handleQuantityChange}
           onSubscriptionToggle={handleSubscriptionToggle}

@@ -4,6 +4,12 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Minus, Plus } from "lucide-react";
 import { addToCart } from "@/lib/cart";
+import {
+  getCartItemsTotal,
+  getLineUnitPrice,
+} from "@/lib/cart-display";
+import type { StoreCart } from "@/lib/cart-data";
+import { fetchClientStoreCart, resolveAddedLineItem } from "@/lib/fetch-client-cart";
 import { Button } from "@/components/ui/button";
 import { SubscriptionSelector } from "@/components/SubscriptionSelector";
 import { useAddToCartModal } from "@/contexts/AddToCartModalContext";
@@ -86,38 +92,25 @@ export function ProductPurchaseSection({
           purchaseType === "subscription" && subscriptionConfig
             ? { subscription_cycle: selectedCycle }
             : undefined;
-        const cart = await addToCart(selectedVariantId, quantity, options) as {
-          items?: Array<{
-            id?: string;
-            product_title?: string;
-            title?: string;
-            variant_title?: string;
-            variant?: { product?: { thumbnail?: string }; title?: string };
-            thumbnail?: string;
-            unit_price?: number;
-            quantity?: number;
-            metadata?: Record<string, unknown>;
-            total?: number;
-          }>;
-          total?: number;
-        } | undefined;
+        const addCart = (await addToCart(selectedVariantId, quantity, options)) as
+          | StoreCart
+          | undefined;
         setAdded(true);
         router.refresh();
         await refreshCart();
         if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
         addedTimerRef.current = setTimeout(() => setAdded(false), 2000);
 
-        if (cart?.items?.length) {
-          const last = cart.items[cart.items.length - 1];
-          const qty = last.quantity ?? quantity;
-          const lineTotal = last.total ?? (last.unit_price ?? 0) * qty;
+        const cart = (await fetchClientStoreCart()) ?? addCart;
+        const last = resolveAddedLineItem(cart, addCart, selectedVariantId);
+        if (cart?.items?.length && last) {
           openModal({
             productTitle: last.product_title ?? last.title ?? "",
             variantTitle: last.variant_title ?? last.variant?.title,
             thumbnail: last.thumbnail ?? last.variant?.product?.thumbnail,
-            quantity: qty,
-            unitPrice: qty > 0 ? lineTotal / qty : (last.unit_price ?? selectedVariantPrice),
-            cartTotal: cart.total ?? 0,
+            quantity: last.quantity ?? quantity,
+            unitPrice: getLineUnitPrice(last) || selectedVariantPrice,
+            cartTotal: getCartItemsTotal(cart),
             itemCount: cart.items.length,
             lineItemId: last.id,
             metadata: last.metadata,
