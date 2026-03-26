@@ -48,7 +48,12 @@ function mapCartToGuapoPayload(cart: Record<string, unknown>): GuapoCartPayload 
 }
 
 /**
- * Loads cart for Guapo Stripe rules (subscriptions, Klarna, metadata).
+ * Loads cart for Guapo Stripe rules (subscriptions, Klarna metadata, amount_details).
+ * Uses the cart module (same process as Medusa payment pipeline).
+ *
+ * Payable amount for Stripe comes from {@link initiatePayment}'s `input.amount`
+ * (payment collection), which must stay aligned with the cart via
+ * `refreshPaymentCollectionForCartWorkflow` when totals change.
  *
  * Currency must match the payment session.
  */

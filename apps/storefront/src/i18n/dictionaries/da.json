@@ -38,7 +38,7 @@
       "cta": "Shop nu"
     },
     "announcement": {
-      "text": "Fri fragt over 299 kr.",
+      "text": "Fri fragt over {{threshold}} kr.",
       "subtext": "30 dages returret"
     },
     "promoBars": {
@@ -141,7 +141,7 @@
     "decreaseQuantity": "Reducer antal",
     "increaseQuantity": "Øg antal",
     "trustStrip": {
-      "freeShipping": "Fri fragt over 299 kr.",
+      "freeShipping": "Fri fragt over {{threshold}} kr.",
       "returns": "30 dages returret",
       "securePayment": "Sikker betaling"
     },
@@ -207,7 +207,7 @@
     "shopVidere": "Shop videre",
     "seKurv": "Se kurv",
     "totalDiscount": "Din samlede rabat",
-    "freeShippingProgress": "Mulighed for fri fragt",
+    "freeShippingProgress": "Fri fragt ved køb over {{threshold}} kr.",
     "addedAsSubscription": "Tilføjet som abonnement",
     "youSavePerTime": "Du sparer 5% pr. gang",
     "cartTotalCount": "Kurv ({{count}}) total",
@@ -376,6 +376,8 @@
     "total": "Total",
     "freeShipping": "Gratis",
     "deliveryAddress": "Leveringsadresse",
+    "pickupPoint": "Pakkeshop",
+    "pickupPointHint": "Din pakke leveres til denne pakkeshop.",
     "subscriptionTitle": "Abonnement",
     "subscriptionText": "Denne ordre er en del af dit abonnement. Du kan administrere leveringsdatoer, pause eller afmelde under Mine abonnementer.",
     "manageSubscriptions": "Administrer abonnementer",

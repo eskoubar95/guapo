@@ -15,6 +15,7 @@ import {
   isLineDiscounted,
 } from "@/lib/cart-display";
 import { getFreeShippingThresholdDkk } from "@/lib/shipping-config";
+import { useFreeShippingStatus } from "@/hooks/useFreeShippingStatus";
 import { useCart } from "@/contexts/CartContext";
 import type { CartItem } from "@/components/cart/CartItems";
 import type { Dictionary } from "@/i18n/dictionaries";
@@ -143,8 +144,12 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
   const discountTotal = getCartDiscountTotal(cart);
   const totalInclVat = getCartItemsTotal(cart);
   const taxTotal = cart?.tax_total ?? 0;
-  const freeShippingThresholdDkk = getFreeShippingThresholdDkk();
-  const hasFreeShipping = totalInclVat >= freeShippingThresholdDkk;
+
+  const fsStatus = useFreeShippingStatus(cart?.id, totalInclVat);
+  const freeShippingThresholdDkk = fsStatus?.threshold ?? getFreeShippingThresholdDkk();
+  const hasFreeShipping =
+    fsStatus?.enabled !== false &&
+    (fsStatus?.qualifies ?? totalInclVat >= freeShippingThresholdDkk);
 
   const handleRemove = (lineItemId: string) => {
     startTransition(async () => {

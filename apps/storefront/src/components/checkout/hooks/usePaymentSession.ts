@@ -1,17 +1,64 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, type MutableRefObject } from "react";
 import { medusa } from "@/lib/medusa";
 import type { StoreCart } from "@/lib/cart-data";
 import type { CheckoutPaymentMethodChoice } from "@/components/checkout-payment-types";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { CheckoutFormData } from "@/components/checkout/steps/checkout-form.types";
+import { normalizeShippingForDisplay } from "@/lib/cart-display";
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/**
+ * `sync-free-shipping-promotion` runs asynchronously on `cart.updated`. The Store API can return
+ * the cart before shipping-method adjustments are applied, so PaymentIntent amount would still
+ * include paid shipping. Poll until `shipping_total` is 0 when the storefront knows the order
+ * qualifies for free shipping.
+ */
+async function retrieveCartWhenReadyForPayment(
+  cartId: string,
+  qualifiesForFreeShipping: boolean,
+  generation: number,
+  sessionGenerationRef: MutableRefObject<number>
+): Promise<StoreCart> {
+  const maxAttempts = qualifiesForFreeShipping ? 30 : 1;
+  const delayMs = 150;
+  let last: StoreCart | null = null;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    if (generation !== sessionGenerationRef.current) {
+      throw new Error("aborted");
+    }
+    const { cart } = await medusa.store.cart.retrieve(cartId);
+    last = cart as StoreCart;
+    if (!qualifiesForFreeShipping) {
+      return last;
+    }
+    const hasShipping = (last.shipping_methods?.length ?? 0) > 0;
+    const raw = last.shipping_total;
+    if (!hasShipping || raw == null) {
+      return last;
+    }
+    const norm = normalizeShippingForDisplay(raw);
+    if (norm === 0) {
+      return last;
+    }
+    if (attempt < maxAttempts - 1) {
+      await sleep(delayMs);
+    }
+  }
+  return last!;
+}
 
 interface UsePaymentSessionParams {
   cartId: string | null;
   formData: CheckoutFormData;
   selectedShippingOptionId: string | null;
   selectedShippingData: Record<string, unknown>;
+  /** When true, wait for Medusa to apply free-shipping adjustments before payment session. */
+  qualifiesForFreeShipping: boolean;
   hasSubscriptionItems: boolean;
   paymentMethodChoice: CheckoutPaymentMethodChoice;
   checkoutMessages: Pick<
@@ -26,25 +73,12 @@ interface UsePaymentSessionParams {
   setLiveCart: (cart: StoreCart) => void;
 }
 
-function servicePointStrings(data: Record<string, unknown>): {
-  address: string;
-  city: string;
-  zip: string;
-} | null {
-  const addr = data.service_point_address;
-  if (addr == null || typeof addr !== "string") return null;
-  return {
-    address: addr,
-    city: typeof data.service_point_city === "string" ? data.service_point_city : "",
-    zip: typeof data.service_point_zipcode === "string" ? data.service_point_zipcode : "",
-  };
-}
-
 export function usePaymentSession({
   cartId,
   formData,
   selectedShippingOptionId,
   selectedShippingData,
+  qualifiesForFreeShipping,
   hasSubscriptionItems,
   paymentMethodChoice,
   checkoutMessages,
@@ -56,12 +90,16 @@ export function usePaymentSession({
   const [stripeLoading, setStripeLoading] = useState(false);
   const [appliedShippingOptionId, setAppliedShippingOptionId] = useState<string | null>(null);
   const lastAppliedFormDataRef = useRef("");
+  const lastAppliedShippingDataRef = useRef("");
+  const lastAppliedQualifiesRef = useRef<boolean | null>(null);
   const lastAppliedPaymentChoiceRef = useRef("");
   const sessionGenerationRef = useRef(0);
 
   const clearPaymentSession = useCallback(() => {
     setClientSecret(null);
     setCart(null);
+    lastAppliedShippingDataRef.current = "";
+    lastAppliedQualifiesRef.current = null;
     lastAppliedPaymentChoiceRef.current = "";
     sessionGenerationRef.current += 1;
   }, []);
@@ -71,13 +109,19 @@ export function usePaymentSession({
     const generation = ++sessionGenerationRef.current;
 
     const formDataSig = `${formData.firstName}|${formData.lastName}|${formData.address1}|${formData.postalCode}|${formData.city}`;
+    const shippingDataSig = JSON.stringify(selectedShippingData ?? {});
     const formDataUnchanged = lastAppliedFormDataRef.current === formDataSig;
+    const shippingDataUnchanged = lastAppliedShippingDataRef.current === shippingDataSig;
+    const freeShippingStateUnchanged =
+      lastAppliedQualifiesRef.current === qualifiesForFreeShipping;
     const choice = hasSubscriptionItems ? "card" : paymentMethodChoice;
     if (
       cart &&
       clientSecret &&
       appliedShippingOptionId === selectedShippingOptionId &&
       formDataUnchanged &&
+      shippingDataUnchanged &&
+      freeShippingStateUnchanged &&
       lastAppliedPaymentChoiceRef.current === choice
     ) {
       return;
@@ -91,7 +135,6 @@ export function usePaymentSession({
       const hasServicePoint = Boolean(
         selectedShippingData?.service_point_id && selectedShippingData?.service_point_address
       );
-      const sp = hasServicePoint ? servicePointStrings(selectedShippingData) : null;
       const billingFieldsOk =
         formData.address1?.trim() && formData.postalCode?.trim() && formData.city?.trim();
 
@@ -108,26 +151,6 @@ export function usePaymentSession({
 
       const guestFirst = checkoutMessages.guestFirstNamePlaceholder;
       const guestLast = checkoutMessages.guestLastNamePlaceholder;
-      const addr = sp
-        ? {
-            first_name: formData.firstName || guestFirst,
-            last_name: formData.lastName || guestLast,
-            address_1: sp.address,
-            city: sp.city,
-            postal_code: sp.zip,
-            country_code: "dk",
-            phone: formData.phone || undefined,
-          }
-        : {
-            first_name: formData.firstName || guestFirst,
-            last_name: formData.lastName || guestLast,
-            address_1: formData.address1 || "",
-            city: formData.city || "",
-            postal_code: formData.postalCode || "",
-            country_code: "dk",
-            phone: formData.phone || undefined,
-          };
-
       const billingAddr = {
         first_name: formData.firstName || guestFirst,
         last_name: formData.lastName || guestLast,
@@ -136,6 +159,14 @@ export function usePaymentSession({
         postal_code: formData.postalCode || "",
         country_code: "dk",
         phone: formData.phone || undefined,
+      };
+      /**
+       * Cart shipping_address = customer's home delivery address (same as billing).
+       * Pakkeshop location is carried only on the shipping method `data` (service_point_*)
+       * so Shipmondo can label to the pickup point while Admin/order UIs show the real home address.
+       */
+      const addr = {
+        ...billingAddr,
       };
 
       await medusa.store.cart.update(cartId, {
@@ -158,7 +189,12 @@ export function usePaymentSession({
 
       if (generation !== sessionGenerationRef.current) return;
 
-      const { cart: updatedCart } = await medusa.store.cart.retrieve(cartId);
+      const updatedCart = await retrieveCartWhenReadyForPayment(
+        cartId,
+        qualifiesForFreeShipping,
+        generation,
+        sessionGenerationRef
+      );
       const pc = updatedCart as {
         payment_collection?: { id?: string };
         payment_collection_id?: string;
@@ -172,10 +208,15 @@ export function usePaymentSession({
         ...(paymentCollectionId ? { payment_collection_id: paymentCollectionId } : {}),
         ...(hasSubscriptionItems ? { setup_future_usage: "off_session" as const } : {}),
       };
-      const { payment_collection } = await medusa.store.payment.initiatePaymentSession(updatedCart, {
-        provider_id: "pp_stripe_stripe",
-        data: sessionData,
-      });
+      const { payment_collection } = await medusa.store.payment.initiatePaymentSession(
+        updatedCart as unknown as Parameters<
+          typeof medusa.store.payment.initiatePaymentSession
+        >[0],
+        {
+          provider_id: "pp_stripe_stripe",
+          data: sessionData,
+        }
+      );
 
       if (generation !== sessionGenerationRef.current) return;
 
@@ -183,6 +224,8 @@ export function usePaymentSession({
       const secret = session?.data?.client_secret as string | undefined;
       if (secret) {
         lastAppliedFormDataRef.current = formDataSig;
+        lastAppliedShippingDataRef.current = shippingDataSig;
+        lastAppliedQualifiesRef.current = qualifiesForFreeShipping;
         lastAppliedPaymentChoiceRef.current = pmChoice;
         setPaymentError(null);
         setCart({ id: cartId });
@@ -202,11 +245,11 @@ export function usePaymentSession({
         setPaymentError(checkoutMessages.paymentError);
       }
     } catch (err) {
-      if (generation === sessionGenerationRef.current) {
-        setPaymentError(
-          err instanceof Error ? err.message : checkoutMessages.paymentInitFailed
-        );
-      }
+      if (generation !== sessionGenerationRef.current) return;
+      if (err instanceof Error && err.message === "aborted") return;
+      setPaymentError(
+        err instanceof Error ? err.message : checkoutMessages.paymentInitFailed
+      );
     } finally {
       if (generation === sessionGenerationRef.current) {
         setStripeLoading(false);
@@ -218,6 +261,7 @@ export function usePaymentSession({
     clientSecret,
     selectedShippingOptionId,
     selectedShippingData,
+    qualifiesForFreeShipping,
     appliedShippingOptionId,
     formData,
     hasSubscriptionItems,

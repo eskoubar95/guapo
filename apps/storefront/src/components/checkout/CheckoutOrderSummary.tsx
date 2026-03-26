@@ -11,6 +11,7 @@ import {
   getLineOriginalTotal,
   getLineTotal,
   isLineDiscounted,
+  normalizeShippingForDisplay,
 } from "@/lib/cart-display";
 import type { StoreCart } from "@/lib/cart-data";
 import type { CartItem } from "@/components/cart/CartItems";
@@ -36,8 +37,27 @@ export function CheckoutOrderSummary({
   const discountTotal = getCartDiscountTotal(cart as StoreCart);
   const itemsTotal = getCartItemsTotal(cart as StoreCart);
 
-  const shippingCommitted = selectedShippingAmount != null && selectedShippingAmount > 0;
-  const shippingTotal = shippingCommitted ? selectedShippingAmount : 0;
+  const cartHasShippingMethod = (cart?.shipping_methods?.length ?? 0) > 0;
+  const cartShippingTotal =
+    cartHasShippingMethod && cart?.shipping_total != null
+      ? normalizeShippingForDisplay(cart.shipping_total)
+      : null;
+
+  const shippingCommitted =
+    cartShippingTotal != null || selectedShippingAmount != null;
+  /**
+   * Do not prefer `cart.shipping_total` over `selectedShippingAmount`.
+   * When the customer qualifies for free shipping, `CheckoutWithStripe` sets
+   * `selectedShippingAmount` to 0 while Medusa may still report the raw option
+   * price until the free-shipping subscriber / refresh catches up — `??` would
+   * keep 51 because it is not null.
+   */
+  const shippingTotal =
+    selectedShippingAmount === 0 || cartShippingTotal === 0
+      ? 0
+      : selectedShippingAmount != null
+        ? selectedShippingAmount
+        : cartShippingTotal ?? 0;
 
   const effectiveTotal = shippingCommitted
     ? itemsTotal + shippingTotal

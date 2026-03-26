@@ -22,7 +22,7 @@ This document describes the Shipmondo API v3 integration for parcel shop (pakkes
 | Krav | Implementering |
 |------|----------------|
 | Ordre → Shipmondo → label | Fulfillment provider: `createFulfillment` kalder `POST /shipments`; label hentes via `getFulfillmentDocuments` og kan vises/downloades på ordren i Admin. |
-| GLS + DAO + PostNord (eller flere) | **Nuværende model:** `shipmondo_enabled_products` + Sync opretter én Medusa option per valgt carrier. **Alternativ:** Tre faste options i seed (GLS, DAO, PostNord) uden sync/enabled – se [Fast carrier-model](#fast-carrier-model-gls-dao-postnord-uden-sync). |
+| GLS + DAO + PostNord (eller flere) | **Nuværende model:** Admin **Tilføj fra Shipmondo** eller `sync:shipmondo` + `shipmondo_enabled_products` — én Medusa option per valgt produkt. Seed opretter **ikke** længere faste tre options; brug cleanup-script hvis I har legacy `pakkeshop`-type fra ældre seed. |
 | Priser efter vægt | `calculatePrice` bruger kurvvægt (variant weight × antal). Hvis Medusa-context mangler `items`, hentes vægt fra DB (`cart_line_item` × `product_variant.weight`). Pris: **price_bands** eller **flat_amount_minor** (både under `data` og topniveau i option-JSON). Fallback: env `SHIPMONDO_PRICE_BANDS` / `SHIPMONDO_FLAT_RATE_MINOR`. |
 | Pakkeshop-valg i checkout | Storefront kalder `/store/pickup-points` (Shipping Module Key eller API); bruger vælger pakkeshop; `service_point_id` gemmes og sendes med ved fulfillment. |
 
@@ -33,14 +33,14 @@ This document describes the Shipmondo API v3 integration for parcel shop (pakkes
 | Model | Hvornår | Carriers | Priser |
 |-------|---------|----------|--------|
 | **Sync + enabled-tabel** | Fleksibel Admin-sti uden kodeændring | Vælges i Settings → Shipmondo, Sync opretter options | `price_bands` / flat pr. option i Admin |
-| **Fast carrier-model** | Kun GLS, DAO, PostNord (fast antal) | Tre options fra seed med faste `product_code` | Samme – stadig manuelt i Medusa |
+| **Fast carrier-model (arkiv)** | Historisk | Tidligere: tre options fra seed — **fjernet**; tilsvarende opnås ved manuel oprettelse i Admin hvis nødvendigt | Samme prisfelter i option `data` |
 
 **Anbefalet rækkefølge (Sync-model):** Se **Testvejledning** nedenfor (env → migration + seed → Admin carriers + Sync + priser → checkout → fulfillment).
 
-### Fast carrier-model (GLS, DAO, PostNord) — implementeret
+### Fast carrier-model (GLS, DAO, PostNord) — historisk
 
-- **Seed** opretter tre shipping options med `price_type: calculated` og start-`flat_amount_minor: 3900` — sæt **`price_bands` pr. carrier** i Admin (topniveau eller under `data`). Hvis alle viser samme 39 kr: tjek at **price type = Calculated** (ikke Flat — Flat bruger DB-pris, ikke provider), og at varianter har **weight** (gram).
-- **Checkout-liste:** Som standard returnerer provideren disse tre koder uden at kalde Shipmondo `GET /products`. Sæt `SHIPMONDO_CHECKOUT_CARRIER_CODES=__API__` for den gamle dynamiske liste (API + enabled-tabel).
+- **Seed** opretter **ikke** længere tre faste Shipmondo-options. Tilføj produkter via **Settings → Shipmondo** eller sync; sæt **`price_bands` / `flat_amount_minor`** under fanen **Priser**. **Calculated** pristype + variant **weight** (gram) kræves for vægtbaseret pris.
+- **Checkout-liste:** Styres af `shipmondo_enabled_products` + faste product codes i `carrier-options` / env — se `SHIPMONDO_CHECKOUT_CARRIER_CODES` og `__API__` i env.template.
 - **PostNord pakkeshop:** Storefront henter også `pdk`-punkter ved pakkeshop-søgning. Bekræft PostNord product code i Shipmondo og sæt `SHIPMONDO_POSTNORD_PRODUCT_CODE` hvis `POSTDK_SD` ikke matcher jeres aftale.
 
 ## Authentication: Two Options
@@ -74,7 +74,17 @@ For **label-oprettelse** (fulfillment) bruges fuld API-adgang:
 - **Sandbox:** [Officiel sandbox-guide](https://shipmondo.dev/docs/sandbox): adgang fås ved at kontakte Shipmondo support (navn, e-mail, begrundelse); derefter login på [sandbox.shipmondo.com](https://sandbox.shipmondo.com/account/login/) med **egne sandbox-credentials** og API-nøgler der matcher. Fiktiv saldo, “unlimited” test-bookinger (ikke performance-test). Dokumenterede carriers i sandbox inkl. **GLS Denmark**, dao, PostNord m.fl. — men **forbindelsesfejl** til en carrier kan stadig opstå midlertidigt; se fejlsøgning nedenfor. Shop-import workers kører **ikke** i sandbox; Medusa → `POST /shipments` påvirkes ikke af det.
 - **Production:** Use production base URL and production API keys from [API access](https://app.shipmondo.com/main/app/#/setting/api).
 - **Transition:** When moving to live, switch the base URL from sandbox to production and use production keys.
-- **Connectivity check:** From `apps/commerce` run `pnpm verify:shipmondo` (calls `GET /products?country_code=DK` with your configured base URL and Basic Auth).
+- **Connectivity check:** From `apps/commerce` run `pnpm verify:shipmondo` (calls `GET /products` with receiver+sender `DK` per `buildShipmondoProductsQueryString`, plus Basic Auth).
+
+### Migrering af priser (sandbox → production)
+
+1. På sandbox: konfigurer Shipmondo-produkter og priser i **Settings → Shipmondo** (Levering + Priser).
+2. Kald **`GET /admin/shipmondo/options/export`** (admin-session) og gem JSON-responsen.
+3. På production: tilføj de samme produkter via **Tilføj fra Shipmondo**, så Medusa-options findes med matchende **`product_code`** (og gerne samme `type.code` som sandbox).
+4. Kald **`POST /admin/shipmondo/options/import`** med den gemte JSON-body — merger **`flat_amount_minor`** og **`price_bands`** ind i eksisterende options.
+5. Svaret indeholder **`applied`** (opdaterede produktkoder) og **`skipped`** med årsag (fx `no_matching_option` hvis koden ikke findes i prod).
+
+**Checkout:** Store-routen **`GET /store/shipping-options-with-pricing`** inkluderer **`carrier_code`** og **`product_code`** pr. option (fra option-`data`), så storefront kan matche valgt pakkeshop-carrier uden at parse danske/engelske produktnavne.
 
 ## Endpoints Used by Guapo
 
@@ -128,9 +138,18 @@ For creating a shipment, the important field is **`number`** (or `id`) — use a
 
 ### 2. Products (list available shipping products)
 
-**GET** `/products?country_code=DK`
+**GET** `/products` — Guapo bruger query som i Shipmondo API: **`receiver_country_code`**, **`sender_country_code`** (default = modtager ved DK-domestic), valgfrit **`carrier_code`** (fx `gls`), og stadig **`country_code`** sat til samme som modtager for bagudkompatibilitet. Se [API reference](https://shipmondo.dev/api-reference#/operations/products_get).
 
-Returns available shipping products for the given country. Use to confirm product codes for your account (e.g. GLS Pakkeshop, DAO).
+Returns available shipping products for the given country/carrier. Use to confirm product codes for your account (e.g. GLS ShopDelivery `GLSDK_SD`). Rækker med **`service_point_required: true`** (nyere API) mappes til vores **`service_point_product`** til pakkeshop-filtre.
+
+### Admin catalog wizard (Medusa)
+
+Admin **Settings → Shipmondo → Tilføj fra Shipmondo** bruger **ShipmondoCatalogWizard**:
+
+1. **Lande** — modtager- og afsenderland (bruges i produktkald).
+2. **Carriers** — ved **Næste** kaldes **`GET /admin/shipmondo/carriers`**, som proxier Shipmondo **`GET /shipping_modules/carriers`** (Basic Auth, samme env som øvrig Shipmondo API). Listen vises uden logo/avatar; brugeren vælger én eller flere carriers.
+3. **Produkter** — ved **Næste** hentes for hver valgt carrier **`GET /admin/shipmondo/products`** med `receiver_country_code`, `sender_country_code`, `carrier_code` (parallel `Promise.all`); resultatet merges på `product.code`. Under hentning vises overlay + deaktiveret **Næste**.
+4. **Bekræft** — anvend **`POST /admin/shipmondo/catalog/apply`** som før.
 
 Typical product codes for Denmark parcel shop:
 
@@ -247,9 +266,11 @@ GLS kræver ofte `service_codes`: `EMAIL_NT` (email notification). DAO/PostNord:
 | `SHIPMONDO_DRY_RUN` | `true` for at simulere fulfillment uden at oprette rigtige labels (til test) |
 | `SHIPMONDO_FLAT_RATE_MINOR` | **(Fallback)** Pris i minor units hvis option ikke har data. Anbefaling: sæt priser i Admin (option data). |
 | `SHIPMONDO_PRICE_BANDS` | **(Fallback)** Vægtbands som JSON hvis option ikke har data. Anbefaling: sæt price_bands i Admin. |
-| `SHIPMONDO_SERVICE_CODES` | **(Fallback)** Service codes til POST /shipments hvis option.data ikke har service_codes (default: EMAIL_NT). |
+| `SHIPMONDO_SERVICE_CODES` | **(Fallback)** Service codes til POST /shipments hvis option.data ikke har service_codes (default i kode: `EMAIL_NT,SMS_NT`). **Sync** skriver `service_codes` på option ud fra GET /products (`required_services` + valgfri `EMAIL_NT`/`SMS_NT` fra `available_services`). |
 | `SHIPMONDO_CHECKOUT_CARRIER_CODES` | Valgfri CSV (default i kode: GLS+DAO+PostNord). Sæt `__API__` for dynamisk liste fra API. |
 | `SHIPMONDO_POSTNORD_PRODUCT_CODE` | PostNord Shipmondo product code (default `POSTDK_SD` hvis uændret). |
+| `SHIPMONDO_GLS_PRODUCT_CODE` | Valgfri override for GLS pakkeshop (default `GLSDK_SD`). Brug hvis Shipmondo-kontoen bruger en anden kode end seed/sync. |
+| `SHIPMONDO_DAO_PRODUCT_CODE` | Valgfri override for DAO pakkeshop (default `DAO_SD`). Brug ved `422 product_code invalid` efter `GET /products?country_code=DK` eller portal. |
 | `SHIPMONDO_LABEL_FORMAT` | Label-format i POST body og GET /labels (`10x19_pdf`, `a4_pdf`, `zpl`, `compact_pdf`). Default `10x19_pdf`. **Kræves** for at API returnerer PDF. |
 | `SHIPMONDO_SHIPMENT_PRINT` | `true` → `print: true` på POST /shipments (Print Client). Default `false`; label hentes stadig med GET når API returnerer den. |
 | `SHIPMONDO_LABEL_GET_MAX_ATTEMPTS` | Antal **GET** `/shipments/{id}/labels` forsøg når POST mangler PDF (default **5**, max 15). |
@@ -288,7 +309,7 @@ Storefront henter fragtoptions med beregnet pris via **GET /store/shipping-optio
 Hvilke Shipmondo-produkter (carriers) der vises i checkout styres af tabellen **medusa.shipmondo_enabled_products**. Kun produkter med `enabled = true` returneres fra `getFulfillmentOptions`. Hvis tabellen er tom eller ikke findes, returneres alle service_point-produkter fra API (bagudkompatibilitet).
 
 - **Tabel:** `product_code` (unik), `carrier_name`, `enabled`, `display_order`. Oprettes via migration (shipmondo-config modul).
-- **Admin:** Under **Settings → Shipmondo** i Medusa Admin kan du slå carriers til/fra, køre "Sync from Shipmondo" og sætte flat priser (øre) pr. shipping option. Seed populerer default GLSDK_SD og DAO_SD hvis tabellen er tom.
+- **Admin:** Under **Settings → Shipmondo** i Medusa Admin kan du slå carriers til/fra, køre "Sync from Shipmondo" og sætte flat priser (øre) pr. shipping option. **Seed opretter ikke længere** faste GLS/DAO/PostNord-options; brug **Tilføj fra Shipmondo** eller `pnpm sync:shipmondo`. Fjern gamle seed-options med `pnpm cleanup:shipmondo-seed-options`.
 
 ## Sync fra Shipmondo (script)
 
@@ -306,14 +327,16 @@ For at Shipmondo-options vises i checkout og i **Settings → Locations → [Din
 
 1. **Stock location** (fx "Denmark") med adresse og **Shipping** slået til. Location skal have mindst ét **fulfillment set** (oprettes typisk ved oprettelse af location eller via seed).
 2. **Service zone** på det fulfillment set – fx "Denmark" med land = DK. Seed opretter denne zone, hvis den ikke findes.
-3. **Shipping options** i den zone – her opretter **seed** de tre Shipmondo-options (GLS Pakkeshop, DAO Pakkeshop, PostNord Pakkeshop) med provider **Shipmondo** og **Calculated** pristype.
+3. **Shipping options** i den zone – **oprettes ikke automatisk af seed** længere. Brug **Settings → Shipmondo → Tilføj fra Shipmondo** (eller `pnpm sync:shipmondo` når `shipmondo_enabled_products` er sat). Efter opgradering fra ældre seed: kør `pnpm cleanup:shipmondo-seed-options` for at fjerne legacy options med type `pakkeshop`.
 
 **Hvad du skal se i Admin:**
 
-- **Settings → Locations → Denmark:** Under "Shipping" bør der stå **3 shipping options** (eller flere, hvis I har andre), alle med provider Shipmondo – ikke kun "Standard Levering (Manual)".
-- Hvis du kun ser én **Manual**-option, er seed enten ikke kørt med Shipmondo-credentials, eller options er oprettet i en anden zone. **Løsning:** Kør `cd apps/commerce && pnpm seed` (sørg for at `SHIPMONDO_API_USER` og `SHIPMONDO_API_KEY` eller `SHIPMONDO_SHIPPING_MODULE_KEY` er sat i `.env`). Seed opretter de tre options i Denmark-zonen og fjerner legacy "Pakkeshop (39 kr)" / gls-pakkeshop. Evt. slet den manuelle "Standard Levering" manuelt i Admin, hvis I kun vil tilbyde Shipmondo.
+- **Settings → Locations → Denmark:** Under "Shipping" vises de Shipmondo-metoder du har tilføjet via Admin eller sync. Seed linker stadig Shipmondo-provideren til stock location og opretter Denmark-zone, men **ikke** faste carrier-options.
+- Hvis du kun ser **Manual**-option: tjek at Shipmondo er linket (`pnpm link:shipmondo`) og at du har tilføjet produkter under **Extensions → Shipmondo**.
 
-**Extensions → Shipmondo:** Den side bruges til at **sætte priser** (flat eller vægtbands) på de shipping options, som allerede findes. Du behøver **ikke** køre "Sync from Shipmondo" i standard setup – options kommer fra seed. Sync bruges kun, hvis I kører med dynamisk carrier-liste (`SHIPMONDO_CHECKOUT_CARRIER_CODES=__API__`).
+**Extensions → Shipmondo:** Faner **Levering** og **Priser**. Priser (flat / vægtbands) sættes i pris-fanen. Når en option har **`weight_intervals`** fra Shipmondo (efter Tilføj/sync), viser **Priser**-fanen faste intervaller — du indtaster kun **beløb i øre** pr. interval; gram-grænser kommer fra API.
+
+**Legacy seed-options:** Kør `pnpm cleanup:shipmondo-seed-options` (fra `apps/commerce`) for at fjerne gamle tre carriers med type `pakkeshop`. **Tilføj fra Shipmondo** åbner en stepper (carriers → produkter + adviseringer → bekræft); katalog hentes automatisk med Shipmondo `GET /products` via `GET /admin/shipmondo/products` med `service_point_only=false` (alle produkter for landet; intet pakkeshop-filter i UI). **Tilføj til shop** kalder `POST /admin/shipmondo/catalog/apply` med **`product_selections`** (per produkt: e-mail/SMS) eller ældre format **`product_codes`** + globale toggles — opretter/opdaterer Medusa shipping options med `product_code`, `service_codes` og `weight_intervals` fra API (priser sættes i pris-fanen). **Sync fra Shipmondo** (`POST /admin/shipmondo/sync`) synkroniserer stadig enabled produkter fra API. I seed-setup kan API-listen være tom (sandbox).
 
 ### Shipmondo vises ikke som "connected" under Fulfillment providers
 
@@ -337,13 +360,12 @@ Scriptet finder alle stock locations og opretter link til `shipmondo_shipmondo`.
 
 **Shipping option types** i Medusa er **kategorier** til fragtmetoder. De bruges til at gruppere shipping options (fx i Admin, rapporter eller filtrering). Hver **shipping option** (den konkrete metode kunden vælger) er knyttet til præcis én type.
 
-**For Guapo med Shipmondo (GLS, DAO, PostNord):**
+**For Guapo med Shipmondo:**
 
-- I behøver **kun én type** til pakkeshop: fx **Label:** Pakkeshop, **Code:** `pakkeshop`, **Description:** GLS/DAO/PostNord pakkeshop.
-- Seed opretter denne type (hvis den ikke findes) og knytter alle tre options (GLS Pakkeshop, DAO Pakkeshop, PostNord Pakkeshop) til den. Så under **Settings → Locations → Shipping Option Types** ser I **én** type “Pakkeshop” i stedet for tre.
-- Den enkelte carrier (GLS vs DAO vs PostNord) styres via **option data** (`product_code`) og option-navn, ikke via separate types.
+- **Tilføj fra Shipmondo** / sync opretter én shipping option pr. produkt med **type.code = Shipmondo product code** (fx `GLSDK_SD`), ikke den gamle fælles `pakkeshop`-type.
+- Legacy options fra ældre seed brugte type **code `pakkeshop`** for alle tre carriers — fjern dem med `pnpm cleanup:shipmondo-seed-options` hvis de stadig findes.
 
-**Hvis I manuelt opretter types:** Opret én type med code `pakkeshop` og brug den, når I opretter shipping options med provider Shipmondo. Seed sørger for at oprette typen og de tre options, så I behøver normalt ikke oprette types selv.
+**Hvis I manuelt opretter types:** Brug meningsfulde labels; vigtigst er **provider-data** (`product_code`, `service_codes`, priser).
 
 ## Medusa Admin: shipping setup (synkroniseret med Shipmondo)
 
@@ -366,7 +388,7 @@ For at teste hele integrationen **uden** at anmode om sandbox og **uden** at kø
 
 ## End-to-end test (M10 acceptance)
 
-1. **Prerequisites:** Commerce og storefront kører; Shipmondo-credentials sat; Stripe konfigureret; seed kørt så de tre Shipmondo-options (GLS, DAO, PostNord) findes under Locations → Denmark → Shipping.
+1. **Prerequisites:** Commerce og storefront kører; Shipmondo-credentials sat; Stripe konfigureret; Shipmondo shipping options tilføjet (Admin → Shipmondo eller sync) under Locations → Denmark → Shipping.
 2. **Checkout:** Vælg Pakkeshop, indtast postnummer (f.eks. 1000), søg, vælg pakkeshop.
 3. **Payment:** Gennemfør betaling med Stripe test kort. Bekræft ordre oprettes og fragt er 39 DKK.
 4. **Fulfillment:** I Medusa Admin, åbn ordren og opret fulfillment. Med `SHIPMONDO_DRY_RUN=true` returneres simulerede data uden API-kald. Uden dry-run kaldes Shipmondo og labels oprettes (kræver saldo/aftale).
@@ -410,7 +432,7 @@ Hvis env-variablen ikke er sat, returnerer endpointet `200` med `{ ok: true, con
 - **Meddelelse om manglende API-nøgler:** Sæt `SHIPMONDO_API_USER` og `SHIPMONDO_API_KEY` (sandbox- eller production-keys matchende `SHIPMONDO_SANDBOX`), eller brug `SHIPMONDO_DRY_RUN=true` til test uden API.
 - **Shipmondo API fejl:** Provider **kaster** nu `MedusaError` — Medusa ruller fulfillment-oprettelse tilbage (slettet kladdelignende fulfillment), så I ikke får “succes” uden label. Tjek commerce logs og Shipmondo respons.
 - **`500` / `Shipmondo shipment failed: This operation was aborted` eller `timed out after …ms`:** Integrationen brugte en **10s timeout** på alle Shipmondo-kald; **`POST /shipments`** kan tage længere (fx ~12s når GLS bookes), så `fetch` blev afbrudt **efter** Shipmondo havde oprettet forsendelsen — derfor ser du fejl i Admin, men forsendelse i Shipmondo. **Fix (implementeret):** `POST /shipments` har nu **60s** standard-timeout (`SHIPMONDO_SHIPMENT_TIMEOUT_MS`). Tjek Shipmondo før du opretter fulfillment igen, så du undgår dubletter.
-- **`422` / `product_code invalid or missing`:** Medusas `shipping_option_id` er et internt `so_…`-id, ikke en Shipmondo-kode. Provideren udleder `product_code` fra ordrens fragtmetode-`data` (gemmes ved checkout), fra shipping optionens `data` i databasen (`id` eller `product_code`), eller fra selve fulfillment-`data`. Sørg for at shipping options i Admin har korrekt provider-data (fx `id: "GLSDK_SD"` eller `product_code`), og at nye ordrer gennemløber checkout efter opdatering, så `product_code` kommer med på fragtmetoden. **Sandbox:** verificér at produktkoder findes med `GET /products?country_code=DK` i sandbox (kan afvige fra produktion).
+- **`422` / `product_code invalid or missing`:** Provideren udleder `product_code` fra shipping method data, option-JSON i DB, og/eller `carrier_code`. Før POST /shipments **validerer** den den resolved kode mod **Shipmondo GET /products** (cachet 15 min) og auto-korrigerer via `carrier_code` → den korrekte Shipmondo-kode. Så selv hvis seed/DB siger `DAO_SD`, men jeres Shipmondo-konto bruger `DAO_PAKKESHOP`, finder systemet den korrekte kode automatisk. **Service-codes** følger også API'et: `required_services` fra produktet bruges, så GLS får `EMAIL_NT` og DAO/PostNord kun det de kræver. **Hvis det stadig fejler:** carrier-produktet er sandsynligvis **ikke aktiveret** på jeres Shipmondo-aftale — tjek Shipmondo-portalen → Produkt- og serviceoversigt, eller `GET /products?country_code=DK`. Env-overrides (`SHIPMONDO_GLS_PRODUCT_CODE`, `SHIPMONDO_DAO_PRODUCT_CODE`) er stadig tilgængelige men sjældent nødvendige.
 - **`422` / sender blank / `Receiver email is required`:** **Afsenderadresse** fra **stock location** for fulfillment-**location** (Settings → Locations — adressefelterne i “Edit location”). **Afsender-e-mail til carrier:** Standard-Admin har **ikke** metadata på location; brug i stedet **Settings → Locations → Shipping profiles → [dit Shipmondo-profil] → Metadata** med mindst **`sender_email`** (gyldig e-mail). Valgfrit i samme metadata: **`sender_name`**, **`sender_phone`**. Disse læses via shipping option → shipping profile. **`SHIPMONDO_SENDER_*`** i `.env` er **overrides** ovenpå. **`SHIPMONDO_SANDBOX=true`** udfylder resterende huller med placeholders (kun lokal test). **Modtager-e-mail:** `order.email` eller `order.customer.email`.
 - **`422` / `Connection to GLS could not be established` (eller tilsvarende for DAO/PostNord):** Det er **ikke** en Medusa-/Guapo-valideringsfejl — Shipmondo har accepteret kaldet, men **carrier-backend** (her GLS) svarer ikke efter retries. Ifølge [Shipmondo Sandbox](https://shipmondo.dev/docs/sandbox) er **GLS Denmark** (sammen med bl.a. dao og PostNord DK) **understøttet** i sandbox — så fejlen betyder ikke automatisk “GLS findes ikke i sandbox”. Typiske årsager: midlertidig fejl mellem Shipmondo og carrier, **sandbox-konto** der mangler aktivering/opsætning af produktet hos Shipmondo, eller at I ikke bruger **dedikerede sandbox API-nøgler** + `SHIPMONDO_SANDBOX=true` (se samme guide: sandbox kræver adgang via **support** og login på [sandbox.shipmondo.com](https://sandbox.shipmondo.com/account/login/)). **Handling:** prøv igen senere, book med **anden carrier** i sandbox (fx `DAO_SD`) for at isolere GLS, eller skriv til **Shipmondo support** med tidspunkt og fuld fejltekst.
 

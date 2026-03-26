@@ -11,6 +11,10 @@ import { resolveCartForPaymentCollection } from "../lib/resolve-cart-for-payment
  * Guapo Stripe provider: extends official Stripe PaymentIntent flow with
  * payment-method choice, subscription rules, and richer Stripe payloads.
  *
+ * Amount/currency for the PaymentIntent come from Medusa (`input.amount`), i.e.
+ * the payment collection row kept in sync with the cart via core flows
+ * (`refreshPaymentCollectionForCartWorkflow` when cart totals change).
+ *
  * @see https://docs.medusajs.com/resources/references/payment/provider#how-to-create-a-payment-module-provider
  */
 export default class GuapoStripeProviderService extends StripeBase {
@@ -51,9 +55,22 @@ export default class GuapoStripeProviderService extends StripeBase {
       clientData: data,
     });
 
+    /**
+     * In practice, Medusa's create-payment-sessions workflow can read a stale
+     * payment_collection amount via remote query while cart totals are already
+     * updated (e.g. free-shipping adjustment just applied).
+     * Use cart total when available so the PaymentIntent amount matches cart.
+     */
+    const cartTotalNumber =
+      typeof cart.total === "number" ? cart.total : Number(cart.total);
+    const amountForStripe =
+      Number.isFinite(cartTotalNumber) && cartTotalNumber >= 0
+        ? cartTotalNumber
+        : amount;
+
     return super.initiatePayment({
       currency_code,
-      amount,
+      amount: amountForStripe,
       data: nextData,
       context,
     });

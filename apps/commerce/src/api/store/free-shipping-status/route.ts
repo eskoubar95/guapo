@@ -8,7 +8,7 @@ import type GuapoFreeShippingModuleService from "../../../modules/guapo-free-shi
 type CartModuleLike = {
   retrieveCart: (
     id: string,
-    config: { relations: string[] }
+    config: { relations?: string[]; select?: string[] }
   ) => Promise<CartLike>;
 };
 
@@ -33,6 +33,13 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
 
     const cartModule = req.scope.resolve(Modules.CART) as unknown as CartModuleLike;
     const cart = await cartModule.retrieveCart(cartId, {
+      select: [
+        "id",
+        "item_total",
+        "original_item_total",
+        "discount_total",
+        "items",
+      ],
       relations: ["items", "items.adjustments"],
     });
 

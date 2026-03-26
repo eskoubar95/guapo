@@ -20,6 +20,7 @@ interface DeliveryStepProps {
   selectedPoint: PickupPoint | null;
   onOpenPickupSheet: () => void;
   onContinue: () => void;
+  qualifiesForFreeShipping?: boolean;
 }
 
 export function DeliveryStep({
@@ -33,6 +34,7 @@ export function DeliveryStep({
   selectedPoint,
   onOpenPickupSheet,
   onContinue,
+  qualifiesForFreeShipping = false,
 }: DeliveryStepProps) {
   return (
     <>
@@ -71,15 +73,31 @@ export function DeliveryStep({
                     ? shippingOptions.find((o) => o.id === selectedShippingOptionId)
                     : pakkeshopOption;
                   const amt = opt?.amount;
+                  if (qualifiesForFreeShipping) {
+                    return (
+                      <span className="flex items-center gap-1.5">
+                        {amt != null && amt > 0 && (
+                          <span className="line-through text-muted-foreground font-normal">
+                            {formatPrice(amt, locale)}
+                          </span>
+                        )}
+                        <span className="text-green-600 font-semibold">
+                          {locale === "da" ? "Gratis" : "Free"}
+                        </span>
+                      </span>
+                    );
+                  }
                   return amt != null && amt > 0
                     ? formatPrice(amt, locale)
                     : locale === "da"
                       ? "Beregnes"
                       : "Calculated";
                 })()
-              : locale === "da"
-                ? "Beregnes"
-                : "Calculated"}
+              : qualifiesForFreeShipping
+                ? <span className="text-green-600 font-semibold">{locale === "da" ? "Gratis" : "Free"}</span>
+                : locale === "da"
+                  ? "Beregnes"
+                  : "Calculated"}
           </span>
         </button>
 

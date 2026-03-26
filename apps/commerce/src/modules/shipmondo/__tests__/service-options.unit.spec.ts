@@ -25,9 +25,9 @@ describe("ShipmondoFulfillmentService — options & validation", () => {
       const service = createService();
       const options = await service.getFulfillmentOptions();
       expect(options).toHaveLength(3);
-      expect(options.map((o) => o.id)).toEqual(["GLSDK_SD", "DAO_SD", "POSTDK_SD"]);
-      expect(options[0].name).toBe("GLS Pakkeshop");
-      expect(options[2].name).toBe("PostNord Pakkeshop");
+      expect(options.map((o) => o.id)).toEqual(["GLSDK_SD", "DAO_STS", "PDK_MC"]);
+      expect(options[0].name).toBe("ShopDelivery");
+      expect(options[2].name).toBe("Service Point");
       expect(fetchMock).not.toHaveBeenCalled();
     });
 
@@ -43,9 +43,10 @@ describe("ShipmondoFulfillmentService — options & validation", () => {
         ],
       } as Response);
       const service = createService();
+      (service as unknown as { productsCache_: null }).productsCache_ = null;
       const options = await service.getFulfillmentOptions();
       expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringContaining("/products?country_code=DK"),
+        expect.stringMatching(/\/products\?.*receiver_country_code=DK.*sender_country_code=DK/),
         expect.any(Object)
       );
       expect(options).toHaveLength(2);
@@ -69,8 +70,8 @@ describe("ShipmondoFulfillmentService — options & validation", () => {
       delete process.env.SHIPMONDO_CHECKOUT_CARRIER_CODES;
       const service = createService();
       expect(await service.validateOption({ id: "GLSDK_SD" })).toBe(true);
-      expect(await service.validateOption({ id: "DAO_SD" })).toBe(true);
-      expect(await service.validateOption({ id: "POSTDK_SD" })).toBe(true);
+      expect(await service.validateOption({ id: "DAO_STS" })).toBe(true);
+      expect(await service.validateOption({ id: "PDK_MC" })).toBe(true);
     });
 
     it("accepts product code from API when __API__ and GET /products returned that code", async () => {
@@ -139,6 +140,28 @@ describe("ShipmondoFulfillmentService — options & validation", () => {
         {}
       );
       expect(result.product_code).toBe("DAO_SD");
+    });
+
+    it("adds product_code from carrier_code when optionData has no product_code", async () => {
+      const service = createService();
+      const result = await service.validateFulfillmentData(
+        {},
+        { service_point_id: "96319", carrier_code: "dao" },
+        {}
+      );
+      expect(result).toEqual({
+        service_point_id: "96319",
+        carrier_code: "dao",
+        product_code: "DAO_STS",
+      });
+    });
+
+    it("respects SHIPMONDO_DAO_PRODUCT_CODE over default DAO_STS", async () => {
+      process.env.SHIPMONDO_DAO_PRODUCT_CODE = "DAO_CUSTOM";
+      const service = createService();
+      const result = await service.validateFulfillmentData({}, { carrier_code: "dao" }, {});
+      expect(result.product_code).toBe("DAO_CUSTOM");
+      delete process.env.SHIPMONDO_DAO_PRODUCT_CODE;
     });
   });
 

@@ -97,10 +97,10 @@ export function getCartItemsTotal(cart: StoreCart | null | undefined): number {
 }
 
 /**
- * Total discount amount inkl. moms across all items.
+ * Total item-level discount inkl. moms (excludes shipping discounts like FREESHIPPING).
+ * Uses line-item totals instead of cart.discount_total which may include shipping adjustments.
  */
 export function getCartDiscountTotal(cart: StoreCart | null | undefined): number {
   if (!cart) return 0;
-  if (cart.discount_total != null && cart.discount_total > 0) return cart.discount_total;
   return Math.max(0, getCartItemsOriginalTotal(cart) - getCartItemsTotal(cart));
 }

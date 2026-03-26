@@ -107,7 +107,7 @@ describe("ShipmondoFulfillmentService — fulfillment lifecycle", () => {
       expect(fetchMock.mock.calls[0][0]).toContain("/shipments");
       expect(fetchMock.mock.calls[0][1]?.method).toBe("POST");
       const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
-      expect(body.product_code).toBe("DAO_SD");
+      expect(body.product_code).toBe("DAO_STS");
       expect(body.label_format).toBe("10x19_pdf");
       expect(body.print).toBe(false);
       expect(result.labels).toHaveLength(1);
@@ -507,6 +507,125 @@ describe("ShipmondoFulfillmentService — fulfillment lifecycle", () => {
       );
       const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
       expect(body.product_code).toBe("GLSDK_SD");
+    });
+
+    it("resolves product_code from carrier_code on order shipping method when so_* and no product_code in method data", async () => {
+      process.env.SHIPMONDO_DRY_RUN = "false";
+      fetchMock
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: new Headers(),
+          json: async () => ({ id: 1, pkg_no: "P1", tracking_url: "" }),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: new Headers(),
+          json: async () => ({}),
+        } as Response);
+      const service = createService();
+      const orderWithCarrierOnly = {
+        ...minimalOrder,
+        shipping_methods: [
+          {
+            shipping_option_id: "so_01TEST",
+            data: {
+              service_point_id: "96319",
+              carrier_code: "dao",
+            },
+          },
+        ],
+      };
+      await service.createFulfillment(
+        { service_point_id: "96319" },
+        minimalItems,
+        orderWithCarrierOnly as any,
+        { ...minimalFulfillment, shipping_option_id: "so_01TEST" } as any
+      );
+      const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
+      expect(body.product_code).toBe("DAO_STS");
+    });
+
+    it("sends configured product_code as-is when candidate is not in cached GET /products list (no carrier substitution)", async () => {
+      process.env.SHIPMONDO_DRY_RUN = "false";
+      fetchMock
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: new Headers(),
+          json: async () => ({ id: 1, pkg_no: "P1", tracking_url: "" }),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: new Headers(),
+          json: async () => ({}),
+        } as Response);
+      const service = createService();
+      (service as unknown as { productsCache_: unknown }).productsCache_ = {
+        products: [
+          { code: "DAO_PAKKESHOP", name: "DAO Pakkeshop", service_point_product: true, carrier_code: "dao" },
+          { code: "GLSDK_SD", name: "GLS Pakkeshop", service_point_product: true, carrier_code: "gls",
+            required_services: [{ code: "EMAIL_NT" }] },
+        ],
+        expiresAt: Date.now() + 60_000,
+      };
+      await service.createFulfillment(
+        { service_point_id: "96319", carrier_code: "dao" },
+        minimalItems,
+        minimalOrder,
+        { ...minimalFulfillment, shipping_option_id: "dao-pakkeshop" } as any
+      );
+      const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
+      expect(body.product_code).toBe("DAO_STS");
+    });
+
+    it("uses required_services from API product as service_codes (carrier-specific)", async () => {
+      process.env.SHIPMONDO_DRY_RUN = "false";
+      delete process.env.SHIPMONDO_SERVICE_CODES;
+      fetchMock
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: new Headers(),
+          json: async () => ({ id: 1, pkg_no: "P1", tracking_url: "" }),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: new Headers(),
+          json: async () => ({}),
+        } as Response);
+      const service = createService();
+      (service as unknown as { productsCache_: unknown }).productsCache_ = {
+        products: [
+          {
+            code: "DAO_SD",
+            name: "DAO Pakkeshop",
+            service_point_product: true,
+            carrier_code: "dao",
+            required_services: [{ code: "EMAIL_NT" }],
+          },
+          {
+            code: "GLSDK_SD",
+            name: "GLS Pakkeshop",
+            service_point_product: true,
+            carrier_code: "gls",
+            required_services: [{ code: "EMAIL_NT" }],
+          },
+        ],
+        expiresAt: Date.now() + 60_000,
+      };
+      await service.createFulfillment(
+        { service_point_id: "96319" },
+        minimalItems,
+        minimalOrder,
+        { ...minimalFulfillment, shipping_option_id: "DAO_SD" } as any
+      );
+      const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
+      expect(body.product_code).toBe("DAO_SD");
+      expect(body.service_codes).toBe("EMAIL_NT");
     });
   });
 

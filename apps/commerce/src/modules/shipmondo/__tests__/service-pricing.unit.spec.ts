@@ -108,8 +108,8 @@ describe("ShipmondoFulfillmentService — pricing", () => {
       const service = createService();
       const result = await service.calculatePrice();
       expect(result).toEqual({
-        calculated_amount: 39,
-        is_calculated_price_tax_inclusive: true,
+        calculated_amount: 31.2,
+        is_calculated_price_tax_inclusive: false,
       });
     });
   });

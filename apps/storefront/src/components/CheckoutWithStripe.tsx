@@ -12,6 +12,8 @@ import { StripePaymentForm } from "./StripePaymentForm";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { useShippingOptions } from "@/components/checkout/hooks/useShippingOptions";
 import { usePaymentSession } from "@/components/checkout/hooks/usePaymentSession";
+import { useFreeShippingStatus } from "@/hooks/useFreeShippingStatus";
+import { getCartItemsTotal } from "@/lib/cart-display";
 import { HeaderBackButton } from "@/components/checkout/HeaderBackButton";
 import { DEFAULT_CHECKOUT_FORM_DATA } from "@/components/checkout/steps/checkout-form-defaults";
 
@@ -50,7 +52,11 @@ export function CheckoutWithStripe({
   const [formData, setFormData] = useState(DEFAULT_CHECKOUT_FORM_DATA);
 
   const { customer } = useAuth();
-  const { setLiveCart, setSelectedShippingAmount } = useCheckoutCart();
+  const { setLiveCart, setSelectedShippingAmount, cart: checkoutCart } = useCheckoutCart();
+
+  const cartItemsTotal = getCartItemsTotal(checkoutCart);
+  const fsStatus = useFreeShippingStatus(cartId ?? undefined, cartItemsTotal);
+  const qualifiesForFreeShipping = fsStatus?.qualifies ?? false;
 
   const [initialPickupZipcode, setInitialPickupZipcode] = useState("");
   const [initialPickupPointId, setInitialPickupPointId] = useState("");
@@ -73,6 +79,7 @@ export function CheckoutWithStripe({
     formData,
     selectedShippingOptionId,
     selectedShippingData,
+    qualifiesForFreeShipping,
     hasSubscriptionItems,
     paymentMethodChoice: hasSubscriptionItems ? "card" : paymentMethodChoice,
     checkoutMessages: dict.checkout,
@@ -127,9 +134,13 @@ export function CheckoutWithStripe({
       setSelectedShippingAmount(null);
       return;
     }
+    if (qualifiesForFreeShipping) {
+      setSelectedShippingAmount(0);
+      return;
+    }
     const option = shippingOptions.find((o) => o.id === selectedShippingOptionId);
     const amountFromList = option?.amount;
-    if (amountFromList != null && amountFromList > 0) {
+    if (amountFromList != null && amountFromList >= 0) {
       setSelectedShippingAmount(amountFromList);
     } else {
       setSelectedShippingAmount(null);
@@ -139,6 +150,7 @@ export function CheckoutWithStripe({
     shippingOptions,
     selectedShippingData,
     setSelectedShippingAmount,
+    qualifiesForFreeShipping,
   ]);
 
   const handleShippingSelect = useCallback(
@@ -237,6 +249,7 @@ export function CheckoutWithStripe({
         onPaymentMethodChange={(m) => {
           if (!hasSubscriptionItems) setPaymentMethodChoice(m);
         }}
+        qualifiesForFreeShipping={qualifiesForFreeShipping}
       />
     </>
   );

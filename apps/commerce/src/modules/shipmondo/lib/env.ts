@@ -8,7 +8,8 @@ export const DEFAULT_SHIPMONDO_REQUEST_TIMEOUT_MS = 10_000;
  */
 export const DEFAULT_SHIPMONDO_SHIPMENT_POST_TIMEOUT_MS = 60_000;
 
-export const DEFAULT_FLAT_RATE_MINOR = 3900; // 39 DKK in minor units
+/** Ex. moms (DK). ≈ 39 DKK inkl. moms ved 25% — bruges kun når intet option/env band er sat. */
+export const DEFAULT_FLAT_RATE_MINOR = 3120;
 export const PRODUCTS_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 export const ENABLED_PRODUCTS_CACHE_TTL_MS = 60 * 1000; // 1 minute
 export const CART_WEIGHT_CACHE_TTL_MS = 4000;
@@ -16,10 +17,16 @@ export const DEFAULT_WEIGHT_GRAMS_PER_ITEM = 500;
 export const MIN_PARCEL_WEIGHT_GRAMS = 200;
 export const MAX_PARCEL_WEIGHT_GRAMS = 30000;
 export const DEFAULT_TOTAL_WEIGHT_GRAMS = 2000;
-export const DEFAULT_SERVICE_CODES = "EMAIL_NT";
+export const DEFAULT_SERVICE_CODES = "EMAIL_NT,SMS_NT";
 
 export function shipmondoLabelFormat(): string {
   return process.env.SHIPMONDO_LABEL_FORMAT?.trim() || DEFAULT_LABEL_FORMAT;
+}
+
+/** When true, POST /shipments uses `own_agreement: true` (some carrier products require it). */
+export function shipmondoOwnAgreementFromEnv(): boolean {
+  const v = process.env.SHIPMONDO_OWN_AGREEMENT?.trim().toLowerCase();
+  return v === "true" || v === "1" || v === "yes";
 }
 
 export function parsePositiveTimeoutMs(envName: string, fallback: number): number {

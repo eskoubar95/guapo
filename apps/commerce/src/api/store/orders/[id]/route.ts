@@ -19,6 +19,7 @@ type OrderDetail = {
     total?: number;
     metadata?: Record<string, unknown>;
   }>;
+  shipping_methods?: Array<{ data?: Record<string, unknown> }>;
 };
 
 /**
@@ -69,6 +70,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
         "items.unit_price",
         "items.total",
         "items.metadata",
+        "shipping_methods.data",
       ],
       filters: { id },
     });
@@ -92,6 +94,16 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     const createdAt = rawOrder.created_at ?? rawOrder.createdAt;
     const shippingTotal = rawOrder.shipping_total ?? (rawOrder as unknown as { shippingTotal?: number }).shippingTotal;
     const orderMeta = (rawOrder.metadata ?? {}) as Record<string, unknown>;
+    const shippingMethods = rawOrder.shipping_methods;
+    const shippingMethodData =
+      shippingMethods?.[0]?.data && typeof shippingMethods[0].data === "object"
+        ? shippingMethods[0].data
+        : null;
+
+    const documents = (orderMeta.documents ?? {}) as Record<string, unknown>;
+    const hasOrderConfirmationPdf = typeof documents.order_confirmation_pdf_base64 === "string";
+    const hasInvoicePdf = typeof documents.invoice_pdf_base64 === "string";
+
     res.json({
       order: {
         id: rawOrder.id,
@@ -102,6 +114,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
         currency_code: rawOrder.currency_code,
         shipping_total: shippingTotal,
         shipping_address: rawOrder.shipping_address ?? {},
+        shipping_method_data: shippingMethodData,
         is_renewal: orderMeta.renewal === true,
         items: (rawOrder.items ?? []).map((item: { id: string; title?: string; variant_id?: string; quantity?: number; unit_price?: number; total?: number; metadata?: Record<string, unknown> }) => {
           const itemMeta = (item.metadata ?? {}) as Record<string, unknown>;
@@ -119,6 +132,14 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
         tracking_url: null as string | null,
         tracking_number: null as string | null,
         metadata: orderMeta,
+        has_order_confirmation_pdf: hasOrderConfirmationPdf,
+        has_invoice_pdf: hasInvoicePdf,
+        order_confirmation_pdf_url: hasOrderConfirmationPdf
+          ? `/store/orders/${encodeURIComponent(rawOrder.id)}/documents/order-confirmation`
+          : null,
+        invoice_pdf_url: hasInvoicePdf
+          ? `/store/orders/${encodeURIComponent(rawOrder.id)}/documents/invoice`
+          : null,
       },
     });
   } catch (err) {

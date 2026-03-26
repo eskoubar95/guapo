@@ -16,8 +16,10 @@ import type SubscriptionModuleService from "../../../../modules/subscription/ser
  * - align_dates=true (default: true): sets all next_renewal_at to the
  *   earliest date in the group so they renew together.
  */
-export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
-  const body = req.body as { subscription_ids?: string[]; align_dates?: boolean };
+type MergeBody = { subscription_ids: string[]; align_dates?: boolean };
+
+export const POST = async (req: MedusaRequest<MergeBody>, res: MedusaResponse) => {
+  const body = req.validatedBody;
   const { subscription_ids, align_dates = true } = body;
 
   if (!Array.isArray(subscription_ids) || subscription_ids.length < 2) {

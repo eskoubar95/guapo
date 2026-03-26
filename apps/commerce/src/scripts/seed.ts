@@ -13,7 +13,6 @@ import {
   linkSalesChannelsToStockLocationWorkflow,
   createStockLocationsWorkflow,
   createShippingProfilesWorkflow,
-  createShippingOptionsWorkflow,
   createProductsWorkflow,
   createProductCategoriesWorkflow,
   createProductTypesWorkflow,
@@ -278,95 +277,25 @@ export default async function seed({ container }: ExecArgs) {
       : existingOptions;
 
     if (hasShipmondoApi || hasShipmondoModuleKey) {
-      const postnordCode = process.env.SHIPMONDO_POSTNORD_PRODUCT_CODE?.trim() || "POSTDK_SD";
-      const dkShipmondoCarriers = [
-        { code: "GLSDK_SD", name: "GLS Pakkeshop", description: "GLS pakkeshop Danmark" },
-        { code: "DAO_SD", name: "DAO Pakkeshop", description: "DAO pakkeshop Danmark" },
-        { code: postnordCode, name: "PostNord Pakkeshop", description: "PostNord pakkeshop Danmark" },
-      ].filter((c, i, arr) => arr.findIndex((x) => x.code === c.code) === i);
-
-      const PAKKESHOP_TYPE = { label: "Pakkeshop", description: "GLS/DAO/PostNord pakkeshop", code: "pakkeshop" };
-      type SoRow = { id: string; name?: string; shipping_option_type?: { code?: string }; data?: { product_code?: string } };
-      let shippingOptionsInZone: SoRow[] = [];
-      try {
-        const { data } = await query.graph({
-          entity: "shipping_option",
-          filters: { service_zone_id: dkZone.id },
-          fields: ["id", "name", "shipping_option_type.code", "data"],
-        });
-        shippingOptionsInZone = (data ?? []) as SoRow[];
-      } catch {
-        shippingOptionsInZone = [];
-      }
-
-      const legacyDeleteIds = shippingOptionsInZone
-        .filter(
-          (r) =>
-            r.name === "Pakkeshop (39 kr)" ||
-            r.shipping_option_type?.code === "gls-pakkeshop"
-        )
+      const allInZone = await fulfillmentModule.listShippingOptions({ service_zone: { id: dkZone.id } });
+      const legacyDeleteIds = allInZone
+        .filter((r) => {
+          const typeCode = (r as { type?: { code?: string } }).type?.code;
+          return r.name === "Pakkeshop (39 kr)" || typeCode === "gls-pakkeshop";
+        })
         .map((r) => r.id);
       if (legacyDeleteIds.length > 0) {
         try {
           await fulfillmentModule.deleteShippingOptions(legacyDeleteIds);
           logger.info(`✅ Removed ${legacyDeleteIds.length} legacy Shipmondo shipping option(s)`);
-          const { data: refreshed } = await query.graph({
-            entity: "shipping_option",
-            filters: { service_zone_id: dkZone.id },
-            fields: ["id", "name", "shipping_option_type.code", "data"],
-          });
-          shippingOptionsInZone = (refreshed ?? []) as SoRow[];
         } catch (err) {
           logger.warn(`Could not remove legacy shipping options: ${err instanceof Error ? err.message : String(err)}`);
         }
       }
 
-      const productCodesPresent = new Set(
-        shippingOptionsInZone
-          .map((r) => r.data?.product_code)
-          .filter((code): code is string => typeof code === "string" && code.length > 0)
+      logger.info(
+        "ℹ️  Shipmondo: seed does not create GLS/DAO/PostNord options anymore. Use Admin → Settings → Shipmondo → Tilføj fra Shipmondo, or pnpm sync:shipmondo. To remove old seed options (type code pakkeshop), run: pnpm cleanup:shipmondo-seed-options"
       );
-      const toCreate = dkShipmondoCarriers.filter((c) => !productCodesPresent.has(c.code));
-
-      if (toCreate.length > 0) {
-        await createShippingOptionsWorkflow(container).run({
-          input: toCreate.map((c) => ({
-            name: c.name,
-            service_zone_id: dkZone.id,
-            shipping_profile_id: shippingProfile.id,
-            provider_id: "shipmondo_shipmondo",
-            type: PAKKESHOP_TYPE,
-            price_type: "calculated" as const,
-            data: { product_code: c.code, flat_amount_minor: 3900 },
-          })),
-        });
-        logger.info(
-          `✅ Created Shipmondo shipping options: ${toCreate.map((c) => c.code).join(", ")}. Set price_bands per carrier in Admin if needed. Verify PostNord code (${postnordCode}) in Shipmondo GET /products.`
-        );
-      } else {
-        logger.info("✅ DK Shipmondo carriers already present (GLS, DAO, PostNord product codes)");
-      }
-
-      try {
-        const configModule = container.resolve("shipmondo_config") as unknown as {
-          listShipmondoEnabledProducts: (f: object) => Promise<{ product_code: string }[]>;
-          createShipmondoEnabledProducts: (data: unknown) => Promise<unknown>;
-        };
-        const existing = await configModule.listShipmondoEnabledProducts({});
-        if (Array.isArray(existing) && existing.length === 0 && typeof configModule.createShipmondoEnabledProducts === "function") {
-          await configModule.createShipmondoEnabledProducts(
-            dkShipmondoCarriers.map((c, idx) => ({
-              product_code: c.code,
-              carrier_name: c.name,
-              enabled: true,
-              display_order: idx,
-            }))
-          );
-          logger.info("✅ Seeded shipmondo_enabled_products (GLS, DAO, PostNord). Optional: use __API__ mode + Sync if you prefer dynamic carrier list.");
-        }
-      } catch {
-        // shipmondo_config module or table may not exist yet
-      }
     }
   } else {
     logger.info("⚠️  No fulfillment set found on stock location - create one in Medusa Admin");

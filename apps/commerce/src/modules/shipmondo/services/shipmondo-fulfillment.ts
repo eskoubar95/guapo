@@ -14,7 +14,9 @@ import {
   extractProductCodeFromOptionLikeData,
   getFixedCheckoutCarrierOptions,
   looksLikeMedusaShippingOptionId,
+  resolveCarrierCodeFromOrderShippingMethod,
   resolveProductCode,
+  resolveProductCodeFromCarrierCode,
   resolveProductCodeFromOrder,
 } from "../lib/carrier-options";
 import { shipmondoRequest } from "../lib/client";
@@ -31,6 +33,7 @@ import {
   getBaseUrl,
   minorToMajor,
   shipmondoLabelFormat,
+  shipmondoOwnAgreementFromEnv,
 } from "../lib/env";
 import {
   coerceLabelsEndpointResponse,
@@ -52,10 +55,13 @@ import {
   getWeightFromContext,
   priceFromBands,
 } from "../lib/pricing";
-import { normalizeProduct } from "../lib/products";
+import { buildShipmondoProductsQueryString } from "../fetch-products";
+import { normalizeProduct, rawShipmondoProductIsServicePoint } from "../lib/products";
 import {
   buildShipmondoReceiverParty,
   buildShipmondoShipmentPostBody,
+  normalizePhoneForShipmondoParty,
+  resolveShipmondoOrderReference,
 } from "../lib/shipment-builder";
 import {
   assertSenderComplete,
@@ -101,17 +107,18 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
     }
     if (!this.options_.apiUser || !this.options_.apiKey) return [];
     try {
+      const qs = buildShipmondoProductsQueryString({ countryCode: "DK", senderCountryCode: "DK" });
       const raw = await this.req<ShipmondoProduct[] | { products?: ShipmondoProduct[] }>(
         "GET",
-        "/products?country_code=DK"
+        `/products?${qs}`
       );
       const list = Array.isArray(raw) ? raw : raw?.products ?? [];
       const products = list
-        .filter(
-          (p): p is Record<string, unknown> & { code: string; service_point_product: boolean } =>
-            typeof p?.code === "string" && p.service_point_product === true
-        )
-        .map(normalizeProduct);
+        .filter((p): p is Record<string, unknown> & { code: string } => {
+          if (typeof (p as { code?: string })?.code !== "string") return false;
+          return rawShipmondoProductIsServicePoint(p as Record<string, unknown>);
+        })
+        .map((p) => normalizeProduct({ ...(p as Record<string, unknown>), code: (p as { code: string }).code }));
       this.productsCache_ = { products, expiresAt: now + PRODUCTS_CACHE_TTL_MS };
       return products;
     } catch (e) {
@@ -120,6 +127,47 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
       );
       return [];
     }
+  }
+
+  /**
+   * Validate a candidate product code against the API products list (service-point subset).
+   * When the code matches, use API `required_services` for default service_codes.
+   * When it does not match (e.g. filtered list omits the code), send the candidate as-is —
+   * do **not** substitute another product with the same carrier (that picked wrong DAO_* codes).
+   */
+  private async resolveValidatedProductCode(
+    candidateCode: string,
+    _carrierCode: string | undefined
+  ): Promise<{ code: string; requiredServiceCodes: string | undefined }> {
+    const products = await this.fetchProducts();
+    if (products.length === 0) {
+      return { code: candidateCode, requiredServiceCodes: undefined };
+    }
+
+    const exact = products.find((p) => p.code === candidateCode);
+    if (exact) {
+      return {
+        code: exact.code,
+        requiredServiceCodes: this.extractRequiredServiceCodes(exact),
+      };
+    }
+
+    this.logger_.warn(
+      `Shipmondo: product_code "${candidateCode}" not found in GET /products ` +
+        `(available: ${products.map((p) => p.code).join(", ")}). ` +
+        `Sending as-is — if Shipmondo rejects it, check product activation in your Shipmondo account.`
+    );
+    return { code: candidateCode, requiredServiceCodes: undefined };
+  }
+
+  private extractRequiredServiceCodes(product: ShipmondoProduct): string | undefined {
+    const raw = product as Record<string, unknown>;
+    const required = raw.required_services;
+    if (!Array.isArray(required) || required.length === 0) return undefined;
+    const codes = required
+      .map((s: unknown) => (s as Record<string, unknown>)?.code)
+      .filter((c): c is string => typeof c === "string" && c.length > 0);
+    return codes.length > 0 ? codes.join(",") : undefined;
   }
 
   private async resolveWeightGramsForPricing(context: Record<string, unknown> | undefined): Promise<number> {
@@ -167,8 +215,12 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
     _context: Record<string, unknown>
   ): Promise<Record<string, unknown>> {
     const servicePointId = data?.service_point_id ?? optionData?.service_point_id;
-    const productCode =
+    let productCode =
       extractProductCodeFromOptionLikeData(data) ?? extractProductCodeFromOptionLikeData(optionData);
+    if (!productCode) {
+      const carrier = typeof data?.carrier_code === "string" ? data.carrier_code : undefined;
+      productCode = resolveProductCodeFromCarrierCode(carrier) ?? productCode;
+    }
     const out: Record<string, unknown> = { ...data };
     if (typeof servicePointId === "string" && servicePointId) out.service_point_id = servicePointId;
     if (productCode) out.product_code = productCode;
@@ -192,20 +244,30 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
     const bandsFromOption = getPriceBandsFromOptionData(optionData);
     const weightGrams = await this.resolveWeightGramsForPricing(context);
 
+    /** Bands / flat amounts in Admin are ex. moms (DK); Medusa adds VAT on top. */
     if (bandsFromOption.length > 0 && weightGrams > 0) {
       const fromBandsMinor = priceFromBands(weightGrams, bandsFromOption);
       if (fromBandsMinor !== null) {
-        return { calculated_amount: minorToMajor(fromBandsMinor), is_calculated_price_tax_inclusive: true };
+        return {
+          calculated_amount: minorToMajor(fromBandsMinor),
+          is_calculated_price_tax_inclusive: false,
+        };
       }
     }
     if (flatFromOptionMinor !== null) {
-      return { calculated_amount: minorToMajor(flatFromOptionMinor), is_calculated_price_tax_inclusive: true };
+      return {
+        calculated_amount: minorToMajor(flatFromOptionMinor),
+        is_calculated_price_tax_inclusive: false,
+      };
     }
     const amountMinor =
       weightGrams > 0
         ? getPriceForWeightGrams(weightGrams, bandsFromOption.length ? bandsFromOption : undefined)
         : getFlatRateMinorFromEnv();
-    return { calculated_amount: minorToMajor(amountMinor), is_calculated_price_tax_inclusive: true };
+    return {
+      calculated_amount: minorToMajor(amountMinor),
+      is_calculated_price_tax_inclusive: false,
+    };
   }
 
   async createFulfillment(
@@ -233,6 +295,13 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
       (resolveProductCode(optionId) ?? undefined);
 
     if (!productCode || looksLikeMedusaShippingOptionId(productCode)) {
+      const carrierFromData = typeof data?.carrier_code === "string" ? data.carrier_code : undefined;
+      const carrierFromOrder = resolveCarrierCodeFromOrderShippingMethod(order, optionId);
+      const fromCarrier = resolveProductCodeFromCarrierCode(carrierFromData ?? carrierFromOrder);
+      if (fromCarrier) productCode = fromCarrier;
+    }
+
+    if (!productCode || looksLikeMedusaShippingOptionId(productCode)) {
       throw new MedusaError(
         MedusaError.Types.INVALID_DATA,
         "Shipmondo: could not resolve a valid product_code for this fulfillment. " +
@@ -240,17 +309,6 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
           "or configure shipping_option data (id / product_code) in Admin."
       );
     }
-
-    const optionDataForServiceCodes =
-      (fulfillmentOptionData && typeof fulfillmentOptionData === "object" ? fulfillmentOptionData : null) ??
-      dbOptionData;
-    const serviceCodes =
-      (data?.service_codes as string) ??
-      (typeof optionDataForServiceCodes?.service_codes === "string"
-        ? optionDataForServiceCodes.service_codes
-        : undefined) ??
-      process.env.SHIPMONDO_SERVICE_CODES ??
-      DEFAULT_SERVICE_CODES;
 
     if (process.env.SHIPMONDO_DRY_RUN === "true") {
       this.logger_.info(
@@ -269,6 +327,31 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
       );
     }
 
+    const carrierCode =
+      (typeof data?.carrier_code === "string" ? data.carrier_code : undefined) ??
+      resolveCarrierCodeFromOrderShippingMethod(order, optionId);
+
+    const validated = await this.resolveValidatedProductCode(productCode, carrierCode);
+    productCode = validated.code;
+
+    const optionDataForServiceCodes =
+      (fulfillmentOptionData && typeof fulfillmentOptionData === "object" ? fulfillmentOptionData : null) ??
+      dbOptionData;
+    const ownAgreement =
+      typeof data?.own_agreement === "boolean"
+        ? data.own_agreement
+        : typeof optionDataForServiceCodes?.own_agreement === "boolean"
+          ? optionDataForServiceCodes.own_agreement
+          : shipmondoOwnAgreementFromEnv();
+    const serviceCodes =
+      (data?.service_codes as string) ??
+      (typeof optionDataForServiceCodes?.service_codes === "string"
+        ? optionDataForServiceCodes.service_codes
+        : undefined) ??
+      validated.requiredServiceCodes ??
+      process.env.SHIPMONDO_SERVICE_CODES ??
+      DEFAULT_SERVICE_CODES;
+
     const orderRecord = order as Record<string, unknown> | undefined;
     let receiverEmail = resolveOrderContactEmail(orderRecord);
     if (!receiverEmail && this.options_.sandbox) receiverEmail = "sandbox@localhost.invalid";
@@ -286,10 +369,24 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
     const sender = buildSenderParty(receiverEmail, stockSender, profileSenderHints, !!this.options_.sandbox);
     assertSenderComplete(sender);
 
-    const receiver = buildShipmondoReceiverParty(data, servicePointId, orderRecord, receiverEmail);
+    const receiver = buildShipmondoReceiverParty(data, orderRecord, receiverEmail);
+    if (!receiver.phone || receiver.phone.trim() === "") {
+      const fallbackMobile = process.env.SHIPMONDO_RECEIVER_MOBILE_FALLBACK?.trim();
+      if (fallbackMobile) {
+        receiver.phone = normalizePhoneForShipmondoParty(fallbackMobile, receiver.country_code);
+      } else if (this.options_.sandbox || process.env.NODE_ENV !== "production") {
+        // Dev/sandbox: DK 8-digit national format (Shipmondo parties use `phone`, not `mobile`).
+        receiver.phone = normalizePhoneForShipmondoParty("11111111", receiver.country_code);
+      } else {
+        this.logger_?.warn?.(
+          "Shipmondo: receiver phone missing and no SHIPMONDO_RECEIVER_MOBILE_FALLBACK set; shipment may be rejected by carrier."
+        );
+      }
+    }
 
     try {
       const labelFormat = shipmondoLabelFormat();
+      const shipmentReference = resolveShipmondoOrderReference(orderRecord, order?.id);
       const body = buildShipmondoShipmentPostBody({
         labelFormat,
         productCode,
@@ -298,8 +395,9 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
         sender: sender as Record<string, unknown>,
         receiver,
         items,
-        orderId: order?.id,
+        reference: shipmentReference,
         printShipment: process.env.SHIPMONDO_SHIPMENT_PRINT === "true",
+        ownAgreement,
       });
 
       const postRaw = await this.req<unknown>("POST", "/shipments", body);
@@ -351,7 +449,11 @@ class ShipmondoFulfillmentService extends AbstractFulfillmentProviderService {
       if (err instanceof MedusaError) throw err;
       const msg = err instanceof Error ? err.message : String(err);
       this.logger_.error(`Shipmondo createFulfillment failed: ${msg}`);
-      throw new MedusaError(MedusaError.Types.UNEXPECTED_STATE, `Shipmondo shipment failed: ${msg}`);
+      const hint =
+        /product_code invalid or missing/i.test(msg) && productCode
+          ? ` (resolved product_code=${JSON.stringify(productCode)} — confirm code in Shipmondo GET /products?country_code=DK or portal; override with SHIPMONDO_DAO_PRODUCT_CODE / SHIPMONDO_GLS_PRODUCT_CODE if needed)`
+          : "";
+      throw new MedusaError(MedusaError.Types.UNEXPECTED_STATE, `Shipmondo shipment failed: ${msg}${hint}`);
     }
   }
 

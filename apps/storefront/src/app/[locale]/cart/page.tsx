@@ -15,6 +15,7 @@ import {
   getCartItemsTotal,
   getCartDiscountTotal,
 } from "@/lib/cart-display";
+import { fetchFreeShippingConfig } from "@/lib/free-shipping-config.server";
 
 interface CartPageProps {
   params: Promise<{ locale: string }>;
@@ -42,6 +43,10 @@ export default async function CartPage({ params }: CartPageProps) {
   const displayDiscount = getCartDiscountTotal(cart);
   const displayTotal = getCartItemsTotal(cart);
   const displayTax = Math.round((displayTotal - displayTotal / 1.25) * 100) / 100;
+
+  const fsConfig = await fetchFreeShippingConfig();
+  const qualifiesForFreeShipping =
+    fsConfig.enabled && displayTotal >= fsConfig.threshold;
 
   return (
     <div className="min-h-full bg-surface/50">
@@ -117,9 +122,15 @@ export default async function CartPage({ params }: CartPageProps) {
 
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">{dict.cart.shipping}</span>
-                        <span className="text-muted-foreground text-xs">
-                          {locale === "da" ? "Beregnes ved kassen" : "Calculated at checkout"}
-                        </span>
+                        {qualifiesForFreeShipping ? (
+                          <span className="text-success font-medium text-xs">
+                            {dict.cart.freeShippingLabel}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">
+                            {locale === "da" ? "Beregnes ved kassen" : "Calculated at checkout"}
+                          </span>
+                        )}
                       </div>
 
                       <div className="border-t border-border pt-3 mt-3">
@@ -166,7 +177,7 @@ export default async function CartPage({ params }: CartPageProps) {
               discountTotal={displayDiscount}
               shippingTotal={0}
               taxTotal={displayTax}
-              qualifiesForFreeShipping={false}
+              qualifiesForFreeShipping={qualifiesForFreeShipping}
               hasShippingMethod={false}
               hasSubscriptionItems={hasSubscriptionItems}
               checkoutHref={`/${locale}/checkout`}

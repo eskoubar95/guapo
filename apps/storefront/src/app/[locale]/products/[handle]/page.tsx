@@ -10,6 +10,7 @@ import { PDPTrustStrip } from "@/components/PDPTrustStrip";
 import { ProductPurchaseSection } from "@/components/product/ProductPurchaseSection";
 import { WishlistButton } from "@/components/product/WishlistButton";
 import { fetchProductByHandle, fetchRecommendedProducts } from "@/lib/medusa-products";
+import { fetchFreeShippingConfig } from "@/lib/free-shipping-config.server";
 import { fetchPayloadProductByHandle } from "@/lib/payload-products";
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
 import { productCardA11yFromDict } from "@/components/product-card-a11y";
@@ -47,9 +48,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const productCardA11y = productCardA11yFromDict(dict);
   const localeKey = locale as "da" | "en";
 
-  const [medusaProduct, payloadProduct] = await Promise.all([
+  const [medusaProduct, payloadProduct, fsConfig] = await Promise.all([
     fetchProductByHandle(handle),
     fetchPayloadProductByHandle(handle, locale),
+    fetchFreeShippingConfig(),
   ]);
 
   if (!medusaProduct) notFound();
@@ -191,7 +193,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
               subscriptionConfig={{ basePrice, currency: "DKK", locale }}
             />
 
-            <PDPTrustStrip labels={dict.products.trustStrip} />
+            <PDPTrustStrip labels={{
+              ...dict.products.trustStrip,
+              freeShipping: dict.products.trustStrip.freeShipping.replace("{{threshold}}", String(fsConfig.threshold)),
+            }} />
 
             {/* Product tabs */}
             <ProductPageTabs

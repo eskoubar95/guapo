@@ -75,6 +75,12 @@ export function OrderConfirmationContent({
     hasOrder && !!order?.items?.some((i: StoreOrderDetailItem) => i.is_subscription_line);
   const showSubscription = hasSubscriptionLines || order?.is_renewal === true;
   const deliveryAddress = formatShippingAddress(order?.shipping_address);
+  const pickupData = order?.shipping_method_data;
+  const hasPickup =
+    pickupData &&
+    typeof pickupData.service_point_id !== "undefined" &&
+    pickupData.service_point_id !== null &&
+    pickupData.service_point_id !== "";
   const itemsSubtotal =
     hasOrder && order
       ? (order.items ?? []).reduce(
@@ -87,6 +93,13 @@ export function OrderConfirmationContent({
     formatCurrencyAmount(amount, locale, currencyCode ?? "dkk");
 
   const formatDate = (dateStr: string | undefined) => formatLongDate(dateStr, locale);
+  const backendBase = (process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "").replace(/\/$/, "");
+  const toAbsoluteOrderUrl = (url: string | null | undefined) => {
+    if (!url) return null;
+    if (/^https?:\/\//.test(url)) return url;
+    if (!backendBase) return url;
+    return `${backendBase}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
 
   if (loading) {
     return (
@@ -147,36 +160,42 @@ export function OrderConfirmationContent({
             <div className="p-5 sm:p-6">
               <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">{oc.items}</h3>
               <ul className="divide-y divide-border">
-                {order.items.map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex flex-col gap-1 py-4 first:pt-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium text-foreground">
-                        {item.quantity ?? 1}× {item.title ?? "–"}
-                      </span>
-                      {item.is_subscription_line && (
-                        <span className="ml-2 inline-flex rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
-                          {dict.account?.orderSubscriptionLineLabel ??
-                            (locale === "da" ? "Abonnement" : "Subscription")}
+                {order.items.map((item) => {
+                  const quantity = Math.max(1, item.quantity ?? 1);
+                  const lineTotalMinor = item.total ?? (item.unit_price ?? 0) * quantity;
+                  const unitDisplayMinor =
+                    item.total != null
+                      ? Math.round(lineTotalMinor / quantity)
+                      : item.unit_price ?? null;
+
+                  return (
+                    <li
+                      key={item.id}
+                      className="flex flex-col gap-1 py-4 first:pt-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-foreground">
+                          {quantity}× {item.title ?? "–"}
                         </span>
-                      )}
-                      {item.unit_price != null && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {formatPrice(toMajor(item.unit_price), order.currency_code)}{" "}
-                          {locale === "da" ? "pr. stk." : "each"}
-                        </p>
-                      )}
-                    </div>
-                    <span className="text-sm font-semibold text-foreground tabular-nums shrink-0">
-                      {formatPrice(
-                        toMajor(item.total ?? (item.unit_price ?? 0) * (item.quantity ?? 1)),
-                        order.currency_code
-                      )}
-                    </span>
-                  </li>
-                ))}
+                        {item.is_subscription_line && (
+                          <span className="ml-2 inline-flex rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                            {dict.account?.orderSubscriptionLineLabel ??
+                              (locale === "da" ? "Abonnement" : "Subscription")}
+                          </span>
+                        )}
+                        {unitDisplayMinor != null && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {formatPrice(toMajor(unitDisplayMinor), order.currency_code)}{" "}
+                            {locale === "da" ? "pr. stk." : "each"}
+                          </p>
+                        )}
+                      </div>
+                      <span className="text-sm font-semibold text-foreground tabular-nums shrink-0">
+                        {formatPrice(toMajor(lineTotalMinor), order.currency_code)}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
               <dl className="mt-5 space-y-2.5 border-t border-border pt-5 text-sm">
                 <div className="flex justify-between">
@@ -211,6 +230,31 @@ export function OrderConfirmationContent({
                 {oc.deliveryAddress}
               </h3>
               <p className="text-sm text-foreground leading-relaxed">{deliveryAddress}</p>
+            </div>
+          )}
+
+          {hasPickup && pickupData && (
+            <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                {oc.pickupPoint}
+              </h3>
+              <p className="text-xs text-muted-foreground mb-2">{oc.pickupPointHint}</p>
+              <div className="text-sm text-foreground leading-relaxed space-y-1">
+                {typeof pickupData.service_point_name === "string" && pickupData.service_point_name && (
+                  <p className="font-medium">{pickupData.service_point_name}</p>
+                )}
+                {typeof pickupData.service_point_address === "string" && pickupData.service_point_address && (
+                  <p>{pickupData.service_point_address}</p>
+                )}
+                <p>
+                  {[pickupData.service_point_zipcode, pickupData.service_point_city]
+                    .filter((x) => x != null && String(x).trim() !== "")
+                    .join(" ")}
+                </p>
+                {typeof pickupData.carrier_code === "string" && pickupData.carrier_code && (
+                  <p className="text-xs text-muted-foreground uppercase">{pickupData.carrier_code}</p>
+                )}
+              </div>
             </div>
           )}
 
@@ -271,6 +315,34 @@ export function OrderConfirmationContent({
               >
                 {oc.trackPackage} →
               </a>
+            </div>
+          )}
+
+          {(order.order_confirmation_pdf_url || order.invoice_pdf_url) && (
+            <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                {locale === "da" ? "Dokumenter" : "Documents"}
+              </h3>
+              <div className="flex flex-col gap-2 text-sm">
+                {order.order_confirmation_pdf_url && (
+                  <a
+                    href={toAbsoluteOrderUrl(order.order_confirmation_pdf_url) ?? "#"}
+                    className="inline-flex text-primary hover:underline"
+                  >
+                    {locale === "da"
+                      ? "Download ordrebekræftelse (PDF)"
+                      : "Download order confirmation (PDF)"}
+                  </a>
+                )}
+                {order.invoice_pdf_url && (
+                  <a
+                    href={toAbsoluteOrderUrl(order.invoice_pdf_url) ?? "#"}
+                    className="inline-flex text-primary hover:underline"
+                  >
+                    {locale === "da" ? "Download faktura (PDF)" : "Download invoice (PDF)"}
+                  </a>
+                )}
+              </div>
             </div>
           )}
         </>

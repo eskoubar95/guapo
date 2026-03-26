@@ -1,5 +1,16 @@
 import type { StoreOrderDetail, StoreOrderDetailItem } from "@/lib/orders";
 
+function extractShippingMethodData(o: Record<string, unknown>): Record<string, unknown> | null | undefined {
+  const direct = o.shipping_method_data;
+  if (direct && typeof direct === "object") {
+    return direct as Record<string, unknown>;
+  }
+  const methods = o.shipping_methods as Array<{ data?: Record<string, unknown> }> | undefined;
+  const data = methods?.[0]?.data;
+  if (data && typeof data === "object") return data;
+  return undefined;
+}
+
 /** Values at or above this in minor units are treated as already minor (sessionStorage heuristic). */
 const SESSION_MINOR_ALREADY_THRESHOLD = 10_000;
 /**
@@ -56,11 +67,16 @@ export function normalizeOrder(raw: unknown, fromSessionStorage = false): StoreO
     currency_code: (o.currency_code ?? (o as Record<string, unknown>).currency_code) as string | undefined,
     shipping_total: ensureMinorAmount(shippingRaw, fromSessionStorage) ?? shippingRaw,
     shipping_address: (o.shipping_address ?? (o as Record<string, unknown>).shipping_address) as Record<string, unknown> | undefined,
+    shipping_method_data: extractShippingMethodData(o),
     is_renewal: Boolean(o.is_renewal),
     items,
     tracking_url: (o.tracking_url as string | null) ?? null,
     tracking_number: (o.tracking_number as string | null) ?? null,
     metadata: (o.metadata as Record<string, unknown>) ?? undefined,
+    has_order_confirmation_pdf: Boolean(o.has_order_confirmation_pdf),
+    has_invoice_pdf: Boolean(o.has_invoice_pdf),
+    order_confirmation_pdf_url: (o.order_confirmation_pdf_url as string | null) ?? null,
+    invoice_pdf_url: (o.invoice_pdf_url as string | null) ?? null,
   };
 }
 

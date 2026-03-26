@@ -46,8 +46,8 @@ export function formatCurrency(amount?: number) {
   return new Intl.NumberFormat("da-DK", {
     style: "currency",
     currency: "DKK",
-    maximumFractionDigits: 0,
-  }).format(amount / 100)
+    maximumFractionDigits: 2,
+  }).format(amount)
 }
 
 export function AddressBlock({

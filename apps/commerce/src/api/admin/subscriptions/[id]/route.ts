@@ -76,32 +76,43 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     } catch { /* enrichment is best-effort */ }
   }
 
-  // Enrich: linked orders
-  // Two sources: (1) initial order from metadata.order_id, (2) renewal orders via metadata.subscription_id
+  // Enrich: linked orders from module link + initial order fallback
   type OrderSummary = { id: string; status?: string; payment_status?: string; total?: number; created_at?: string; metadata?: Record<string, unknown> };
-  const linkedOrders: OrderSummary[] = [];
+  const linkedOrdersMap = new Map<string, OrderSummary>();
   try {
-    const { data: orders } = await query.graph({
-      entity: "order",
-      fields: ["id", "status", "payment_status", "total", "created_at", "metadata"],
-      filters: {},
-    }) as { data: OrderSummary[] };
-
+    const { data: linkedData } = await query.graph({
+      entity: "subscription",
+      fields: [
+        "id",
+        "orders.id",
+        "orders.status",
+        "orders.payment_status",
+        "orders.total",
+        "orders.created_at",
+        "orders.metadata",
+      ],
+      filters: { id },
+    }) as { data: Array<{ id: string; orders?: OrderSummary[] }> };
+    const linked = linkedData?.[0]?.orders ?? [];
+    for (const order of linked) {
+      linkedOrdersMap.set(order.id, order);
+    }
     const initialOrderId = (subscription.metadata as Record<string, unknown> | null)?.order_id as string | undefined;
-    for (const o of (orders ?? []) as OrderSummary[]) {
-      const meta = o.metadata ?? {};
-      const isRenewal = meta.subscription_id === id;
-      const isInitial = initialOrderId ? o.id === initialOrderId : false;
-      if (isRenewal || isInitial) {
-        linkedOrders.push(o);
+    if (initialOrderId && !linkedOrdersMap.has(initialOrderId)) {
+      const { data: initialOrderData } = await query.graph({
+        entity: "order",
+        fields: ["id", "status", "payment_status", "total", "created_at", "metadata"],
+        filters: { id: initialOrderId },
+      }) as { data: OrderSummary[] };
+      if (initialOrderData?.[0]) {
+        linkedOrdersMap.set(initialOrderData[0].id, initialOrderData[0]);
       }
     }
-    // Sort by created_at desc
-    linkedOrders.sort((a, b) => {
-      if (!a.created_at || !b.created_at) return 0;
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
   } catch { /* enrichment is best-effort */ }
+  const linkedOrders = [...linkedOrdersMap.values()].sort((a, b) => {
+    if (!a.created_at || !b.created_at) return 0;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
 
   // Enrich: group members (other subscriptions sharing group_id)
   type GroupMember = { id: string; status: string; cycle_weeks: number; delivery_count: number; variant_id: string };

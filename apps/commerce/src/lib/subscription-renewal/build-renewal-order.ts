@@ -37,11 +37,13 @@ export function buildRenewalOrderCreateInput(input: {
   origIsTaxInclusive: boolean;
   origTaxLines: OrigTaxLine[];
   shippingOptionId: string;
-  shippingDkk: number;
+  shippingExVatDkk: number;
   subscriptionId: string;
   cycleWeeks: number;
   stripePaymentIntentId: string | null;
   nextRenewalAt: Date | string | null | undefined;
+  /** Shipmondo pakkeshop payload — must be on the order shipping method for fulfillment */
+  shippingMethodData?: Record<string, unknown> | null;
 }): Record<string, unknown> {
   const {
     regionId,
@@ -62,11 +64,12 @@ export function buildRenewalOrderCreateInput(input: {
     origIsTaxInclusive,
     origTaxLines,
     shippingOptionId,
-    shippingDkk,
+    shippingExVatDkk,
     subscriptionId,
     cycleWeeks,
     stripePaymentIntentId,
     nextRenewalAt,
+    shippingMethodData,
   } = input;
 
   return {
@@ -124,7 +127,10 @@ export function buildRenewalOrderCreateInput(input: {
           {
             shipping_option_id: shippingOptionId,
             name: "Standard",
-            amount: shippingDkk,
+            amount: shippingExVatDkk,
+            ...(shippingMethodData && Object.keys(shippingMethodData).length > 0
+              ? { data: shippingMethodData }
+              : {}),
             tax_lines: origTaxLines.map((tl) => ({
               ...tl,
               description: `Fragt ${tl.description}`,

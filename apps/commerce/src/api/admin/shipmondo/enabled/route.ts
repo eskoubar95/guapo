@@ -28,10 +28,18 @@ export const GET = async (_req: MedusaRequest, res: MedusaResponse) => {
  * Body: { product_code, carrier_name, enabled } or { product_codes: [{ product_code, carrier_name, enabled }] }
  * Upserts enabled state. If record exists (by product_code), updates enabled; else creates.
  */
+type EnabledPutBody = {
+  product_code?: string;
+  carrier_name?: string;
+  enabled?: boolean;
+  product_codes?: { product_code: string; carrier_name?: string; enabled?: boolean }[];
+};
+
 export const PUT = async (req: MedusaRequest, res: MedusaResponse) => {
   try {
     const config = req.scope.resolve(SHIPMONDO_CONFIG_MODULE) as ConfigService;
-    const body = req.body as { product_code?: string; carrier_name?: string; enabled?: boolean; product_codes?: { product_code: string; carrier_name: string; enabled: boolean }[] };
+    const body =
+      (req as MedusaRequest & { validatedBody?: EnabledPutBody }).validatedBody ?? (req.body as EnabledPutBody);
     if (body.product_codes && Array.isArray(body.product_codes)) {
       const existing = await config.listShipmondoEnabledProducts({});
       const byCode = new Map((Array.isArray(existing) ? existing : []).map((e) => [e.product_code, e]));

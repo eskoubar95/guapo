@@ -2,10 +2,11 @@
  * Connectivity check for Shipmondo API (sandbox or production).
  * Run: pnpm verify:shipmondo  (from apps/commerce)
  *
- * Validates env and performs GET /products?country_code=DK — same base URL as fulfillment module.
+ * Validates env and performs GET /products (receiver + sender DK) — same query shape as fulfillment module.
  */
 import type { ExecArgs } from "@medusajs/framework/types";
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
+import { buildShipmondoProductsQueryString } from "../modules/shipmondo/fetch-products";
 
 function baseUrl(): string {
   return process.env.SHIPMONDO_SANDBOX === "true"
@@ -32,12 +33,13 @@ export default async function verifyShipmondoSandbox({ container }: ExecArgs) {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), 12_000);
   try {
-    const res = await fetch(`${baseUrl()}/products?country_code=DK`, {
+    const qs = buildShipmondoProductsQueryString({ countryCode: "DK", senderCountryCode: "DK" });
+    const res = await fetch(`${baseUrl()}/products?${qs}`, {
       headers: { Authorization: `Basic ${auth}` },
       signal: controller.signal,
     });
     const text = await res.text();
-    logger.info(`GET /products?country_code=DK → HTTP ${res.status}`);
+    logger.info(`GET /products?${qs} → HTTP ${res.status}`);
     if (!res.ok) {
       logger.warn(`Response (truncated): ${text.slice(0, 400)}`);
       if (res.status === 401) {

@@ -35,10 +35,14 @@ export type SubscriptionDetail = {
   stripe_payment_method_id: string
   shipping_address: Record<string, unknown> | null
   billing_address: Record<string, unknown> | null
+  /** Shipmondo service_point_* snapshot for renewals */
+  delivery_data?: Record<string, unknown> | null
   shipping_option_id: string
   skip_next: boolean
   retry_count: number
   next_retry_at: string | null
+  on_hold_at?: string | null
+  last_failure_reason?: string | null
   group_id: string | null
   linked_orders: OrderSummary[]
   group_members: GroupMember[]

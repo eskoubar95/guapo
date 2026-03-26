@@ -4,12 +4,15 @@ export const FALLBACK_OPTION_IDS = ["gls-pakkeshop", "dao-pakkeshop"] as const;
 
 export const FALLBACK_PRODUCT_CODES: Record<string, string> = {
   "gls-pakkeshop": "GLSDK_SD",
-  "dao-pakkeshop": "DAO_SD",
+  "dao-pakkeshop": "DAO_STS",
 };
 
 const FIXED_CARRIER_LABELS: Record<string, string> = {
-  GLSDK_SD: "GLS Pakkeshop",
+  GLSDK_SD: "ShopDelivery",
+  DAO_STS: "daoSHOP (drop-off)",
   DAO_SD: "DAO Pakkeshop",
+  PDK_MC: "Service Point",
+  POSTDK_SD: "PostNord Pakkeshop",
 };
 
 /**
@@ -19,8 +22,9 @@ const FIXED_CARRIER_LABELS: Record<string, string> = {
 export function getFixedCheckoutCarrierOptions(): FulfillmentOption[] | null {
   const trimmed = process.env.SHIPMONDO_CHECKOUT_CARRIER_CODES?.trim();
   if (trimmed === "__API__") return null;
-  const postnordDefault = process.env.SHIPMONDO_POSTNORD_PRODUCT_CODE?.trim() || "POSTDK_SD";
-  const codes = (trimmed || `GLSDK_SD,DAO_SD,${postnordDefault}`).split(/[\s,]+/).filter(Boolean);
+  const postnordDefault = process.env.SHIPMONDO_POSTNORD_PRODUCT_CODE?.trim() || "PDK_MC";
+  const daoDefault = process.env.SHIPMONDO_DAO_PRODUCT_CODE?.trim() || "DAO_STS";
+  const codes = (trimmed || `GLSDK_SD,${daoDefault},${postnordDefault}`).split(/[\s,]+/).filter(Boolean);
   if (codes.length === 0) return null;
   const postnordCode = process.env.SHIPMONDO_POSTNORD_PRODUCT_CODE?.trim();
   return codes.map((code) => {
@@ -69,6 +73,36 @@ export function resolveProductCodeFromOrder(
   if (!Array.isArray(methods)) return undefined;
   const sm = methods.find((m) => m.shipping_option_id === shippingOptionId);
   return extractProductCodeFromOptionLikeData(sm?.data);
+}
+
+/**
+ * Checkout persists `carrier_code` on shipping method data (gls/dao/pdk) but not always `product_code`.
+ * Use when option JSON lacks product_code — maps to Shipmondo codes (overridable per env).
+ */
+export function resolveProductCodeFromCarrierCode(carrier: string | undefined | null): string | undefined {
+  if (!carrier || typeof carrier !== "string") return undefined;
+  const c = carrier.trim().toLowerCase();
+  if (!c) return undefined;
+  if (c === "gls") return process.env.SHIPMONDO_GLS_PRODUCT_CODE?.trim() || "GLSDK_SD";
+  if (c === "dao") return process.env.SHIPMONDO_DAO_PRODUCT_CODE?.trim() || "DAO_STS";
+  if (c === "pdk" || c === "postnord")
+    return process.env.SHIPMONDO_POSTNORD_PRODUCT_CODE?.trim() || "PDK_MC";
+  return undefined;
+}
+
+/** `carrier_code` from the order line that matches this fulfillment's shipping option. */
+export function resolveCarrierCodeFromOrderShippingMethod(
+  order: Partial<FulfillmentOrderDTO> | undefined,
+  shippingOptionId: string | undefined
+): string | undefined {
+  if (!shippingOptionId) return undefined;
+  const methods = (
+    order as { shipping_methods?: Array<{ shipping_option_id?: string; data?: Record<string, unknown> }> }
+  )?.shipping_methods;
+  if (!Array.isArray(methods)) return undefined;
+  const sm = methods.find((m) => m.shipping_option_id === shippingOptionId);
+  const raw = sm?.data?.carrier_code;
+  return typeof raw === "string" && raw.trim() ? raw.trim() : undefined;
 }
 
 /**

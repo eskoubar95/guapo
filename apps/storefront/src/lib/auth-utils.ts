@@ -11,3 +11,12 @@ export function getSafeReturnUrl(
   if (!path.startsWith("/") || path.startsWith("//")) return fallback
   return path
 }
+
+/**
+ * Returns current in-app path (`/path?query#hash`) for post-auth redirects.
+ * Falls back when not running in the browser.
+ */
+export function getCurrentReturnUrl(fallback: string): string {
+  if (typeof window === "undefined") return fallback
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`
+}

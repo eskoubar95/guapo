@@ -11,7 +11,7 @@ type Props = {
   actioning: string | null
   onRefresh: () => void
   onAction: (
-    action: "pause" | "resume" | "cancel" | "skip",
+    action: "pause" | "resume" | "cancel" | "skip" | "retry",
     body?: Record<string, unknown>
   ) => void
 }
@@ -24,9 +24,13 @@ export function SubscriptionHeader({
   onAction,
 }: Props) {
   const canPause = subscription.status === "active"
-  const canResume = subscription.status === "paused"
-  const canCancel = subscription.status === "active" || subscription.status === "paused"
+  const canResume = subscription.status === "paused" || subscription.status === "on_hold"
+  const canCancel =
+    subscription.status === "active" ||
+    subscription.status === "paused" ||
+    subscription.status === "on_hold"
   const canSkip = subscription.status === "active" && !subscription.skip_next
+  const canRetry = subscription.status === "on_hold" || subscription.retry_count > 0
 
   return (
     <Container className="p-0">
@@ -90,6 +94,16 @@ export function SubscriptionHeader({
               disabled={!!actioning}
             >
               Cancel
+            </Button>
+          ) : null}
+          {canRetry ? (
+            <Button
+              size="small"
+              variant="secondary"
+              onClick={() => onAction("retry")}
+              disabled={!!actioning}
+            >
+              Retry now
             </Button>
           ) : null}
         </div>

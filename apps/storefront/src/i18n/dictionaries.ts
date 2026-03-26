@@ -374,6 +374,8 @@ export interface Dictionary {
     total: string;
     freeShipping: string;
     deliveryAddress: string;
+    pickupPoint: string;
+    pickupPointHint: string;
     subscriptionTitle: string;
     subscriptionText: string;
     manageSubscriptions: string;

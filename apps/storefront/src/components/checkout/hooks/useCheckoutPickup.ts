@@ -10,6 +10,10 @@ import type { ShippingOption } from "@/components/checkout/checkout-shipping.typ
 import type { CheckoutFormData } from "@/components/checkout/steps/checkout-form.types";
 import type { CarrierCode } from "@/components/checkout/steps/checkout-utils";
 import { usePickupPointSheetSearch } from "@/components/checkout/hooks/usePickupPointSheetSearch";
+import {
+  findDefaultPakkeshopOption,
+  findShippingOptionForCarrier,
+} from "@/components/checkout/shipping-option-carrier";
 
 interface UseCheckoutPickupParams {
   shippingOptions: ShippingOption[];
@@ -44,19 +48,10 @@ export function useCheckoutPickup({
     };
   }, []);
 
-  const pakkeshopOption =
-    shippingOptions.find(
-      (o) => o.name.toLowerCase().includes("pakkeshop") || o.name.toLowerCase().includes("gls")
-    ) ?? shippingOptions[0];
+  const pakkeshopOption = findDefaultPakkeshopOption(shippingOptions);
 
   const getOptionForCarrier = useCallback(
-    (carrier: CarrierCode) => {
-      if (carrier === "pdk")
-        return shippingOptions.find((o) => o.name.toLowerCase().includes("postnord"));
-      if (carrier === "dao")
-        return shippingOptions.find((o) => o.name.toLowerCase().includes("dao"));
-      return shippingOptions.find((o) => o.name.toLowerCase().includes("gls"));
-    },
+    (carrier: CarrierCode) => findShippingOptionForCarrier(shippingOptions, carrier),
     [shippingOptions]
   );
 

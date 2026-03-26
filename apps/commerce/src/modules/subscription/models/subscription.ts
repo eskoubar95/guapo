@@ -27,8 +27,10 @@ export const Subscription = model.define("subscription", {
   discount_percent: model.number().default(5),
   variant_id: model.text(),
   quantity: model.number().default(1),
-  shipping_address: model.json(), // Address object
+  shipping_address: model.json(), // Address object (customer home; synced from profile at renewal when possible)
   billing_address: model.json(), // Address object
+  /** Pakkeshop / carrier payload from order shipping method (service_point_*), optional for home delivery */
+  delivery_data: model.json().nullable(),
   shipping_option_id: model.text(),
   metadata: model.json().nullable(),
   // Retry/recovery
@@ -36,6 +38,8 @@ export const Subscription = model.define("subscription", {
   next_retry_at: model.dateTime().nullable(),
   skip_next: model.boolean().default(false),
   on_hold_at: model.dateTime().nullable(),
+  last_failure_reason: model.text().nullable(),
+  last_renewal_order_id: model.text().nullable(),
   // Subscription grouping: when multiple subs are merged they share the same group_id
   group_id: model.text().nullable(),
 }).indexes([

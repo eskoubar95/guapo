@@ -8,13 +8,15 @@ export type ShipmondoWeightInterval = {
   description?: string;
 };
 
-/** Product from Shipmondo GET /products (country_code=DK). */
+/** Product from Shipmondo GET /products (normalized; `service_point_product` includes `service_point_required` from API). */
 export type ShipmondoProduct = {
   code: string;
   name?: string;
   service_point_product?: boolean;
   carrier_code?: string;
   weight_intervals?: ShipmondoWeightInterval[];
+  required_services?: Array<{ code: string; name?: string }>;
+  available_services?: Array<{ code: string; name?: string }>;
 };
 
 export type ShipmondoOptions = {

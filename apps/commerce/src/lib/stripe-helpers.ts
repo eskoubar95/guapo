@@ -1,10 +1,9 @@
-import Stripe from "stripe";
-
 import {
   type MedusaContainerLike,
   resolvePaymentModule,
   resolveQuery,
 } from "./container-types";
+import { getStripeClient } from "./stripe-client";
 
 export type { MedusaContainerLike } from "./container-types";
 
@@ -44,7 +43,7 @@ export async function enrichStripeIdsFromPaymentData(
     return { customerId, paymentMethodId: null };
   }
 
-  const stripe = new Stripe(apiKey);
+  const stripe = getStripeClient();
   const pi = await stripe.paymentIntents.retrieve(piId);
   paymentMethodId =
     typeof pi.payment_method === "string"
@@ -114,7 +113,7 @@ export async function retrieveStripePaymentMethodCardDetails(
   const apiKey = process.env.STRIPE_API_KEY;
   if (!apiKey) return null;
 
-  const stripe = new Stripe(apiKey);
+  const stripe = getStripeClient();
   const pm = await stripe.paymentMethods.retrieve(paymentMethodId);
   const card = pm.card;
   if (!card?.last4) return null;

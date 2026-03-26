@@ -35,6 +35,7 @@ export function RegisterForm({ locale, labels, onSuccess, returnUrl }: RegisterF
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const defaultDestination = `/${locale}/account`;
   const destination = getSafeReturnUrl(returnUrl, defaultDestination);
@@ -43,6 +44,7 @@ export function RegisterForm({ locale, labels, onSuccess, returnUrl }: RegisterF
     e.preventDefault();
     if (!firstName || !lastName || !email || !password) return;
     setError(null);
+    setStatusMessage(locale === "da" ? "Opretter konto..." : "Creating account...");
     setLoading(true);
     try {
       let shouldCreateCustomer = true;
@@ -74,9 +76,11 @@ export function RegisterForm({ locale, labels, onSuccess, returnUrl }: RegisterF
         });
       }
       if (onSuccess) {
+        setStatusMessage(locale === "da" ? "Opdaterer..." : "Updating...");
         onSuccess();
         router.refresh();
       } else {
+        setStatusMessage(locale === "da" ? "Viderestiller..." : "Redirecting...");
         router.push(destination);
         router.refresh();
       }
@@ -84,6 +88,7 @@ export function RegisterForm({ locale, labels, onSuccess, returnUrl }: RegisterF
       setError(labels.errorRegister);
     } finally {
       setLoading(false);
+      setStatusMessage(null);
     }
   };
 
@@ -140,8 +145,13 @@ export function RegisterForm({ locale, labels, onSuccess, returnUrl }: RegisterF
         />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
+      {statusMessage && !error && (
+        <p className="text-sm text-muted-foreground" role="status" aria-live="polite">
+          {statusMessage}
+        </p>
+      )}
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? "..." : labels.submitRegister}
+        {loading ? (locale === "da" ? "Opretter..." : "Creating...") : labels.submitRegister}
       </Button>
     </form>
   );

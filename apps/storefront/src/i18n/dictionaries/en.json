@@ -38,7 +38,7 @@
       "cta": "Shop now"
     },
     "announcement": {
-      "text": "Free shipping over 299 DKK",
+      "text": "Free shipping over {{threshold}} DKK",
       "subtext": "30-day return policy"
     },
     "promoBars": {
@@ -141,7 +141,7 @@
     "decreaseQuantity": "Decrease quantity",
     "increaseQuantity": "Increase quantity",
     "trustStrip": {
-      "freeShipping": "Free shipping over 299 DKK",
+      "freeShipping": "Free shipping over {{threshold}} DKK",
       "returns": "30-day return policy",
       "securePayment": "Secure payment"
     },
@@ -207,7 +207,7 @@
     "shopVidere": "Continue shopping",
     "seKurv": "View cart",
     "totalDiscount": "Your total discount",
-    "freeShippingProgress": "Free shipping progress",
+    "freeShippingProgress": "Free shipping on orders over {{threshold}} DKK",
     "addedAsSubscription": "Added as subscription",
     "youSavePerTime": "You save 5% per delivery",
     "cartTotalCount": "Cart ({{count}}) total",
@@ -376,6 +376,8 @@
     "total": "Total",
     "freeShipping": "Free",
     "deliveryAddress": "Delivery address",
+    "pickupPoint": "Parcel shop",
+    "pickupPointHint": "Your package will be delivered to this pickup location.",
     "subscriptionTitle": "Subscription",
     "subscriptionText": "This order is part of your subscription. You can manage delivery dates, pause or cancel under My subscriptions.",
     "manageSubscriptions": "Manage subscriptions",

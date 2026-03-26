@@ -4,12 +4,13 @@ import { useCallback, useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 
 import { AddressesSection } from "./_components/AddressesSection"
+import { DeliverySection } from "./_components/DeliverySection"
 import { CustomerCard } from "./_components/CustomerCard"
 import { GroupMembers } from "./_components/GroupMembers"
 import { OrdersTable } from "./_components/OrdersTable"
 import { ProductCard } from "./_components/ProductCard"
 import { RenewalCard } from "./_components/RenewalCard"
-import { callSubscriptionAction } from "./_components/subscription-actions"
+import { callSubscriptionAction, updateSubscriptionAddresses } from "./_components/subscription-actions"
 import type { SubscriptionDetail } from "./_components/subscription-detail.types"
 import { SubscriptionHeader } from "./_components/SubscriptionHeader"
 import { StripeCard } from "./_components/StripeCard"
@@ -21,6 +22,7 @@ const SubscriptionDetailPage = () => {
   const [subscription, setSubscription] = useState<SubscriptionDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [actioning, setActioning] = useState<string | null>(null)
+  const [savingAddresses, setSavingAddresses] = useState(false)
 
   const loadSubscription = useCallback(async () => {
     if (!id) return
@@ -47,7 +49,7 @@ const SubscriptionDetailPage = () => {
   }, [loadSubscription])
 
   const handleAction = async (
-    action: "pause" | "resume" | "cancel" | "skip",
+    action: "pause" | "resume" | "cancel" | "skip" | "retry",
     body?: Record<string, unknown>
   ) => {
     if (!id) return
@@ -59,6 +61,7 @@ const SubscriptionDetailPage = () => {
         resume: "Subscription resumed",
         cancel: "Subscription cancelled",
         skip: "Next delivery will be skipped",
+        retry: "Retry started",
       }
       toast.success(labels[action] ?? `Done`)
       loadSubscription()
@@ -66,6 +69,23 @@ const SubscriptionDetailPage = () => {
       toast.error(e instanceof Error ? e.message : `Failed to ${action}`)
     } finally {
       setActioning(null)
+    }
+  }
+
+  const handleSaveAddresses = async (body: {
+    shipping_address?: Record<string, unknown>
+    billing_address?: Record<string, unknown>
+  }) => {
+    if (!id) return
+    setSavingAddresses(true)
+    try {
+      await updateSubscriptionAddresses(BASE, id, body)
+      toast.success("Addresses updated")
+      await loadSubscription()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update addresses")
+    } finally {
+      setSavingAddresses(false)
     }
   }
 
@@ -111,7 +131,12 @@ const SubscriptionDetailPage = () => {
       </div>
 
       <OrdersTable subscription={subscription} />
-      <AddressesSection subscription={subscription} />
+      <DeliverySection subscription={subscription} />
+      <AddressesSection
+        subscription={subscription}
+        onSave={handleSaveAddresses}
+        saving={savingAddresses}
+      />
       <GroupMembers subscription={subscription} />
     </div>
   )

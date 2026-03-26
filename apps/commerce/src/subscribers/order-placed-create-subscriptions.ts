@@ -6,6 +6,7 @@ import { resolveStripeCustomerAndPaymentMethodFromOrder } from "../lib/stripe-he
 import { SUBSCRIPTION_MODULE } from "../modules/subscription";
 import type SubscriptionModuleService from "../modules/subscription/service";
 import { getSubscriptionDiscountPercentWithProductOverride } from "../lib/subscription-discount";
+import { extractDeliveryDataFromShippingMethodData } from "../lib/subscription-delivery-data";
 
 const ALLOWED_CYCLE_WEEKS = [4, 8, 12] as const
 
@@ -28,6 +29,7 @@ type OrderWithItems = {
   }> | null;
   shipping_methods?: Array<{
     shipping_option_id?: string;
+    data?: Record<string, unknown> | null;
   }> | null;
 };
 
@@ -63,6 +65,7 @@ export default async function orderPlacedCreateSubscriptions({
       "items.variant.product.id",
       "items.variant.product.metadata",
       "shipping_methods.shipping_option_id",
+      "shipping_methods.data",
     ],
     filters: { id: orderId },
   });
@@ -126,7 +129,9 @@ export default async function orderPlacedCreateSubscriptions({
     return
   }
 
-  const shippingOptionId = order.shipping_methods?.[0]?.shipping_option_id ?? "";
+  const firstMethod = order.shipping_methods?.[0];
+  const shippingOptionId = firstMethod?.shipping_option_id ?? "";
+  const deliveryData = extractDeliveryDataFromShippingMethodData(firstMethod?.data ?? undefined);
 
   const now = new Date();
   for (const item of subscriptionItems) {
@@ -168,7 +173,9 @@ export default async function orderPlacedCreateSubscriptions({
           quantity,
           shipping_address: order.shipping_address ?? {},
           billing_address: order.billing_address ?? {},
+          delivery_data: deliveryData,
           shipping_option_id: shippingOptionId,
+          last_renewal_order_id: orderId,
           metadata: { order_id: orderId, line_item_id: item.id },
         },
       ]);

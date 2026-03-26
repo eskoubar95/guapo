@@ -1,10 +1,27 @@
-import Stripe from "stripe";
-
 import type SubscriptionModuleService from "../../modules/subscription/service";
+import { getStripeClient } from "../stripe-client";
+
+type StripeErrorWithRaw = Error & {
+  code?: string;
+  type?: string;
+  raw?: {
+    code?: string;
+    payment_intent?: {
+      id?: string;
+      status?: string;
+    };
+  };
+};
 
 export type ChargeRenewalStripeResult =
   | { ok: true; stripePaymentIntentId: string }
-  | { ok: false; error: string; retryCount: number };
+  | {
+      ok: false;
+      error: string;
+      retryCount: number;
+      requiresAction?: boolean;
+      stripePaymentIntentId?: string | null;
+    };
 
 /**
  * Off-session PaymentIntent charge for subscription renewal. Updates retry / on-hold on failure.
@@ -31,7 +48,7 @@ export async function chargeStripeSubscriptionRenewal(input: {
   if (!apiKey) {
     return { ok: false, error: "STRIPE_API_KEY not set", retryCount: subRetryCount };
   }
-  const stripe = new Stripe(apiKey);
+  const stripe = getStripeClient();
 
   try {
     const pi = await stripe.paymentIntents.create({
@@ -45,15 +62,41 @@ export async function chargeStripeSubscriptionRenewal(input: {
     });
     return { ok: true, stripePaymentIntentId: pi.id };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const e = err as StripeErrorWithRaw;
+    const msg = e instanceof Error ? e.message : String(err);
+    const stripeCode = e.code ?? e.raw?.code;
+    const intentStatus = e.raw?.payment_intent?.status;
+    const stripePaymentIntentId = e.raw?.payment_intent?.id ?? null;
+    const requiresAction =
+      stripeCode === "authentication_required" || intentStatus === "requires_action";
+
+    if (requiresAction) {
+      await subscriptionService.setFailureContext(subscriptionId, "authentication_required", {
+        requires_customer_action: true,
+        pending_payment_intent_id: stripePaymentIntentId,
+      });
+      await subscriptionService.setOnHold(
+        subscriptionId,
+        "authentication_required"
+      );
+      return {
+        ok: false,
+        error: msg,
+        retryCount: subRetryCount,
+        requiresAction: true,
+        stripePaymentIntentId,
+      };
+    }
+
     const nextRetry = subRetryCount + 1;
     await subscriptionService.setRetryState(
       subscriptionId,
       nextRetry,
       new Date(Date.now() + 24 * 60 * 60 * 1000)
     );
+    await subscriptionService.setFailureContext(subscriptionId, stripeCode || "payment_failed");
     if (subRetryCount >= 2) {
-      await subscriptionService.setOnHold(subscriptionId);
+      await subscriptionService.setOnHold(subscriptionId, stripeCode || "payment_failed");
     }
     return { ok: false, error: msg, retryCount: nextRetry };
   }

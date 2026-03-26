@@ -24,7 +24,18 @@ export default async function simulateSubscriptionFromOrder({
     ContainerRegistrationKeys.LOGGER
   ) as { info?: (m: string) => void; error?: (m: string) => void };
 
-  const orderId = process.env.ORDER_ID ?? process.argv.slice(2)[0];
+  const argvTail = process.argv.slice(2);
+  const idFromCli = argvTail
+    .filter(
+      (a) =>
+        a !== "exec" &&
+        !a.endsWith(".ts") &&
+        !a.endsWith(".js") &&
+        !a.startsWith("-")
+    )
+    .pop();
+
+  const orderId = process.env.ORDER_ID ?? idFromCli;
 
   if (!orderId) {
     logger?.info?.(

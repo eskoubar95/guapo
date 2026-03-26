@@ -46,12 +46,18 @@ export type StoreOrderDetail = {
   currency_code?: string;
   shipping_total?: number;
   shipping_address?: Record<string, unknown>;
+  /** First shipping method data (e.g. Shipmondo service_point_* for pakkeshop) */
+  shipping_method_data?: Record<string, unknown> | null;
   is_renewal?: boolean;
   items: StoreOrderDetailItem[];
   tracking_url?: string | null;
   tracking_number?: string | null;
   /** From order.metadata when set by backend (e.g. payment_last4, payment_brand). */
   metadata?: Record<string, unknown>;
+  has_order_confirmation_pdf?: boolean;
+  has_invoice_pdf?: boolean;
+  order_confirmation_pdf_url?: string | null;
+  invoice_pdf_url?: string | null;
 };
 
 /** Fetch customer order list (requires auth). Returns [] if not authenticated. */

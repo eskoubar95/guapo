@@ -264,6 +264,12 @@ export function fallbackTrackingUrlForMedusaAdmin(
   if (c.includes("gls")) {
     return `https://gls-group.eu/GROUP/en/parcel-tracking?match=${encodeURIComponent(pkgNo)}`;
   }
+  if (c.includes("dao")) {
+    return `https://dao.as/tools/track/?id=${encodeURIComponent(pkgNo)}`;
+  }
+  if (c.includes("pdk") || c.includes("postnord") || c.includes("post")) {
+    return `https://tracking.postnord.com/dk/?id=${encodeURIComponent(pkgNo)}`;
+  }
   return "https://www.shipmondo.com";
 }
 

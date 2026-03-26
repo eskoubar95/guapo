@@ -10,6 +10,7 @@ import {
   getLineUnitPrice,
 } from "@/lib/cart-display";
 import { getFreeShippingThresholdDkk } from "@/lib/shipping-config";
+import { useFreeShippingStatus } from "@/hooks/useFreeShippingStatus";
 import { useAddToCartModal } from "@/contexts/AddToCartModalContext";
 import { useCart } from "@/contexts/CartContext";
 import type { AddToCartModalData } from "@/contexts/AddToCartModalContext";
@@ -24,13 +25,18 @@ interface AddToCartModalProps {
 
 export function AddToCartModal({ data, locale, dict, onClose }: AddToCartModalProps) {
   const { updateModalData } = useAddToCartModal();
-  const { refreshCart } = useCart();
+  const { refreshCart, cart } = useCart();
   const [updating, setUpdating] = useState(false);
 
+  const fsStatus = useFreeShippingStatus(cart?.id, data.cartTotal);
+  const thresholdDkk = fsStatus?.threshold ?? getFreeShippingThresholdDkk();
+  const freeShippingEnabled = fsStatus?.enabled !== false;
+
   const base = `/${locale}`;
-  const thresholdDkk = getFreeShippingThresholdDkk();
   const progress = Math.min(100, (data.cartTotal / thresholdDkk) * 100);
-  const hasFreeShipping = data.cartTotal >= thresholdDkk;
+  const hasFreeShipping =
+    freeShippingEnabled &&
+    (fsStatus?.qualifies ?? data.cartTotal >= thresholdDkk);
 
   const canChangeQty = Boolean(data.lineItemId);
 
@@ -181,7 +187,7 @@ export function AddToCartModal({ data, locale, dict, onClose }: AddToCartModalPr
             />
           </div>
           <p className="text-sm text-muted-foreground mt-1.5">
-            {dict.cart.freeShippingProgress}
+            {dict.cart.freeShippingProgress.replace("{{threshold}}", String(thresholdDkk))}
           </p>
         </div>
 

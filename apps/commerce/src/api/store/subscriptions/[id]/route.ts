@@ -53,7 +53,10 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
       skip_next: subscription.skip_next,
       shipping_address: subscription.shipping_address,
       billing_address: subscription.billing_address,
+      delivery_data: (subscription as { delivery_data?: unknown }).delivery_data ?? null,
       metadata: subscription.metadata,
+      last_failure_reason: (subscription as { last_failure_reason?: string | null }).last_failure_reason ?? null,
+      on_hold_at: (subscription as { on_hold_at?: string | null }).on_hold_at ?? null,
     },
   });
 };

@@ -42,6 +42,7 @@ interface CheckoutStepsProps {
   onRegisterGoToStep?: (fn: (step: CheckoutStepNum) => void) => void;
   selectedPaymentMethod?: CheckoutPaymentMethodChoice;
   onPaymentMethodChange?: (method: CheckoutPaymentMethodChoice) => void;
+  qualifiesForFreeShipping?: boolean;
 }
 
 export function CheckoutSteps({
@@ -66,6 +67,7 @@ export function CheckoutSteps({
   onRegisterGoToStep,
   selectedPaymentMethod = "card",
   onPaymentMethodChange,
+  qualifiesForFreeShipping = false,
 }: CheckoutStepsProps) {
   const [step, setStep] = useState<CheckoutStepNum>(1);
   const [contactConfirmed, setContactConfirmed] = useState(false);
@@ -138,6 +140,7 @@ export function CheckoutSteps({
               selectedPoint={selectedPoint}
               onOpenPickupSheet={() => setSheetOpen(true)}
               onContinue={() => handleStepChange(2)}
+              qualifiesForFreeShipping={qualifiesForFreeShipping}
             />
           )}
         </div>

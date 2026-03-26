@@ -45,7 +45,7 @@ interface ServiceStripProps {
 }
 
 const defaultServices: ServiceItem[] = [
-  { icon: Truck, title: "Hurtig levering", description: "Fri fragt over 499 kr." },
+  { icon: Truck, title: "Hurtig levering", description: "Fri fragt ved køb over grænsebeløb" },
   { icon: ShieldCheck, title: "Sikker betaling", description: "Krypteret & beskyttet" },
   { icon: RotateCcw, title: "30 dages returret", description: "Nem & gratis retur" },
   { icon: Headphones, title: "Kundeservice", description: "Alle hverdage 9–17" },
