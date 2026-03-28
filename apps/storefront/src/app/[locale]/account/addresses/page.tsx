@@ -22,6 +22,8 @@ export default async function AddressPage({ params }: AddressPageProps) {
   return (
     <div className="max-w-2xl">
       <AddressManager
+        locale={locale}
+        checkout={dict.checkout}
         labels={{
           addressTitle: dict.account.addressTitle,
           billingAddress: dict.account.billingAddress,

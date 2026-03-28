@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface AccountGateProps {
@@ -16,17 +16,19 @@ interface AccountGateProps {
 export function AccountGate({ locale, loadingLabel = "Loading…", children }: AccountGateProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
     if (loading) return;
     if (!isAuthenticated) {
       const params = new URLSearchParams();
-      if (pathname) params.set("returnUrl", pathname);
+      const returnUrl = `${pathname ?? `/${locale}/account`}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}`;
+      params.set("returnUrl", returnUrl);
       params.set("reason", "auth_required");
       router.replace(`/${locale}/login?${params.toString()}`);
     }
-  }, [locale, isAuthenticated, loading, router, pathname]);
+  }, [locale, isAuthenticated, loading, router, pathname, searchParams]);
 
   if (loading) {
     return (

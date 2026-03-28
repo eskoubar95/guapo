@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthModal, type AuthModalLabels } from "@/components/auth/AuthModal";
 
@@ -18,9 +19,12 @@ export function CheckoutAuthGate({
   children,
 }: CheckoutAuthGateProps) {
   const { customer } = useAuth();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalView, setAuthModalView] = useState<"login" | "register">("login");
   const needsAuth = hasSubscriptionItems && !customer;
+  const returnUrl = `${pathname ?? `/${locale}/checkout`}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}`;
 
   if (needsAuth) {
     return (
@@ -65,6 +69,7 @@ export function CheckoutAuthGate({
           locale={locale}
           labels={authLabels}
           initialView={authModalView}
+          returnUrl={returnUrl}
         />
       </>
     );

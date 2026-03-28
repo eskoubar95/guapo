@@ -169,7 +169,7 @@ export function AuthModal({
 
   const content = (
     <div
-      className="fixed inset-0 z-[100] overflow-hidden"
+      className="fixed inset-0 z-100 overflow-hidden"
       aria-hidden={exiting}
     >
       <div

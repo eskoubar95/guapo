@@ -107,6 +107,19 @@ Spam `POST` to store subscription routes → expect `429` with `RATE_LIMITED` (u
 
 ---
 
+## Step 8 — Transactional emails + PDF documents (M11)
+
+- [ ] Place an order and verify `order_confirmation` mail is sent exactly once.
+- [ ] For subscription order lines, verify `subscription_created` mail is sent exactly once.
+- [ ] Open customer order detail and confirm both document links exist:
+  - `order-confirmation` PDF
+  - `invoice` PDF
+- [ ] Download both documents as the owning customer (expect `200` + `application/pdf`).
+- [ ] Attempt download as another customer (expect `403`).
+- [ ] Stress endpoint and confirm rate limit returns `429 RATE_LIMITED`.
+
+---
+
 ## Subscription impact note (important)
 
 These checkout amount-sync fixes do **not** change subscription renewal pricing logic directly.

@@ -271,6 +271,11 @@ export default defineMiddlewares({
       middlewares: [authenticate("customer", ["session", "bearer"])],
     },
     {
+      matcher: "/store/account/summary*",
+      method: "GET",
+      middlewares: [authenticate("customer", ["session", "bearer"])],
+    },
+    {
       matcher: "/store/orders/*/documents/*",
       method: "GET",
       middlewares: [storeOrderDocumentsRateLimit],

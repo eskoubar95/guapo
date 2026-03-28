@@ -31,7 +31,13 @@ interface PickupPointSheetProps {
   pickupPoints: PickupPoint[];
   selectedPoint: PickupPoint | null;
   onSelectPoint: (point: PickupPoint) => void;
-  getOptionForCarrier: (carrier: CarrierCode) => ShippingOption | undefined;
+  /** Checkout only — when omitted, shipping price row is hidden (e.g. account settings). */
+  getOptionForCarrier?: (carrier: CarrierCode) => ShippingOption | undefined;
+  /** When set, called on confirm before closing; reject/throw to keep sheet open. */
+  onConfirmSelection?: (point: PickupPoint) => void | Promise<void>;
+  confirmLoading?: boolean;
+  /** Shown while confirmLoading (e.g. account "Saving…"); defaults to checkout.searching. */
+  confirmLoadingLabel?: string;
 }
 
 export function PickupPointSheet({
@@ -46,6 +52,9 @@ export function PickupPointSheet({
   selectedPoint,
   onSelectPoint,
   getOptionForCarrier,
+  onConfirmSelection,
+  confirmLoading = false,
+  confirmLoadingLabel,
 }: PickupPointSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -140,16 +149,18 @@ export function PickupPointSheet({
                                   </AccordionItem>
                                 </Accordion>
                               ) : null}
-                              <div className="flex justify-end pt-2 mt-1">
-                                <span className="text-sm font-medium text-foreground tabular-nums">
-                                  {(() => {
-                                    const c: CarrierCode = point.carrier_code === "pdk" ? "pdk" : point.carrier_code === "dao" ? "dao" : "gls";
-                                    const opt = getOptionForCarrier(c);
-                                    const amt = opt?.amount;
-                                    return amt != null && amt > 0 ? formatPrice(amt, locale) : (locale === "da" ? "Beregnes" : "Calculated");
-                                  })()}
-                                </span>
-                              </div>
+                              {getOptionForCarrier ? (
+                                <div className="flex justify-end pt-2 mt-1">
+                                  <span className="text-sm font-medium text-foreground tabular-nums">
+                                    {(() => {
+                                      const c: CarrierCode = point.carrier_code === "pdk" ? "pdk" : point.carrier_code === "dao" ? "dao" : "gls";
+                                      const opt = getOptionForCarrier(c);
+                                      const amt = opt?.amount;
+                                      return amt != null && amt > 0 ? formatPrice(amt, locale) : (locale === "da" ? "Beregnes" : "Calculated");
+                                    })()}
+                                  </span>
+                                </div>
+                              ) : null}
                             </div>
                           </div>
                         )}
@@ -169,8 +180,23 @@ export function PickupPointSheet({
                 <span className="font-medium">{selectedPoint.name}</span>{" — "}{selectedPoint.zipcode} {selectedPoint.city}
               </p>
             </div>
-            <button type="button" onClick={() => onOpenChange(false)} className="w-full rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary-hover transition-colors">
-              {checkout.confirmPakkeshop}
+            <button
+              type="button"
+              disabled={confirmLoading}
+              onClick={async () => {
+                if (!selectedPoint) return;
+                try {
+                  if (onConfirmSelection) {
+                    await Promise.resolve(onConfirmSelection(selectedPoint));
+                  }
+                  onOpenChange(false);
+                } catch {
+                  /* parent shows error; keep sheet open */
+                }
+              }}
+              className="w-full rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary-hover transition-colors disabled:opacity-50"
+            >
+              {confirmLoading ? (confirmLoadingLabel ?? checkout.searching) : checkout.confirmPakkeshop}
             </button>
           </SheetFooter>
         )}

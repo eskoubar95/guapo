@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter, Lexend } from "next/font/google";
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getDictionary } from "@/i18n/dictionaries";
 import { locales, type Locale } from "@/i18n/config";
@@ -41,12 +40,6 @@ export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-function isMinimalShellPath(pathname: string): boolean {
-  const segments = pathname.split("/").filter(Boolean);
-  const last = segments[segments.length - 1] ?? "";
-  return last === "login" || last === "register" || last === "checkout";
-}
-
 function getFallbackSections(locale: string): NavSection[] {
   const base = `/${locale}`;
   return [
@@ -80,10 +73,6 @@ export default async function LocaleLayout({
   const footer = resolveFooter(locale, footerData);
   const dict = await getDictionary(locale as Locale);
 
-  const headersList = await headers();
-  const pathname = headersList.get("x-pathname") ?? "";
-  const minimalShell = isMinimalShellPath(pathname);
-
   return (
     <html lang={locale} suppressHydrationWarning>
       <body
@@ -100,7 +89,6 @@ export default async function LocaleLayout({
               promotionBar={nav?.promotionBar ?? undefined}
               ctaButton={nav?.ctaButton ?? undefined}
               footer={footer}
-              minimalShell={minimalShell}
             >
               {children}
             </AuthAwareShell>

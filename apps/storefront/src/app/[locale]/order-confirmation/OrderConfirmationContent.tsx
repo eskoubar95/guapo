@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { StoreOrderDetail, StoreOrderDetailItem } from "@/lib/orders";
 import { formatCurrencyAmount, formatLongDate } from "@/lib/format";
-import { formatShippingAddress, normalizeOrder, toMajor } from "@/lib/order-utils";
+import { formatShippingAddress, normalizeOrder } from "@/lib/order-utils";
 import type { Dictionary } from "@/i18n/dictionaries";
 
 const ORDER_STORAGE_KEY = "guapo_order_";
@@ -162,10 +162,10 @@ export function OrderConfirmationContent({
               <ul className="divide-y divide-border">
                 {order.items.map((item) => {
                   const quantity = Math.max(1, item.quantity ?? 1);
-                  const lineTotalMinor = item.total ?? (item.unit_price ?? 0) * quantity;
-                  const unitDisplayMinor =
+                  const lineTotalMajor = item.total ?? (item.unit_price ?? 0) * quantity;
+                  const unitDisplayMajor =
                     item.total != null
-                      ? Math.round(lineTotalMinor / quantity)
+                      ? Math.round((lineTotalMajor / quantity) * 100) / 100
                       : item.unit_price ?? null;
 
                   return (
@@ -183,15 +183,15 @@ export function OrderConfirmationContent({
                               (locale === "da" ? "Abonnement" : "Subscription")}
                           </span>
                         )}
-                        {unitDisplayMinor != null && (
+                        {unitDisplayMajor != null && (
                           <p className="text-xs text-muted-foreground mt-1">
-                            {formatPrice(toMajor(unitDisplayMinor), order.currency_code)}{" "}
+                            {formatPrice(unitDisplayMajor, order.currency_code)}{" "}
                             {locale === "da" ? "pr. stk." : "each"}
                           </p>
                         )}
                       </div>
                       <span className="text-sm font-semibold text-foreground tabular-nums shrink-0">
-                        {formatPrice(toMajor(lineTotalMinor), order.currency_code)}
+                        {formatPrice(lineTotalMajor, order.currency_code)}
                       </span>
                     </li>
                   );
@@ -201,23 +201,23 @@ export function OrderConfirmationContent({
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">{oc.subtotal}</dt>
                   <dd className="font-medium text-foreground tabular-nums">
-                    {formatPrice(toMajor(itemsSubtotal), order.currency_code)}
+                    {formatPrice(itemsSubtotal, order.currency_code)}
                   </dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">{oc.shipping}</dt>
                   <dd className="font-medium text-foreground tabular-nums">
                     {order.shipping_total != null
-                      ? toMajor(order.shipping_total) === 0
+                      ? order.shipping_total === 0
                         ? oc.freeShipping
-                        : formatPrice(toMajor(order.shipping_total), order.currency_code)
+                        : formatPrice(order.shipping_total, order.currency_code)
                       : oc.freeShipping}
                   </dd>
                 </div>
                 <div className="flex justify-between border-t border-border pt-4 text-base font-semibold">
                   <dt className="text-foreground">{oc.total}</dt>
                   <dd className="text-foreground tabular-nums">
-                    {formatPrice(toMajor(order.total), order.currency_code)}
+                    {formatPrice(order.total ?? 0, order.currency_code)}
                   </dd>
                 </div>
               </dl>
@@ -350,7 +350,7 @@ export function OrderConfirmationContent({
 
       <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-center sm:gap-4">
         <Link
-          href={`/${locale}/account/orders/${orderId}`}
+          href={`/${locale}/account/orders`}
           className="inline-flex justify-center rounded-lg border border-input bg-background px-6 py-3.5 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
         >
           {oc.viewOrder}

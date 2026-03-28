@@ -40,7 +40,7 @@ function SheetContent({
   side = "right",
   ...props
 }: DialogPrimitive.Popup.Props & {
-  side?: "left" | "right";
+  side?: "left" | "right" | "bottom";
 }) {
   return (
     <DialogPrimitive.Portal>
@@ -50,11 +50,15 @@ function SheetContent({
         className={cn(
           "fixed z-50 flex flex-col bg-background shadow-xl outline-none",
           "duration-300 data-open:animate-in data-closed:animate-out",
-          "inset-y-0 w-full sm:max-w-md",
-          side === "right" &&
-            "right-0 data-open:slide-in-from-right data-closed:slide-out-to-right",
-          side === "left" &&
-            "left-0 data-open:slide-in-from-left data-closed:slide-out-to-left",
+          side === "bottom"
+            ? "inset-x-0 bottom-0 top-auto max-h-[90vh] h-auto w-full rounded-t-2xl border border-b-0 data-open:slide-in-from-bottom data-closed:slide-out-to-bottom"
+            : cn(
+                "inset-y-0 w-full sm:max-w-md",
+                side === "right" &&
+                  "right-0 data-open:slide-in-from-right data-closed:slide-out-to-right",
+                side === "left" &&
+                  "left-0 data-open:slide-in-from-left data-closed:slide-out-to-left"
+              ),
           className,
         )}
         {...props}

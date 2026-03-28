@@ -15,6 +15,13 @@ function baseHeaders(): HeadersInit {
   };
 }
 
+function withBackendUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  if (!path.startsWith("/")) return null;
+  return `${MEDUSA_URL}${path}`;
+}
+
 export type StoreOrderSummary = {
   id: string;
   display_id?: number;
@@ -22,8 +29,14 @@ export type StoreOrderSummary = {
   created_at?: string;
   total?: number;
   currency_code?: string;
+  /** Number of line items (from list endpoint). */
+  item_count?: number;
   tracking_url?: string | null;
   is_renewal?: boolean;
+  has_order_confirmation_pdf?: boolean;
+  has_invoice_pdf?: boolean;
+  order_confirmation_pdf_url?: string | null;
+  invoice_pdf_url?: string | null;
 };
 
 export type StoreOrderDetailItem = {
@@ -95,7 +108,11 @@ export async function getCustomerOrders(options?: {
     count?: number;
   };
   return {
-    orders: data.orders ?? [],
+    orders: (data.orders ?? []).map((order) => ({
+      ...order,
+      order_confirmation_pdf_url: withBackendUrl(order.order_confirmation_pdf_url),
+      invoice_pdf_url: withBackendUrl(order.invoice_pdf_url),
+    })),
     count: data.count ?? 0,
   };
 }
@@ -122,5 +139,10 @@ export async function getCustomerOrder(
   }
 
   const data = (await res.json()) as { order?: StoreOrderDetail };
-  return data.order ?? null;
+  if (!data.order) return null;
+  return {
+    ...data.order,
+    order_confirmation_pdf_url: withBackendUrl(data.order.order_confirmation_pdf_url),
+    invoice_pdf_url: withBackendUrl(data.order.invoice_pdf_url),
+  };
 }

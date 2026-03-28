@@ -347,7 +347,7 @@
     "email": "Email",
     "phone": "Telefon",
     "addressTitle": "Leveringsoplysninger",
-    "billingAddress": "Fakturadresse",
+    "billingAddress": "Leverings adresse",
     "address": "Adresse",
     "postalCode": "Postnummer",
     "city": "By",
@@ -410,7 +410,18 @@
     "backToSubscriptions": "Tilbage til abonnementer",
     "viewDetails": "Se detaljer",
     "cancelConfirm": "Er du sikker på, at du vil annullere abonnementet?",
-    "cancelConfirmTitle": "Annuller abonnement"
+    "cancelConfirmTitle": "Annuller abonnement",
+    "cancelKeepButton": "Fortryd",
+    "cancelSubmitButton": "Ja, annuller abonnementet",
+    "cancelLoadingLabel": "Annullerer…",
+    "cancelSuccessTitle": "Abonnement annulleret",
+    "cancelSuccessBody": "Du modtager ikke flere abonnementsleverancer. Tak fordi du var med.",
+    "cancelCloseButton": "Luk",
+    "cancelTryAgain": "Prøv igen",
+    "subscriptionLinesTitle": "Abonnementsvarer",
+    "orderHistoryTitle": "Ordrehistorik",
+    "discountIncluded": "Inkl. {{percent}}% abonnementsrabat på fornyelser",
+    "openOrderHistory": "Se ordrehistorik"
   },
   "blog": {
     "title": "Blog",

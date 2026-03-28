@@ -84,20 +84,30 @@ export default async function orderPlacedTransactionalDocuments({
     return;
   }
 
+  /** Graph amounts are decimal DKK (major); buildOrderPdf expects integer øre. */
+  const majorToMinorOre = (m: number) => Math.round(m * 100);
+
   const items = order.items ?? [];
   const subtotalMinor = items.reduce((sum, item) => {
     const qty = Math.max(1, item.quantity ?? 1);
-    const line = item.total ?? (item.unit_price ?? 0) * qty;
-    return sum + Math.round(line);
+    const lineMajor = item.total ?? (item.unit_price ?? 0) * qty;
+    return sum + majorToMinorOre(Number(lineMajor));
   }, 0);
-  const shippingMinor = Math.round(order.shipping_total ?? 0);
-  const totalMinor = Math.round(order.total ?? subtotalMinor + shippingMinor);
+  const shippingMinor = majorToMinorOre(Number(order.shipping_total ?? 0));
+  const totalMinor =
+    order.total != null ? majorToMinorOre(Number(order.total)) : subtotalMinor + shippingMinor;
   const currencyCode = String(order.currency_code ?? "dkk");
 
   const lines = items.map((item) => {
     const quantity = Math.max(1, item.quantity ?? 1);
-    const lineTotalMinor = Math.round(item.total ?? (item.unit_price ?? 0) * quantity);
-    const unitPriceMinor = Math.round(item.total != null ? lineTotalMinor / quantity : item.unit_price ?? 0);
+    const lineTotalMinor = majorToMinorOre(
+      Number(item.total ?? (item.unit_price ?? 0) * quantity)
+    );
+    const unitPriceMinor = Math.round(
+      item.total != null
+        ? lineTotalMinor / quantity
+        : majorToMinorOre(Number(item.unit_price ?? 0))
+    );
     return {
       title: item.title ?? item.id,
       quantity,

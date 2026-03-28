@@ -142,3 +142,14 @@ export async function fetchAllPickupPoints(params: {
   withDistance.sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
   return [...withDistance, ...withoutDistance];
 }
+
+/** Human-readable carrier for pakkeshop (GLS, DAO, PostNord / `pdk`). */
+export function formatPickupCarrierLabel(carrier_code?: string | null): string | null {
+  if (carrier_code == null || typeof carrier_code !== "string") return null;
+  const c = carrier_code.trim().toLowerCase();
+  if (!c) return null;
+  if (c === "gls") return "GLS";
+  if (c === "dao") return "DAO";
+  if (c === "pdk") return "PostNord";
+  return c.toUpperCase();
+}

@@ -13,8 +13,9 @@ import {
 import { NewsletterForm } from "@/components/NewsletterForm";
 import type { ResolvedFooter, ResolvedFooterColumn } from "@/lib/payload-footer";
 
+/** Lucide/simple-icons SVGs accept `size` as number or string in their propTypes; widen for assignability. */
 type SocialIconComponent = React.ComponentType<{
-  size?: number;
+  size?: number | string;
   className?: string;
   color?: string;
 }>;

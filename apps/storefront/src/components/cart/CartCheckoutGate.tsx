@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthModal, type AuthModalLabels } from "@/components/auth/AuthModal";
 
@@ -25,8 +26,11 @@ export function CartCheckoutGate({
   compact = false,
 }: CartCheckoutGateProps) {
   const { customer } = useAuth();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalView, setAuthModalView] = useState<"login" | "register">("login");
+  const returnUrl = `${pathname ?? `/${locale}/cart`}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}`;
 
   const needsAuth = hasSubscriptionItems && !customer;
   const msg =
@@ -82,6 +86,7 @@ export function CartCheckoutGate({
         locale={locale}
         labels={authLabels}
         initialView={authModalView}
+        returnUrl={returnUrl}
       />
     </div>
   );

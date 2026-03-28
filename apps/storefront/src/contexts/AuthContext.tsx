@@ -5,12 +5,17 @@ import { medusa } from "@/lib/medusa";
 
 type Customer = { id: string; email?: string | null; first_name?: string | null; last_name?: string | null; [k: string]: unknown };
 
+export type SignOutOptions = {
+  /** Full path (e.g. `/da/login`) — uses hard navigation so account shell unmount cannot skip redirect */
+  redirectTo?: string;
+};
+
 type AuthState = {
   customer: Customer | null;
   loading: boolean;
   isAuthenticated: boolean;
   refetch: () => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: (options?: SignOutOptions) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -39,13 +44,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const signOut = useCallback(async () => {
+  const signOut = useCallback(async (options?: SignOutOptions) => {
     requestVersionRef.current += 1;
     try {
       await medusa.auth.logout();
     } finally {
       setCustomer(null);
       setLoading(false);
+      const to = options?.redirectTo?.trim();
+      if (typeof window !== "undefined" && to) {
+        window.location.replace(to.startsWith("/") ? to : `/${to}`);
+      }
     }
   }, []);
 

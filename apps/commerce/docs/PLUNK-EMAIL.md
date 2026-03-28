@@ -25,6 +25,14 @@ Transactional emails via [Plunk](https://useplunk.com/) using the **Next API** (
   Når en admin inviterer en bruger (Settings → Users → Invite), sendes en mail med invite-link via **Plunk Next API** (`POST https://next-api.useplunk.com/v1/send`).  
   Subscriber: `src/subscribers/invite-email.ts` (events: `invite.created`, `invite.resent`).  
   Klient: `src/lib/plunk.ts`.
+- **Order placed transactional baseline (M11)**  
+  Ved `order.placed` opretter subscriber `src/subscribers/order-placed-transactional-documents.ts`:
+  - `order_confirmation` mail (locale-aware `da`/`en`)
+  - `subscription_created` mail når ordre har subscription-linje
+  - Ordrebekræftelse-PDF + faktura-PDF gemmes i `order.metadata.documents.*` og kan downloades via:
+    - `GET /store/orders/:id/documents/order-confirmation`
+    - `GET /store/orders/:id/documents/invoice`
+  Download kræver customer auth + ownership og er rate-limited.
 
 ## Fejlfinding: "Ingen mail sendt"
 
@@ -53,6 +61,16 @@ Events and suggested Plunk template names. Implement by adding subscribers or wo
 | Fulfillment created / tracking available | `shipment_tracking_available` | Customer email | Tracking URL and number |
 
 Implementation order (recommended): `order_confirmation` → `subscription_created` → `renewal_reminder_3_days` → `payment_failed_*` / `payment_recovered` → `subscription_paused` / `resumed` / `cancelled` → `shipment_tracking_available`.
+
+## Sikkerhed for transactional flow
+
+- `PLUNK_SECRET_KEY` må kun ligge i server-miljø (Railway variables), aldrig i client kode.
+- Brug verified sender domain for `PLUNK_FROM_EMAIL` (SPF/DKIM/DMARC).
+- PDF links i mails peger på auth-beskyttede store-routes; dokumenter er ikke offentlige.
+- Rate-limit for dokumentdownloads styres via:
+  - `ORDER_DOCUMENTS_RATE_LIMIT_MAX` (default `40` per minut per IP)
+  - `ORDER_DOCUMENTS_RATE_LIMIT_DISABLED=true` (kun til lokal fejlsøgning)
+- Idempotency/retry guard: subscriber markerer sendt-status i `order.metadata.transactional.*` for at undgå dubletter ved event-replays.
 
 ## Fremtidige mails
 

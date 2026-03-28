@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState, useEffect } from "react"
-import { User, Package, RefreshCw, UserPen, MapPin, Menu, X } from "lucide-react"
+import { useEffect, useState } from "react"
+import { User, Package, RefreshCw, UserPen, MapPin, ChevronRight, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export interface AccountLayoutLabels {
@@ -33,6 +33,10 @@ const linkIconMap = {
 } as const
 
 type LinkKey = keyof typeof linkIconMap
+
+/** Below main `Header` sticky bar (`h-14` / `sm:h-16`) + small gap — keeps account stickies from sliding under the nav */
+const ACCOUNT_STICKY_TOP =
+  "top-[calc(3.5rem+0.75rem)] sm:top-[calc(4rem+0.75rem)]"
 
 const links = (locale: string, labels: AccountLayoutLabels): { href: string; label: string; key: LinkKey }[] => [
   { href: `/${locale}/account`, label: labels.overview, key: "overview" },
@@ -69,15 +73,15 @@ function NavLinks({
   const items = links(locale, labels)
   const defaultLinkClass = (isActive: boolean) =>
     cn(
-      "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors min-h-[44px]",
+      "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors min-h-[44px]",
       isActive
-        ? "bg-primary text-primary-foreground"
+        ? "bg-primary/10 text-primary"
         : "text-muted-foreground hover:bg-muted hover:text-foreground"
     )
   const getClass = linkClassName ?? defaultLinkClass
 
   return (
-    <nav className={cn("space-y-0.5", className)} aria-label={labels.accountTitle}>
+    <nav className={cn("space-y-1", className)} aria-label={labels.accountTitle}>
       {items.map((link) => {
         const Icon = linkIconMap[link.key]
         const isActive =
@@ -91,7 +95,14 @@ function NavLinks({
             aria-current={isActive ? "page" : undefined}
           >
             <Icon className="h-4 w-4 shrink-0" aria-hidden />
-            {link.label}
+            <span className="truncate">{link.label}</span>
+            <ChevronRight
+              className={cn(
+                "ml-auto h-4 w-4 transition-opacity",
+                isActive ? "opacity-100 text-primary" : "opacity-0 group-hover:opacity-60"
+              )}
+              aria-hidden
+            />
           </Link>
         )
       })}
@@ -102,7 +113,7 @@ function NavLinks({
 export function AccountLayout({ locale, labels, children }: AccountLayoutProps) {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
-  const menuLabel = labels.menuLabel ?? "Menu"
+  const menuLabel = labels.menuLabel ?? labels.accountTitle
   const closeMenuLabel = labels.closeMenu ?? "Close menu"
   const currentSection = getCurrentSectionLabel(pathname, locale, labels)
 
@@ -129,21 +140,29 @@ export function AccountLayout({ locale, labels, children }: AccountLayoutProps) 
 
   return (
     <div className="min-h-full">
-      {/* Mobile: top bar with menu button and current section */}
-      <div className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-card px-4 py-3 md:hidden">
+      {/* Mobile: trigger — sticky below site header so it does not sit under the nav */}
+      <div
+        className={cn(
+          "sticky z-30 border-b border-border bg-card/95 px-4 py-3 backdrop-blur md:hidden",
+          ACCOUNT_STICKY_TOP
+        )}
+      >
         <button
           type="button"
           onClick={() => setMenuOpen(true)}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          className="flex w-full items-center justify-between rounded-xl border border-border px-3 py-2.5 text-left text-sm text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           aria-label={menuLabel}
           aria-expanded={menuOpen}
         >
-          <Menu className="h-5 w-5" aria-hidden />
+          <span className="font-medium">{labels.accountTitle}</span>
+          <span className="inline-flex items-center gap-2 text-muted-foreground">
+            <span className="max-w-[160px] truncate">{currentSection}</span>
+            <ChevronRight className="h-4 w-4" aria-hidden />
+          </span>
         </button>
-        <span className="truncate text-lg font-semibold text-foreground">{currentSection}</span>
       </div>
 
-      {/* Mobile: drawer overlay */}
+      {/* Mobile: bottom sheet menu */}
       {menuOpen && (
         <>
           <div
@@ -153,11 +172,11 @@ export function AccountLayout({ locale, labels, children }: AccountLayoutProps) 
           />
           <div
             className={cn(
-              "fixed left-0 top-0 bottom-0 z-50 w-[min(100vw-3rem,280px)] border-r border-border bg-card shadow-xl transition-transform duration-200 ease-out md:hidden",
-              menuOpen ? "translate-x-0" : "-translate-x-full"
+              "fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-border bg-card shadow-xl transition-transform duration-200 ease-out md:hidden",
+              menuOpen ? "translate-y-0" : "translate-y-full"
             )}
           >
-            <div className="flex flex-col h-full">
+            <div className="flex max-h-[78vh] flex-col">
               <div className="flex items-center justify-between border-b border-border px-4 py-3">
                 <span className="font-semibold text-foreground">{labels.accountTitle}</span>
                 <button
@@ -169,7 +188,7 @@ export function AccountLayout({ locale, labels, children }: AccountLayoutProps) 
                   <X className="h-5 w-5" aria-hidden />
                 </button>
               </div>
-              <div className="flex-1 overflow-auto p-3">
+              <div className="flex-1 overflow-auto p-3 pb-6">
                 <NavLinks
                   pathname={pathname}
                   locale={locale}
@@ -177,9 +196,9 @@ export function AccountLayout({ locale, labels, children }: AccountLayoutProps) 
                   onLinkClick={() => setMenuOpen(false)}
                   linkClassName={(isActive) =>
                     cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                      "group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )
                   }
@@ -194,10 +213,11 @@ export function AccountLayout({ locale, labels, children }: AccountLayoutProps) 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[200px_1fr] lg:grid-cols-[220px_1fr] lg:gap-8">
           {/* Desktop sidebar */}
           <aside className="hidden md:block md:shrink-0">
-            <div className="sticky top-6 rounded-xl border border-border bg-card p-4">
-              <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                {labels.accountTitle}
-              </h2>
+            <div className={cn("sticky rounded-2xl border border-border bg-card p-4", ACCOUNT_STICKY_TOP)}>
+              <div className="mb-4 rounded-xl bg-muted/40 px-3 py-2.5">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{labels.accountTitle}</p>
+                <p className="mt-1 text-sm font-medium text-foreground">{currentSection}</p>
+              </div>
               <NavLinks pathname={pathname} locale={locale} labels={labels} />
             </div>
           </aside>

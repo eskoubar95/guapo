@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { medusa } from "@/lib/medusa";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check } from "lucide-react";
 import { PickupPointManager } from "./PickupPointManager";
+import type { Dictionary } from "@/i18n/dictionaries";
 
 interface AddressManagerLabels {
   addressTitle: string;
@@ -33,9 +34,11 @@ interface AddressManagerLabels {
 
 interface AddressManagerProps {
   labels: AddressManagerLabels;
+  locale: string;
+  checkout: Dictionary["checkout"];
 }
 
-export function AddressManager({ labels }: AddressManagerProps) {
+export function AddressManager({ labels, locale, checkout }: AddressManagerProps) {
   const { customer } = useAuth();
 
   const [addressId, setAddressId] = useState<string | null>(null);
@@ -61,6 +64,19 @@ export function AddressManager({ labels }: AddressManagerProps) {
       setCity(addr.city ?? "");
     }).catch(() => {});
   }, [customer]);
+
+  /** Same shape as checkout pickup sheet: street + ", " + zip + city — seeds pakkeshop search */
+  const pickupSearchSeed = useMemo(() => {
+    const addr = address1.trim();
+    const zip = postalCode.trim().replace(/\D/g, "").slice(0, 4);
+    const c = city.trim();
+    if (addr) {
+      return `${addr}${zip ? `, ${zip}` : ""}${c ? ` ${c}` : ""}`.trim();
+    }
+    if (zip.length >= 3 && c) return `${zip} ${c}`.trim();
+    if (zip.length >= 3) return zip;
+    return "";
+  }, [address1, postalCode, city]);
 
   const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,6 +202,9 @@ export function AddressManager({ labels }: AddressManagerProps) {
           searchAction: labels.pickupSearchAction,
           cancel: labels.cancel,
         }}
+        checkout={checkout}
+        locale={locale}
+        addressSearchSeed={pickupSearchSeed}
       />
     </div>
   );

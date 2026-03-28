@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { LogOut } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
 
@@ -11,13 +11,10 @@ interface AccountHeaderProps {
 }
 
 export function AccountHeader({ locale, title, signOutLabel }: AccountHeaderProps) {
-  const router = useRouter();
   const { customer, signOut } = useAuth();
 
   const handleSignOut = async () => {
-    await signOut()
-    router.replace(`/${locale}/login`)
-    router.refresh()
+    await signOut({ redirectTo: `/${locale}/login` })
   }
 
   return (
@@ -30,11 +27,12 @@ export function AccountHeader({ locale, title, signOutLabel }: AccountHeaderProp
       </div>
       <Button
         type="button"
-        variant="ghost"
+        variant="destructive"
         size="sm"
-        className="w-fit mt-1 sm:mt-0"
+        className="mt-1 w-full gap-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 sm:mt-0 sm:w-auto sm:self-start"
         onClick={handleSignOut}
       >
+        <LogOut className="size-3.5 shrink-0 opacity-95" aria-hidden />
         {signOutLabel}
       </Button>
     </div>

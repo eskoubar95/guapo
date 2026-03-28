@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ShoppingCart, User, Menu, Search, Heart } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { SidebarMenu } from "@/components/SidebarMenu";
 import { SearchModal } from "@/components/SearchModal";
 import { CartDropdown } from "@/components/CartDropdown";
@@ -26,6 +27,7 @@ const FIRST_SECTION_SCROLL_THRESHOLD = 480;
 const SCROLL_DOWN_DELTA = 8;
 
 export function Header({ locale, dict, menuSections, promotionBar, ctaButton }: HeaderProps) {
+  const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -49,6 +51,46 @@ export function Header({ locale, dict, menuSections, promotionBar, ctaButton }: 
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  /** Route change: Header stays mounted across client navigations; avoid stuck hidden state */
+  useEffect(() => {
+    setHeaderVisible(true);
+    if (typeof window !== "undefined") {
+      lastScrollYRef.current = window.scrollY;
+    }
+  }, [pathname]);
+
+  /** Fuld navigation / tilbage: vis header igen (BFCache har ikke altid `persisted`; begge skal dækkes) */
+  useEffect(() => {
+    const onPageShow = () => {
+      setHeaderVisible(true);
+      if (typeof window !== "undefined") {
+        lastScrollYRef.current = window.scrollY;
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
+  /** SPA history (sjældent efter login, men sikrer synlig header ved tilbage/forward) */
+  useEffect(() => {
+    const onPopState = () => {
+      setHeaderVisible(true);
+      if (typeof window !== "undefined") {
+        lastScrollYRef.current = window.scrollY;
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  /** Første layout: sync scroll — undgår at `last` er 0 mens siden allerede er scrollet (gendannelse) */
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    const y = window.scrollY;
+    lastScrollYRef.current = y;
+    setHeaderVisible(true);
+  }, []);
+
   useEffect(() => {
     let ticking = false;
     const handleScroll = () => {
@@ -61,6 +103,17 @@ export function Header({ locale, dict, menuSections, promotionBar, ctaButton }: 
           if (y <= FIRST_SECTION_SCROLL_THRESHOLD) {
             setHeaderVisible(true);
             lastScrollYRef.current = y;
+            ticking = false;
+            return;
+          }
+
+          /**
+           * Browser scroll restoration (fx tilbage fra login): første event har ofte last=0 og y langt nede.
+           * Det må ikke tælles som "scroller ned" — så skjules header straks.
+           */
+          if (last === 0 && y > FIRST_SECTION_SCROLL_THRESHOLD) {
+            lastScrollYRef.current = y;
+            setHeaderVisible(true);
             ticking = false;
             return;
           }

@@ -23,7 +23,7 @@ List orders for the authenticated customer. Sorted by `created_at` descending.
       "display_id": 1001,
       "status": "completed",
       "created_at": "2026-03-01T12:00:00.000Z",
-      "total": 42600,
+      "total": 426,
       "currency_code": "dkk",
       "tracking_url": null
     }
@@ -33,6 +33,8 @@ List orders for the authenticated customer. Sorted by `created_at` descending.
   "limit": 20
 }
 ```
+
+- `total`: Order total in **decimal DKK** (major units), same as other Guapo Medusa store amounts — not integer øre.
 
 - `tracking_url`: First available fulfillment tracking URL for the order, or `null` if none.
 
@@ -49,17 +51,17 @@ Retrieve one order. Returns 404 if not found, 403 if not owned by the current cu
     "display_id": 1001,
     "status": "completed",
     "created_at": "2026-03-01T12:00:00.000Z",
-    "total": 42600,
+    "total": 426,
     "currency_code": "dkk",
-    "shipping_total": 3900,
+    "shipping_total": 39,
     "items": [
       {
         "id": "item_xxx",
         "title": "Product title",
         "variant_id": "variant_xxx",
         "quantity": 1,
-        "unit_price": 18900,
-        "total": 18900,
+        "unit_price": 189,
+        "total": 189,
         "metadata": {}
       }
     ],

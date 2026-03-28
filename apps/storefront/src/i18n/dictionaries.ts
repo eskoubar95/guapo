@@ -409,6 +409,17 @@ export interface Dictionary {
     viewDetails: string;
     cancelConfirm: string;
     cancelConfirmTitle: string;
+    cancelKeepButton: string;
+    cancelSubmitButton: string;
+    cancelLoadingLabel: string;
+    cancelSuccessTitle: string;
+    cancelSuccessBody: string;
+    cancelCloseButton: string;
+    cancelTryAgain: string;
+    subscriptionLinesTitle: string;
+    orderHistoryTitle: string;
+    discountIncluded: string;
+    openOrderHistory: string;
   };
   blog: {
     title: string;

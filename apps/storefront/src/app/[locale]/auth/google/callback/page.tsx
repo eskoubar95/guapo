@@ -25,6 +25,7 @@ export default function GoogleCallbackPage() {
   const params = useParams();
   const locale = (params?.locale as string) || "da";
   const [loading, setLoading] = useState(true);
+  const [phase, setPhase] = useState<"finalizing" | "redirecting">("finalizing");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export default function GoogleCallbackPage() {
 
     const validateCallback = async () => {
       try {
+        setPhase("finalizing");
         const token = await medusa.auth.callback("customer", "google", queryParams);
         const decoded = decodeJwtPayload(token);
         const shouldCreateCustomer = !decoded.actor_id || decoded.actor_id === "";
@@ -55,6 +57,7 @@ export default function GoogleCallbackPage() {
         }
 
         if (!cancelled) {
+          setPhase("redirecting");
           window.location.href = destination;
         }
       } catch (err) {
@@ -84,9 +87,20 @@ export default function GoogleCallbackPage() {
 
   return (
     <div className="container mx-auto max-w-md px-4 py-12">
-      <p className="text-muted-foreground">
-        {locale === "da" ? "Logger ind med Google..." : "Signing in with Google..."}
-      </p>
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-border border-t-primary" />
+          <p className="text-muted-foreground" role="status" aria-live="polite">
+            {phase === "finalizing"
+              ? locale === "da"
+                ? "Færdiggør login med Google..."
+                : "Finalizing Google sign in..."
+              : locale === "da"
+                ? "Viderestiller..."
+                : "Redirecting..."}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,9 +1,13 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import type { NavSection } from "@/lib/payload-navigation";
 import type { PayloadNavPromotionBar, PayloadNavCtaButton } from "@/lib/payload-navigation";
 import type { ResolvedFooter } from "@/lib/payload-footer";
 import type { Dictionary } from "@/i18n/dictionaries";
+import { isMinimalShellPath } from "@/lib/shell-path";
 
 interface AuthAwareShellProps {
   children: React.ReactNode;
@@ -13,10 +17,12 @@ interface AuthAwareShellProps {
   promotionBar?: PayloadNavPromotionBar | null;
   ctaButton?: PayloadNavCtaButton | null;
   footer: ResolvedFooter | null;
-  /** When true, render only main (no header/footer) — login, register, checkout. */
-  minimalShell: boolean;
 }
 
+/**
+ * Header/footer vs minimal main-only shell — driven by **client** pathname so tilbage/frem
+ * fra login/register (Next client navigation) ikke sidder fast med forældet server `x-pathname`.
+ */
 export function AuthAwareShell({
   children,
   locale,
@@ -25,8 +31,10 @@ export function AuthAwareShell({
   promotionBar,
   ctaButton,
   footer,
-  minimalShell,
 }: AuthAwareShellProps) {
+  const pathname = usePathname() ?? "";
+  const minimalShell = isMinimalShellPath(pathname);
+
   if (minimalShell) {
     return (
       <main id="main" className="flex-1 min-w-0 overflow-x-clip">
