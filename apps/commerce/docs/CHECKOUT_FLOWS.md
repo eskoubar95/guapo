@@ -6,6 +6,37 @@ Guapo supports two checkout flows:
 1. **Guest Checkout** - For one-time purchases (no account required)
 2. **Authenticated Checkout** - For subscriptions (account required)
 
+## Payment amount source of truth (critical)
+
+For checkout correctness, treat these as separate states that must be synchronized:
+
+1. **Cart totals** (decorated totals shown to storefront)
+2. **Payment collection amount** (persisted value used by Medusa payment-session workflow)
+3. **Stripe/Klarna PaymentIntent amount** (what Klarna widget displays and customer authorizes)
+
+### Required order of operations
+
+1. Update cart data (`POST /store/carts/:id`)
+2. Add shipping method (`POST /store/carts/:id/shipping-methods`)
+3. Apply/remove free-shipping adjustment on shipping method (subscriber)
+4. Refresh payment collection for cart (`refreshPaymentCollectionForCartWorkflow`)
+5. Create payment session (`POST /store/payment-collections/:id/payment-sessions`)
+
+If step 5 runs before 3+4 are fully applied, Klarna may show an old amount.
+
+### Current Guapo hardening
+
+- Free shipping is applied as a shipping-method adjustment in `sync-free-shipping-promotion.ts`.
+- Subscriber now retries briefly when shipping method amount is not yet ready (race guard).
+- Stripe provider (`payment-stripe-guapo`) resolves cart totals and uses cart total for PaymentIntent amount when available, to avoid stale payment-collection reads in edge timing windows.
+
+### Validation query (DB)
+
+When debugging a mismatch, verify all three values match:
+- `medusa.cart_shipping_method_adjustment`
+- `medusa.payment_collection.amount`
+- `medusa.payment_session.amount` (latest)
+
 ## Guest Checkout (One-time Purchases)
 
 Medusa supports guest checkout out-of-the-box. No authentication is required.
@@ -42,6 +73,13 @@ Subscriptions require a customer account for:
 3. Customer enters/selects saved shipping details
 4. Customer adds/selects payment method (tokenized for recurring)
 5. Customer completes checkout with subscription
+
+### Mixed carts (subscription + one-time)
+
+Mixed carts follow the authenticated subscription path:
+- Customer must be authenticated
+- Checkout forces card-based flow (no Klarna/MobilePay for subscription carts)
+- Shipping/free-shipping logic still applies to the full cart total before payment session
 
 ### Authentication
 ```bash

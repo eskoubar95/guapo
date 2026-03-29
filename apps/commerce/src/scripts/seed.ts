@@ -13,7 +13,6 @@ import {
   linkSalesChannelsToStockLocationWorkflow,
   createStockLocationsWorkflow,
   createShippingProfilesWorkflow,
-  createShippingOptionsWorkflow,
   createProductsWorkflow,
   createProductCategoriesWorkflow,
   createProductTypesWorkflow,
@@ -86,6 +85,7 @@ export default async function seed({ container }: ExecArgs) {
               city: "Copenhagen",
               country_code: "DK",
               address_1: "Warehouse Street 1",
+              postal_code: "2100",
             },
           },
         ],
@@ -277,23 +277,25 @@ export default async function seed({ container }: ExecArgs) {
       : existingOptions;
 
     if (hasShipmondoApi || hasShipmondoModuleKey) {
-      const pakkeshopOption = remainingOptions.find((o) => o.name === "Pakkeshop (39 kr)");
-      if (!pakkeshopOption) {
-        await createShippingOptionsWorkflow(container).run({
-          input: [{
-            name: "Pakkeshop (39 kr)",
-            service_zone_id: dkZone.id,
-            shipping_profile_id: shippingProfile.id,
-            provider_id: "shipmondo_shipmondo",
-            type: { label: "Pakkeshop", description: "GLS/DAO pakkeshop", code: "gls-pakkeshop" },
-            price_type: "flat",
-            prices: [{ currency_code: "dkk", amount: 3900 }],
-          }],
-        });
-        logger.info("✅ Created shipping option: Pakkeshop (39 kr)");
-      } else {
-        logger.info(`✅ Shipping option already exists: ${pakkeshopOption.id}`);
+      const allInZone = await fulfillmentModule.listShippingOptions({ service_zone: { id: dkZone.id } });
+      const legacyDeleteIds = allInZone
+        .filter((r) => {
+          const typeCode = (r as { type?: { code?: string } }).type?.code;
+          return r.name === "Pakkeshop (39 kr)" || typeCode === "gls-pakkeshop";
+        })
+        .map((r) => r.id);
+      if (legacyDeleteIds.length > 0) {
+        try {
+          await fulfillmentModule.deleteShippingOptions(legacyDeleteIds);
+          logger.info(`✅ Removed ${legacyDeleteIds.length} legacy Shipmondo shipping option(s)`);
+        } catch (err) {
+          logger.warn(`Could not remove legacy shipping options: ${err instanceof Error ? err.message : String(err)}`);
+        }
       }
+
+      logger.info(
+        "ℹ️  Shipmondo: seed does not create GLS/DAO/PostNord options anymore. Use Admin → Settings → Shipmondo → Tilføj fra Shipmondo, or pnpm sync:shipmondo. To remove old seed options (type code pakkeshop), run: pnpm cleanup:shipmondo-seed-options"
+      );
     }
   } else {
     logger.info("⚠️  No fulfillment set found on stock location - create one in Medusa Admin");
