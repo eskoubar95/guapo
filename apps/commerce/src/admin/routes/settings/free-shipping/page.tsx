@@ -194,14 +194,14 @@ const FreeShippingSettingsPage = () => {
 
         <div className="flex items-center justify-between gap-3 rounded-lg border border-ui-border-base px-4 py-3">
           <div>
-            <Text size="small" weight="plus" className="text-ui-fg-base">
+            <Text id="fs-enabled-label" size="small" weight="plus" className="text-ui-fg-base">
               Enabled
             </Text>
             <Text size="small" className="text-ui-fg-subtle">
               When off, automatic free-shipping promotion sync is disabled.
             </Text>
           </div>
-          <Switch checked={enabled} onCheckedChange={setEnabled} />
+          <Switch checked={enabled} onCheckedChange={setEnabled} aria-labelledby="fs-enabled-label" />
         </div>
 
         <Button type="button" size="small" disabled={saving} onClick={save}>

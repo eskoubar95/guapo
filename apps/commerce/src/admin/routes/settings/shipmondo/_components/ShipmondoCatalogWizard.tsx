@@ -35,7 +35,7 @@ async function fetchProductsForCarrier(
   const res = await fetch(`${BASE}/admin/shipmondo/products?${params}`, { credentials: "include" })
   const j = await res.json().catch(() => ({}))
   if (!res.ok) {
-    throw new Error((j && j.message) || `Produkter for ${carrierCode}`)
+    throw new Error((j && j.message) || `Kunne ikke hente produkter for carrier ${carrierCode}`)
   }
   return j.products ?? []
 }
