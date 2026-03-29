@@ -6,15 +6,19 @@ import { useState } from "react";
 interface StripePaymentFormProps {
   cartId: string;
   onError: (message: string) => void;
+  onProcessing?: (processing: boolean) => void;
   locale: string;
   placeOrderLabel: string;
+  termsAccepted?: boolean;
 }
 
 export function StripePaymentForm({
   cartId,
   onError,
+  onProcessing,
   locale,
   placeOrderLabel,
+  termsAccepted = true,
 }: StripePaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
@@ -22,9 +26,10 @@ export function StripePaymentForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
+    if (!stripe || !elements || !termsAccepted) return;
 
     setLoading(true);
+    onProcessing?.(true);
     try {
       const origin = typeof window !== "undefined" ? window.location.origin : "";
       const returnUrl = `${origin}/${locale}/order-confirmation?cart_id=${cartId}`;
@@ -40,9 +45,11 @@ export function StripePaymentForm({
         },
       });
       if (error) {
+        onProcessing?.(false);
         onError(error.message ?? "Payment failed");
       }
     } catch (err) {
+      onProcessing?.(false);
       onError(err instanceof Error ? err.message : "Payment failed");
     } finally {
       setLoading(false);
@@ -50,12 +57,18 @@ export function StripePaymentForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement options={{ layout: "tabs" }} />
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <PaymentElement
+        options={{
+          layout: { type: "accordion", defaultCollapsed: false },
+          /** Show Apple Pay / Google Pay when Stripe + browser allow (needs HTTPS + verified domain for Apple Pay on web). */
+          wallets: { applePay: "auto", googlePay: "auto" },
+        }}
+      />
       <button
         type="submit"
-        disabled={!stripe || loading}
-        className="w-full rounded-full bg-primary px-8 py-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={!stripe || loading || !termsAccepted}
+        className="w-full rounded-lg bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading
           ? locale === "da"
@@ -63,6 +76,13 @@ export function StripePaymentForm({
             : "Processing..."
           : placeOrderLabel}
       </button>
+      {!termsAccepted && (
+        <p className="text-xs text-muted-foreground text-center">
+          {locale === "da"
+            ? "Accepter venligst betingelserne for at fortsætte"
+            : "Please accept the terms to continue"}
+        </p>
+      )}
     </form>
   );
 }
