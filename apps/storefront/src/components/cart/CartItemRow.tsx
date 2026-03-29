@@ -9,6 +9,7 @@ import {
 } from "@/lib/cart-display";
 import { Minus, Plus, X, ChevronDown, RotateCw } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries";
+import { getCartLineQuantityCap } from "@/lib/product-inventory";
 import type { CartItem } from "./CartItems";
 
 const CYCLE_OPTIONS = [4, 8, 12] as const;
@@ -26,6 +27,8 @@ interface CartItemRowProps {
   ) => void;
   onSubscriptionToggle: (item: CartItem, cycleWeeks: number | null) => void;
   onCycleChange: (item: CartItem, weeks: number) => void;
+  /** Inline message after failed quantity update (e.g. insufficient stock) */
+  quantityError?: string | null;
 }
 
 export function CartItemRow({
@@ -37,11 +40,13 @@ export function CartItemRow({
   onQuantityChange,
   onSubscriptionToggle,
   onCycleChange,
+  quantityError,
 }: CartItemRowProps) {
   const thumbnail = item.thumbnail || item.variant?.product?.thumbnail;
   const title = item.product_title || item.title || "Product";
   const variantTitle = (item.variant_title || item.variant?.title) ?? "";
   const quantity = item.quantity ?? 1;
+  const maxQty = getCartLineQuantityCap(item);
   const cycle = typeof item.metadata?.subscription_cycle === "number"
     ? item.metadata.subscription_cycle
     : 0;
@@ -137,47 +142,54 @@ export function CartItemRow({
             )}
           </div>
 
-          <div className="flex items-end justify-between gap-3 mt-auto pt-2.5">
-            <div className="inline-flex items-center rounded-md border border-border bg-background h-8">
-              <button
-                type="button"
-                onClick={() => onQuantityChange(item.id, quantity - 1, item.metadata)}
-                disabled={isPending || quantity <= 1}
-                className="flex items-center justify-center w-8 h-full hover:bg-surface transition-colors disabled:opacity-30 disabled:cursor-not-allowed rounded-l-md"
-                aria-label={dict.cart.decreaseQuantity}
-              >
-                <Minus className="h-3 w-3" />
-              </button>
-              <span className="flex items-center justify-center w-8 h-full text-[13px] font-medium text-foreground border-x border-border tabular-nums">
-                {quantity}
-              </span>
-              <button
-                type="button"
-                onClick={() => onQuantityChange(item.id, quantity + 1, item.metadata)}
-                disabled={isPending}
-                className="flex items-center justify-center w-8 h-full hover:bg-surface transition-colors rounded-r-md"
-                aria-label={dict.cart.increaseQuantity}
-              >
-                <Plus className="h-3 w-3" />
-              </button>
-            </div>
+          <div className="mt-auto pt-2.5 flex flex-col gap-1.5">
+            <div className="flex items-end justify-between gap-3">
+              <div className="inline-flex items-center rounded-md border border-border bg-background h-8">
+                <button
+                  type="button"
+                  onClick={() => onQuantityChange(item.id, quantity - 1, item.metadata)}
+                  disabled={isPending || quantity <= 1}
+                  className="flex items-center justify-center w-8 h-full hover:bg-surface transition-colors disabled:opacity-30 disabled:cursor-not-allowed rounded-l-md"
+                  aria-label={dict.cart.decreaseQuantity}
+                >
+                  <Minus className="h-3 w-3" />
+                </button>
+                <span className="flex items-center justify-center w-8 h-full text-[13px] font-medium text-foreground border-x border-border tabular-nums">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onQuantityChange(item.id, quantity + 1, item.metadata)}
+                  disabled={isPending || quantity >= maxQty}
+                  className="flex items-center justify-center w-8 h-full hover:bg-surface transition-colors rounded-r-md disabled:opacity-30 disabled:cursor-not-allowed"
+                  aria-label={dict.cart.increaseQuantity}
+                >
+                  <Plus className="h-3 w-3" />
+                </button>
+              </div>
 
-            <div className="text-right shrink-0">
-              {showDiscounted ? (
-                <div className="flex items-baseline gap-2 justify-end">
+              <div className="text-right shrink-0">
+                {showDiscounted ? (
+                  <div className="flex items-baseline gap-2 justify-end">
+                    <span className="text-sm font-semibold text-foreground tabular-nums">
+                      {formatPrice(lineTotal, locale)}
+                    </span>
+                    <span className="text-xs text-muted-foreground line-through tabular-nums">
+                      {formatPrice(lineTotalOriginal, locale)}
+                    </span>
+                  </div>
+                ) : (
                   <span className="text-sm font-semibold text-foreground tabular-nums">
-                    {formatPrice(lineTotal, locale)}
-                  </span>
-                  <span className="text-xs text-muted-foreground line-through tabular-nums">
                     {formatPrice(lineTotalOriginal, locale)}
                   </span>
-                </div>
-              ) : (
-                <span className="text-sm font-semibold text-foreground tabular-nums">
-                  {formatPrice(lineTotalOriginal, locale)}
-                </span>
-              )}
+                )}
+              </div>
             </div>
+            {quantityError ? (
+              <p className="text-xs text-destructive" role="alert">
+                {quantityError}
+              </p>
+            ) : null}
           </div>
         </div>
       </div>

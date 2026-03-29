@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Minus, Plus } from "lucide-react";
 import { addToCart } from "@/lib/cart";
@@ -14,11 +14,17 @@ import { Button } from "@/components/ui/button";
 import { SubscriptionSelector } from "@/components/SubscriptionSelector";
 import { useAddToCartModal } from "@/contexts/AddToCartModalContext";
 import { useCart } from "@/contexts/CartContext";
+import {
+  formatLowStockLabel,
+  getVariantStockInfo,
+} from "@/lib/product-inventory";
 
 interface Variant {
   id: string;
   title: string;
   price: number;
+  manage_inventory?: boolean;
+  inventory_quantity?: number | null;
 }
 
 interface SubscriptionConfig {
@@ -37,6 +43,16 @@ interface ProductPurchaseSectionProps {
   increaseQuantityAriaLabel?: string;
   purchaseOptionsLabel?: string;
   subscriptionConfig?: SubscriptionConfig;
+  outOfStockLabel: string;
+  lowStockWithCountLabel: string;
+}
+
+function firstInStockVariantId(vs: Variant[]): string {
+  for (const v of vs) {
+    const s = getVariantStockInfo(v.manage_inventory, v.inventory_quantity);
+    if (s.inStock) return v.id;
+  }
+  return vs[0]?.id ?? "";
 }
 
 export function ProductPurchaseSection({
@@ -49,8 +65,12 @@ export function ProductPurchaseSection({
   increaseQuantityAriaLabel = "Increase quantity",
   purchaseOptionsLabel = "Purchase options",
   subscriptionConfig,
+  outOfStockLabel,
+  lowStockWithCountLabel,
 }: ProductPurchaseSectionProps) {
-  const [selectedVariantId, setSelectedVariantId] = useState(variants[0]?.id ?? "");
+  const [selectedVariantId, setSelectedVariantId] = useState(() =>
+    firstInStockVariantId(variants)
+  );
   const [quantity, setQuantity] = useState(1);
   const [purchaseType, setPurchaseType] = useState<"one-time" | "subscription">("one-time");
   const [selectedCycle, setSelectedCycle] = useState(8);
@@ -61,6 +81,39 @@ export function ProductPurchaseSection({
   const addedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { openModal } = useAddToCartModal();
   const { refreshCart } = useCart();
+
+  const selectedVariant = variants.find((v) => v.id === selectedVariantId);
+  const stock = useMemo(
+    () =>
+      getVariantStockInfo(
+        selectedVariant?.manage_inventory,
+        selectedVariant?.inventory_quantity
+      ),
+    [selectedVariant?.manage_inventory, selectedVariant?.inventory_quantity]
+  );
+
+  const maxSelectable =
+    stock.maxQuantity != null && stock.maxQuantity > 0
+      ? Math.min(99, stock.maxQuantity)
+      : stock.inStock
+        ? 99
+        : 1;
+
+  useEffect(() => {
+    if (variants.length === 0) return;
+    const stillThere = variants.some((v) => v.id === selectedVariantId);
+    if (!stillThere) {
+      setSelectedVariantId(firstInStockVariantId(variants));
+    }
+  }, [variants, selectedVariantId]);
+
+  useEffect(() => {
+    setQuantity((q) => {
+      if (!stock.inStock) return q;
+      const cap = stock.maxQuantity != null ? Math.min(99, stock.maxQuantity) : 99;
+      return Math.min(Math.max(1, q), cap);
+    });
+  }, [selectedVariantId, stock.inStock, stock.maxQuantity]);
 
   const selectedVariantPrice =
     variants.find((v) => v.id === selectedVariantId)?.price ??
@@ -74,7 +127,7 @@ export function ProductPurchaseSection({
   }, []);
 
   const handleQuantityChange = (newQuantity: number) => {
-    if (newQuantity < 1 || newQuantity > 99) return;
+    if (newQuantity < 1 || newQuantity > maxSelectable) return;
     setQuantity(newQuantity);
   };
 
@@ -84,7 +137,7 @@ export function ProductPurchaseSection({
   };
 
   const handleAddToCart = () => {
-    if (!selectedVariantId) return;
+    if (!selectedVariantId || !stock.inStock) return;
     setError(null);
     startTransition(async () => {
       try {
@@ -131,15 +184,23 @@ export function ProductPurchaseSection({
           <div className="flex flex-wrap gap-2">
             {variants.map((variant) => {
               const isSelected = selectedVariantId === variant.id;
+              const vStock = getVariantStockInfo(
+                variant.manage_inventory,
+                variant.inventory_quantity
+              );
+              const disabled = !vStock.inStock;
               return (
                 <button
                   key={variant.id}
                   type="button"
+                  disabled={disabled}
                   onClick={() => setSelectedVariantId(variant.id)}
                   className={`rounded-lg border-2 px-4 py-2 text-sm font-medium transition-all ${
-                    isSelected
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-background text-foreground hover:border-primary/70"
+                    disabled
+                      ? "cursor-not-allowed border-border/60 bg-muted/40 text-muted-foreground line-through opacity-70"
+                      : isSelected
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background text-foreground hover:border-primary/70"
                   }`}
                 >
                   {variant.title}
@@ -150,36 +211,52 @@ export function ProductPurchaseSection({
         </div>
       )}
 
+      {!stock.inStock && (
+        <p className="mt-6 text-sm font-medium text-destructive" role="status">
+          {outOfStockLabel}
+        </p>
+      )}
+      {stock.inStock && stock.isLowStock && stock.availableQuantity != null && (
+        <p
+          className={`text-sm font-medium text-amber-900 dark:text-amber-200 ${variants.length > 1 ? "mt-4" : "mt-6"}`}
+          role="status"
+        >
+          {formatLowStockLabel(lowStockWithCountLabel, stock.availableQuantity)}
+        </p>
+      )}
+
       {/* Quantity selector */}
-      <div className="mt-6 flex flex-wrap items-end gap-6">
-        <div>
-          <label className="mb-3 block text-sm font-medium text-foreground">{quantityLabel}</label>
-          <div className="flex w-fit items-center gap-3 rounded-lg bg-muted/50 p-2">
-            <button
-              type="button"
-              onClick={() => handleQuantityChange(quantity - 1)}
-              disabled={quantity <= 1}
-              className="rounded p-2 transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label={decreaseQuantityAriaLabel}
-            >
-              <Minus className="h-4 w-4 text-foreground" />
-            </button>
-            <span className="w-8 text-center font-semibold text-foreground">{quantity}</span>
-            <button
-              type="button"
-              onClick={() => handleQuantityChange(quantity + 1)}
-              disabled={quantity >= 99}
-              className="rounded p-2 transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label={increaseQuantityAriaLabel}
-            >
-              <Plus className="h-4 w-4 text-foreground" />
-            </button>
+      {stock.inStock && (
+        <div className="mt-6 flex flex-wrap items-end gap-6">
+          <div>
+            <label className="mb-3 block text-sm font-medium text-foreground">{quantityLabel}</label>
+            <div className="flex w-fit items-center gap-3 rounded-lg bg-muted/50 p-2">
+              <button
+                type="button"
+                onClick={() => handleQuantityChange(quantity - 1)}
+                disabled={quantity <= 1}
+                className="rounded p-2 transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label={decreaseQuantityAriaLabel}
+              >
+                <Minus className="h-4 w-4 text-foreground" />
+              </button>
+              <span className="w-8 text-center font-semibold text-foreground">{quantity}</span>
+              <button
+                type="button"
+                onClick={() => handleQuantityChange(quantity + 1)}
+                disabled={quantity >= maxSelectable}
+                className="rounded p-2 transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label={increaseQuantityAriaLabel}
+              >
+                <Plus className="h-4 w-4 text-foreground" />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Subscription selector (when subscriptionConfig provided) */}
-      {subscriptionConfig && (
+      {stock.inStock && subscriptionConfig && (
         <div className="mt-6">
           <p className="mb-3 text-sm font-medium text-foreground">{purchaseOptionsLabel}</p>
           <SubscriptionSelector
@@ -195,7 +272,7 @@ export function ProductPurchaseSection({
       <Button
         type="button"
         onClick={handleAddToCart}
-        disabled={isPending || !selectedVariantId}
+        disabled={isPending || !selectedVariantId || !stock.inStock}
         className="mt-6 w-full"
         size="lg"
       >

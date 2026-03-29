@@ -4,6 +4,7 @@
  */
 
 import type { Product } from "@/components/ProductCard";
+import { getVariantStockInfo } from "@/lib/product-inventory";
 import { getCached, readCache, setCache } from "@/lib/server-cache";
 
 const MEDUSA_URL =
@@ -86,6 +87,8 @@ interface MedusaProductResponse {
   variants?: Array<{
     id?: string;
     title?: string;
+    manage_inventory?: boolean;
+    inventory_quantity?: number | null;
     calculated_price?: {
       calculated_amount?: number;
       calculated_amount_with_tax?: number;
@@ -121,6 +124,10 @@ async function mapMedusaToProduct(p: MedusaProductResponse): Promise<Product> {
 
   const rating = p.metadata?.rating;
   const reviewCount = p.metadata?.reviewCount;
+  const stock = getVariantStockInfo(
+    firstVariant?.manage_inventory,
+    firstVariant?.inventory_quantity
+  );
   return {
     id: p.handle ?? p.id,
     name: p.title ?? p.handle ?? p.id,
@@ -130,7 +137,10 @@ async function mapMedusaToProduct(p: MedusaProductResponse): Promise<Product> {
     price: priceDkk,
     image: img,
     variant: variantTitle,
-    variantId: firstVariant?.id,
+    variantId: stock.inStock ? firstVariant?.id : undefined,
+    inStock: stock.inStock,
+    lowStock: stock.isLowStock,
+    stockCount: stock.availableQuantity,
     subtitle: subtitle || undefined,
     ...(typeof rating === "number" && { rating }),
     ...(typeof reviewCount === "number" && { reviewCount }),
@@ -158,7 +168,8 @@ export async function fetchProductsByCategory(
     const params = new URLSearchParams({
       category_id: categoryId,
       limit: "50",
-      fields: "id,handle,title,subtitle,metadata,thumbnail,*images.url,*variants.title,*variants.calculated_price,*brand.*",
+      fields:
+        "id,handle,title,subtitle,metadata,thumbnail,*images.url,*variants.title,*variants.calculated_price,+variants.inventory_quantity,+variants.manage_inventory,*brand.*",
     });
     await appendPricingParams(params);
     if (_sort === "price-asc") params.set("order", "variants.calculated_price:asc");
@@ -194,7 +205,7 @@ export async function fetchProductByHandle(handle: string): Promise<MedusaProduc
       handle,
       limit: "1",
       fields:
-        "id,handle,title,subtitle,metadata,thumbnail,*images.url,*variants.id,*variants.title,*variants.calculated_price,*variants.options,*brand.id,*brand.handle,*brand.name,*categories.id,*categories.handle,*categories.name",
+        "id,handle,title,subtitle,metadata,thumbnail,*images.url,*variants.id,*variants.title,*variants.calculated_price,*variants.options,+variants.inventory_quantity,+variants.manage_inventory,*brand.id,*brand.handle,*brand.name,*categories.id,*categories.handle,*categories.name",
     });
     await appendPricingParams(params);
     const res = await fetch(`${MEDUSA_URL}/products?${params}`, {
@@ -261,7 +272,7 @@ export async function fetchProductsByBrand(
 }
 
 const PRODUCT_FIELDS =
-  "id,handle,title,subtitle,metadata,thumbnail,*images.url,*variants.title,*variants.calculated_price,*brand.*";
+  "id,handle,title,subtitle,metadata,thumbnail,*images.url,*variants.title,*variants.calculated_price,+variants.inventory_quantity,+variants.manage_inventory,*brand.*";
 
 /**
  * Fetch related products from the same category, excluding the current product.

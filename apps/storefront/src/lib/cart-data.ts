@@ -24,10 +24,13 @@ export interface StoreCartItem {
   product_title?: string;
   title?: string;
   variant_title?: string;
+  product_id?: string;
   variant?: {
     id?: string;
     product?: { thumbnail?: string; title?: string };
     title?: string;
+    manage_inventory?: boolean;
+    inventory_quantity?: number | null;
   };
   unit_price?: number;
   quantity?: number;
@@ -73,15 +76,28 @@ export async function clearCartId(): Promise<void> {
   cookieStore.delete("cart_id");
 }
 
+/** Variant stock on line items for quantity caps (requires Medusa fields expansion). */
+const CART_FIELDS_WITH_VARIANT_STOCK =
+  "+items.*,*items.variant,+items.variant.inventory_quantity,+items.variant.manage_inventory";
+
 export async function getCart(): Promise<StoreCart | null> {
   try {
     const cartId = await getCartId();
     if (!cartId) return null;
 
-    const res = await fetch(
-      `${MEDUSA_URL}/store/carts/${cartId}?fields=+items.*`,
-      { headers: headers(), cache: "no-store" }
-    );
+    const urlWithFields = (fields: string) =>
+      `${MEDUSA_URL}/store/carts/${cartId}?fields=${encodeURIComponent(fields)}`;
+
+    let res = await fetch(urlWithFields(CART_FIELDS_WITH_VARIANT_STOCK), {
+      headers: headers(),
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      res = await fetch(urlWithFields("+items.*"), {
+        headers: headers(),
+        cache: "no-store",
+      });
+    }
     if (!res.ok) return null;
     const data = await res.json();
     const cart = (data as { cart?: StoreCart & { completed_at?: string | null } }).cart;

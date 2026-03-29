@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { X, Minus, Plus } from "lucide-react";
 import { formatPrice } from "@/lib/format";
 import type { StoreCart } from "@/lib/cart-data";
@@ -9,11 +9,13 @@ import {
   getCartItemsTotal,
   getLineUnitPrice,
 } from "@/lib/cart-display";
+import { getCartLineQuantityCap } from "@/lib/product-inventory";
 import { getFreeShippingThresholdDkk } from "@/lib/shipping-config";
 import { useFreeShippingStatus } from "@/hooks/useFreeShippingStatus";
 import { useAddToCartModal } from "@/contexts/AddToCartModalContext";
 import { useCart } from "@/contexts/CartContext";
 import type { AddToCartModalData } from "@/contexts/AddToCartModalContext";
+import { userMessageForLineItemError } from "@/lib/cart-errors";
 import type { Dictionary } from "@/i18n/dictionaries";
 
 interface AddToCartModalProps {
@@ -27,6 +29,13 @@ export function AddToCartModal({ data, locale, dict, onClose }: AddToCartModalPr
   const { updateModalData } = useAddToCartModal();
   const { refreshCart, cart } = useCart();
   const [updating, setUpdating] = useState(false);
+  const [qtyError, setQtyError] = useState<string | null>(null);
+
+  const lineFromCart = useMemo(
+    () => cart?.items?.find((i) => i.id === data.lineItemId),
+    [cart?.items, data.lineItemId]
+  );
+  const maxQty = lineFromCart ? getCartLineQuantityCap(lineFromCart) : 99;
 
   const fsStatus = useFreeShippingStatus(cart?.id, data.cartTotal);
   const thresholdDkk = fsStatus?.threshold ?? getFreeShippingThresholdDkk();
@@ -42,9 +51,10 @@ export function AddToCartModal({ data, locale, dict, onClose }: AddToCartModalPr
 
   const handleQuantityChange = async (delta: number) => {
     if (!data.lineItemId || updating) return;
-    const newQty = Math.max(1, data.quantity + delta);
+    const newQty = Math.min(maxQty, Math.max(1, data.quantity + delta));
     if (newQty === data.quantity) return;
     setUpdating(true);
+    setQtyError(null);
     try {
       const updateRes = await fetch("/api/cart/line-item", {
         method: "POST",
@@ -55,21 +65,31 @@ export function AddToCartModal({ data, locale, dict, onClose }: AddToCartModalPr
           metadata: data.metadata,
         }),
       });
-      if (!updateRes.ok) throw new Error("Update failed");
+      if (!updateRes.ok) {
+        const errBody = (await updateRes.json().catch(() => ({}))) as { error?: string };
+        setQtyError(
+          userMessageForLineItemError(
+            errBody.error,
+            dict.cart.notEnoughStock,
+            dict.cart.quantityUpdateFailed
+          )
+        );
+        return;
+      }
       const cartRes = await fetch("/api/cart");
-      const cart = (await cartRes.json()) as StoreCart | null;
-      if (cart?.items) {
-        const item = cart.items.find((i) => i.id === data.lineItemId);
+      const nextCart = (await cartRes.json()) as StoreCart | null;
+      if (nextCart?.items) {
+        const item = nextCart.items.find((i) => i.id === data.lineItemId);
         updateModalData({
           quantity: item?.quantity ?? newQty,
-          cartTotal: getCartItemsTotal(cart),
-          itemCount: cart.items.length,
+          cartTotal: getCartItemsTotal(nextCart),
+          itemCount: nextCart.items.length,
           ...(item ? { unitPrice: getLineUnitPrice(item) } : {}),
         });
       }
       await refreshCart();
     } catch {
-      // Keep current modal data on error
+      setQtyError(dict.cart.notEnoughStock);
     } finally {
       setUpdating(false);
     }
@@ -148,7 +168,7 @@ export function AddToCartModal({ data, locale, dict, onClose }: AddToCartModalPr
                 <button
                   type="button"
                   onClick={() => handleQuantityChange(1)}
-                  disabled={updating}
+                  disabled={updating || data.quantity >= maxQty}
                   className="flex items-center justify-center w-8 h-8 text-muted-foreground hover:text-foreground hover:bg-muted/50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
                   aria-label={dict.cart.increaseQuantity}
                 >
@@ -170,6 +190,11 @@ export function AddToCartModal({ data, locale, dict, onClose }: AddToCartModalPr
             )}
           </div>
         </div>
+        {qtyError ? (
+          <p className="text-sm text-destructive mt-2" role="alert">
+            {qtyError}
+          </p>
+        ) : null}
 
         <p className="text-base font-semibold text-primary mt-4">
           {dict.cart.cartTotalCount.replace("{{count}}", String(data.itemCount))} : {formatPrice(data.cartTotal, locale)}

@@ -78,6 +78,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
       id: v.id ?? "",
       title: v.title ?? "",
       price: amount,
+      manage_inventory: v.manage_inventory,
+      inventory_quantity: v.inventory_quantity,
     };
   });
 
@@ -191,6 +193,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
               increaseQuantityAriaLabel={dict.products.increaseQuantity}
               purchaseOptionsLabel={dict.products.purchaseOptions}
               subscriptionConfig={{ basePrice, currency: "DKK", locale }}
+              outOfStockLabel={dict.products.outOfStock}
+              lowStockWithCountLabel={dict.products.lowStockWithCount}
             />
 
             <PDPTrustStrip labels={{

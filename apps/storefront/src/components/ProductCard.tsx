@@ -19,6 +19,7 @@ import {
   type ProductCardA11yLabels,
   defaultProductCardA11y,
 } from "@/components/product-card-a11y";
+import { formatLowStockLabel } from "@/lib/product-inventory";
 
 export interface Product {
   id: string;
@@ -32,6 +33,11 @@ export interface Product {
   variant?: string;
   /** Medusa variant ID; when set, add-to-cart button adds directly and opens cart modal */
   variantId?: string;
+  /** When false, quick-add is hidden (from Medusa inventory when tracked). */
+  inStock?: boolean;
+  lowStock?: boolean;
+  /** Remaining quantity when inventory is tracked and low */
+  stockCount?: number | null;
   subtitle?: string;
   rating?: number;
   reviewCount?: number;
@@ -53,6 +59,14 @@ export function ProductCard({ product, locale, className, labels }: ProductCardP
   const productHref = `/${locale}/products/${product.id}`;
   const inWishlist = isInWishlist(product.id);
   const a11y = labels ?? defaultProductCardA11y(locale);
+  const inStock = product.inStock !== false;
+  const lowStockBadge =
+    inStock &&
+    product.lowStock &&
+    product.stockCount != null &&
+    product.stockCount > 0
+      ? formatLowStockLabel(a11y.lowStockWithCount, product.stockCount)
+      : null;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -89,12 +103,20 @@ export function ProductCard({ product, locale, className, labels }: ProductCardP
     <article className={cn("group/card flex flex-col h-full", className)}>
       {/* Image — link to product */}
       <Link href={productHref} className="block relative mb-3">
-        <div className="aspect-square overflow-hidden rounded-md bg-surface">
+        <div className="aspect-square overflow-hidden rounded-md bg-surface relative">
           <ImageWithFallback
             src={product.image}
             alt={product.name}
-            className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300"
+            className={cn(
+              "w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300",
+              !inStock && "opacity-60"
+            )}
           />
+          {lowStockBadge && (
+            <span className="absolute bottom-2 left-2 right-2 rounded-md bg-amber-950/90 px-2 py-1 text-center text-[11px] font-medium text-amber-50">
+              {lowStockBadge}
+            </span>
+          )}
         </div>
         <button
           type="button"
@@ -156,16 +178,20 @@ export function ProductCard({ product, locale, className, labels }: ProductCardP
         )}
 
         {/* Price + add to cart — mt-auto ensures bottom alignment across cards */}
-        <div className="flex items-center justify-between mt-auto pt-5">
+        <div className="flex items-center justify-between mt-auto pt-5 gap-2">
           <span className="text-[13px] font-semibold text-text-primary tabular-nums">
             {new Intl.NumberFormat(locale === "da" ? "da-DK" : "en-DK", { style: "currency", currency: "DKK", maximumFractionDigits: 0 }).format(product.price)}
           </span>
-          {product.variantId ? (
+          {!inStock ? (
+            <span className="text-[11px] font-medium text-text-muted text-right leading-tight max-w-[7rem]">
+              {a11y.outOfStock}
+            </span>
+          ) : product.variantId ? (
             <button
               type="button"
               onClick={handleAddToCart}
               disabled={isPending}
-              className="w-8 h-8 rounded-full bg-primary flex items-center justify-center hover:bg-primary-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-70"
+              className="w-8 h-8 shrink-0 rounded-full bg-primary flex items-center justify-center hover:bg-primary-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-70"
               aria-label={a11y.addToCart}
             >
               <ShoppingCart className="h-4 w-4 text-primary-foreground" />
@@ -174,7 +200,7 @@ export function ProductCard({ product, locale, className, labels }: ProductCardP
             <Link
               href={productHref}
               onClick={(e) => e.stopPropagation()}
-              className="w-8 h-8 rounded-full bg-primary flex items-center justify-center hover:bg-primary-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
+              className="w-8 h-8 shrink-0 rounded-full bg-primary flex items-center justify-center hover:bg-primary-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
               aria-label={a11y.addToCart}
             >
               <ShoppingCart className="h-4 w-4 text-primary-foreground" />

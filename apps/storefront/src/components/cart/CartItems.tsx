@@ -1,21 +1,27 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { removeLineItem, updateLineItem, setLineItemSubscription } from "@/lib/cart";
 import { useRouter } from "next/navigation";
 import type { Dictionary } from "@/i18n/dictionaries";
+import { userMessageForLineItemError } from "@/lib/cart-errors";
+import { getCartLineQuantityCap } from "@/lib/product-inventory";
 import { CartItemRow } from "./CartItemRow";
 
 export interface CartItem {
   id: string;
   variant_id?: string;
+  product_id?: string;
   thumbnail?: string;
   product_title?: string;
   title?: string;
   variant_title?: string;
   variant?: {
+    id?: string;
     product?: { thumbnail?: string; title?: string };
     title?: string;
+    manage_inventory?: boolean;
+    inventory_quantity?: number | null;
   };
   unit_price?: number;
   quantity?: number;
@@ -37,8 +43,10 @@ interface CartItemsProps {
 export function CartItems({ items, locale, dict }: CartItemsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [qtyError, setQtyError] = useState<{ lineId: string; message: string } | null>(null);
 
   const handleRemove = (lineItemId: string) => {
+    setQtyError(null);
     startTransition(async () => {
       await removeLineItem(lineItemId);
       router.refresh();
@@ -51,9 +59,24 @@ export function CartItems({ items, locale, dict }: CartItemsProps) {
     metadata?: Record<string, unknown>
   ) => {
     if (newQuantity < 1) return;
+    const item = items.find((i) => i.id === lineItemId);
+    if (item && newQuantity > getCartLineQuantityCap(item)) return;
+    setQtyError(null);
     startTransition(async () => {
-      await updateLineItem(lineItemId, newQuantity, metadata);
-      router.refresh();
+      try {
+        await updateLineItem(lineItemId, newQuantity, metadata);
+        router.refresh();
+      } catch (e) {
+        const raw = e instanceof Error ? e.message : "";
+        setQtyError({
+          lineId: lineItemId,
+          message: userMessageForLineItemError(
+            raw,
+            dict.cart.notEnoughStock,
+            dict.cart.quantityUpdateFailed
+          ),
+        });
+      }
     });
   };
 
@@ -88,6 +111,7 @@ export function CartItems({ items, locale, dict }: CartItemsProps) {
           onQuantityChange={handleQuantityChange}
           onSubscriptionToggle={handleSubscriptionToggle}
           onCycleChange={handleCycleChange}
+          quantityError={qtyError?.lineId === item.id ? qtyError.message : null}
         />
       ))}
     </div>

@@ -19,6 +19,8 @@ import { useFreeShippingStatus } from "@/hooks/useFreeShippingStatus";
 import { useCart } from "@/contexts/CartContext";
 import type { CartItem } from "@/components/cart/CartItems";
 import type { Dictionary } from "@/i18n/dictionaries";
+import { userMessageForLineItemError } from "@/lib/cart-errors";
+import { getCartLineQuantityCap } from "@/lib/product-inventory";
 
 interface CartDropdownProps {
   isOpen: boolean;
@@ -34,6 +36,7 @@ function CartDropdownItem({
   onRemove,
   onQuantityChange,
   isPending,
+  quantityError,
 }: {
   item: CartItem;
   locale: string;
@@ -41,6 +44,7 @@ function CartDropdownItem({
   onRemove: () => void;
   onQuantityChange: (qty: number) => void;
   isPending: boolean;
+  quantityError?: string | null;
 }) {
   const thumbnail = item.thumbnail || item.variant?.product?.thumbnail;
   const title = item.product_title || item.title || "";
@@ -48,6 +52,7 @@ function CartDropdownItem({
   const cycle = typeof item.metadata?.subscription_cycle === "number" ? item.metadata.subscription_cycle : 0;
   const isSubscription = cycle > 0;
   const quantity = item.quantity ?? 1;
+  const maxQty = getCartLineQuantityCap(item);
 
   const lineTotalOriginal = getLineOriginalTotal(item);
   const lineTotal = getLineTotal(item);
@@ -75,8 +80,8 @@ function CartDropdownItem({
         {isSubscription && (
           <p className="text-xs text-muted-foreground">{dict.cart.addedAsSubscription}</p>
         )}
-        <div className="flex items-center gap-2 mt-1.5">
-          <div className="flex items-center border border-border rounded overflow-hidden">
+        <div className="mt-1.5 flex flex-col gap-1">
+          <div className="flex items-center border border-border rounded overflow-hidden w-fit">
             <button
               type="button"
               onClick={() => onQuantityChange(quantity - 1)}
@@ -92,13 +97,18 @@ function CartDropdownItem({
             <button
               type="button"
               onClick={() => onQuantityChange(quantity + 1)}
-              disabled={isPending}
-              className="p-1.5 hover:bg-surface"
+              disabled={isPending || quantity >= maxQty}
+              className="p-1.5 hover:bg-surface disabled:opacity-40 disabled:pointer-events-none"
               aria-label={dict.cart.increaseQuantity}
             >
               <Plus className="h-3 w-3" />
             </button>
           </div>
+          {quantityError ? (
+            <p className="text-xs text-destructive leading-snug" role="alert">
+              {quantityError}
+            </p>
+          ) : null}
         </div>
       </div>
       <div className="flex flex-col items-end justify-between">
@@ -136,6 +146,7 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
   const { cart, refreshCart } = useCart();
   const [isPending, startTransition] = useTransition();
   const [isClearing, setIsClearing] = useState(false);
+  const [qtyError, setQtyError] = useState<{ lineId: string; message: string } | null>(null);
   const router = useRouter();
   const base = `/${locale}`;
   const items = (cart?.items ?? []) as CartItem[];
@@ -152,6 +163,7 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
     (fsStatus?.qualifies ?? totalInclVat >= freeShippingThresholdDkk);
 
   const handleRemove = (lineItemId: string) => {
+    setQtyError(null);
     startTransition(async () => {
       await removeLineItem(lineItemId);
       router.refresh();
@@ -165,15 +177,32 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
     metadata?: Record<string, unknown>
   ) => {
     if (newQty < 1) return;
+    const item = items.find((i) => i.id === lineItemId);
+    if (item && newQty > getCartLineQuantityCap(item)) return;
+    setQtyError(null);
     startTransition(async () => {
-      await updateLineItem(lineItemId, newQty, metadata);
-      router.refresh();
-      await refreshCart();
+      try {
+        await updateLineItem(lineItemId, newQty, metadata);
+        router.refresh();
+        await refreshCart();
+      } catch (e) {
+        const raw = e instanceof Error ? e.message : "";
+        setQtyError({
+          lineId: lineItemId,
+          message: userMessageForLineItemError(
+            raw,
+            dict.cart.notEnoughStock,
+            dict.cart.quantityUpdateFailed
+          ),
+        });
+        await refreshCart();
+      }
     });
   };
 
   const handleClearCart = () => {
     if (items.length === 0) return;
+    setQtyError(null);
     setIsClearing(true);
     startTransition(async () => {
       await clearCart();
@@ -223,6 +252,7 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
                   onRemove={() => handleRemove(item.id)}
                   onQuantityChange={(qty) => handleQuantityChange(item.id, qty, item.metadata)}
                   isPending={isPending}
+                  quantityError={qtyError?.lineId === item.id ? qtyError.message : null}
                 />
               ))}
             </div>
