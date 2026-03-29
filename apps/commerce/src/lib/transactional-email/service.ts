@@ -44,10 +44,4 @@ export async function sendTransactionalEmail<T extends TransactionalTemplate>(
   return { success: true };
 }
 
-export function resolveTransactionalLocale(input?: string | null): "da" | "en" {
-  const normalized = String(input ?? "")
-    .trim()
-    .toLowerCase();
-  if (normalized.startsWith("en")) return "en";
-  return "da";
-}
+export { resolveTransactionalLocale } from "./locale";

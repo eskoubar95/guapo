@@ -18,13 +18,16 @@ Transactional emails via [Plunk](https://useplunk.com/) using the **Next API** (
    | `PLUNK_FROM_EMAIL`| Afsender-email (skal være verified domain).      |
    | `PLUNK_FROM_NAME` | Valgfri afsendernavn (fx Guapo).                 |
    | `PLUNK_STORE_NAME`| Valgfri butiksnavn i invite-mails (default: Guapo). |
+   | `GUAPO_EMAIL_ASSET_BASE` | Valgfri base-URL til hero/logo i HTML-mails (samme som nyhedsbrev). Default: Supabase `newsletter`-mappe. |
+
+HTML-skallen (Inter/Lexend, farver, hero-baggrund, logo, navy footer) ligger i `src/lib/transactional-email/email-layout.ts` og bruges af invite + `order_confirmation` + `subscription_created`.
 
 ## Hvad der er implementeret
 
 - **Invite emails**  
   Når en admin inviterer en bruger (Settings → Users → Invite), sendes en mail med invite-link via **Plunk Next API** (`POST https://next-api.useplunk.com/v1/send`).  
   Subscriber: `src/subscribers/invite-email.ts` (events: `invite.created`, `invite.resent`).  
-  Klient: `src/lib/plunk.ts`.
+  Klient: `src/lib/plunk.ts` + samme visuelle skal som nyhedsbrev (`email-layout.ts`).
 - **Order placed transactional baseline (M11)**  
   Ved `order.placed` opretter subscriber `src/subscribers/order-placed-transactional-documents.ts`:
   - `order_confirmation` mail (locale-aware `da`/`en`)
@@ -33,6 +36,12 @@ Transactional emails via [Plunk](https://useplunk.com/) using the **Next API** (
     - `GET /store/orders/:id/documents/order-confirmation`
     - `GET /store/orders/:id/documents/invoice`
   Download kræver customer auth + ownership og er rate-limited.
+- **Abonnement + fornyelse + forsendelse (M11)**  
+  Central dispatch: `src/lib/transactional-email/service.ts` (`sendTransactionalEmail`) med idempotency-keys og HTML fra `lifecycle-email-templates.ts` / `email-layout.ts`.
+  - `renewal_reminder_3_days` — job `src/jobs/subscription-renewal-reminder.ts` (cron); metadata `renewal_reminder_sent_for` på subscription.
+  - `payment_failed_retry_1`, `payment_failed_final_on_hold`, `payment_recovered` — `src/lib/transactional-email/subscription-renewal-notifications.ts` kaldt fra `src/workflows/steps/run-subscription-renewal.ts`.
+  - `subscription_paused` / `subscription_resumed` / `subscription_cancelled` — `sendSubscriptionLifecycleMail` efter succes på store- og admin-routes under `src/api/store/subscriptions/[id]/{pause,resume,cancel}` og `src/api/admin/subscriptions/[id]/{pause,resume,cancel}`.
+  - `shipment_tracking_available` — `sendFulfillmentTrackingEmailIfReady` (`src/lib/transactional-email/send-fulfillment-tracking-email.ts`); subscribers `order-fulfillment-tracking-email.ts` (`order.fulfillment_created`, respekterer `no_notification`) og `order-shipment-tracking-email.ts` (`shipment.created`) så tracking ofte fanges når labels først kommer ved shipment. Ordre-metadata `guapo_tracking_email_fulfillment_id` forhindrer dubletter.
 
 ## Fejlfinding: "Ingen mail sendt"
 

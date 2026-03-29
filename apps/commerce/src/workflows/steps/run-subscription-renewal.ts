@@ -15,6 +15,10 @@ import { resolveRenewalShipping } from "../../lib/subscription-renewal/resolve-r
 import { getStripeClient } from "../../lib/stripe-client";
 import { GUAPO_FREE_SHIPPING_MODULE } from "../../modules/guapo-free-shipping";
 import type GuapoFreeShippingModuleService from "../../modules/guapo-free-shipping/service";
+import {
+  notifyAfterRenewalPaymentFailure,
+  notifySubscriptionPaymentRecovered,
+} from "../../lib/transactional-email/subscription-renewal-notifications";
 import { SUBSCRIPTION_MODULE } from "../../modules/subscription";
 import type SubscriptionModuleService from "../../modules/subscription/service";
 
@@ -89,6 +93,8 @@ export const runSubscriptionRenewalStep = createStep(
 
     const sub = await subscriptionService.retrieveSubscription(subscriptionId);
     if (!sub) throw new Error("Subscription not found");
+
+    const hadPaymentRetries = (sub.retry_count ?? 0) > 0;
 
     if (sub.skip_next) {
       await subscriptionService.updateSubscriptions([{ id: subscriptionId, skip_next: false }]);
@@ -174,6 +180,12 @@ export const runSubscriptionRenewalStep = createStep(
     });
 
     if (!chargeResult.ok) {
+      await notifyAfterRenewalPaymentFailure({
+        container,
+        subscriptionId,
+        chargeResult,
+        logger: logger as { info?: (m: string) => void; warn?: (m: string) => void; error?: (m: string) => void },
+      });
       return new StepResponse({
         renewed: false,
         error: chargeResult.error,
@@ -280,6 +292,16 @@ export const runSubscriptionRenewalStep = createStep(
           billing_address: billingAddr,
         },
       ]);
+
+      if (hadPaymentRetries) {
+        await notifySubscriptionPaymentRecovered({
+          container,
+          subscriptionId,
+          customerId: sub.customer_id,
+          renewalOrderId: order.id,
+          logger: logger as { info?: (m: string) => void; warn?: (m: string) => void; error?: (m: string) => void },
+        });
+      }
 
       return new StepResponse({
         renewed: true,

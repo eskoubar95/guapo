@@ -201,7 +201,9 @@ export default defineConfig({
     {
       resolve: "@lambdacurry/medusa-product-reviews",
       options: {
-        defaultReviewStatus: "pending", // Pre-moderation per spec (on-site reviews)
+        // "approved" = synlig med det samme på storefront (GET /product-reviews?status=approved).
+        // Sæt til "pending" hvis I vil godkende i Admin før de vises.
+        defaultReviewStatus: "approved",
       },
     },
   ],

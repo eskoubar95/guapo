@@ -1,4 +1,6 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
+import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
+import { sendSubscriptionLifecycleMail } from "../../../../../lib/transactional-email/send-subscription-lifecycle-mail";
 import { SUBSCRIPTION_MODULE } from "../../../../../modules/subscription";
 import type SubscriptionModuleService from "../../../../../modules/subscription/service";
 
@@ -15,5 +17,13 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   }
 
   const updated = await subscriptionService.pause(id);
+  const logger = req.scope.resolve(ContainerRegistrationKeys.LOGGER);
+  sendSubscriptionLifecycleMail({
+    container: req.scope,
+    customerId: updated.customer_id,
+    subscriptionId: updated.id,
+    template: "subscription_paused",
+    logger: logger as { info?: (m: string) => void; warn?: (m: string) => void },
+  });
   res.json({ subscription: updated });
 };
