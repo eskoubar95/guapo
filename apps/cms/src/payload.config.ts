@@ -40,7 +40,7 @@ export default buildConfig({
         const loc = locale?.code ?? 'da'
         if (globalConfig?.slug === 'homepage') return `${storefrontUrl}/${loc}?draft=1`
         if (collectionConfig?.slug === 'pages' && data?.path) {
-          const pathSegment = data.path === 'home' ? '' : `/${(data as { path: string }).path}`
+          const pathSegment = data.path === 'home' ? '' : `/${data.path}`
           return `${storefrontUrl}/${loc}${pathSegment}?draft=1`
         }
         return `${storefrontUrl}/${loc}?draft=1`
@@ -109,6 +109,8 @@ export default buildConfig({
   },
 
   editor: lexicalEditor({
+    // Risk accepted for M11: table support is currently only available via EXPERIMENTAL_TableFeature.
+    // Package is pinned to 3.74.0 in apps/cms/package.json to avoid unplanned breakages on upgrades.
     features: ({ defaultFeatures }) => [...defaultFeatures, EXPERIMENTAL_TableFeature()],
   }),
 

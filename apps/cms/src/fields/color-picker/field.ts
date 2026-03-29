@@ -10,18 +10,8 @@ export const colorField = (options?: ColorPickerArgs): TextField => {
     admin: {
       description: options?.description,
       components: {
-        Field: {
-          path: '@/fields/color-picker',
-          clientProps: {
-            colorPresets: options?.colorPresets ?? [],
-            debounceDelay: options?.debounceDelay ?? 300,
-            showTextInput: options?.showTextInput !== false,
-          },
-        },
-        Cell: {
-          path: '@/fields/color-picker#ColorCell',
-          clientProps: {},
-        },
+        Field: '@/fields/color-picker',
+        Cell: '@/fields/color-picker#ColorCell',
       },
     },
     validate: (value) => {

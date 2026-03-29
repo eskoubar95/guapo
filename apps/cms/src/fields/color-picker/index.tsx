@@ -68,7 +68,7 @@ const ColorPicker: React.FC<ColorPickerFieldProps> = ({
   }
 
   const handlePresetClick = (color: string) => {
-    if (actualReadOnly) return
+    if (actualReadOnly || disabled) return
     setLocalValue(color)
     setValue(color)
     if (colorInputRef.current) {
@@ -85,7 +85,7 @@ const ColorPicker: React.FC<ColorPickerFieldProps> = ({
     debouncedSetValue(newColor)
   }
 
-  const isValidHex = /^#[0-9A-Fa-f]{6}$/.test(localValue) || /^#[0-9A-Fa-f]{3}$/.test(localValue)
+  const isValidHex = /^#([0-9A-Fa-f]{3}){1,2}$/.test(localValue)
 
   return (
     <div className="color-picker">
@@ -129,7 +129,7 @@ const ColorPicker: React.FC<ColorPickerFieldProps> = ({
                 key={color}
                 type="button"
                 onClick={() => handlePresetClick(color)}
-                disabled={actualReadOnly}
+                disabled={disabled || actualReadOnly}
                 className={`color-picker__preset ${localValue === color ? 'color-picker__preset--active' : ''}`}
                 style={{ backgroundColor: color }}
                 aria-label={`Vælg ${color}`}

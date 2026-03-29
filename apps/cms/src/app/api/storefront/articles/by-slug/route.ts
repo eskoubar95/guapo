@@ -6,8 +6,14 @@
  * Does not require auth (overrideAccess).
  */
 import { NextResponse } from 'next/server'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 import config from '@payload-config'
+
+const VALID_LOCALES = ['da', 'en'] as const
+type SupportedLocale = (typeof VALID_LOCALES)[number]
+
+const normalizeLocale = (value: string | null): SupportedLocale =>
+  value && VALID_LOCALES.includes(value as SupportedLocale) ? (value as SupportedLocale) : 'da'
 
 export async function GET(req: Request) {
   try {
@@ -17,20 +23,24 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Missing slug' }, { status: 400 })
     }
 
-    const locale = (searchParams.get('locale') ?? 'da') as 'da' | 'en'
-    const fallbackLocale = (searchParams.get('fallback-locale') ?? 'da') as 'da' | 'en'
+    const locale = normalizeLocale(searchParams.get('locale'))
+    const fallbackLocale = normalizeLocale(searchParams.get('fallback-locale'))
+    const draft = searchParams.get('draft') === 'true'
 
     const payload = await getPayload({ config })
+    const where: Where = draft
+      ? { slug: { equals: slug } }
+      : { and: [{ status: { equals: 'published' } }, { slug: { equals: slug } }] }
+
     const result = await payload.find({
       collection: 'articles',
       locale,
       fallbackLocale,
       depth: 2,
       limit: 1,
+      draft,
       overrideAccess: true,
-      where: {
-        and: [{ status: { equals: 'published' } }, { slug: { equals: slug } }],
-      },
+      where,
     })
 
     const doc = result.docs?.[0]

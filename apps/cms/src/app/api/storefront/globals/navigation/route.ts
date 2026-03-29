@@ -1,18 +1,24 @@
 /**
  * GET /api/storefront/globals/navigation
  *
- * Returns the Navigation global for storefront (mainMenu, ctaButton).
+ * Returns the Navigation global for storefront (menuSections, mainMenu, ctaButton, promotionBar).
  * Query: locale (da|en), draft (true|false), fallback-locale (da|en).
  */
 import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
+const VALID_LOCALES = ['da', 'en'] as const
+type SupportedLocale = (typeof VALID_LOCALES)[number]
+
+const normalizeLocale = (value: string | null): SupportedLocale =>
+  value && VALID_LOCALES.includes(value as SupportedLocale) ? (value as SupportedLocale) : 'da'
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
-    const locale = (searchParams.get('locale') ?? 'da') as 'da' | 'en'
-    const fallbackLocale = (searchParams.get('fallback-locale') ?? 'da') as 'da' | 'en'
+    const locale = normalizeLocale(searchParams.get('locale'))
+    const fallbackLocale = normalizeLocale(searchParams.get('fallback-locale'))
     const draft = searchParams.get('draft') === 'true'
 
     const payload = await getPayload({ config })

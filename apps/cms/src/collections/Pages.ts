@@ -1,4 +1,4 @@
-import type { Block, CollectionConfig } from 'payload'
+import type { CollectionConfig } from 'payload'
 import { sectionBlocks } from '../fields/sectionBlocks'
 
 export const Pages: CollectionConfig = {
@@ -109,11 +109,17 @@ export const Pages: CollectionConfig = {
       type: 'richText',
       required: false,
       localized: true,
+      validate: (value, { siblingData }: { siblingData?: Record<string, unknown> }) => {
+        if (siblingData?.pageType === 'default' && !value) {
+          return 'Content is required for default pages'
+        }
+        return true
+      },
       admin: {
         condition: (_, siblingData) =>
           siblingData?.pageType === 'default' || siblingData?.pageType === 'blog-index',
         description:
-          'Rich text body. Required for default pages; optional intro above the article list for blog index.',
+          'Rich text body for default pages; optional intro above the article list for blog index.',
       },
     },
     {
@@ -122,7 +128,7 @@ export const Pages: CollectionConfig = {
       label: 'Page Sections',
       maxRows: 10,
       localized: true,
-      blocks: sectionBlocks as Block[],
+      blocks: sectionBlocks,
       admin: {
         condition: (_, siblingData) =>
           siblingData?.pageType === 'homepage' || siblingData?.pageType === 'landing',

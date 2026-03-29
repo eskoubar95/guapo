@@ -1,6 +1,8 @@
 /** Shared section blocks for Homepage global and Pages (homepage/landing types). */
+import type { Block } from 'payload'
+
 type ConditionArg = Record<string, unknown>
-export const sectionBlocks = [
+export const sectionBlocks: Block[] = [
   // Hero Section
   {
     slug: 'hero',
@@ -35,10 +37,16 @@ export const sectionBlocks = [
         name: 'backgroundImage',
         type: 'upload',
         relationTo: 'media',
-        required: true,
         admin: {
           condition: (_: ConditionArg, siblingData: ConditionArg) =>
             siblingData?.variant === 'full' || siblingData?.variant === 'split',
+        },
+        validate: (value: unknown, { siblingData }: { siblingData: Record<string, unknown> }) => {
+          const variant = siblingData?.variant
+          if ((variant === 'full' || variant === 'split') && !value) {
+            return 'Background image is required for this variant'
+          }
+          return true
         },
       },
       {
@@ -155,7 +163,7 @@ export const sectionBlocks = [
             type: 'text',
             defaultValue: 'View All Products',
             admin: {
-              condition: (_: ConditionArg, siblingData: ConditionArg) => siblingData?.show,
+              condition: (_: ConditionArg, siblingData: ConditionArg) => Boolean(siblingData?.show),
             },
           },
           {
@@ -163,7 +171,7 @@ export const sectionBlocks = [
             type: 'text',
             defaultValue: '/shop',
             admin: {
-              condition: (_: ConditionArg, siblingData: ConditionArg) => siblingData?.show,
+              condition: (_: ConditionArg, siblingData: ConditionArg) => Boolean(siblingData?.show),
             },
           },
         ],
@@ -361,14 +369,14 @@ export const sectionBlocks = [
             name: 'text',
             type: 'text',
             admin: {
-              condition: (_: ConditionArg, siblingData: ConditionArg) => siblingData?.show,
+              condition: (_: ConditionArg, siblingData: ConditionArg) => Boolean(siblingData?.show),
             },
           },
           {
             name: 'url',
             type: 'text',
             admin: {
-              condition: (_: ConditionArg, siblingData: ConditionArg) => siblingData?.show,
+              condition: (_: ConditionArg, siblingData: ConditionArg) => Boolean(siblingData?.show),
             },
           },
         ],
@@ -575,7 +583,7 @@ export const sectionBlocks = [
             type: 'text',
             defaultValue: 'Read More',
             admin: {
-              condition: (_: ConditionArg, siblingData: ConditionArg) => siblingData?.show,
+              condition: (_: ConditionArg, siblingData: ConditionArg) => Boolean(siblingData?.show),
             },
           },
           {
@@ -583,7 +591,7 @@ export const sectionBlocks = [
             type: 'text',
             defaultValue: '/blog',
             admin: {
-              condition: (_: ConditionArg, siblingData: ConditionArg) => siblingData?.show,
+              condition: (_: ConditionArg, siblingData: ConditionArg) => Boolean(siblingData?.show),
             },
           },
         ],
@@ -942,4 +950,4 @@ export const sectionBlocks = [
       },
     ],
   },
-];
+]

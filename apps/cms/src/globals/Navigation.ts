@@ -1,5 +1,15 @@
 import type { GlobalConfig } from 'payload'
 
+const ICON_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Grid (submenu)', value: 'grid' },
+  { label: 'Tag', value: 'tag' },
+  { label: 'Sparkles', value: 'sparkles' },
+  { label: 'Shopping bag', value: 'shopping-bag' },
+  { label: 'File text', value: 'file-text' },
+  { label: 'Home', value: 'home' },
+]
+
 export const Navigation: GlobalConfig = {
   slug: 'navigation',
   label: 'Site Navigation',
@@ -64,15 +74,7 @@ export const Navigation: GlobalConfig = {
               name: 'icon',
               type: 'select',
               label: 'Icon',
-              options: [
-                { label: 'None', value: 'none' },
-                { label: 'Grid (submenu)', value: 'grid' },
-                { label: 'Tag', value: 'tag' },
-                { label: 'Sparkles', value: 'sparkles' },
-                { label: 'Shopping bag', value: 'shopping-bag' },
-                { label: 'File text', value: 'file-text' },
-                { label: 'Home', value: 'home' },
-              ],
+              options: ICON_OPTIONS,
             },
             {
               name: 'link',
@@ -185,15 +187,7 @@ export const Navigation: GlobalConfig = {
           admin: {
             description: 'Optional icon for this menu item. Leave empty for no icon.',
           },
-          options: [
-            { label: 'None', value: 'none' },
-            { label: 'Grid (submenu)', value: 'grid' },
-            { label: 'Tag', value: 'tag' },
-            { label: 'Sparkles', value: 'sparkles' },
-            { label: 'Shopping bag', value: 'shopping-bag' },
-            { label: 'File text', value: 'file-text' },
-            { label: 'Home', value: 'home' },
-          ],
+          options: ICON_OPTIONS,
         },
         {
           name: 'link',
@@ -307,10 +301,11 @@ export const Navigation: GlobalConfig = {
           name: 'text',
           type: 'text',
           label: 'Text',
-          required: true,
           admin: {
             condition: (_, siblingData) => siblingData?.show,
           },
+          validate: (value: unknown, { siblingData }: { siblingData: Record<string, unknown> }) =>
+            siblingData?.show && !value ? 'Text is required when promotion bar is shown' : true,
         },
         {
           name: 'url',
