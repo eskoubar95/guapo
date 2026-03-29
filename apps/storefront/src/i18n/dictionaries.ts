@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Locale } from "./config";
 
 // Dictionary structure for type safety
@@ -11,6 +12,28 @@ export interface Dictionary {
     signIn: string;
     signOut: string;
     language: string;
+  };
+  search: {
+    placeholder: string;
+    recentSearches: string;
+    clearRecent: string;
+    popularSearches: string;
+    shortcuts: string;
+    bestsellers: string;
+    bestsellersSub: string;
+    newArrivals: string;
+    newArrivalsSub: string;
+    products: string;
+    articles: string;
+    resultsCount: string;
+    resultCount: string;
+    noResults: string;
+    tryDifferent: string;
+    searching: string;
+    selectHint: string;
+    closeHint: string;
+    minChars: string;
+    viewAllResults: string;
   };
   home: {
     hero: {
@@ -27,6 +50,9 @@ export interface Dictionary {
       bar2: { text: string; subtext: string };
     };
     promoSlider: {
+      previousSlide: string;
+      nextSlide: string;
+      goToSlide: string;
       slide1: {
         badge: string;
         title: string;
@@ -87,6 +113,8 @@ export interface Dictionary {
   products: {
     addToCart: string;
     outOfStock: string;
+    /** Remaining count, e.g. "Kun {{count}} tilbage på lager" */
+    lowStockWithCount: string;
     viewDetails: string;
     filters: string;
     clearFilters: string;
@@ -122,7 +150,7 @@ export interface Dictionary {
       count: string;
       count_plural: string;
       noReviews: string;
-      reviewAfterPurchase: string;
+      ratingLabel: string;
       responseLabel: string;
       writeReview: string;
       writeReviewTitle: string;
@@ -173,6 +201,32 @@ export interface Dictionary {
     deliveryLabel: string;
     everyXWeeks: string;
     goToShop: string;
+    itemsInCart: string;
+    goToCart: string;
+    addedToCart: string;
+    shopVidere: string;
+    seKurv: string;
+    totalDiscount: string;
+    freeShippingProgress: string;
+    addedAsSubscription: string;
+    youSavePerTime: string;
+    cartTotalCount: string;
+    clearCart: string;
+    /** Shown when quantity cannot exceed available inventory */
+    notEnoughStock: string;
+    /** Non-inventory failure updating line quantity */
+    quantityUpdateFailed: string;
+  };
+  wishlist: {
+    title: string;
+    empty: string;
+    addToWishlist: string;
+    removeFromWishlist: string;
+    goToShop: string;
+    saveToAccount: string;
+    loading: string;
+    saving: string;
+    saved: string;
   };
   checkout: {
     title: string;
@@ -193,6 +247,63 @@ export interface Dictionary {
     continueToPayment: string;
     nextStep: string;
     previousStep: string;
+    shippingAddress: string;
+    editInfo: string;
+    yourInfo: string;
+    yourOrder: string;
+    acceptTerms: string;
+    termsText: string;
+    termsLink: string;
+    acceptSubscriptionTerms: string;
+    subscriptionTermsText: string;
+    subscriptionTermsLink: string;
+    privacyLink: string;
+    glsPakkeshop: string;
+    daoPakkeshop: string;
+    postnordPakkeshop: string;
+    subscriptionNote: string;
+    processing: string;
+    searchPakkeshop: string;
+    selectedPakkeshop: string;
+    postalCode: string;
+    search: string;
+    searching: string;
+    firstName: string;
+    lastName: string;
+    address: string;
+    city: string;
+    phone: string;
+    email: string;
+    guestCheckoutNote: string;
+    marketingOptIn: string;
+    deliveryInfo: string;
+    paymentMethod: string;
+    confirmOrder: string;
+    loadingPayment: string;
+    paymentError: string;
+    addressRequired: string;
+    billingRequired: string;
+    selectPakkeshop: string;
+    confirmPakkeshop: string;
+    chooseCarrier: string;
+    searchAddressPlaceholder: string;
+    openingHours: string;
+    paymentDetailsHint: string;
+    processingPaymentTitle: string;
+    processingPaymentSubtitle: string;
+    cardPaymentLabel: string;
+    cardPaymentNetworks: string;
+    mobilePayPaymentSub: string;
+    klarnaPaymentSub: string;
+    subscriptionPaymentRestriction: string;
+    termsAcceptBeforeTermsLink: string;
+    termsAcceptAfterTermsBeforePrivacyLink: string;
+    termsAcceptAfterPrivacyLink: string;
+    guestFirstNamePlaceholder: string;
+    guestLastNamePlaceholder: string;
+    mobilePayLabel: string;
+    klarnaLabel: string;
+    paymentInitFailed: string;
   };
   auth: {
     loginTitle: string;
@@ -212,6 +323,10 @@ export interface Dictionary {
     errorRegister: string;
     hasAccount: string;
     loginLink: string;
+    backLink?: string;
+    loginDescription?: string;
+    registerDescription?: string;
+    authRequiredMessage?: string;
   };
   account: {
     title: string;
@@ -222,20 +337,63 @@ export interface Dictionary {
     addresses: string;
     signOut: string;
     loading: string;
+    orderRenewalLabel?: string;
+    orderSubscriptionLineLabel?: string;
+    menuLabel?: string;
+    closeMenu?: string;
+    profileTitle: string;
+    profileSaved: string;
+    profileError: string;
+    saving: string;
+    save: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    addressTitle: string;
+    billingAddress: string;
+    address: string;
+    postalCode: string;
+    city: string;
+    addressSaved: string;
+    addressError: string;
+    preferredPickupPoint: string;
+    noPickupPointSaved: string;
+    searchPickupPoint: string;
+    pickupPointSaved: string;
+    pickupPointError: string;
+    change: string;
+    cancel: string;
   };
   orderConfirmation: {
     title: string;
     subtitle: string;
     orderNumber: string;
+    orderDate: string;
+    status: string;
     viewOrder: string;
     continueShopping: string;
     summary: string;
+    items: string;
     subtotal: string;
     shipping: string;
     total: string;
+    freeShipping: string;
+    deliveryAddress: string;
+    pickupPoint: string;
+    pickupPointHint: string;
+    subscriptionTitle: string;
+    subscriptionText: string;
+    manageSubscriptions: string;
+    tracking: string;
+    trackPackage: string;
+    paymentMethod: string;
+    paymentCardEnding: string;
+    paymentCardBrand: string;
     confirming: string;
     errorMessage: string;
     backToCheckout: string;
+    orderLoadError: string;
   };
   subscriptionDetail: {
     title: string;
@@ -257,6 +415,33 @@ export interface Dictionary {
     viewDetails: string;
     cancelConfirm: string;
     cancelConfirmTitle: string;
+    cancelKeepButton: string;
+    cancelSubmitButton: string;
+    cancelLoadingLabel: string;
+    cancelSuccessTitle: string;
+    cancelSuccessBody: string;
+    cancelCloseButton: string;
+    cancelTryAgain: string;
+    subscriptionLinesTitle: string;
+    orderHistoryTitle: string;
+    discountIncluded: string;
+    openOrderHistory: string;
+  };
+  blog: {
+    title: string;
+    intro: string;
+    empty: string;
+    readMore: string;
+    backToBlog: string;
+    featuredHeading: string;
+    moreArticles: string;
+    categories: {
+      "skincare-tips": string;
+      "product-guides": string;
+      ingredients: string;
+      routines: string;
+      news: string;
+    };
   };
   footer: {
     support: string;
@@ -274,6 +459,6 @@ const dictionaries: Record<Locale, () => Promise<Dictionary>> = {
   en: () => import("./dictionaries/en.json").then((module) => module.default),
 };
 
-export const getDictionary = async (locale: Locale): Promise<Dictionary> => {
+export const getDictionary = cache(async (locale: Locale): Promise<Dictionary> => {
   return dictionaries[locale]();
-};
+});

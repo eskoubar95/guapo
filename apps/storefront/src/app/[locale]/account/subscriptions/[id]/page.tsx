@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCustomerSubscription } from "@/lib/subscriptions";
 import { SubscriptionActions } from "@/components/subscription/SubscriptionActions";
+import { getSubscriptionStatusPill } from "@/lib/account-status-labels";
 
 interface SubscriptionDetailPageProps {
   params: Promise<{ locale: string; id: string }>;
@@ -18,14 +19,6 @@ export async function generateMetadata({ params }: SubscriptionDetailPageProps):
   };
 }
 
-const statusLabels: Record<string, { da: string; en: string; color: string }> = {
-  active: { da: "Aktiv", en: "Active", color: "bg-green-100 text-green-800" },
-  paused: { da: "Pauset", en: "Paused", color: "bg-yellow-100 text-yellow-800" },
-  on_hold: { da: "On hold", en: "On hold", color: "bg-red-100 text-red-800" },
-  cancelled: { da: "Annulleret", en: "Cancelled", color: "bg-gray-100 text-gray-800" },
-  expired: { da: "Udløbet", en: "Expired", color: "bg-gray-100 text-gray-800" },
-};
-
 export default async function SubscriptionDetailPage({ params }: SubscriptionDetailPageProps) {
   const { locale, id } = await params;
   const dict = await getDictionary(locale as Locale);
@@ -33,6 +26,8 @@ export default async function SubscriptionDetailPage({ params }: SubscriptionDet
 
   const sub = await getCustomerSubscription(id);
   if (!sub) notFound();
+
+  const subStatusPill = getSubscriptionStatusPill(sub.status);
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "–";
@@ -79,9 +74,9 @@ export default async function SubscriptionDetailPage({ params }: SubscriptionDet
               </div>
             </div>
             <span
-              className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${statusLabels[sub.status]?.color ?? "bg-gray-100 text-gray-800"}`}
+              className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${subStatusPill.color}`}
             >
-              {statusLabels[sub.status]?.[localeKey] ?? sub.status}
+              {subStatusPill[localeKey]}
             </span>
           </div>
 
@@ -128,6 +123,13 @@ export default async function SubscriptionDetailPage({ params }: SubscriptionDet
                 cancelConfirm: dict.subscriptionDetail.cancelConfirm,
                 cancelConfirmTitle: dict.subscriptionDetail.cancelConfirmTitle,
                 cancelAfter: dict.subscriptionDetail.cancelAfter,
+                cancelKeepButton: dict.subscriptionDetail.cancelKeepButton,
+                cancelSubmitButton: dict.subscriptionDetail.cancelSubmitButton,
+                cancelLoadingLabel: dict.subscriptionDetail.cancelLoadingLabel,
+                cancelSuccessTitle: dict.subscriptionDetail.cancelSuccessTitle,
+                cancelSuccessBody: dict.subscriptionDetail.cancelSuccessBody,
+                cancelCloseButton: dict.subscriptionDetail.cancelCloseButton,
+                cancelTryAgain: dict.subscriptionDetail.cancelTryAgain,
               }}
             />
           </div>

@@ -1,8 +1,7 @@
 import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
-import { localeCurrencies } from "@/i18n/config";
-import Link from "next/link";
 import type { Metadata } from "next";
+import { AccountOrdersClient } from "@/components/account/AccountOrdersClient";
 
 interface OrdersPageProps {
   params: Promise<{ locale: string }>;
@@ -16,140 +15,23 @@ export async function generateMetadata({ params }: OrdersPageProps): Promise<Met
   };
 }
 
-// Placeholder orders (will come from Medusa)
-const orders = [
-  {
-    id: "ORD-001",
-    date: "2026-01-15",
-    status: "delivered",
-    total: 426,
-    items: [
-      { title: "Gentle Cleanser", quantity: 1 },
-      { title: "Niacinamide Serum", quantity: 1 },
-    ],
-  },
-  {
-    id: "ORD-002",
-    date: "2025-12-20",
-    status: "delivered",
-    total: 329,
-    items: [
-      { title: "Hydrating Moisturizer", quantity: 1 },
-    ],
-  },
-  {
-    id: "ORD-003",
-    date: "2025-11-05",
-    status: "delivered",
-    total: 279,
-    items: [
-      { title: "Daily SPF 50", quantity: 1 },
-    ],
-  },
-];
-
-const statusLabels: Record<string, { da: string; en: string; color: string }> = {
-  pending: { da: "Afventer", en: "Pending", color: "bg-yellow-100 text-yellow-800" },
-  processing: { da: "Behandles", en: "Processing", color: "bg-blue-100 text-blue-800" },
-  shipped: { da: "Sendt", en: "Shipped", color: "bg-purple-100 text-purple-800" },
-  delivered: { da: "Leveret", en: "Delivered", color: "bg-green-100 text-green-800" },
-  cancelled: { da: "Annulleret", en: "Cancelled", color: "bg-red-100 text-red-800" },
-};
-
-const defaultStatusLabel = { da: "Ukendt", en: "Unknown", color: "bg-gray-200 text-gray-700" };
-
 export default async function OrdersPage({ params }: OrdersPageProps) {
   const { locale } = await params;
   const dict = await getDictionary(locale as Locale);
-  const localeKey = locale as "da" | "en";
-
-  const formatPrice = (amount: number, orderCurrency?: string) => {
-    const currency = orderCurrency || localeCurrencies[locale as Locale] || "DKK";
-    return new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency,
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(locale === "da" ? "da-DK" : "en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
   return (
-    <div className="max-w-3xl">
-        {/* Breadcrumb */}
-        <nav className="mb-6">
-          <ol className="flex items-center gap-2 text-sm text-muted-foreground">
-            <li>
-              <Link href={`/${locale}/account`} className="hover:text-primary">
-                {dict.account.title}
-              </Link>
-            </li>
-            <li>/</li>
-            <li className="text-foreground">{dict.account.orders}</li>
-          </ol>
-        </nav>
-
-        <h1 className="text-2xl font-bold text-foreground">{dict.account.orders}</h1>
-
-        {orders.length > 0 ? (
-          <div className="mt-8 space-y-4">
-            {orders.map((order) => (
-              <div
-                key={order.id}
-                className="rounded-lg border border-border p-4 hover:border-gray-200"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">{order.id}</p>
-                    <p className="text-sm text-muted-foreground">{formatDate(order.date)}</p>
-                  </div>
-                  <span className={`rounded-full px-3 py-1 text-xs font-medium ${(statusLabels[order.status] ?? defaultStatusLabel).color}`}>
-                    {(statusLabels[order.status] ?? defaultStatusLabel)[localeKey]}
-                  </span>
-                </div>
-                
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="text-sm text-muted-foreground">
-                    {order.items.map((item, i) => (
-                      <span key={i}>
-                        {item.quantity}x {item.title}
-                        {i < order.items.length - 1 && ", "}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="font-medium text-foreground">{formatPrice(order.total)}</p>
-                </div>
-
-                <div className="mt-4 flex gap-4">
-                  <button className="text-sm font-medium text-muted-foreground hover:text-primary">
-                    {locale === "da" ? "Se detaljer" : "View details"}
-                  </button>
-                  <button className="text-sm font-medium text-muted-foreground hover:text-primary">
-                    {locale === "da" ? "Spor pakke" : "Track package"}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="mt-12 text-center">
-            <p className="text-muted-foreground">
-              {locale === "da" ? "Du har ingen ordrer endnu" : "You have no orders yet"}
-            </p>
-            <Link
-              href={`/${locale}/categories`}
-              className="mt-4 inline-flex rounded-full bg-gray-900 px-6 py-3 text-sm font-medium text-white hover:bg-gray-800"
-            >
-              {locale === "da" ? "Start med at shoppe" : "Start shopping"}
-            </Link>
-          </div>
-        )}
-    </div>
+    <AccountOrdersClient
+      locale={locale}
+      accountTitle={dict.account.title}
+      ordersTitle={dict.account.orders}
+      renewalLabel={dict.account.orderRenewalLabel}
+      orderDetailLabels={{
+        summary: dict.orderConfirmation.summary,
+        items: dict.orderConfirmation.items,
+        subtotal: dict.orderConfirmation.subtotal,
+        shipping: dict.orderConfirmation.shipping,
+        total: dict.orderConfirmation.total,
+        freeShipping: dict.orderConfirmation.freeShipping,
+      }}
+    />
   );
 }

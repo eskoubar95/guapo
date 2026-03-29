@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { getCart } from "@/lib/cart-data";
 
 const MEDUSA_URL = (
   process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
@@ -40,19 +41,21 @@ async function setCartId(cartId: string) {
 }
 
 /** Clear the cart cookie (call after order completion so next visit gets a fresh cart) */
-/** Medusa store cart shape (minimal for page usage) */
-export interface StoreCart {
-  id?: string;
-  items?: Array<{ id?: string; metadata?: Record<string, unknown> }>;
-  subtotal?: number;
-  shipping_total?: number;
-  total?: number;
-  completed_at?: string | null;
-}
-
 export async function clearCartId() {
   const cookieStore = await cookies();
   cookieStore.delete("cart_id");
+}
+
+/** Re-export for consumers that still import from cart (e.g. cart-utils) */
+export type { StoreCart } from "@/lib/cart-data";
+
+/** Remove all line items from the current cart (empties the cart). */
+export async function clearCart(): Promise<void> {
+  const cart = await getCart();
+  const ids = (cart?.items ?? []).map((item) => item.id).filter((id): id is string => Boolean(id));
+  for (const lineItemId of ids) {
+    await removeLineItem(lineItemId);
+  }
 }
 
 export async function getOrCreateCart(): Promise<string> {
@@ -120,20 +123,37 @@ export async function addToCart(
   return (data as { cart: unknown }).cart;
 }
 
-export async function updateLineItem(lineItemId: string, quantity: number) {
+export async function updateLineItem(
+  lineItemId: string,
+  quantity: number,
+  metadata?: Record<string, unknown>
+) {
   const cartId = await getCartId();
   if (!cartId) throw new Error("No cart");
+
+  const quantityInt = Math.max(1, Math.floor(Number(quantity)));
+  const body: { quantity: number; metadata?: Record<string, unknown> } = {
+    quantity: quantityInt,
+  };
+  if (metadata != null && typeof metadata === "object") {
+    body.metadata = metadata;
+  }
 
   const res = await fetch(
     `${MEDUSA_URL}/store/carts/${cartId}/line-items/${lineItemId}`,
     {
       method: "POST",
       headers: headers(),
-      body: JSON.stringify({ quantity }),
+      body: JSON.stringify(body),
     }
   );
-  if (!res.ok) throw new Error("Failed to update item");
-  const { cart } = await res.json();
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = (data as { message?: string }).message;
+    throw new Error(msg && typeof msg === "string" ? msg : "Failed to update item");
+  }
+  const { cart } = data as { cart?: unknown };
   return cart;
 }
 
@@ -150,44 +170,30 @@ export async function removeLineItem(lineItemId: string) {
   return cart;
 }
 
-/** Set subscription on a line item: removes it and re-adds with or without subscription_cycle metadata. */
+/**
+ * Toggle subscription on a line item by updating its metadata in-place.
+ * Polls the cart briefly after the API call to let the async cart.updated
+ * subscriber finish applying/removing the line item adjustment.
+ */
 export async function setLineItemSubscription(
   lineItemId: string,
-  variantId: string,
+  _variantId: string,
   quantity: number,
   subscriptionCycleWeeks: number | null
 ) {
-  await removeLineItem(lineItemId);
-  try {
-    await addToCart(variantId, quantity, subscriptionCycleWeeks ? { subscription_cycle: subscriptionCycleWeeks } : undefined);
-  } catch (error) {
-    try {
-      await addToCart(variantId, quantity);
-    } catch {
-      // Rollback failed; original error is rethrown
-    }
-    throw error;
+  const metadata = subscriptionCycleWeeks
+    ? { subscription_cycle: subscriptionCycleWeeks }
+    : { subscription_cycle: null };
+
+  await updateLineItem(lineItemId, quantity, metadata);
+
+  const expectDiscount = subscriptionCycleWeeks !== null && subscriptionCycleWeeks > 0;
+  for (let i = 0; i < 5; i++) {
+    await new Promise((r) => setTimeout(r, 250));
+    const cart = await getCart();
+    if (!cart) break;
+    const hasDiscount = (cart.discount_total ?? 0) > 0;
+    if (hasDiscount === expectDiscount) break;
   }
 }
 
-export async function getCart(): Promise<StoreCart | null> {
-  try {
-    const cartId = await getCartId();
-    if (!cartId) return null;
-
-    const res = await fetch(`${MEDUSA_URL}/store/carts/${cartId}`, {
-      headers: headers(),
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const cart = (data as { cart?: StoreCart & { completed_at?: string | null } }).cart;
-    if (cart?.completed_at) {
-      await clearCartId();
-      return null;
-    }
-    return cart ?? null;
-  } catch {
-    return null;
-  }
-}

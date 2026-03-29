@@ -8,7 +8,7 @@ const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
 /**
  * POST /api/product-reviews
  * Proxies to Medusa POST /store/product-reviews/submit.
- * Forwards Authorization header so logged-in customers can submit reviews.
+ * Prefer calling medusa.client.fetch from the browser — SDK JWT lives in localStorage (`medusa_auth_token`), not this cookie.
  */
 const AUTH_COOKIE_NAME = "medusa_token";
 
