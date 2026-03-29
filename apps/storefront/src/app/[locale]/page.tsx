@@ -23,6 +23,9 @@ import {
 import { fetchHomepage, fetchPageByPath } from "@/lib/payload-homepage";
 import { resolveHomepageData } from "@/lib/resolve-homepage-data";
 import { productCardA11yFromDict } from "@/components/product-card-a11y";
+import { HomePrimaryHeroLoadGate } from "@/components/home/HomePrimaryHeroLoadGate";
+import { getAboveFoldHeroBackgroundImageUrl } from "@/lib/homepage-primary-hero";
+import { preload } from "react-dom";
 
 interface HomePageProps {
   params: Promise<{ locale: string }>;
@@ -51,21 +54,27 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
 
   if (hasCmsSections && sections) {
     const { resolvedProducts, resolvedArticles } = await resolveHomepageData(sections, validLocale);
+    const aboveFoldHeroImageUrl = getAboveFoldHeroBackgroundImageUrl(sections);
+    if (aboveFoldHeroImageUrl) {
+      preload(aboveFoldHeroImageUrl, { as: "image" });
+    }
     return (
-      <div className="min-h-full w-full bg-background min-w-0 overflow-x-clip">
-        <HomePageSections
-          sections={sections}
-          locale={validLocale}
-          resolvedProducts={resolvedProducts}
-          resolvedArticles={resolvedArticles}
-          productCardA11y={productCardA11y}
-          promoSliderLabels={{
-            previousSlide: dict.home.promoSlider.previousSlide,
-            nextSlide: dict.home.promoSlider.nextSlide,
-            goToSlide: dict.home.promoSlider.goToSlide,
-          }}
-        />
-      </div>
+      <HomePrimaryHeroLoadGate blockUntilPrimaryHeroMedia={Boolean(aboveFoldHeroImageUrl)}>
+        <div className="min-h-full w-full bg-background min-w-0 overflow-x-clip">
+          <HomePageSections
+            sections={sections}
+            locale={validLocale}
+            resolvedProducts={resolvedProducts}
+            resolvedArticles={resolvedArticles}
+            productCardA11y={productCardA11y}
+            promoSliderLabels={{
+              previousSlide: dict.home.promoSlider.previousSlide,
+              nextSlide: dict.home.promoSlider.nextSlide,
+              goToSlide: dict.home.promoSlider.goToSlide,
+            }}
+          />
+        </div>
+      </HomePrimaryHeroLoadGate>
     );
   }
 

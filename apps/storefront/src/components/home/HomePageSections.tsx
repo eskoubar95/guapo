@@ -4,6 +4,7 @@
  */
 
 import type { HomepageSection, PayloadMedia } from "@/lib/payload-homepage";
+import { resolvePayloadMediaUrl } from "@/lib/payload-media-url";
 import type { Product } from "@/components/ProductCard";
 import type { ProductCardA11yLabels } from "@/components/product-card-a11y";
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
@@ -26,14 +27,6 @@ import { ValueCardsSection } from "@/components/sections/ValueCardsSection";
 import type { PromotionSliderLabels } from "@/components/sections/PromotionSlider";
 
 const PAYLOAD_URL = process.env.NEXT_PUBLIC_PAYLOAD_API_URL ?? process.env.PAYLOAD_API_URL ?? "";
-
-function mediaUrl(media: PayloadMedia | number | null | undefined): string {
-  if (!media) return "";
-  if (typeof media === "number") return "";
-  const m = media as PayloadMedia;
-  if (m.url) return m.url.startsWith("http") ? m.url : `${PAYLOAD_URL.replace(/\/$/, "")}${m.url}`;
-  return "";
-}
 
 import type { BlogCarouselArticle } from "@/components/sections/BlogCarouselSection";
 
@@ -68,7 +61,7 @@ export function HomePageSections({
         switch (block.blockType) {
           case "hero": {
             const hero = block as import("@/lib/payload-homepage").HeroBlock;
-            const bgUrl = mediaUrl(hero.backgroundImage);
+            const bgUrl = resolvePayloadMediaUrl(hero.backgroundImage);
             const isFirstHero = sections.findIndex((b) => b.blockType === "hero") === index;
             return (
               <HeroSection
@@ -81,6 +74,7 @@ export function HomePageSections({
                 textPosition={hero.textPosition ?? "center"}
                 textColor={hero.textColor ?? "light"}
                 headingLevel={isFirstHero ? 1 : 2}
+                prioritizeAboveFold={index === 0}
                 locale={locale}
               />
             );
@@ -144,7 +138,7 @@ export function HomePageSections({
 
           case "content-block": {
             const cb = block as import("@/lib/payload-homepage").ContentBlockBlock;
-            const imgUrl = mediaUrl(cb.image);
+            const imgUrl = resolvePayloadMediaUrl(cb.image);
             const layout = cb.layout ?? "text-image";
             const isFullWidth = layout === "full-width";
             if (isFullWidth && (cb.heading || cb.cta?.text)) {
@@ -181,7 +175,7 @@ export function HomePageSections({
 
           case "image-text-breakout": {
             const b = block as import("@/lib/payload-homepage").ImageTextBreakoutBlock;
-            const imgUrl = mediaUrl(b.image);
+            const imgUrl = resolvePayloadMediaUrl(b.image);
             if (!imgUrl || !b.heading) return null;
             return (
               <ImageTextBreakoutSection
@@ -248,13 +242,13 @@ export function HomePageSections({
             const ps = block as import("@/lib/payload-homepage").PromotionSliderBlock;
             const slides = (ps.slides ?? [])
               .map((s, i) => {
-                const desktopUrl = mediaUrl(s.imageDesktop);
+                const desktopUrl = resolvePayloadMediaUrl(s.imageDesktop);
                 if (!desktopUrl) return null;
                 return {
                   id: `slide-${i}`,
                   imageDesktopUrl: desktopUrl,
-                  imageTabletUrl: mediaUrl(s.imageTablet) || undefined,
-                  imageMobileUrl: mediaUrl(s.imageMobile) || undefined,
+                  imageTabletUrl: resolvePayloadMediaUrl(s.imageTablet) || undefined,
+                  imageMobileUrl: resolvePayloadMediaUrl(s.imageMobile) || undefined,
                   href: (s.href && String(s.href).trim()) ? String(s.href).trim() : undefined,
                 };
               })
@@ -299,7 +293,7 @@ export function HomePageSections({
             const brandKey = typeof bs.brand === "object" && bs.brand && "brandKey" in bs.brand ? (bs.brand as { brandKey?: string }).brandKey : undefined;
             const brandPagePath = (bs.ctaUrl ?? (brandKey ? `brands/${brandKey}` : "brands")).replace(/^\//, "");
             const products = resolvedProducts[key] ?? [];
-            const imageUrl = mediaUrl(bs.image);
+            const imageUrl = resolvePayloadMediaUrl(bs.image);
             return (
               <BrandSpotlight
                 key={key}
@@ -322,7 +316,7 @@ export function HomePageSections({
               const url = !rawUrl ? undefined : rawUrl.startsWith("http") ? rawUrl : rawUrl.startsWith(`/${locale}/`) || rawUrl.startsWith(`${locale}/`) ? (rawUrl.startsWith("/") ? rawUrl : `/${rawUrl}`) : `/${locale}/${rawUrl.replace(/^\//, "")}`;
               return {
                 iconType: item.iconType ?? undefined,
-                iconImageUrl: item.iconImage ? mediaUrl(item.iconImage) || undefined : undefined,
+                iconImageUrl: item.iconImage ? resolvePayloadMediaUrl(item.iconImage) || undefined : undefined,
                 title: item.title,
                 subtitle: item.subtitle ?? undefined,
                 url,
