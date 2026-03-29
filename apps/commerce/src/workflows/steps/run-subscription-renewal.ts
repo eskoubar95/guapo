@@ -244,16 +244,17 @@ export const runSubscriptionRenewalStep = createStep(
       shippingMethodData: deliveryData,
     });
 
+    let createdOrderId: string | null = null;
     try {
       const orderModule = resolveOrderModule(container);
       const [order] = await orderModule.createOrders([
         {
           ...createOrderInput,
           status: "pending",
-          payment_status: "captured",
         },
       ]);
       if (!order?.id) throw new Error("Order creation failed");
+      createdOrderId = order.id;
 
       await link.create([
         {
@@ -308,6 +309,7 @@ export const runSubscriptionRenewalStep = createStep(
         orderId: order.id,
       });
     } catch (err) {
+      let refunded = false;
       const stripe = getStripeClient();
       try {
         await stripe.refunds.create({
@@ -322,10 +324,15 @@ export const runSubscriptionRenewalStep = createStep(
           subscriptionId,
           "order_creation_failed_charge_refunded"
         );
+        refunded = true;
         logger?.error?.(
           `[subscription-renewal] Refunded payment intent ${chargeResult.stripePaymentIntentId} after order creation failure for ${subscriptionId}`
         );
       } catch (refundErr) {
+        await subscriptionService.setFailureContext(
+          subscriptionId,
+          "order_creation_failed_refund_failed"
+        );
         logger?.error?.(
           `[subscription-renewal] Refund failed for payment intent ${chargeResult.stripePaymentIntentId}: ${
             refundErr instanceof Error ? refundErr.message : String(refundErr)
@@ -333,13 +340,36 @@ export const runSubscriptionRenewalStep = createStep(
         );
       }
 
+      if (createdOrderId) {
+        try {
+          const orderModule = resolveOrderModule(container) as unknown as {
+            cancelOrders?: (ids: string[]) => Promise<unknown>;
+            updateOrders?: (data: Array<Record<string, unknown>>) => Promise<unknown>;
+            deleteOrders?: (ids: string[]) => Promise<unknown>;
+          };
+          if (typeof orderModule.cancelOrders === "function") {
+            await orderModule.cancelOrders([createdOrderId]);
+          } else if (typeof orderModule.updateOrders === "function") {
+            await orderModule.updateOrders([{ id: createdOrderId, status: "canceled" }]);
+          } else if (typeof orderModule.deleteOrders === "function") {
+            await orderModule.deleteOrders([createdOrderId]);
+          }
+        } catch (compensationErr) {
+          logger?.error?.(
+            `[subscription-renewal] Failed local order compensation for ${createdOrderId}: ${
+              compensationErr instanceof Error ? compensationErr.message : String(compensationErr)
+            }`
+          );
+        }
+      }
+
       return new StepResponse({
         renewed: false,
         error:
           err instanceof Error
-            ? `Order creation failed, charge refunded: ${err.message}`
-            : "Order creation failed, charge refunded",
-        refunded: true,
+            ? `Order creation failed${refunded ? ", charge refunded" : ""}: ${err.message}`
+            : `Order creation failed${refunded ? ", charge refunded" : ""}`,
+        refunded,
       });
     }
   }

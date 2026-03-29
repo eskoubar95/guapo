@@ -88,12 +88,19 @@ export default async function orderPlacedCreateSubscriptions({
   }
 
   const subscriptionService = container.resolve<SubscriptionModuleService>(SUBSCRIPTION_MODULE);
-  const existingForOrder = await subscriptionService.listSubscriptions({}, { take: 200 }).then((list) =>
+  const existingForOrder = await subscriptionService.listSubscriptions({}, { take: 2000 }).then((list) =>
     (list ?? []).filter((s) => (s.metadata as Record<string, unknown> | null)?.order_id === orderId)
   );
+  const existingLineItemIds = new Set(
+    existingForOrder
+      .map((s) => (s.metadata as Record<string, unknown> | null)?.line_item_id)
+      .filter((lineItemId): lineItemId is string => typeof lineItemId === "string" && lineItemId.length > 0)
+  );
   if (existingForOrder.length > 0) {
-    log(`Order ${orderId} already has ${existingForOrder.length} subscription(s) linked. Skipping (idempotent).`);
-    return;
+    log(
+      `Order ${orderId} already has ${existingForOrder.length} subscription(s). ` +
+        `Will only create missing line items (idempotent).`
+    );
   }
 
   let stripeCustomerId: string | null = null;
@@ -136,6 +143,11 @@ export default async function orderPlacedCreateSubscriptions({
   const now = new Date();
   for (const item of subscriptionItems) {
     try {
+      if (!item.id || existingLineItemIds.has(item.id)) {
+        log(`Skipping already-processed subscription line item ${item.id} on order ${orderId}`);
+        continue;
+      }
+
       const cycleWeeks = (item.metadata as Record<string, unknown>)?.subscription_cycle as number
       if (typeof cycleWeeks !== "number" || !Number.isInteger(cycleWeeks) || cycleWeeks <= 0) {
         logWarn(`Invalid cycle_weeks (${cycleWeeks}) for item ${item.id}, skipping.`)
@@ -190,6 +202,7 @@ export default async function orderPlacedCreateSubscriptions({
             [Modules.ORDER]: { order_id: orderId },
           },
         ]);
+        existingLineItemIds.add(item.id);
         log(`Created subscription ${created.id} for order ${orderId} line item ${item.id} (cycle ${cycleWeeks} weeks)`)
       }
     } catch (err) {

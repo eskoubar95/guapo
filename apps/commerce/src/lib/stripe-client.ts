@@ -10,6 +10,9 @@ export function getStripeClient(): Stripe {
     throw new Error("STRIPE_API_KEY not set");
   }
 
-  stripeClient = new Stripe(apiKey);
+  stripeClient = new Stripe(apiKey, {
+    timeout: 80_000,
+    maxNetworkRetries: 2,
+  });
   return stripeClient;
 }
