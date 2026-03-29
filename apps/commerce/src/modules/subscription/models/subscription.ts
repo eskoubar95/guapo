@@ -32,6 +32,7 @@ export const Subscription = model.define("subscription", {
   /** Pakkeshop / carrier payload from order shipping method (service_point_*), optional for home delivery */
   delivery_data: model.json().nullable(),
   shipping_option_id: model.text(),
+  idempotency_key: model.text().nullable(),
   metadata: model.json().nullable(),
   // Retry/recovery
   retry_count: model.number().default(0),
@@ -47,4 +48,5 @@ export const Subscription = model.define("subscription", {
   { on: ["status"] },
   { on: ["next_renewal_at"] },
   { on: ["status", "next_renewal_at"] },
+  { on: ["idempotency_key"] },
 ]);

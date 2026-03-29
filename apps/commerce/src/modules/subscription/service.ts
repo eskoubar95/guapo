@@ -194,6 +194,22 @@ class SubscriptionModuleService extends MedusaService({
     ]);
     return updated;
   }
+
+  async retrieveByIdempotencyKey(key: string) {
+    const normalized = String(key ?? "").trim();
+    if (!normalized) return null;
+
+    const pool = getSubscriptionPool();
+    const table = getSubscriptionTableFqn();
+    const { rows } = await pool.query<{ id: string }>(
+      `select id from ${table} where idempotency_key = $1 limit 1`,
+      [normalized]
+    );
+    const id = rows[0]?.id;
+    if (!id) return null;
+
+    return this.retrieveSubscription(id);
+  }
 }
 
 export default SubscriptionModuleService;

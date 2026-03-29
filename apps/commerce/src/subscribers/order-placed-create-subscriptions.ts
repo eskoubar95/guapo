@@ -10,6 +10,16 @@ import { extractDeliveryDataFromShippingMethodData } from "../lib/subscription-d
 
 const ALLOWED_CYCLE_WEEKS = [4, 8, 12] as const
 
+function isAtomicIdempotencyConflict(err: unknown): boolean {
+  const code = (err as { code?: string } | null)?.code;
+  const message = err instanceof Error ? err.message : String(err);
+  return (
+    code === "23505" &&
+    (message.includes("idx_subscription_idempotency_key_unique") ||
+      message.includes("subscription_idempotency_key"))
+  );
+}
+
 type OrderWithItems = {
   id: string;
   customer_id: string | null;
@@ -147,6 +157,17 @@ export default async function orderPlacedCreateSubscriptions({
         log(`Skipping already-processed subscription line item ${item.id} on order ${orderId}`);
         continue;
       }
+      const idempotencyKey = `${orderId}:${item.id}`;
+
+      const existingForKey = await subscriptionService.retrieveByIdempotencyKey(idempotencyKey);
+      if (existingForKey?.id) {
+        existingLineItemIds.add(item.id);
+        log(
+          `Subscription already exists for idempotency_key=${idempotencyKey} ` +
+            `(subscription ${existingForKey.id}). Skipping create.`
+        );
+        continue;
+      }
 
       const cycleWeeks = (item.metadata as Record<string, unknown>)?.subscription_cycle as number
       if (typeof cycleWeeks !== "number" || !Number.isInteger(cycleWeeks) || cycleWeeks <= 0) {
@@ -187,8 +208,9 @@ export default async function orderPlacedCreateSubscriptions({
           billing_address: order.billing_address ?? {},
           delivery_data: deliveryData,
           shipping_option_id: shippingOptionId,
+          idempotency_key: idempotencyKey,
           last_renewal_order_id: orderId,
-          metadata: { order_id: orderId, line_item_id: item.id },
+          metadata: { order_id: orderId, line_item_id: item.id, idempotency_key: idempotencyKey },
         },
       ]);
 
@@ -206,6 +228,17 @@ export default async function orderPlacedCreateSubscriptions({
         log(`Created subscription ${created.id} for order ${orderId} line item ${item.id} (cycle ${cycleWeeks} weeks)`)
       }
     } catch (err) {
+      if (isAtomicIdempotencyConflict(err)) {
+        const idempotencyKey = `${orderId}:${item.id}`;
+        const existing = await subscriptionService.retrieveByIdempotencyKey(idempotencyKey);
+        if (existing?.id) {
+          existingLineItemIds.add(item.id);
+          log(
+            `Atomic idempotency conflict for ${idempotencyKey}; using existing subscription ${existing.id}.`
+          );
+          continue;
+        }
+      }
       logErr(`Failed to create subscription for line item ${item.id}: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
