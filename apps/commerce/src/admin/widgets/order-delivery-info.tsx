@@ -31,11 +31,13 @@ function pickupFromMethodData(data: Record<string, unknown> | null | undefined):
 const OrderDeliveryInfoWidget = ({ data }: DetailWidgetProps) => {
   const order = data as OrderLike
   const [resolved, setResolved] = useState<OrderLike | null>(null)
+  const [fetchAttempted, setFetchAttempted] = useState(false)
   const effective = resolved ?? order
 
   useEffect(() => {
-    if (effective?.shipping_methods?.length || !order?.id) return
+    if (effective?.shipping_methods?.length || !order?.id || fetchAttempted) return
     let cancelled = false
+    setFetchAttempted(true)
     fetch(`${BASE}/admin/orders/${encodeURIComponent(order.id)}`, {
       credentials: "include",
     })
@@ -48,7 +50,7 @@ const OrderDeliveryInfoWidget = ({ data }: DetailWidgetProps) => {
     return () => {
       cancelled = true
     }
-  }, [order?.id, effective?.shipping_methods?.length])
+  }, [order?.id, effective?.shipping_methods?.length, fetchAttempted])
 
   const sm = effective?.shipping_methods?.[0]?.data
   const pickup = pickupFromMethodData(sm ?? undefined)

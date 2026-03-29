@@ -20,25 +20,31 @@ const ShipmondoSettingsPage = () => {
   const refreshOptions = useCallback(async () => {
     try {
       const optRes = await fetch(`${BASE}/admin/shipmondo/options`, { credentials: "include" })
-      if (optRes.ok) {
-        const j = await optRes.json()
-        setOptions(j.options ?? [])
+      if (!optRes.ok) {
+        const j = await optRes.json().catch(() => ({}))
+        throw new Error(j?.message || `Kunne ikke hente leveringsmuligheder (${optRes.status})`)
       }
-    } catch {
-      toast.error("Kunne ikke opdatere leveringsmuligheder")
+      const j = await optRes.json()
+      setOptions(j.options ?? [])
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunne ikke opdatere leveringsmuligheder")
+      throw e
     }
   }, [])
 
   const refreshEnabled = useCallback(async () => {
     try {
       const res = await fetch(`${BASE}/admin/shipmondo/enabled`, { credentials: "include" })
-      if (res.ok) {
-        const j = await res.json()
-        const list = j.enabled ?? []
-        setEnabledRows(Array.isArray(list) ? list : [])
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        throw new Error(j?.message || `Kunne ikke hente aktiveret-liste (${res.status})`)
       }
-    } catch {
-      toast.error("Kunne ikke opdatere aktiveret-liste")
+      const j = await res.json()
+      const list = j.enabled ?? []
+      setEnabledRows(Array.isArray(list) ? list : [])
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunne ikke opdatere aktiveret-liste")
+      throw e
     }
   }, [])
 

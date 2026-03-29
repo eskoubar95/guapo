@@ -45,11 +45,13 @@ export default async function verifyShipmondoSandbox({ container }: ExecArgs) {
       if (res.status === 401) {
         logger.warn("401: wrong credentials or production keys used against sandbox (or vice versa).");
       }
+      process.exitCode = 1;
     } else {
       logger.info("Credentials accepted. Next: checkout → order → Admin fulfillment → label.");
     }
   } catch (e) {
     logger.error(`Request failed: ${e instanceof Error ? e.message : String(e)}`);
+    process.exitCode = 1;
   } finally {
     clearTimeout(t);
   }

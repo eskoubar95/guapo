@@ -37,18 +37,34 @@ const WARN = "⚠️ ";
 
 function parseFlags() {
   const args = process.argv.slice(2);
-  const resetDueNow =
-    !!process.env.RESET_DUE_NOW ||
-    args.includes("--reset-due-now");
-  const cyclesArg =
-    process.env.CYCLES ??
-    args.find((a) => a.startsWith("--cycles="))?.split("=")[1] ??
-    (args[args.indexOf("--cycles") + 1]);
-  const cycles = cyclesArg ? Math.max(1, parseInt(String(cyclesArg), 10)) : 1;
-  const orderId =
-    process.env.ORDER_ID ??
-    args.find((a) => !a.startsWith("--")) ??
-    undefined;
+  const positional: string[] = [];
+  let resetDueNow = process.env.RESET_DUE_NOW === "1";
+  let cyclesArg = process.env.CYCLES;
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--reset-due-now") {
+      resetDueNow = true;
+      continue;
+    }
+    if (arg.startsWith("--cycles=")) {
+      cyclesArg = arg.split("=")[1];
+      continue;
+    }
+    if (arg === "--cycles") {
+      const next = args[i + 1];
+      if (next && !next.startsWith("--")) {
+        cyclesArg = next;
+        i += 1;
+      }
+      continue;
+    }
+    if (!arg.startsWith("--")) positional.push(arg);
+  }
+
+  const parsedCycles = cyclesArg ? Number.parseInt(String(cyclesArg), 10) : 1;
+  const cycles = Number.isFinite(parsedCycles) && parsedCycles > 0 ? parsedCycles : 1;
+  const orderId = process.env.ORDER_ID ?? positional[0] ?? undefined;
   return { orderId, resetDueNow, cycles };
 }
 
@@ -75,10 +91,11 @@ export default async function simulateE2eSubscription({ container }: ExecArgs) {
     process.exit(1);
   }
 
+  const allowLiveSimulation = process.env.ALLOW_LIVE_SIMULATION === "1";
   const stripeMode = process.env.STRIPE_API_KEY.startsWith("sk_test_") ? "TEST" : "LIVE";
-  if (stripeMode === "LIVE") {
-    warn("STRIPE_API_KEY is a LIVE key. Real charges will be made. Aborting in 3s…");
-    await new Promise((r) => setTimeout(r, 3000));
+  if (stripeMode === "LIVE" && !allowLiveSimulation) {
+    err("STRIPE_API_KEY is a LIVE key. Refusing to run without ALLOW_LIVE_SIMULATION=1.");
+    process.exit(1);
   }
 
   log(HR);

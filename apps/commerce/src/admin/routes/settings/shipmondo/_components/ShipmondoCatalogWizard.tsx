@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Button, FocusModal, Text, toast } from "@medusajs/ui"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { ApiCarrierOption, CatalogProductRich } from "./shipmondo-admin.types"
 import { WizardStepConfirm } from "./WizardStepConfirm"
 import { WizardStepCarriers } from "./WizardStepCarriers"
@@ -55,6 +55,7 @@ export function ShipmondoCatalogWizard({ onApplied }: { onApplied: () => Promise
   const [notificationByCode, setNotificationByCode] = useState<Map<string, { email: boolean; sms: boolean }>>(
     () => new Map()
   )
+  const wizardSessionRef = useRef(0)
 
   const grouped = useMemo(() => groupByCarrier(catalog), [catalog])
   const productByCode = useMemo(() => new Map(catalog.map((p) => [p.code, p])), [catalog])
@@ -79,8 +80,10 @@ export function ShipmondoCatalogWizard({ onApplied }: { onApplied: () => Promise
   }, [])
 
   useEffect(() => {
-    if (!open) return
-    resetWizardState()
+    wizardSessionRef.current += 1
+    if (open) {
+      resetWizardState()
+    }
   }, [open, resetWizardState])
 
   const handleToggleCarrier = (carrierKey: string, on: boolean) => {
@@ -156,10 +159,12 @@ export function ShipmondoCatalogWizard({ onApplied }: { onApplied: () => Promise
   }
 
   const loadCarriers = useCallback(async () => {
+    const sessionId = wizardSessionRef.current
     setLoadingCarriers(true)
     try {
       const res = await fetch(`${BASE}/admin/shipmondo/carriers`, { credentials: "include" })
       const j = await res.json().catch(() => ({}))
+      if (!open || wizardSessionRef.current !== sessionId) return
       if (!res.ok) {
         toast.error(j?.message || "Kunne ikke hente carriers")
         setApiCarriers([])
@@ -173,15 +178,18 @@ export function ShipmondoCatalogWizard({ onApplied }: { onApplied: () => Promise
       }
       setStep(2)
     } catch (e) {
+      if (!open || wizardSessionRef.current !== sessionId) return
       toast.error(e instanceof Error ? e.message : "Netværksfejl")
       setApiCarriers([])
     } finally {
+      if (!open || wizardSessionRef.current !== sessionId) return
       setLoadingCarriers(false)
     }
-  }, [])
+  }, [open])
 
   const loadProductsForCarriers = useCallback(async () => {
     const codes = Array.from(selectedCarriers)
+    const sessionId = wizardSessionRef.current
     setLoadingProducts(true)
     try {
       const results = await Promise.all(
@@ -192,6 +200,7 @@ export function ShipmondoCatalogWizard({ onApplied }: { onApplied: () => Promise
           })
         )
       )
+      if (!open || wizardSessionRef.current !== sessionId) return
       const merged = new Map<string, CatalogProductRich>()
       for (const arr of results) {
         for (const p of arr) {
@@ -207,9 +216,10 @@ export function ShipmondoCatalogWizard({ onApplied }: { onApplied: () => Promise
       }
       setStep(3)
     } finally {
+      if (!open || wizardSessionRef.current !== sessionId) return
       setLoadingProducts(false)
     }
-  }, [receiver, sender, selectedCarriers])
+  }, [open, receiver, sender, selectedCarriers])
 
   const handleNext = async () => {
     if (step === 1) {
@@ -289,8 +299,12 @@ export function ShipmondoCatalogWizard({ onApplied }: { onApplied: () => Promise
       } else {
         toast.success(j.message || "Opdateret")
       }
-      await onApplied()
       setOpen(false)
+      try {
+        await onApplied()
+      } catch {
+        toast.info("Kataloget blev gemt, men listen kunne ikke genindlæses endnu.")
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Fejl")
     } finally {

@@ -1,9 +1,9 @@
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk";
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
-import Stripe from "stripe";
 import {
   SUBSCRIPTION_MODULE,
 } from "../../modules/subscription";
+import { getStripeClient } from "../../lib/stripe-client";
 import type SubscriptionModuleService from "../../modules/subscription/service";
 
 export type RunSubscriptionRenewalInput = { subscriptionId: string };
@@ -14,6 +14,7 @@ export type RunSubscriptionRenewalOutput = {
   error?: string;
   retryCount?: number;
   skipped?: boolean;
+  refunded?: boolean;
 };
 
 export const runSubscriptionRenewalStep = createStep(
@@ -42,6 +43,14 @@ export const runSubscriptionRenewalStep = createStep(
       }>>;
     };
 
+    const claimed = await subscriptionService.claimForRenewal(subscriptionId);
+    if (!claimed) {
+      return new StepResponse({
+        renewed: false,
+        skipped: true,
+      });
+    }
+
     const sub = await subscriptionService.retrieveSubscription(subscriptionId);
     if (!sub) throw new Error("Subscription not found");
 
@@ -67,15 +76,13 @@ export const runSubscriptionRenewalStep = createStep(
     const unitPrice = Math.round(rawPrice * (1 - discount));
     const totalAmount = unitPrice * (sub.quantity ?? 1);
 
-    const apiKey = process.env.STRIPE_API_KEY;
-    if (!apiKey) throw new Error("STRIPE_API_KEY not set");
-
-    const stripe = new Stripe(apiKey);
+    const stripe = getStripeClient();
+    const stripeAmountOre = Math.max(1, Math.round(totalAmount));
     let chargeSuccess = false;
+    let paymentIntentId: string | null = null;
     try {
-      // Medusa calculated_amount is in minor units (øre); Stripe DKK expects amount in øre. Round to nearest 100 øre.
-      await stripe.paymentIntents.create({
-        amount: Math.round(totalAmount / 100) * 100,
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: stripeAmountOre,
         currency: "dkk",
         customer: sub.stripe_customer_id,
         payment_method: sub.stripe_payment_method_id,
@@ -83,6 +90,7 @@ export const runSubscriptionRenewalStep = createStep(
         off_session: true,
         automatic_payment_methods: { enabled: true, allow_redirects: "never" },
       });
+      paymentIntentId = paymentIntent.id;
       chargeSuccess = true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -92,8 +100,11 @@ export const runSubscriptionRenewalStep = createStep(
         new Date(Date.now() + 24 * 60 * 60 * 1000)
       );
       if ((sub.retry_count ?? 0) >= 2) {
-        await subscriptionService.setOnHold(subscriptionId);
+        await subscriptionService.setOnHold(subscriptionId, "stripe_charge_failed");
       }
+      await subscriptionService.setFailureContext(subscriptionId, "stripe_charge_failed", {
+        stripe_charge_error: msg,
+      });
       return new StepResponse({
         renewed: false,
         error: msg,
@@ -163,28 +174,72 @@ export const runSubscriptionRenewalStep = createStep(
     const orderModule = container.resolve(Modules.ORDER) as {
       createOrders: (data: unknown[]) => Promise<Array<{ id: string }>>;
     };
-    const [order] = await orderModule.createOrders([
-      {
-        ...createOrderInput,
-        status: "pending",
-      },
-    ]);
-    if (!order?.id) throw new Error("Order creation failed");
+    try {
+      const [order] = await orderModule.createOrders([
+        {
+          ...createOrderInput,
+          status: "pending",
+        },
+      ]);
+      if (!order?.id) throw new Error("Order creation failed");
 
-    await link.create([
-      {
-        [SUBSCRIPTION_MODULE]: { subscription_id: subscriptionId },
-        [Modules.ORDER]: { order_id: order.id },
-      },
-    ]);
+      await link.create([
+        {
+          [SUBSCRIPTION_MODULE]: { subscription_id: subscriptionId },
+          [Modules.ORDER]: { order_id: order.id },
+        },
+      ]);
 
-    await subscriptionService.incrementDeliveryCount(subscriptionId);
-    await subscriptionService.advanceNextRenewal(subscriptionId);
-    await subscriptionService.clearRetryState(subscriptionId);
+      await subscriptionService.incrementDeliveryCount(subscriptionId);
+      await subscriptionService.advanceNextRenewal(subscriptionId, order.id);
+      await subscriptionService.clearRetryState(subscriptionId);
+      await subscriptionService.updateSubscriptions([
+        {
+          id: subscriptionId,
+          last_failure_reason: null,
+        },
+      ]);
 
-    return new StepResponse({
-      renewed: true,
-      orderId: order.id,
-    });
+      return new StepResponse({
+        renewed: true,
+        orderId: order.id,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      let refunded = false;
+
+      if (paymentIntentId) {
+        try {
+          await stripe.refunds.create({
+            payment_intent: paymentIntentId,
+            reason: "requested_by_customer",
+            metadata: {
+              subscription_id: subscriptionId,
+              renewal_recovery: "order_creation_failed",
+            },
+          });
+          refunded = true;
+        } catch (refundErr) {
+          await subscriptionService.setFailureContext(subscriptionId, "order_creation_failed_refund_failed", {
+            refund_error: refundErr instanceof Error ? refundErr.message : String(refundErr),
+          });
+        }
+      }
+
+      await subscriptionService.setFailureContext(
+        subscriptionId,
+        refunded ? "order_creation_failed_charge_refunded" : "order_creation_failed",
+        {
+          renewal_order_error: msg,
+          payment_intent_id: paymentIntentId,
+        }
+      );
+
+      return new StepResponse({
+        renewed: false,
+        error: `Order creation failed${refunded ? ", charge refunded" : ""}: ${msg}`,
+        refunded,
+      });
+    }
   }
 );

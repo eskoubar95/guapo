@@ -20,6 +20,8 @@ export default async function linkShipmondoToLocation({ container }: ExecArgs) {
 
   if (!hasShipmondo) {
     logger.warn("Shipmondo env not set (SHIPMONDO_API_USER+API_KEY or SHIPMONDO_SHIPPING_MODULE_KEY). Provider may not be registered.");
+    process.exitCode = 1;
+    return;
   }
 
   const locations = await stockLocationModule.listStockLocations({});
@@ -28,6 +30,7 @@ export default async function linkShipmondoToLocation({ container }: ExecArgs) {
     return;
   }
 
+  let failed = false;
   for (const loc of locations) {
     try {
       await link.create({
@@ -41,7 +44,12 @@ export default async function linkShipmondoToLocation({ container }: ExecArgs) {
         logger.info(`Shipmondo already linked to ${loc.name}`);
       } else {
         logger.warn(`Could not link Shipmondo to ${loc.name}: ${msg}`);
+        failed = true;
       }
     }
+  }
+
+  if (failed) {
+    process.exitCode = 1;
   }
 }

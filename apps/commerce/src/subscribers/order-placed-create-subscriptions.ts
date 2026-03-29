@@ -4,7 +4,36 @@ import type { LinkDefinition } from "@medusajs/framework/types";
 import { SUBSCRIPTION_MODULE } from "../modules/subscription";
 import type SubscriptionModuleService from "../modules/subscription/service";
 
-const DEFAULT_DISCOUNT_PERCENT = 20;
+const DEFAULT_DISCOUNT_PERCENT = 5;
+const ALLOWED_CYCLE_WEEKS = [4, 8, 12] as const;
+
+function isAtomicIdempotencyConflict(err: unknown): boolean {
+  const code = (err as { code?: string } | null)?.code;
+  const message = err instanceof Error ? err.message : String(err);
+  return (
+    code === "23505" &&
+    (message.includes("idx_subscription_idempotency_key_unique") ||
+      message.includes("subscription_idempotency_key"))
+  );
+}
+
+function extractDeliveryDataFromShippingMethodData(
+  data: Record<string, unknown> | null | undefined
+): Record<string, unknown> | null {
+  if (!data || typeof data !== "object") return null;
+  const servicePointId = data.service_point_id;
+  if (typeof servicePointId !== "string" || servicePointId.trim() === "") return null;
+
+  return {
+    service_point_id: data.service_point_id ?? null,
+    service_point_name: data.service_point_name ?? null,
+    service_point_address: data.service_point_address ?? null,
+    service_point_zipcode: data.service_point_zipcode ?? null,
+    service_point_city: data.service_point_city ?? null,
+    carrier_code: data.carrier_code ?? null,
+    service_code: data.service_code ?? null,
+  };
+}
 
 type OrderWithItems = {
   id: string;
@@ -25,6 +54,7 @@ type OrderWithItems = {
   }> | null;
   shipping_methods?: Array<{
     shipping_option_id?: string;
+    data?: Record<string, unknown> | null;
   }> | null;
 };
 
@@ -130,11 +160,32 @@ export default async function orderPlacedCreateSubscriptions({
   }
 
   const subscriptionService = container.resolve<SubscriptionModuleService>(SUBSCRIPTION_MODULE);
+  const existingForOrder = await subscriptionService.listSubscriptions({}, { take: 2000 }).then((list) =>
+    (list ?? []).filter((s) => (s.metadata as Record<string, unknown> | null)?.order_id === orderId)
+  );
+  const existingLineItemIds = new Set(
+    existingForOrder
+      .map((s) => (s.metadata as Record<string, unknown> | null)?.line_item_id)
+      .filter((lineItemId): lineItemId is string => typeof lineItemId === "string" && lineItemId.length > 0)
+  );
   const shippingOptionId = order.shipping_methods?.[0]?.shipping_option_id ?? "";
+  const deliveryData = extractDeliveryDataFromShippingMethodData(
+    order.shipping_methods?.[0]?.data ?? undefined
+  );
 
   const now = new Date();
   for (const item of subscriptionItems) {
     try {
+      if (!item.id || existingLineItemIds.has(item.id)) {
+        continue;
+      }
+      const idempotencyKey = `${orderId}:${item.id}`;
+      const existingForKey = await subscriptionService.retrieveByIdempotencyKey(idempotencyKey);
+      if (existingForKey?.id) {
+        existingLineItemIds.add(item.id);
+        continue;
+      }
+
       const cycleWeeks = (item.metadata as Record<string, unknown>)?.subscription_cycle as number;
       if (
         typeof cycleWeeks !== "number" ||
@@ -144,6 +195,9 @@ export default async function orderPlacedCreateSubscriptions({
         console.warn(
           `[order-placed-create-subscriptions] Invalid cycle_weeks (${cycleWeeks}) for item ${item.id}, skipping.`
         );
+        continue;
+      }
+      if (!(ALLOWED_CYCLE_WEEKS as readonly number[]).includes(cycleWeeks)) {
         continue;
       }
 
@@ -175,8 +229,11 @@ export default async function orderPlacedCreateSubscriptions({
           quantity,
           shipping_address: order.shipping_address ?? {},
           billing_address: order.billing_address ?? {},
+          delivery_data: deliveryData,
           shipping_option_id: shippingOptionId,
-          metadata: { order_id: orderId, line_item_id: item.id },
+          idempotency_key: idempotencyKey,
+          last_renewal_order_id: orderId,
+          metadata: { order_id: orderId, line_item_id: item.id, idempotency_key: idempotencyKey },
         },
       ]);
 
@@ -190,8 +247,17 @@ export default async function orderPlacedCreateSubscriptions({
             [Modules.ORDER]: { order_id: orderId },
           },
         ]);
+        existingLineItemIds.add(item.id);
       }
     } catch (err) {
+      if (isAtomicIdempotencyConflict(err)) {
+        const idempotencyKey = `${orderId}:${item.id}`;
+        const existing = await subscriptionService.retrieveByIdempotencyKey(idempotencyKey);
+        if (existing?.id) {
+          existingLineItemIds.add(item.id);
+          continue;
+        }
+      }
       console.error(
         `[order-placed-create-subscriptions] Failed to create subscription for line item ${item.id}:`,
         err instanceof Error ? err.message : String(err)

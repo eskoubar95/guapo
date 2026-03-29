@@ -34,26 +34,28 @@ export default async function cleanupLegacyShipmondoSeedOptions({ container }: E
     fields: ["fulfillment_sets.id"],
   });
   const locations = (locData ?? []) as { fulfillment_sets?: { id: string }[] }[];
-  const setId = locations.find((l) => l.fulfillment_sets?.length)?.fulfillment_sets?.[0]?.id;
-  if (!setId) {
+  const setIds = locations.flatMap((l) => l.fulfillment_sets?.map((s) => s.id) ?? []);
+  if (setIds.length === 0) {
     logger.warn("No stock location with fulfillment set found.");
     return;
   }
 
-  const zones = await fulfillmentModule.listServiceZones({ fulfillment_set: { id: setId } });
-  const dkZone = zones.find((z) => z.name === "Denmark" || z.name === "Denmark Zone");
-  if (!dkZone) {
-    logger.warn("Denmark service zone not found.");
-    return;
+  const toDelete: ShippingOptionRow[] = []
+  for (const setId of setIds) {
+    const zones = await fulfillmentModule.listServiceZones({ fulfillment_set: { id: setId } });
+    const dkZone = zones.find((z) => z.name === "Denmark" || z.name === "Denmark Zone");
+    if (!dkZone) {
+      continue
+    }
+    const list = await fulfillmentModule.listShippingOptions({ service_zone: { id: dkZone.id } });
+    toDelete.push(
+      ...list.filter(
+        (r) =>
+          r.provider_id === SHIPMONDO_PROVIDER_ID &&
+          r.type?.code === LEGACY_SHIPPING_OPTION_TYPE_CODE
+      )
+    )
   }
-
-  const list = await fulfillmentModule.listShippingOptions({ service_zone: { id: dkZone.id } });
-
-  const toDelete = list.filter(
-    (r) =>
-      r.provider_id === SHIPMONDO_PROVIDER_ID &&
-      r.type?.code === LEGACY_SHIPPING_OPTION_TYPE_CODE
-  );
 
   if (toDelete.length === 0) {
     logger.info("No legacy Shipmondo seed options (type code pakkeshop) to remove.");

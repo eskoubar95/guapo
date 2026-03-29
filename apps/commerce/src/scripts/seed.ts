@@ -280,8 +280,12 @@ export default async function seed({ container }: ExecArgs) {
       const allInZone = await fulfillmentModule.listShippingOptions({ service_zone: { id: dkZone.id } });
       const legacyDeleteIds = allInZone
         .filter((r) => {
+          const providerId = (r as { provider_id?: string }).provider_id;
           const typeCode = (r as { type?: { code?: string } }).type?.code;
-          return r.name === "Pakkeshop (39 kr)" || typeCode === "gls-pakkeshop";
+          return (
+            providerId === "shipmondo_shipmondo" &&
+            (r.name === "Pakkeshop (39 kr)" || typeCode === "gls-pakkeshop")
+          );
         })
         .map((r) => r.id);
       if (legacyDeleteIds.length > 0) {

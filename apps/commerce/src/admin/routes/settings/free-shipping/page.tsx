@@ -13,6 +13,7 @@ type FreeShippingSettings = {
 
 const FreeShippingSettingsPage = () => {
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [threshold, setThreshold] = useState("")
   const [promotionCode, setPromotionCode] = useState("")
@@ -26,29 +27,38 @@ const FreeShippingSettingsPage = () => {
 
   const load = useCallback(async () => {
     setLoading(true)
+    setLoadError(null)
     try {
       const res = await fetch(`${BASE}/admin/guapo-free-shipping/settings`, {
         credentials: "include",
       })
       if (!res.ok) {
         const j = await res.json().catch(() => ({}))
-        toast.error(j?.message || `Could not load settings (${res.status})`)
+        const message = j?.message || `Could not load settings (${res.status})`
+        setLoadError(message)
+        toast.error(message)
         return
       }
       const dto: FreeShippingSettings = await res.json()
       applyDto(dto)
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to load free shipping settings")
+      const message = e instanceof Error ? e.message : "Failed to load free shipping settings"
+      setLoadError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
   }, [applyDto])
 
   useEffect(() => {
-    load()
+    void load()
   }, [load])
 
   const save = async () => {
+    if (loadError) {
+      toast.error("Cannot save while settings failed to load.")
+      return
+    }
     const thresholdNum = Number.parseFloat(threshold.replace(",", "."))
     if (!Number.isFinite(thresholdNum) || thresholdNum <= 0) {
       toast.error("Threshold must be a positive number (DKK).")
@@ -94,6 +104,27 @@ const FreeShippingSettingsPage = () => {
     return (
       <Container>
         <Text className="p-6">Loading…</Text>
+      </Container>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <Container className="divide-y p-0">
+        <div className="flex flex-col gap-2 px-6 py-4">
+          <Heading level="h1">Free shipping</Heading>
+          <Text className="text-ui-fg-subtle">
+            Could not load current settings. Retry before making changes.
+          </Text>
+        </div>
+        <div className="flex flex-col gap-3 px-6 py-4 max-w-md">
+          <Text size="small" className="text-ui-fg-subtle">
+            {loadError}
+          </Text>
+          <Button type="button" size="small" onClick={() => void load()}>
+            Retry
+          </Button>
+        </div>
       </Container>
     )
   }

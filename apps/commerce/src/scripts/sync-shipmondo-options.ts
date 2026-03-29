@@ -13,5 +13,6 @@ export default async function syncShipmondoOptions({ container }: ExecArgs) {
     logger.info(result.message);
   } catch (e) {
     logger.error(`Sync failed: ${e instanceof Error ? e.message : String(e)}`);
+    throw e;
   }
 }

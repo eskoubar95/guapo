@@ -104,7 +104,7 @@ const SubscriptionsPage = () => {
   }, [page, statusFilter])
 
   useEffect(() => {
-    loadSubscriptions()
+    void loadSubscriptions()
   }, [loadSubscriptions])
 
   const toggleSelect = (id: string) => {
@@ -140,12 +140,16 @@ const SubscriptionsPage = () => {
           align_dates: true,
         }),
       })
-      const json = await res.json()
+      const json: { message?: string; group_id?: string } = await res.json().catch(() => ({}))
       if (!res.ok) {
-        throw new Error((json as { message?: string })?.message ?? "Merge failed")
+        throw new Error(json.message ?? "Merge failed")
       }
-      toast.success(`Merged ${selected.size} subscriptions into group ${String(json.group_id).slice(0, 8)}…`)
-      loadSubscriptions()
+      toast.success(
+        json.group_id
+          ? `Merged ${selected.size} subscriptions into group ${json.group_id.slice(0, 8)}…`
+          : `Merged ${selected.size} subscriptions`
+      )
+      void loadSubscriptions()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Merge failed")
     } finally {
@@ -221,6 +225,7 @@ const SubscriptionsPage = () => {
                     <Checkbox
                       checked={allSelected}
                       onCheckedChange={toggleAll}
+                      aria-label="Select all subscriptions on this page"
                     />
                   </Table.HeaderCell>
                   <Table.HeaderCell>ID</Table.HeaderCell>
@@ -243,6 +248,7 @@ const SubscriptionsPage = () => {
                       <Checkbox
                         checked={selected.has(s.id)}
                         onCheckedChange={() => toggleSelect(s.id)}
+                        aria-label={`Select subscription ${s.id}`}
                       />
                     </Table.Cell>
                     <Table.Cell>

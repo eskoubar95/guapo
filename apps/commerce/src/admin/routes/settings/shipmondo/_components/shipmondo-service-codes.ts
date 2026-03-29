@@ -7,8 +7,12 @@ export function buildServiceCodesString(email: boolean, sms: boolean): string {
 }
 
 export function parseServiceCodes(raw: string | undefined): { email: boolean; sms: boolean } {
-  if (!raw || typeof raw !== "string") return { email: true, sms: true }
-  const parts = raw.split(",").map((s) => s.trim().toUpperCase())
+  if (raw == null) return { email: true, sms: true }
+  if (typeof raw !== "string" || raw.trim() === "") return { email: false, sms: false }
+  const parts = raw
+    .split(",")
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean)
   return {
     email: parts.includes("EMAIL_NT"),
     sms: parts.includes("SMS_NT"),

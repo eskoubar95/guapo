@@ -19,6 +19,12 @@ export default async function purgeOrders({ container }: ExecArgs) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const knex: any = container.resolve(ContainerRegistrationKeys.PG_CONNECTION);
 
+  if (process.env.CONFIRM_PURGE_ORDERS !== "DELETE_ALL_ORDERS") {
+    logger.error("Refusing to purge orders. Re-run with CONFIRM_PURGE_ORDERS=DELETE_ALL_ORDERS.");
+    process.exitCode = 1;
+    return;
+  }
+
   const [{ count }] = await knex("medusa.order").count();
   if (count === "0") {
     logger.info("No orders found — nothing to purge.");
