@@ -1671,3 +1671,163 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 - Loading/empty/error states bevaret.
 
 **Estimate:** L
+
+---
+
+## M11 — Storefront–CMS synergi og UX-polering
+
+*Linear: M11 oprettes som Milestone Project; tasks synkroniseres som issues. Se [work/backlog/m11-linear-log.md](work/backlog/m11-linear-log.md) for oprettelse og status. Branch: `task/m11-storefront-cms-synergy`.*
+
+### Task: t11.1
+
+**Description:** Payload API til Homepage. I storefront: hent Homepage global fra Payload (`/api/globals/homepage` eller tilsvarende), map sections til eksisterende section-komponenter (PromotionSlider, FeaturedProducts, CategoryStrip, osv.). Erstat `home-mock` på forsiden.
+
+**Workspace:** apps/storefront
+
+**Status:** done
+
+**Tags:** storefront, cms
+
+**Milestone:** M11
+
+**Dependencies:** (CMS Homepage global klar fra M7/t7.12)
+
+**Acceptance:**
+- Forside viser indhold fra CMS; redaktør kan ændre forsiden i Payload og se det på storefront.
+
+**Estimate:** M
+
+**Notes:** Linear: GUA-96
+
+### Task: t11.2
+
+**Description:** Payload API til Navigation. Hent Navigation global; brug mainMenu (og evt. ctaButton) i Header/SidebarMenu.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** storefront, cms
+
+**Milestone:** M11
+
+**Acceptance:**
+- Menu-punkter og struktur styres fra CMS; storefront viser dem korrekt (desktop + mobil).
+
+**Estimate:** M
+
+**Notes:** Linear: GUA-97
+
+### Task: t11.3
+
+**Description:** Footer fra CMS. Hvis Payload har Footer global eller pages-struktur til footer-links: hent og brug i Footer. Ellers: dokumenter at footer stadig er hardcodet og evt. opret CMS-model + task til senere.
+
+**Workspace:** apps/storefront (evt. apps/cms)
+
+**Status:** backlog
+
+**Tags:** storefront, cms
+
+**Milestone:** M11
+
+**Acceptance:**
+- Besluttet og enten implementeret eller dokumenteret med klar opfølgning.
+
+**Estimate:** S
+
+**Notes:** Linear: GUA-98
+
+### Task: t11.4
+
+**Description:** Blog list + artikel fra Payload. Hent artikler fra Payload (REST/GraphQL); blog-liste med slug, titel, excerpt, dato, kategori. Artikelside: hent by slug, brug SEO-felter og body.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** storefront, cms
+
+**Milestone:** M11
+
+**Acceptance:**
+- `/blog` og `/blog/[slug]` viser data fra CMS; tom/fejl håndteres.
+
+**Estimate:** M
+
+**Notes:** Linear: GUA-99
+
+### Task: t11.5
+
+**Description:** Søgning mod Medusa (ingen Algolia i MVP). Undersøg Medusa store products API for søgning (f.eks. q eller title-filter). Implementer fetchProductsSearch i medusa-products.ts og brug det på search-siden. SearchModal fortsat med redirect til /[locale]/search?q=...
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** storefront, search
+
+**Milestone:** M11
+
+**Acceptance:**
+- Søgning viser reelle produkter fra Medusa; loading og "ingen resultater" vises korrekt.
+
+**Estimate:** M
+
+**Notes:** Linear: GUA-100
+
+### Task: t11.6
+
+**Description:** Auth-notifikationer og returnUrl. Når bruger ikke er logget ind og rammer auth-gated route: vis kort besked (toast eller inline) "Du er ikke logget ind" før redirect til login (eller på login-siden). Evt. gem returnUrl (fx i query) og efter login redirect til den side.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** storefront, auth
+
+**Milestone:** M11
+
+**Acceptance:**
+- Bruger får tydelig feedback; evt. returnUrl fungerer; ingen funktionsregression i AccountGate.
+
+**Estimate:** S
+
+**Notes:** Linear: GUA-101
+
+### Task: t11.7
+
+**Description:** Sitemap-side gennemgang. Gennemgå hver side i spec/09-sitemap.md: design-tokens (spec/07-design-system.md), loading/empty/error states, data-kilde (Medusa/CMS) korrekt. Prioriter: Home, PLP (kategori/concern/brand), PDP, Cart, Checkout, Order confirmation, Account (orders/subscriptions), Blog, Support (FAQ, Contact), Policies.
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** storefront, design
+
+**Milestone:** M11
+
+**Acceptance:**
+- Checkliste per side (eller per side-type) opfyldt; resterende gaps noteret som opgaver eller accepteret.
+
+**Estimate:** L
+
+**Notes:** Linear: GUA-102
+
+### Task: t11.8
+
+**Description:** Notifikations-/toast-system. Hvis ikke allerede på plads: indfør et let toast/notification-system (fx Sonner eller eget) til auth-feedback og evt. andre brugerbeskeder (fx "Tilføjet til kurv").
+
+**Workspace:** apps/storefront
+
+**Status:** backlog
+
+**Tags:** storefront, design
+
+**Milestone:** M11
+
+**Acceptance:**
+- Toast bruges ved auth-redirect og evt. 1–2 andre kritiske flows; ingen konflikt med eksisterende UI.
+
+**Estimate:** S
+
+**Notes:** Linear: GUA-103
