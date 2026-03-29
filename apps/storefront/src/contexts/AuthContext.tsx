@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { medusa } from "@/lib/medusa";
+import { getSafeReturnUrl } from "@/lib/auth-utils";
 
 type Customer = { id: string; email?: string | null; first_name?: string | null; last_name?: string | null; [k: string]: unknown };
 
@@ -51,9 +52,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setCustomer(null);
       setLoading(false);
-      const to = options?.redirectTo?.trim();
+      const to = options?.redirectTo;
       if (typeof window !== "undefined" && to) {
-        window.location.replace(to.startsWith("/") ? to : `/${to}`);
+        window.location.replace(getSafeReturnUrl(to, "/"));
       }
     }
   }, []);

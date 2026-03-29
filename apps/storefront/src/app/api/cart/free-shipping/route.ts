@@ -8,6 +8,7 @@ const MEDUSA_URL = (
   process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
 ).replace(/\/$/, "");
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
+const UPSTREAM_TIMEOUT_MS = 5000;
 
 export async function GET() {
   try {
@@ -18,10 +19,13 @@ export async function GET() {
     };
 
     if (!cartId) {
+      const cfgController = new AbortController();
+      const cfgTimeoutId = setTimeout(() => cfgController.abort(), UPSTREAM_TIMEOUT_MS);
       const cfgRes = await fetch(`${MEDUSA_URL}/store/free-shipping-config`, {
         headers,
         cache: "no-store",
-      });
+        signal: cfgController.signal,
+      }).finally(() => clearTimeout(cfgTimeoutId));
       if (cfgRes.ok) {
         const cfg = (await cfgRes.json()) as {
           threshold?: number;
@@ -51,14 +55,20 @@ export async function GET() {
       );
     }
 
+    const statusController = new AbortController();
+    const statusTimeoutId = setTimeout(() => statusController.abort(), UPSTREAM_TIMEOUT_MS);
     const res = await fetch(
       `${MEDUSA_URL}/store/free-shipping-status?cart_id=${encodeURIComponent(cartId)}`,
-      { headers, cache: "no-store" }
-    );
+      { headers, cache: "no-store", signal: statusController.signal }
+    ).finally(() => clearTimeout(statusTimeoutId));
     if (!res.ok) {
       const errText = await res.text();
+      console.error("[free-shipping] Upstream request failed", {
+        status: res.status,
+        hasBody: Boolean(errText),
+      });
       return NextResponse.json(
-        { message: errText || "Free shipping status failed", code: "UPSTREAM_ERROR" },
+        { message: "Free shipping status failed", code: "UPSTREAM_ERROR" },
         { status: res.status }
       );
     }

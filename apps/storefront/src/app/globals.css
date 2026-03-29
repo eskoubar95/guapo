@@ -170,19 +170,24 @@
   border-radius: var(--radius-lg);
 }
 
-/* Focus: active border only, no focus ring (spec/07) */
-*:focus {
+/* Focus: visible state on interactive controls (spec/07: border-focused, no ring) */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible {
   outline: none;
 }
-*:focus-visible {
-  outline: none;
-}
-input:focus,
-textarea:focus,
-select:focus,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
 button:focus-visible {
   border: 2px solid var(--primary);
-  outline: none;
+}
+a:focus-visible,
+[role="button"]:focus-visible {
+  border-bottom: 2px solid var(--primary);
 }
 
 /* Force light mode + prevent horizontal scroll on mobile.
@@ -382,8 +387,6 @@ html {
 .search-modal-input:active {
   outline: none !important;
   box-shadow: none !important;
-  border: none !important;
-  border-color: transparent !important;
 }
 
 /* Design is light-only: no prefers-color-scheme override. */
