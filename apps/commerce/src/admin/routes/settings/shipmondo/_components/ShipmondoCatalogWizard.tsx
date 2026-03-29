@@ -86,6 +86,14 @@ export function ShipmondoCatalogWizard({ onApplied }: { onApplied: () => Promise
     }
   }, [open, resetWizardState])
 
+  const handleOpenChange = useCallback((nextOpen: boolean) => {
+    if (!nextOpen) {
+      // Invalidate current async session immediately when closing.
+      wizardSessionRef.current += 1
+    }
+    setOpen(nextOpen)
+  }, [])
+
   const handleToggleCarrier = (carrierKey: string, on: boolean) => {
     setSelectedCarriers((prev) => {
       const next = new Set(prev)
@@ -182,19 +190,21 @@ export function ShipmondoCatalogWizard({ onApplied }: { onApplied: () => Promise
       toast.error(e instanceof Error ? e.message : "Netværksfejl")
       setApiCarriers([])
     } finally {
-      if (!open || wizardSessionRef.current !== sessionId) return
-      setLoadingCarriers(false)
+      if (open && wizardSessionRef.current === sessionId) {
+        setLoadingCarriers(false)
+      }
     }
   }, [open])
 
   const loadProductsForCarriers = useCallback(async () => {
     const codes = Array.from(selectedCarriers)
+    const normalizedSender = sender.trim() || receiver
     const sessionId = wizardSessionRef.current
     setLoadingProducts(true)
     try {
       const results = await Promise.all(
         codes.map((c) =>
-          fetchProductsForCarrier(receiver, sender, c).catch((err) => {
+          fetchProductsForCarrier(receiver, normalizedSender, c).catch((err) => {
             toast.error(err instanceof Error ? err.message : String(err))
             return [] as CatalogProductRich[]
           })
@@ -216,8 +226,9 @@ export function ShipmondoCatalogWizard({ onApplied }: { onApplied: () => Promise
       }
       setStep(3)
     } finally {
-      if (!open || wizardSessionRef.current !== sessionId) return
-      setLoadingProducts(false)
+      if (open && wizardSessionRef.current === sessionId) {
+        setLoadingProducts(false)
+      }
     }
   }, [open, receiver, sender, selectedCarriers])
 
@@ -265,6 +276,8 @@ export function ShipmondoCatalogWizard({ onApplied }: { onApplied: () => Promise
       toast.error("Vælg mindst ét produkt")
       return
     }
+    const sessionId = wizardSessionRef.current
+    const normalizedSender = sender.trim() || receiver
     setApplying(true)
     try {
       const product_selections = Array.from(selectedProducts).map((code) => {
@@ -284,7 +297,7 @@ export function ShipmondoCatalogWizard({ onApplied }: { onApplied: () => Promise
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           receiver_country: receiver,
-          sender_country: sender || undefined,
+          sender_country: normalizedSender,
           product_selections,
           service_point_only: false,
         }),
@@ -298,6 +311,9 @@ export function ShipmondoCatalogWizard({ onApplied }: { onApplied: () => Promise
         toast.info(j.message || "Delvist opdateret", { description: j.errors.join("\n") })
       } else {
         toast.success(j.message || "Opdateret")
+      }
+      if (wizardSessionRef.current !== sessionId) {
+        return
       }
       setOpen(false)
       try {
@@ -319,11 +335,11 @@ export function ShipmondoCatalogWizard({ onApplied }: { onApplied: () => Promise
 
   return (
     <>
-      <Button type="button" variant="secondary" onClick={() => setOpen(true)}>
+      <Button type="button" variant="secondary" onClick={() => handleOpenChange(true)}>
         Tilføj fra Shipmondo
       </Button>
 
-      <FocusModal open={open} onOpenChange={setOpen}>
+      <FocusModal open={open} onOpenChange={handleOpenChange}>
         <FocusModal.Content className="flex max-h-[92vh] max-w-2xl flex-col overflow-hidden rounded-xl shadow-xl">
           <FocusModal.Header className="border-b border-ui-border-base px-6 py-4">
             <FocusModal.Title className="text-lg">Opsæt levering fra Shipmondo</FocusModal.Title>
@@ -394,7 +410,7 @@ export function ShipmondoCatalogWizard({ onApplied }: { onApplied: () => Promise
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ui-border-base bg-ui-bg-subtle-hover/30 px-6 py-4">
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
+              <Button type="button" variant="secondary" onClick={() => handleOpenChange(false)}>
                 Luk
               </Button>
               {step > 1 ? (

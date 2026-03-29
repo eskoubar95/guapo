@@ -77,7 +77,11 @@ const ShipmondoSettingsPage = () => {
         const j = await res.json().catch(() => ({}))
         throw new Error(j.message || "Kunne ikke opdatere")
       }
-      await refreshEnabled()
+      try {
+        await refreshEnabled()
+      } catch {
+        toast.info("Ændringen blev gemt, men listen kunne ikke genindlæses endnu.")
+      }
     },
     [refreshEnabled]
   )
@@ -109,7 +113,11 @@ const ShipmondoSettingsPage = () => {
         })
         if (res.ok) {
           toast.success("Priser gemt")
-          await refreshOptions()
+          try {
+            await refreshOptions()
+          } catch {
+            toast.info("Prisen blev gemt, men listen kunne ikke genindlæses endnu.")
+          }
         } else {
           const j = await res.json().catch(() => ({}))
           toast.error(j?.message || "Kunne ikke gemme")

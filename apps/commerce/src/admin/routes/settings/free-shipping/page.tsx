@@ -11,6 +11,17 @@ type FreeShippingSettings = {
   enabled: boolean
 }
 
+const isFreeShippingSettings = (value: unknown): value is FreeShippingSettings => {
+  if (!value || typeof value !== "object") return false
+  const record = value as Record<string, unknown>
+  return (
+    typeof record.threshold_amount === "number" &&
+    Number.isFinite(record.threshold_amount) &&
+    typeof record.promotion_code === "string" &&
+    typeof record.enabled === "boolean"
+  )
+}
+
 const FreeShippingSettingsPage = () => {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -39,7 +50,10 @@ const FreeShippingSettingsPage = () => {
         toast.error(message)
         return
       }
-      const dto: FreeShippingSettings = await res.json()
+      const dto = await res.json()
+      if (!isFreeShippingSettings(dto)) {
+        throw new Error("Invalid free shipping settings response")
+      }
       applyDto(dto)
     } catch (e) {
       const message = e instanceof Error ? e.message : "Failed to load free shipping settings"
@@ -91,7 +105,10 @@ const FreeShippingSettingsPage = () => {
         }
         return
       }
-      applyDto(j as FreeShippingSettings)
+      if (!isFreeShippingSettings(j)) {
+        throw new Error("Invalid save response payload")
+      }
+      applyDto(j)
       toast.success("Free shipping settings saved")
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Save failed")
