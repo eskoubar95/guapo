@@ -22,7 +22,7 @@ export function CampaignSection({
   if (layout === "background" && image) {
     return (
       <section className="py-8 lg:py-12 bg-background">
-        <div className="container mx-auto px-4">
+        <div className="section-container">
           <div className="relative rounded-2xl overflow-hidden min-h-[300px] lg:min-h-[400px]">
             <ImageWithFallback
               src={image}
@@ -31,7 +31,7 @@ export function CampaignSection({
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/30" />
             <div className="relative z-10 p-8 lg:p-12 flex flex-col justify-center h-full max-w-2xl">
-              <h2 className="text-3xl lg:text-5xl font-bold text-white mb-4">
+              <h2 className="section-heading text-white mb-4">
                 {title}
               </h2>
               {description && (
@@ -59,13 +59,13 @@ export function CampaignSection({
 
   return (
     <section className="py-12 lg:py-16 bg-surface-muted/50">
-      <div className="container mx-auto px-4">
+      <div className="section-container">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl lg:text-5xl font-bold text-primary mb-4">
+          <h2 className="section-heading text-primary mb-4">
             {title}
           </h2>
           {description && (
-            <p className="text-muted-foreground mb-8 text-base lg:text-lg">
+            <p className="text-text-muted mb-8 text-base lg:text-lg">
               {description}
             </p>
           )}

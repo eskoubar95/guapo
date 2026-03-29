@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<title>Guapo — Beauty of Joseon Desktop 2560×875</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;700&family=Inter:wght@300;400;500;600&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary:    #051537;
+    --border:     #e8ecf2;
+    --text-sec:   #4a5568;
+    --text-muted: #7b8599;
+
+    /* Beauty of Joseon palette */
+    --boj-dark:    #2a1a08;
+    --boj-mid:     #8b5e3c;
+    --boj-gold:    #c49060;
+    --boj-light:   #f5ede0;
+    --boj-cream:   #faf4ec;
+    --boj-amber:   #e8b870;
+
+    --radius-md: 6px;
+    --radius-lg: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #eee8df;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 60px;
+  }
+
+  /* ── Banner: 2560×875 ── */
+  .banner {
+    position: relative;
+    width: 2560px;
+    height: 875px;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(196, 144, 96, 0.35);
+    overflow: hidden;
+    background: var(--boj-cream);
+    display: flex;
+    flex-shrink: 0;
+  }
+
+  /* Diagonal stripe signature — warm tone */
+  .banner::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(
+      -52deg,
+      transparent 0px, transparent 44px,
+      rgba(139,94,60,0.055) 44px, rgba(139,94,60,0.055) 46px
+    );
+    z-index: 0; pointer-events: none;
+  }
+
+  /* ── Left zone: dark ── */
+  .banner-left {
+    position: relative; z-index: 2;
+    flex: 0 0 38%;
+    background: var(--boj-dark);
+    padding: 100px 110px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+
+  /* stripes on dark bg */
+  .banner-left::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(
+      -52deg,
+      transparent 0px, transparent 44px,
+      rgba(255,255,255,0.03) 44px, rgba(255,255,255,0.03) 46px
+    );
+    z-index: 0; pointer-events: none;
+  }
+
+  /* Wordmark = primær titel (ingen duplikeret stor overskrift) */
+  .boj-logo-wordmark {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: auto;
+    height: 72px;
+    max-width: min(480px, 100%);
+    object-fit: contain;
+    object-position: left center;
+    margin-bottom: 28px;
+    filter: invert(1) brightness(1.12);
+    opacity: 0.95;
+  }
+
+  .eyebrow {
+    position: relative; z-index: 1;
+    font-size: 19px; font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: none;
+    color: var(--boj-gold);
+    margin-bottom: 22px;
+  }
+
+  .tagline {
+    position: relative; z-index: 1;
+    font-family: 'Noto Serif', serif;
+    font-style: italic;
+    font-size: 24px; color: rgba(245,237,224,0.58);
+    margin-bottom: 40px; letter-spacing: 0.03em;
+    line-height: 1.45;
+    max-width: 28ch;
+  }
+
+  /* category pills */
+  .pills {
+    position: relative; z-index: 1;
+    display: flex; flex-wrap: wrap; gap: 14px;
+    margin-bottom: 56px;
+  }
+
+  .pill {
+    padding: 10px 24px; border-radius: var(--radius-md);
+    border: 1px solid rgba(196,144,96,0.35);
+    font-size: 20px; color: var(--boj-gold);
+    font-weight: 500; letter-spacing: 0.04em;
+  }
+
+  .btn-primary {
+    position: relative; z-index: 1;
+    display: inline-block;
+    padding: 24px 60px; border-radius: var(--radius-md);
+    background: var(--boj-gold); color: var(--boj-dark);
+    font-family: 'Inter', sans-serif;
+    font-size: 24px; font-weight: 700;
+    letter-spacing: 0.05em; border: none;
+    cursor: pointer; text-decoration: none;
+    width: fit-content;
+  }
+
+  /* ── SVG curve divider ── */
+  .curve-divider {
+    position: absolute;
+    left: calc(38% - 2px); top: 0;
+    width: 110px; height: 100%;
+    z-index: 3; pointer-events: none;
+  }
+
+  /* ── Right zone: product grid ── */
+  .banner-right {
+    position: relative; z-index: 2;
+    flex: 1;
+    background: var(--boj-cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 72px 40px 108px;
+    overflow: hidden;
+  }
+
+  /* subtle warm radial glow behind products */
+  .banner-right::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 900px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(196,144,96,0.1) 0%, transparent 70%);
+    z-index: 0; pointer-events: none;
+  }
+
+  /*
+   * Produktrække: grid + samme stage-højde = fælles underkant på boksen.
+   * Midterfelt (150 ml) bredere + scale — stadig transform-origin: bottom center.
+   * Små translateY på packshots udligner typisk forskellig luft i PNG-kanvas.
+   */
+  .products {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.52fr) minmax(0, 1fr);
+    align-items: end;
+    justify-items: center;
+    gap: 28px;
+    width: 100%;
+    max-width: 1760px;
+    margin: 0 auto;
+  }
+
+  .boj-img-wrap {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    flex-shrink: 0;
+    /* Alle tre samme højde → samme bundlinje for img-boksen */
+    height: 660px;
+    overflow: visible;
+  }
+
+  .boj-img-wrap--relief {
+    width: min(318px, 23vw);
+  }
+
+  .boj-img-wrap--essence {
+    width: min(500px, 36vw);
+  }
+
+  .boj-img-wrap--cream {
+    width: min(348px, 25vw);
+  }
+
+  /* Finjustering af visuel bund (transparent kanvas varierer pr. foto) */
+  .boj-shot--relief {
+    transform: translateY(4px);
+  }
+
+  .boj-shot--essence {
+    transform: translateY(2px) scale(1.28);
+    transform-origin: bottom center;
+  }
+
+  .boj-shot--cream {
+    transform: translateY(6px);
+  }
+
+  /* Hård, grafisk “cut-out”-skygge (0 blur) + let dybde */
+  .boj-shot {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    object-position: bottom center;
+    filter:
+      drop-shadow(10px 12px 0 rgba(42, 26, 8, 0.38))
+      drop-shadow(20px 24px 0 rgba(196, 144, 96, 0.12));
+  }
+
+</style>
+</head>
+<body>
+
+<div class="banner">
+
+  <!-- Left: dark text zone -->
+  <div class="banner-left">
+    <div class="eyebrow">Udvalgte produkter fra</div>
+    <img
+      class="boj-logo-wordmark"
+      src="./boj-logo.png"
+      alt="Beauty of Joseon"
+      width="520"
+      height="49"
+    />
+    <p class="tagline">Hanbang-hudpleje inspireret af Joseon-traditionen.</p>
+    <div class="pills">
+      <span class="pill">Essence</span>
+      <span class="pill">SPF</span>
+      <span class="pill">Creme</span>
+    </div>
+    <a class="btn-primary" href="#">Se kollektionen</a>
+  </div>
+
+  <!-- SVG curve -->
+  <svg class="curve-divider" viewBox="0 0 110 875" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M110,0 Q0,437 110,875 L0,875 L0,0 Z" fill="#2a1a08"/>
+  </svg>
+
+  <!-- Right: products -->
+  <div class="banner-right">
+
+    <div class="products">
+
+      <div class="boj-img-wrap boj-img-wrap--relief">
+        <img
+          class="boj-shot boj-shot--relief"
+          src="./boj-relief-sun.png"
+          alt="Relief Sun SPF50+"
+          width="500"
+          height="500"
+        />
+      </div>
+
+      <div class="boj-img-wrap boj-img-wrap--essence">
+        <img
+          class="boj-shot boj-shot--essence"
+          src="./boj-ginseng-essence-water.png"
+          alt="Ginseng Essence Water"
+          width="1000"
+          height="1000"
+        />
+      </div>
+
+      <div class="boj-img-wrap boj-img-wrap--cream">
+        <img
+          class="boj-shot boj-shot--cream"
+          src="./boj-dynasty-cream.png"
+          alt="Dynasty Cream"
+          width="1024"
+          height="1024"
+        />
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

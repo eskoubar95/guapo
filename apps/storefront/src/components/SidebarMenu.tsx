@@ -1,132 +1,60 @@
 "use client";
 
 import Link from "next/link";
-import { X, ChevronRight, ChevronLeft } from "lucide-react";
+import {
+  X,
+  ChevronRight,
+  ChevronLeft,
+  LayoutGrid,
+  Tag,
+  Sparkles,
+  ShoppingBag,
+  FileText,
+  Home,
+  type LucideIcon,
+} from "lucide-react";
 import { useEffect, useState } from "react";
+import type { NavSection, NavMenuItem, NavDropdownItem } from "@/lib/payload-navigation";
 
-type MenuItemType = "category" | "link" | "section-header";
+const ICON_MAP: Record<string, LucideIcon> = {
+  grid: LayoutGrid,
+  tag: Tag,
+  sparkles: Sparkles,
+  "shopping-bag": ShoppingBag,
+  "file-text": FileText,
+  home: Home,
+};
 
-interface SubmenuCategory {
-  name: string;
-  href: string;
+const iconClass = "h-5 w-5 shrink-0 text-text-muted";
+
+/** Render icon from Payload choice; none or unknown = no icon. */
+function MenuItemIcon({ icon }: { icon?: string | null }) {
+  if (!icon || icon === "none") return null;
+  const Icon = ICON_MAP[icon];
+  if (!Icon) return null;
+  return <Icon className={iconClass} aria-hidden />;
 }
-
-interface SubmenuSection {
-  title: string;
-  items: SubmenuCategory[];
-}
-
-interface SubmenuData {
-  title: string;
-  viewAllHref: string;
-  categories: SubmenuCategory[];
-  sections?: SubmenuSection[];
-}
-
-interface MenuItem {
-  name: string;
-  href?: string;
-  type: MenuItemType;
-  icon?: React.ComponentType<{ className?: string }>;
-  hasSubmenu?: boolean;
-  submenu?: SubmenuData;
-}
-
-const mainMenuItems: MenuItem[] = [
-  {
-    name: "Hudpleje",
-    type: "category",
-    hasSubmenu: true,
-    submenu: {
-      title: "Hudpleje",
-      viewAllHref: "/categories/hudpleje",
-      categories: [
-        { name: "Rensning", href: "/categories/rensning" },
-        { name: "Serum", href: "/categories/serum" },
-        { name: "Fugtighedscreme", href: "/categories/creme" },
-        { name: "Øjenpleje", href: "/categories/ojenpleje" },
-        { name: "Solbeskyttelse", href: "/categories/solbeskyttelse" },
-      ],
-      sections: [
-        {
-          title: "Shop efter behov",
-          items: [
-            { name: "Tør hud", href: "/concerns/tor-hud" },
-            { name: "Uren hud & Acne", href: "/concerns/uren-hud" },
-            { name: "Følsom hud", href: "/concerns/folsom-hud" },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    name: "Makeup",
-    type: "category",
-    hasSubmenu: true,
-    submenu: {
-      title: "Makeup",
-      viewAllHref: "/categories/makeup",
-      categories: [
-        { name: "Foundation", href: "/categories/foundation" },
-        { name: "Læbestift", href: "/categories/labestift" },
-        { name: "Mascara", href: "/categories/mascara" },
-      ],
-    },
-  },
-  {
-    name: "Hår",
-    type: "category",
-    hasSubmenu: true,
-    submenu: {
-      title: "Hår",
-      viewAllHref: "/categories/har",
-      categories: [
-        { name: "Shampoo", href: "/categories/shampoo" },
-        { name: "Conditioner", href: "/categories/conditioner" },
-        { name: "Styling", href: "/categories/styling" },
-      ],
-    },
-  },
-  {
-    name: "Krop",
-    type: "category",
-    hasSubmenu: true,
-    submenu: {
-      title: "Krop",
-      viewAllHref: "/categories/krop",
-      categories: [
-        { name: "Body Lotion", href: "/categories/lotion" },
-        { name: "Body Wash", href: "/categories/wash" },
-      ],
-    },
-  },
-  { name: "Brands", href: "/brands", type: "link" },
-  { name: "Nyheder", href: "/categories", type: "link" },
-  { name: "Tilbud", href: "/categories", type: "link" },
-  { name: "Bestsellers", href: "/categories", type: "link" },
-  { name: "Inspiration", type: "section-header" },
-  { name: "Blog & Guides", href: "/blog", type: "link" },
-  { name: "Kundeservice", type: "section-header" },
-  { name: "Mine ordrer", href: "/account/orders", type: "link" },
-  { name: "FAQ", href: "/support/faq", type: "link" },
-  { name: "Kontakt os", href: "/support/contact", type: "link" },
-];
 
 interface SidebarMenuProps {
   isOpen: boolean;
   onClose: () => void;
   locale: string;
+  sections: NavSection[];
 }
 
-export function SidebarMenu({ isOpen, onClose, locale }: SidebarMenuProps) {
-  const [activeSubmenu, setActiveSubmenu] = useState<SubmenuData | null>(null);
+/** Item row: same hover on flat and card so it breaks against both sidebar gray and white. */
+const itemClass =
+  "flex items-center justify-between gap-3 w-full px-4 py-4 text-left border-b border-sidebar-divider last:border-b-0 hover:bg-sidebar-item-hover active:bg-sidebar-item-hover transition-colors min-h-[48px]";
+
+export function SidebarMenu({ isOpen, onClose, locale, sections }: SidebarMenuProps) {
+  const [activeDropdown, setActiveDropdown] = useState<NavDropdownItem | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
-      setActiveSubmenu(null);
+      setActiveDropdown(null);
     }
     return () => {
       document.body.style.overflow = "";
@@ -146,153 +74,144 @@ export function SidebarMenu({ isOpen, onClose, locale }: SidebarMenuProps) {
         aria-hidden
       />
 
-      {/* Sidebar */}
+      {/* Sidebar — solid gray background (surface) */}
       <div
-        className={`fixed left-0 top-0 bottom-0 w-full md:w-[380px] bg-background z-50 overflow-hidden shadow-2xl flex flex-col transition-transform duration-300 ease-out ${
+        className={`fixed left-0 top-0 bottom-0 w-full md:w-[380px] bg-surface z-50 overflow-hidden shadow-2xl flex flex-col transition-transform duration-300 ease-out ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="h-full overflow-y-auto flex flex-col">
-          {!activeSubmenu ? (
+          {!activeDropdown ? (
             <>
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-border flex-shrink-0">
+              <div className="flex items-center justify-between p-5 border-b border-sidebar-divider shrink-0">
                 <Link
                   href={base}
                   onClick={onClose}
-                  className="font-semibold text-lg text-primary"
+                  className="shrink-0"
+                  aria-label="Guapo – forside"
                 >
-                  Guapo
+                  <img
+                    src="/logos/GUAPO_default.svg"
+                    alt="Guapo"
+                    className="h-6 w-auto"
+                    width={856}
+                    height={157}
+                  />
                 </Link>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-2 hover:bg-surface rounded-lg transition-colors"
+                  className="p-2.5 hover:bg-sidebar-item-hover rounded-lg transition-colors -mr-1"
                   aria-label="Luk menu"
                 >
-                  <X className="h-5 w-5 text-muted-foreground" />
+                  <X className="h-5 w-5 text-text-muted" />
                 </button>
               </div>
 
-              {/* Menu Items */}
-              <nav className="flex-1 py-2">
-                {mainMenuItems.map((item, index) => {
-                  if (item.type === "section-header") {
-                    return (
-                      <div
-                        key={index}
-                        className="px-6 pt-6 pb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
-                      >
-                        {item.name}
-                      </div>
-                    );
-                  }
-
-                  if (item.type === "category" && item.hasSubmenu && item.submenu) {
-                    return (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => setActiveSubmenu(item.submenu!)}
-                        className="w-full flex items-center justify-between px-6 py-3.5 hover:bg-surface transition-colors group"
-                      >
-                        <span className="font-medium text-primary group-hover:opacity-80">
-                          {item.name}
-                        </span>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </button>
-                    );
-                  }
-
+              {/* Menu sections — card = white box with rounded corners; flat = directly on sidebar background */}
+              <nav className="flex-1 px-4 py-4 space-y-4" aria-label="Navigation">
+                {sections.map((section, sectionIndex) => {
+                  const isFlat = section.sectionStyle === "flat";
+                  const itemList = (
+                    <>
+                      {section.items.map((item, index) => {
+                        if (item.type === "dropdown") {
+                          return (
+                            <button
+                              key={index}
+                              type="button"
+                              onClick={() => setActiveDropdown(item)}
+                              className={itemClass}
+                            >
+                              <span className="flex items-center gap-3 min-w-0">
+                                <MenuItemIcon icon={item.icon} />
+                                <span className="font-medium text-text-primary truncate">
+                                  {item.label}
+                                </span>
+                              </span>
+                              <ChevronRight className="h-5 w-5 shrink-0 text-text-muted" aria-hidden />
+                            </button>
+                          );
+                        }
+                        return (
+                          <Link
+                            key={index}
+                            href={item.href}
+                            onClick={onClose}
+                            {...(item.newTab ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                            className={itemClass}
+                          >
+                            <span className="flex items-center gap-3 min-w-0">
+                              <MenuItemIcon icon={item.icon} />
+                              <span className="font-medium text-text-primary truncate">
+                                {item.label}
+                              </span>
+                            </span>
+                          </Link>
+                        );
+                      })}
+                    </>
+                  );
                   return (
-                    <Link
-                      key={index}
-                      href={`${base}${item.href ?? ""}`}
-                      onClick={onClose}
-                      className="flex items-center justify-between px-6 py-3.5 hover:bg-surface transition-colors group"
-                    >
-                      <span className="text-sm text-foreground group-hover:text-primary transition-colors">
-                        {item.name}
-                      </span>
-                    </Link>
+                    <div key={sectionIndex}>
+                      {section.title ? (
+                        <h2 className="text-xs font-semibold uppercase tracking-wide text-text-muted px-1 mb-2">
+                          {section.title}
+                        </h2>
+                      ) : null}
+                      {isFlat ? (
+                        <div className="overflow-hidden">{itemList}</div>
+                      ) : (
+                        <div className="rounded-xl bg-white overflow-hidden">
+                          {itemList}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </nav>
             </>
           ) : (
             <>
-              {/* Submenu Header */}
-              <div className="flex items-center justify-between px-4 py-5 border-b border-border flex-shrink-0">
+              {/* Submenu header */}
+              <div className="flex items-center justify-between px-4 py-4 border-b border-sidebar-divider shrink-0 bg-surface-muted/30">
                 <button
                   type="button"
-                  onClick={() => setActiveSubmenu(null)}
-                  className="p-2 hover:bg-surface rounded-lg transition-colors -ml-2"
+                  onClick={() => setActiveDropdown(null)}
+                  className="p-2.5 hover:bg-surface rounded-lg transition-colors -ml-1"
                   aria-label="Tilbage"
                 >
-                  <ChevronLeft className="h-5 w-5 text-muted-foreground" />
+                  <ChevronLeft className="h-5 w-5 text-text-muted" />
                 </button>
-                <h2 className="font-semibold text-primary text-base">
-                  {activeSubmenu.title}
+                <h2 className="font-semibold text-text-primary text-base truncate mx-2">
+                  {activeDropdown.label}
                 </h2>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-2 hover:bg-surface rounded-lg transition-colors -mr-2"
+                  className="p-2.5 hover:bg-sidebar-item-hover rounded-lg transition-colors -mr-1"
                   aria-label="Luk menu"
                 >
-                  <X className="h-5 w-5 text-muted-foreground" />
+                  <X className="h-5 w-5 text-text-muted" />
                 </button>
               </div>
 
-              {/* Submenu Content */}
-              <div className="flex-1 py-4 overflow-y-auto">
-                <Link
-                  href={`${base}${activeSubmenu.viewAllHref}`}
-                  onClick={onClose}
-                  className="mx-4 mb-4 px-4 py-3 bg-gradient-to-r from-[#DBE9F4] to-[#C8E6D4] rounded-lg hover:shadow-md transition-all block group"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-primary">
-                      Se alle produkter
-                    </span>
-                    <ChevronRight className="h-4 w-4 text-primary" />
-                  </div>
-                </Link>
-
-                <div className="space-y-1 mb-6">
-                  {activeSubmenu.categories.map((category, i) => (
+              {/* Submenu children — leaf links, no chevron; wrapped in white canvas */}
+              <div className="flex-1 overflow-y-auto px-4 py-4">
+                <div className="rounded-xl bg-white overflow-hidden">
+                  {activeDropdown.children.map((child, i) => (
                     <Link
                       key={i}
-                      href={`${base}${category.href}`}
+                      href={child.href}
                       onClick={onClose}
-                      className="flex items-center justify-between px-6 py-2.5 hover:bg-surface transition-colors group"
+                      {...(child.newTab ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                      className="flex items-center w-full px-4 py-3.5 text-left border-b border-sidebar-divider last:border-b-0 hover:bg-sidebar-item-hover active:bg-sidebar-item-hover transition-colors min-h-[44px] font-medium text-text-primary"
                     >
-                      <span className="text-sm text-foreground group-hover:text-primary transition-colors">
-                        {category.name}
-                      </span>
+                      {child.label}
                     </Link>
                   ))}
                 </div>
-
-                {activeSubmenu.sections?.map((section, si) => (
-                  <div key={si} className="mb-6">
-                    <div className="px-6 pb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      {section.title}
-                    </div>
-                    <div className="space-y-1">
-                      {section.items.map((item, ii) => (
-                        <Link
-                          key={ii}
-                          href={`${base}${item.href}`}
-                          onClick={onClose}
-                          className="block px-6 py-2.5 text-sm text-foreground hover:bg-surface hover:text-primary transition-colors"
-                        >
-                          {item.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ))}
               </div>
             </>
           )}

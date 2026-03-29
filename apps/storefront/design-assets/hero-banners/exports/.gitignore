@@ -1,0 +1,5 @@
+# Genereres af `pnpm hero-banner:export` — behold mappe i git, ikke de store PNG’er
+*.png
+*.webp
+*.jpg
+*.jpeg
