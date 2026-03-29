@@ -3,12 +3,17 @@
 import { useState } from "react";
 import { Star } from "lucide-react";
 import Link from "next/link";
+import { FetchError } from "@medusajs/js-sdk";
+import { medusa } from "@/lib/medusa";
 
 interface ProductReviewFormProps {
   productId: string;
   locale: string;
+  /** When true, omit the in-form title (e.g. sheet already has SheetTitle). */
+  hideTitle?: boolean;
   labels: {
     writeReviewTitle: string;
+    ratingLabel: string;
     headline: string;
     headlinePlaceholder: string;
     reviewText: string;
@@ -26,6 +31,7 @@ interface ProductReviewFormProps {
 export function ProductReviewForm({
   productId,
   locale,
+  hideTitle = false,
   labels,
   onSuccess,
 }: ProductReviewFormProps) {
@@ -44,42 +50,39 @@ export function ProductReviewForm({
     setStatus("submitting");
     setErrorCode(null);
     try {
-      const res = await fetch("/api/product-reviews", {
+      await medusa.client.fetch("/store/product-reviews/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           product_id: productId,
           rating,
           content: content.trim(),
           ...(headline.trim() && { headline: headline.trim() }),
-        }),
+        },
       });
-      const data = await res.json();
-      if (res.ok) {
-        setStatus("success");
-        setRating(0);
-        setHeadline("");
-        setContent("");
-        setTimeout(() => onSuccess?.(), 2000);
-      } else if (res.status === 401) {
-        setStatus("error");
+      setStatus("success");
+      setRating(0);
+      setHeadline("");
+      setContent("");
+      setTimeout(() => onSuccess?.(), 2000);
+    } catch (e) {
+      setStatus("error");
+      if (e instanceof FetchError && e.status === 401) {
         setErrorCode("UNAUTHORIZED");
       } else {
-        setStatus("error");
-        setErrorCode(data?.code ?? "UNKNOWN");
+        setErrorCode("UNKNOWN");
       }
-    } catch {
-      setStatus("error");
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <h3 className="text-lg font-semibold text-foreground">{labels.writeReviewTitle}</h3>
+      {!hideTitle && (
+        <h3 className="text-lg font-semibold text-foreground">{labels.writeReviewTitle}</h3>
+      )}
 
       {/* Star rating */}
       <div>
-        <p className="mb-2 text-sm font-medium text-foreground">{labels.reviewText}</p>
+        <p className="mb-2 text-sm font-medium text-foreground">{labels.ratingLabel}</p>
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((value) => (
             <button
@@ -89,7 +92,9 @@ export function ProductReviewForm({
               onMouseEnter={() => setHoverRating(value)}
               onMouseLeave={() => setHoverRating(0)}
               className="rounded p-1 transition-colors hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              aria-label={`${value} stjerner`}
+              aria-label={
+                locale === "da" ? `${value} stjerner` : `${value} stars`
+              }
             >
               <Star
                 className={`h-8 w-8 ${

@@ -115,6 +115,7 @@
   "products": {
     "addToCart": "Læg i kurv",
     "outOfStock": "Ikke på lager",
+    "lowStockWithCount": "Kun {{count}} tilbage på lager",
     "viewDetails": "Se detaljer",
     "filters": "Filtre",
     "clearFilters": "Ryd alle filtre",
@@ -150,7 +151,7 @@
       "count": "{{count}} anmeldelse",
       "count_plural": "{{count}} anmeldelser",
       "noReviews": "Ingen anmeldelser endnu.",
-      "reviewAfterPurchase": "Har du købt dette produkt? Du kan anmelde det fra din ordreoversigt under Konto → Ordrer.",
+      "ratingLabel": "Din vurdering",
       "responseLabel": "Svar fra Guapo",
       "writeReview": "Skriv en anmeldelse",
       "writeReviewTitle": "Skriv din anmeldelse",
@@ -166,7 +167,7 @@
       "no": "Nej",
       "submitting": "Sender...",
       "errorSubmit": "Kunne ikke indsende. Prøv igen.",
-      "successSubmit": "Tak! Din anmeldelse er modtaget og vises efter godkendelse."
+      "successSubmit": "Tak! Din anmeldelse er gemt og vises på siden."
     }
   },
   "cart": {
@@ -211,7 +212,9 @@
     "addedAsSubscription": "Tilføjet som abonnement",
     "youSavePerTime": "Du sparer 5% pr. gang",
     "cartTotalCount": "Kurv ({{count}}) total",
-    "clearCart": "Ryd kurv"
+    "clearCart": "Ryd kurv",
+    "notEnoughStock": "Ikke nok på lager til det antal.",
+    "quantityUpdateFailed": "Kunne ikke opdatere antallet. Prøv igen."
   },
   "wishlist": {
     "title": "Min ønskeliste",

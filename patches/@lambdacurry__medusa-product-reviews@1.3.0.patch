@@ -1,0 +1,223 @@
+diff --git a/.medusa/server/src/admin/index.js b/.medusa/server/src/admin/index.js
+index f2ac755ff554cfd036eb33c6f1aa4c32cef49f50..f5648a3d1aaa93d6297a953854cba69c6caab350 100644
+--- a/.medusa/server/src/admin/index.js
++++ b/.medusa/server/src/admin/index.js
+@@ -127,10 +127,11 @@ const ProductReviewResponseDrawer = ({
+   ] }) });
+ };
+ const ReviewStars = ({ rating }) => {
++  const safeRating = rating ?? 0;
+   return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "flex gap-0.5", children: [...Array(5)].map((_, index) => /* @__PURE__ */ jsxRuntime.jsx(
+     "svg",
+     {
+-      className: `h-5 w-5 ${index < rating ? "text-yellow-400" : "text-gray-200"}`,
++      className: `h-5 w-5 ${index < safeRating ? "text-yellow-400" : "text-gray-200"}`,
+       xmlns: "http://www.w3.org/2000/svg",
+       viewBox: "0 0 24 24",
+       fill: "currentColor",
+@@ -169,26 +170,38 @@ const ProductReviewDetailsDrawer = ({
+ }) => {
+   var _a;
+   if (!review) return null;
+-  const ProductValue = () => /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "flex items-center gap-4", children: [
+-    review.product.thumbnail ? /* @__PURE__ */ jsxRuntime.jsx(
+-      "img",
+-      {
+-        className: "h-12 w-12 flex-shrink-0 rounded-md",
+-        src: review.product.thumbnail,
+-        alt: review.product.title
+-      }
+-    ) : /* @__PURE__ */ jsxRuntime.jsx("div", { className: "h-12 w-12 flex-shrink-0 rounded-md bg-gray-200" }),
+-    /* @__PURE__ */ jsxRuntime.jsx(reactRouterDom.Link, { to: `/products/${review.product.id}`, children: /* @__PURE__ */ jsxRuntime.jsx(ui.Text, { className: "hover:underline", children: review.product.title }) })
+-  ] });
+-  const OrderValue = () => /* @__PURE__ */ jsxRuntime.jsx(reactRouterDom.Link, { to: `/orders/${review.order.id}`, children: /* @__PURE__ */ jsxRuntime.jsxs(ui.Text, { className: "hover:underline", children: [
+-    "#",
+-    review.order.display_id
+-  ] }) });
++  const ProductValue = () => {
++    const p = review.product;
++    if (!p?.id) {
++      return /* @__PURE__ */ jsxRuntime.jsx(ui.Text, { className: "text-ui-fg-subtle text-sm", children: "\u2014" });
++    }
++    return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "flex items-center gap-4", children: [
++      p.thumbnail ? /* @__PURE__ */ jsxRuntime.jsx(
++        "img",
++        {
++          className: "h-12 w-12 flex-shrink-0 rounded-md",
++          src: p.thumbnail,
++          alt: p.title
++        }
++      ) : /* @__PURE__ */ jsxRuntime.jsx("div", { className: "h-12 w-12 flex-shrink-0 rounded-md bg-gray-200" }),
++      /* @__PURE__ */ jsxRuntime.jsx(reactRouterDom.Link, { to: `/products/${p.id}`, children: /* @__PURE__ */ jsxRuntime.jsx(ui.Text, { className: "hover:underline", children: p.title }) })
++    ] });
++  };
++  const OrderValue = () => {
++    const order = review.order;
++    if (!order?.id) {
++      return /* @__PURE__ */ jsxRuntime.jsx(ui.Text, { className: "text-ui-fg-subtle text-sm", children: "\u2014" });
++    }
++    return /* @__PURE__ */ jsxRuntime.jsx(reactRouterDom.Link, { to: `/orders/${order.id}`, children: /* @__PURE__ */ jsxRuntime.jsxs(ui.Text, { className: "hover:underline", children: [
++      "#",
++      order.display_id
++    ] }) });
++  };
+   const StatusValue = () => /* @__PURE__ */ jsxRuntime.jsx(ui.Text, { className: "text-ui-fg-subtle text-sm", children: review.status });
+   const CreatedAtValue = () => /* @__PURE__ */ jsxRuntime.jsx(ui.Text, { className: "text-ui-fg-subtle text-sm", children: luxon.DateTime.fromISO(review.created_at).toFormat("LLL dd yyyy hh:mm a") });
+   const CustomerValue = () => /* @__PURE__ */ jsxRuntime.jsx("div", { className: "flex flex-col gap-1", children: /* @__PURE__ */ jsxRuntime.jsx(ui.Text, { children: review.name }) });
+   const ReviewContent = () => /* @__PURE__ */ jsxRuntime.jsx("div", { className: "flex flex-col gap-2", children: /* @__PURE__ */ jsxRuntime.jsx(ui.Text, { className: "whitespace-pre-wrap", children: review.content }) });
+-  const ImagesValue = () => /* @__PURE__ */ jsxRuntime.jsx("div", { className: "grid grid-cols-3 gap-2", children: review.images.map((image, index) => /* @__PURE__ */ jsxRuntime.jsx(
++  const ImagesValue = () => /* @__PURE__ */ jsxRuntime.jsx("div", { className: "grid grid-cols-3 gap-2", children: (review.images ?? []).map((image, index) => /* @__PURE__ */ jsxRuntime.jsx(
+     "img",
+     {
+       src: image.url,
+@@ -216,7 +229,7 @@ const ProductReviewDetailsDrawer = ({
+         }
+       ),
+       /* @__PURE__ */ jsxRuntime.jsx(SectionRow, { title: "Review", value: /* @__PURE__ */ jsxRuntime.jsx(ReviewContent, {}) }),
+-      review.images.length > 0 && /* @__PURE__ */ jsxRuntime.jsx(SectionRow, { title: "Images", value: /* @__PURE__ */ jsxRuntime.jsx(ImagesValue, {}) }),
++      (review.images ?? []).length > 0 && /* @__PURE__ */ jsxRuntime.jsx(SectionRow, { title: "Images", value: /* @__PURE__ */ jsxRuntime.jsx(ImagesValue, {}) }),
+       /* @__PURE__ */ jsxRuntime.jsx(
+         SectionRow,
+         {
+@@ -254,6 +267,9 @@ const getColumns = (showColumns, actions) => {
+       enableSorting: false,
+       cell: ({ row }) => {
+         const product = row.original.product;
++        if (!product?.id) {
++          return /* @__PURE__ */ jsxRuntime.jsx("span", { className: "text-sm text-ui-fg-muted", children: "\u2014" });
++        }
+         return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "flex items-center gap-4 py-2 w-full min-w-[200px] max-w-[300px]", children: [
+           product.thumbnail ? /* @__PURE__ */ jsxRuntime.jsx("img", { className: "h-8 w-8 flex-shrink-0 rounded-md my-1", src: product.thumbnail, alt: product.title }) : /* @__PURE__ */ jsxRuntime.jsx("div", { className: "h-8 w-8 flex-shrink-0 rounded-md bg-gray-200" }),
+           /* @__PURE__ */ jsxRuntime.jsx("div", { className: "flex-1 min-w-0", children: /* @__PURE__ */ jsxRuntime.jsx(reactRouterDom.Link, { to: `/products/${product.id}`, children: /* @__PURE__ */ jsxRuntime.jsx("span", { className: "text-sm whitespace-normal break-words hover:underline line-clamp-3", children: product.title }) }) })
+@@ -265,9 +281,13 @@ const getColumns = (showColumns, actions) => {
+       header: "Order",
+       enableSorting: false,
+       cell: ({ row }) => {
+-        return /* @__PURE__ */ jsxRuntime.jsx(reactRouterDom.Link, { to: `/orders/${row.original.order.id}`, children: /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "text-sm whitespace-normal break-words hover:underline", children: [
++        const order = row.original.order;
++        if (!order?.id) {
++          return /* @__PURE__ */ jsxRuntime.jsx("span", { className: "text-sm text-ui-fg-muted", children: "\u2014" });
++        }
++        return /* @__PURE__ */ jsxRuntime.jsx(reactRouterDom.Link, { to: `/orders/${order.id}`, children: /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "text-sm whitespace-normal break-words hover:underline", children: [
+           "#",
+-          row.original.order.display_id
++          order.display_id
+         ] }) });
+       }
+     }),
+diff --git a/.medusa/server/src/admin/index.mjs b/.medusa/server/src/admin/index.mjs
+index 729b34734f4db32ee61c345941a79755edf14b3e..ba1d913aef6ab834936656ecc757b651fa7c93e9 100644
+--- a/.medusa/server/src/admin/index.mjs
++++ b/.medusa/server/src/admin/index.mjs
+@@ -108,10 +108,11 @@ const ProductReviewResponseDrawer = ({
+   ] }) });
+ };
+ const ReviewStars = ({ rating }) => {
++  const safeRating = rating ?? 0;
+   return /* @__PURE__ */ jsx("div", { className: "flex gap-0.5", children: [...Array(5)].map((_, index) => /* @__PURE__ */ jsx(
+     "svg",
+     {
+-      className: `h-5 w-5 ${index < rating ? "text-yellow-400" : "text-gray-200"}`,
++      className: `h-5 w-5 ${index < safeRating ? "text-yellow-400" : "text-gray-200"}`,
+       xmlns: "http://www.w3.org/2000/svg",
+       viewBox: "0 0 24 24",
+       fill: "currentColor",
+@@ -150,26 +151,38 @@ const ProductReviewDetailsDrawer = ({
+ }) => {
+   var _a;
+   if (!review) return null;
+-  const ProductValue = () => /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-4", children: [
+-    review.product.thumbnail ? /* @__PURE__ */ jsx(
+-      "img",
+-      {
+-        className: "h-12 w-12 flex-shrink-0 rounded-md",
+-        src: review.product.thumbnail,
+-        alt: review.product.title
+-      }
+-    ) : /* @__PURE__ */ jsx("div", { className: "h-12 w-12 flex-shrink-0 rounded-md bg-gray-200" }),
+-    /* @__PURE__ */ jsx(Link, { to: `/products/${review.product.id}`, children: /* @__PURE__ */ jsx(Text, { className: "hover:underline", children: review.product.title }) })
+-  ] });
+-  const OrderValue = () => /* @__PURE__ */ jsx(Link, { to: `/orders/${review.order.id}`, children: /* @__PURE__ */ jsxs(Text, { className: "hover:underline", children: [
+-    "#",
+-    review.order.display_id
+-  ] }) });
++  const ProductValue = () => {
++    const p = review.product;
++    if (!p?.id) {
++      return /* @__PURE__ */ jsx(Text, { className: "text-ui-fg-subtle text-sm", children: "\u2014" });
++    }
++    return /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-4", children: [
++      p.thumbnail ? /* @__PURE__ */ jsx(
++        "img",
++        {
++          className: "h-12 w-12 flex-shrink-0 rounded-md",
++          src: p.thumbnail,
++          alt: p.title
++        }
++      ) : /* @__PURE__ */ jsx("div", { className: "h-12 w-12 flex-shrink-0 rounded-md bg-gray-200" }),
++      /* @__PURE__ */ jsx(Link, { to: `/products/${p.id}`, children: /* @__PURE__ */ jsx(Text, { className: "hover:underline", children: p.title }) })
++    ] });
++  };
++  const OrderValue = () => {
++    const order = review.order;
++    if (!order?.id) {
++      return /* @__PURE__ */ jsx(Text, { className: "text-ui-fg-subtle text-sm", children: "\u2014" });
++    }
++    return /* @__PURE__ */ jsx(Link, { to: `/orders/${order.id}`, children: /* @__PURE__ */ jsxs(Text, { className: "hover:underline", children: [
++      "#",
++      order.display_id
++    ] }) });
++  };
+   const StatusValue = () => /* @__PURE__ */ jsx(Text, { className: "text-ui-fg-subtle text-sm", children: review.status });
+   const CreatedAtValue = () => /* @__PURE__ */ jsx(Text, { className: "text-ui-fg-subtle text-sm", children: DateTime.fromISO(review.created_at).toFormat("LLL dd yyyy hh:mm a") });
+   const CustomerValue = () => /* @__PURE__ */ jsx("div", { className: "flex flex-col gap-1", children: /* @__PURE__ */ jsx(Text, { children: review.name }) });
+   const ReviewContent = () => /* @__PURE__ */ jsx("div", { className: "flex flex-col gap-2", children: /* @__PURE__ */ jsx(Text, { className: "whitespace-pre-wrap", children: review.content }) });
+-  const ImagesValue = () => /* @__PURE__ */ jsx("div", { className: "grid grid-cols-3 gap-2", children: review.images.map((image, index) => /* @__PURE__ */ jsx(
++  const ImagesValue = () => /* @__PURE__ */ jsx("div", { className: "grid grid-cols-3 gap-2", children: (review.images ?? []).map((image, index) => /* @__PURE__ */ jsx(
+     "img",
+     {
+       src: image.url,
+@@ -197,7 +210,7 @@ const ProductReviewDetailsDrawer = ({
+         }
+       ),
+       /* @__PURE__ */ jsx(SectionRow, { title: "Review", value: /* @__PURE__ */ jsx(ReviewContent, {}) }),
+-      review.images.length > 0 && /* @__PURE__ */ jsx(SectionRow, { title: "Images", value: /* @__PURE__ */ jsx(ImagesValue, {}) }),
++      (review.images ?? []).length > 0 && /* @__PURE__ */ jsx(SectionRow, { title: "Images", value: /* @__PURE__ */ jsx(ImagesValue, {}) }),
+       /* @__PURE__ */ jsx(
+         SectionRow,
+         {
+@@ -235,6 +248,9 @@ const getColumns = (showColumns, actions) => {
+       enableSorting: false,
+       cell: ({ row }) => {
+         const product = row.original.product;
++        if (!product?.id) {
++          return /* @__PURE__ */ jsx("span", { className: "text-sm text-ui-fg-muted", children: "\u2014" });
++        }
+         return /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-4 py-2 w-full min-w-[200px] max-w-[300px]", children: [
+           product.thumbnail ? /* @__PURE__ */ jsx("img", { className: "h-8 w-8 flex-shrink-0 rounded-md my-1", src: product.thumbnail, alt: product.title }) : /* @__PURE__ */ jsx("div", { className: "h-8 w-8 flex-shrink-0 rounded-md bg-gray-200" }),
+           /* @__PURE__ */ jsx("div", { className: "flex-1 min-w-0", children: /* @__PURE__ */ jsx(Link, { to: `/products/${product.id}`, children: /* @__PURE__ */ jsx("span", { className: "text-sm whitespace-normal break-words hover:underline line-clamp-3", children: product.title }) }) })
+@@ -246,9 +262,13 @@ const getColumns = (showColumns, actions) => {
+       header: "Order",
+       enableSorting: false,
+       cell: ({ row }) => {
+-        return /* @__PURE__ */ jsx(Link, { to: `/orders/${row.original.order.id}`, children: /* @__PURE__ */ jsxs("span", { className: "text-sm whitespace-normal break-words hover:underline", children: [
++        const order = row.original.order;
++        if (!order?.id) {
++          return /* @__PURE__ */ jsx("span", { className: "text-sm text-ui-fg-muted", children: "\u2014" });
++        }
++        return /* @__PURE__ */ jsx(Link, { to: `/orders/${order.id}`, children: /* @__PURE__ */ jsxs("span", { className: "text-sm whitespace-normal break-words hover:underline", children: [
+           "#",
+-          row.original.order.display_id
++          order.display_id
+         ] }) });
+       }
+     }),
+@@ -294,7 +314,7 @@ const getColumns = (showColumns, actions) => {
+       header: "Images",
+       enableSorting: false,
+       cell: ({ row }) => {
+-        return /* @__PURE__ */ jsx("div", { className: "flex gap-2", children: row.original.images.length });
++        return /* @__PURE__ */ jsx("div", { className: "flex gap-2", children: (row.original.images ?? []).length });
+       }
+     }),
+     columnHelper.accessor("response", {

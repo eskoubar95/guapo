@@ -113,6 +113,8 @@ export interface Dictionary {
   products: {
     addToCart: string;
     outOfStock: string;
+    /** Remaining count, e.g. "Kun {{count}} tilbage på lager" */
+    lowStockWithCount: string;
     viewDetails: string;
     filters: string;
     clearFilters: string;
@@ -148,7 +150,7 @@ export interface Dictionary {
       count: string;
       count_plural: string;
       noReviews: string;
-      reviewAfterPurchase: string;
+      ratingLabel: string;
       responseLabel: string;
       writeReview: string;
       writeReviewTitle: string;
@@ -210,6 +212,10 @@ export interface Dictionary {
     youSavePerTime: string;
     cartTotalCount: string;
     clearCart: string;
+    /** Shown when quantity cannot exceed available inventory */
+    notEnoughStock: string;
+    /** Non-inventory failure updating line quantity */
+    quantityUpdateFailed: string;
   };
   wishlist: {
     title: string;

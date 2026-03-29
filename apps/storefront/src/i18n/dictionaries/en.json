@@ -115,6 +115,7 @@
   "products": {
     "addToCart": "Add to cart",
     "outOfStock": "Out of stock",
+    "lowStockWithCount": "Only {{count}} left in stock",
     "viewDetails": "View details",
     "filters": "Filters",
     "clearFilters": "Clear all filters",
@@ -150,7 +151,7 @@
       "count": "{{count}} review",
       "count_plural": "{{count}} reviews",
       "noReviews": "No reviews yet.",
-      "reviewAfterPurchase": "Bought this product? You can leave a review from your order history under Account → Orders.",
+      "ratingLabel": "Your rating",
       "responseLabel": "Response from Guapo",
       "writeReview": "Write a review",
       "writeReviewTitle": "Write your review",
@@ -166,7 +167,7 @@
       "no": "No",
       "submitting": "Submitting...",
       "errorSubmit": "Could not submit. Please try again.",
-      "successSubmit": "Thank you! Your review has been received and will appear after moderation."
+      "successSubmit": "Thank you! Your review has been saved and appears on this page."
     }
   },
   "cart": {
@@ -211,7 +212,9 @@
     "addedAsSubscription": "Added as subscription",
     "youSavePerTime": "You save 5% per delivery",
     "cartTotalCount": "Cart ({{count}}) total",
-    "clearCart": "Clear cart"
+    "clearCart": "Clear cart",
+    "notEnoughStock": "Not enough stock for that quantity.",
+    "quantityUpdateFailed": "Could not update the quantity. Please try again."
   },
   "wishlist": {
     "title": "My wishlist",

@@ -11,5 +11,10 @@
     "dev:cms": "pnpm --filter @guapo/cms dev",
     "build:cms": "pnpm --filter @guapo/cms build",
     "lint:cms": "pnpm --filter @guapo/cms lint"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@lambdacurry/medusa-product-reviews@1.3.0": "patches/@lambdacurry__medusa-product-reviews@1.3.0.patch"
+    }
   }
 }
