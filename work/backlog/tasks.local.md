@@ -1676,7 +1676,7 @@ Tasks are grouped by milestone. Each task is designed to be small/validatable, w
 
 ## M11 — Storefront–CMS synergi og UX-polering
 
-*Linear: M11 oprettes som Milestone Project; tasks synkroniseres som issues. Se [work/backlog/m11-linear-log.md](work/backlog/m11-linear-log.md) for oprettelse og status. Branch: `task/m11-storefront-cms-synergy`.*
+*Linear: M11 oprettes som Milestone Project; tasks synkroniseres som issues. Se [m11-linear-log.md](m11-linear-log.md) for oprettelse og status. Branch: `task/m11-storefront-cms-synergy`.*
 
 ### Task: t11.1
 

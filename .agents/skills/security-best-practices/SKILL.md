@@ -203,7 +203,15 @@ await db.refreshToken.create({
 app.post('/api/auth/refresh', async (req, res) => {
   const { refreshToken } = req.body;
 
-  const payload = jwt.verify(refreshToken, REFRESH_SECRET);
+  if (!refreshToken) {
+    return res.status(401).json({ error: 'Refresh token is required' });
+  }
+  let payload;
+  try {
+    payload = jwt.verify(refreshToken, REFRESH_SECRET);
+  } catch {
+    return res.status(401).json({ error: 'Invalid or expired refresh token' });
+  }
 
   // Invalidate existing token
   await db.refreshToken.delete({ where: { token: refreshToken } });
