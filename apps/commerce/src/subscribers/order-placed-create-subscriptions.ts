@@ -171,12 +171,10 @@ export default async function orderPlacedCreateSubscriptions({
 
       const cycleWeeks = (item.metadata as Record<string, unknown>)?.subscription_cycle as number
       if (typeof cycleWeeks !== "number" || !Number.isInteger(cycleWeeks) || cycleWeeks <= 0) {
-        logWarn(`Invalid cycle_weeks (${cycleWeeks}) for item ${item.id}, skipping.`)
-        continue
+        throw new Error(`Invalid cycle_weeks (${cycleWeeks}) for item ${item.id}.`)
       }
       if (!(ALLOWED_CYCLE_WEEKS as readonly number[]).includes(cycleWeeks)) {
-        logWarn(`Cycle ${cycleWeeks} not in allowed [4,8,12] for item ${item.id}, skipping.`)
-        continue
+        throw new Error(`Cycle ${cycleWeeks} not in allowed [4,8,12] for item ${item.id}.`)
       }
 
       const variantId = item.variant_id;
