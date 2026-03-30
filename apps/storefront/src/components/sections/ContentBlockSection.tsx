@@ -31,9 +31,14 @@ export function ContentBlockSection({
   const showCta = cta?.show === true && cta?.text;
   const ctaHref =
     showCta && cta?.url
-      ? cta.url.startsWith("http")
-        ? cta.url
-        : `/${locale}${cta.url.startsWith("/") ? cta.url : `/${cta.url}`}`
+      ? (() => {
+          const raw = cta.url.trim();
+          if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) return raw;
+          const localePrefix = `/${locale}`;
+          if (raw === localePrefix || raw.startsWith(`${localePrefix}/`)) return raw;
+          const path = raw.startsWith("/") ? raw : `/${raw}`;
+          return `${localePrefix}${path === "/" ? "" : path}`;
+        })()
       : undefined;
 
   const textBlock = (
@@ -97,12 +102,25 @@ export function ContentBlockSection({
     );
   }
 
+  if (layout === "full-width") {
+    return (
+      <section className={`py-8 sm:py-10 lg:py-14 ${bgClass}`}>
+        <div className="section-container max-w-none">
+          <div className="w-full">{textBlock}</div>
+        </div>
+      </section>
+    );
+  }
+
   if (layout === "text-image" || layout === "image-text") {
     const isImageFirst = layout === "image-text";
+    const hasImage = Boolean(imageBlock);
     return (
       <section className={`py-8 sm:py-10 lg:py-14 ${bgClass}`}>
         <div className="section-container">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
+          <div
+            className={`grid grid-cols-1 ${hasImage ? "lg:grid-cols-2" : "lg:grid-cols-1"} gap-6 sm:gap-8 lg:gap-12 items-center`}
+          >
             {isImageFirst && imageBlock}
             {textBlock}
             {!isImageFirst && imageBlock}

@@ -13,22 +13,74 @@ import {
   CtaStrip,
   Newsletter,
 } from "@/components/sections";
+import { HomePageSections } from "@/components/home/HomePageSections";
 import {
   homeMockProducts,
   homeMockRoutines,
   homeMockContent,
   homeMockCategories,
 } from "@/lib/home-mock";
+import { fetchHomepage, fetchPageByPath } from "@/lib/payload-homepage";
+import { resolveHomepageData } from "@/lib/resolve-homepage-data";
+import { productCardA11yFromDict } from "@/components/product-card-a11y";
+import { HomePrimaryHeroLoadGate } from "@/components/home/HomePrimaryHeroLoadGate";
+import { getAboveFoldHeroBackgroundImageUrl } from "@/lib/homepage-primary-hero";
+import { preload } from "react-dom";
 
 interface HomePageProps {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ draft?: string }>;
 }
 
-export default async function HomePage({ params }: HomePageProps) {
+export default async function HomePage({ params, searchParams }: HomePageProps) {
   const { locale } = await params;
+  const { draft: draftParam } = await searchParams;
   const dict = await getDictionary(locale as Locale);
   const validLocale = locale as Locale;
+  const draft = draftParam === "1" || draftParam === "true";
 
+  // Prefer Page with path "home" (Pages collection) over Homepage global — avoid double CMS fetch when page wins
+  const homePage = await fetchPageByPath("home", validLocale, { draft });
+  const sectionsFromPage =
+    homePage?.pageType === "homepage" && homePage?.sections?.length
+      ? homePage.sections
+      : null;
+  const sections =
+    sectionsFromPage ??
+    (await fetchHomepage(validLocale, { draft }))?.sections ??
+    null;
+  const hasCmsSections = sections && sections.length > 0;
+  const productCardA11y = productCardA11yFromDict(dict);
+
+  if (hasCmsSections && sections) {
+    const { resolvedProducts, resolvedArticles } = await resolveHomepageData(sections, validLocale);
+    const aboveFoldHeroImageUrl = getAboveFoldHeroBackgroundImageUrl(sections);
+    if (aboveFoldHeroImageUrl) {
+      preload(aboveFoldHeroImageUrl, { as: "image" });
+    }
+    return (
+      <HomePrimaryHeroLoadGate blockUntilPrimaryHeroMedia={Boolean(aboveFoldHeroImageUrl)}>
+        <div className="min-h-full w-full bg-background min-w-0 overflow-x-clip">
+          <HomePageSections
+            sections={sections}
+            locale={validLocale}
+            resolvedProducts={resolvedProducts}
+            resolvedArticles={resolvedArticles}
+            productCardA11y={productCardA11y}
+            promoSliderLabels={{
+              previousSlide: dict.home.promoSlider.previousSlide,
+              nextSlide: dict.home.promoSlider.nextSlide,
+              goToSlide: dict.home.promoSlider.goToSlide,
+              pauseAutoplay: dict.home.promoSlider.pauseAutoplay,
+              playAutoplay: dict.home.promoSlider.playAutoplay,
+            }}
+          />
+        </div>
+      </HomePrimaryHeroLoadGate>
+    );
+  }
+
+  // Fallback: CMS not configured or no sections — render static/mock layout
   const featuredProducts = homeMockProducts.slice(0, 8);
   const bestSellersList = homeMockProducts.slice(0, 5);
   const bestSellers = [
@@ -42,41 +94,18 @@ export default async function HomePage({ params }: HomePageProps) {
     ...brandProductsList.map((p, i) => ({ ...p, id: `brand-b-${p.id}-${i}` })),
   ];
 
-  const heroImg =
-    "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=2560&q=80";
   const promoSliderSlides = [
     {
       id: "slide1",
-      imageDesktopUrl: heroImg,
-      imageMobileUrl: heroImg,
-      href: "/categories",
-    },
-    {
-      id: "slide2",
-      imageDesktopUrl:
-        "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=2560&q=80",
-      href: "/categories",
-    },
-    {
-      id: "slide3",
-      imageDesktopUrl:
-        "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=2560&q=80",
+      imageDesktopUrl: "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=1200&q=80",
       href: "/categories",
     },
   ];
 
   return (
-    <div className="min-h-full bg-white">
-      {/* Promo bars (design: two bars, not hero) */}
-      <HomePromoBars
-        bar1={dict.home.promoBars.bar1}
-        bar2={dict.home.promoBars.bar2}
-      />
-
-      {/* Category strip with colored circles */}
+    <div className="min-h-full w-full bg-background min-w-0 overflow-x-clip">
+      <HomePromoBars bar1={dict.home.promoBars.bar1} bar2={dict.home.promoBars.bar2} />
       <CategoryStrip categories={homeMockCategories} locale={validLocale} />
-
-      {/* Promotion slider (3 slides) */}
       <PromotionSlider
         slides={promoSliderSlides}
         locale={validLocale}
@@ -84,43 +113,36 @@ export default async function HomePage({ params }: HomePageProps) {
           previousSlide: dict.home.promoSlider.previousSlide,
           nextSlide: dict.home.promoSlider.nextSlide,
           goToSlide: dict.home.promoSlider.goToSlide,
+          pauseAutoplay: dict.home.promoSlider.pauseAutoplay,
+          playAutoplay: dict.home.promoSlider.playAutoplay,
         }}
       />
-
-      {/* Editor picks */}
       <FeaturedProducts
         title={dict.home.editorPicks}
         products={featuredProducts}
         locale={validLocale}
         layout="carousel"
-        backgroundColor="bg-white"
+        backgroundColor="bg-background"
+        productCardA11y={productCardA11y}
       />
-
-      {/* Campaign: Vinter hudpleje */}
       <CampaignSection
         title={dict.home.campaign.title}
         description={dict.home.campaign.description}
         image="https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=1200&q=80"
-        primaryCta={{
-          text: dict.home.campaign.ctaText,
-          href: "/categories",
-        }}
+        primaryCta={{ text: dict.home.campaign.ctaText, href: "/categories" }}
         locale={validLocale}
         layout="background"
       />
-
-      {/* Bestsellers */}
       <FeaturedProducts
         title={dict.home.featured.title}
         products={bestSellers}
         locale={validLocale}
         viewAllLink="/categories"
         viewAllText="Se alle"
-        backgroundColor="bg-gradient-to-b from-slate-50/50 to-white"
+        backgroundColor="bg-gradient-to-b from-surface-muted/50 to-background"
         layout="carousel"
+        productCardA11y={productCardA11y}
       />
-
-      {/* Routine block */}
       <RoutineBlock
         title={dict.home.routine.title}
         subtitle={dict.home.routine.subtitle}
@@ -129,18 +151,15 @@ export default async function HomePage({ params }: HomePageProps) {
         layout="carousel"
         backgroundColor="bg-surface-muted/30"
       />
-
-      {/* New arrivals */}
       <FeaturedProducts
         title={dict.home.newArrivals.title}
         products={newArrivals}
         locale={validLocale}
         viewAllLink="/categories"
-        backgroundColor="bg-gradient-to-b from-sky-50/20 to-white"
+        backgroundColor="bg-gradient-to-b from-surface-muted/20 to-background"
         layout="carousel"
+        productCardA11y={productCardA11y}
       />
-
-      {/* Content grid: Inspiration & Guides */}
       <ContentGrid
         title={dict.home.content.title}
         subtitle={dict.home.content.subtitle}
@@ -148,8 +167,6 @@ export default async function HomePage({ params }: HomePageProps) {
         locale={validLocale}
         layout="carousel"
       />
-
-      {/* Brand spotlight: The Ordinary */}
       <BrandSpotlight
         brandName="The Ordinary"
         description={dict.home.brandSpotlight.description}
@@ -157,18 +174,11 @@ export default async function HomePage({ params }: HomePageProps) {
         products={brandProducts}
         brandPageLink="/brands/the-ordinary"
         locale={validLocale}
-        backgroundColor="bg-gradient-to-b from-teal-50/20 to-slate-50/30"
+        backgroundColor="bg-gradient-to-b from-surface-muted/20 to-surface-muted/30"
+        productCardA11y={productCardA11y}
       />
-
-      {/* CTA strip */}
-      <CtaStrip locale={validLocale} backgroundColor="bg-white" />
-
-      {/* Service strip */}
-      <ServiceStrip
-        backgroundColor="bg-gradient-to-br from-slate-50/40 to-sky-50/20"
-      />
-
-      {/* Newsletter */}
+      <CtaStrip locale={validLocale} backgroundColor="bg-background" />
+      <ServiceStrip backgroundColor="bg-gradient-to-br from-surface-muted/40 to-surface-muted/20" />
       <Newsletter
         locale={validLocale}
         title={dict.home.newsletter.title}

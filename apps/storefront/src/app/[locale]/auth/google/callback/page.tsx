@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { medusa } from "@/lib/medusa";
+import { getSafeReturnUrl } from "@/lib/auth-utils";
 
 /**
  * Decode JWT payload without verification (Medusa already validated the token).
@@ -24,15 +25,24 @@ export default function GoogleCallbackPage() {
   const params = useParams();
   const locale = (params?.locale as string) || "da";
   const [loading, setLoading] = useState(true);
+  const [phase, setPhase] = useState<"finalizing" | "redirecting">("finalizing");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
     const queryParams = Object.fromEntries(searchParams.entries());
+    const returnUrlFromQuery = searchParams.get("returnUrl") ?? "";
+    const returnUrlFromStorage = typeof window !== "undefined" ? sessionStorage.getItem("guapo_google_return_url") : null;
+    if (typeof window !== "undefined" && returnUrlFromStorage) {
+      sessionStorage.removeItem("guapo_google_return_url");
+    }
+    const returnUrl = returnUrlFromQuery || returnUrlFromStorage || "";
+    const destination = getSafeReturnUrl(returnUrl, `/${locale}/account`);
 
     const validateCallback = async () => {
       try {
+        setPhase("finalizing");
         const token = await medusa.auth.callback("customer", "google", queryParams);
         const decoded = decodeJwtPayload(token);
         const shouldCreateCustomer = !decoded.actor_id || decoded.actor_id === "";
@@ -47,7 +57,8 @@ export default function GoogleCallbackPage() {
         }
 
         if (!cancelled) {
-          window.location.href = `/${locale}/account`;
+          setPhase("redirecting");
+          window.location.href = destination;
         }
       } catch (err) {
         if (!cancelled) {
@@ -76,9 +87,20 @@ export default function GoogleCallbackPage() {
 
   return (
     <div className="container mx-auto max-w-md px-4 py-12">
-      <p className="text-muted-foreground">
-        {locale === "da" ? "Logger ind med Google..." : "Signing in with Google..."}
-      </p>
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-border border-t-primary" />
+          <p className="text-muted-foreground" role="status" aria-live="polite">
+            {phase === "finalizing"
+              ? locale === "da"
+                ? "Færdiggør login med Google..."
+                : "Finalizing Google sign in..."
+              : locale === "da"
+                ? "Viderestiller..."
+                : "Redirecting..."}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

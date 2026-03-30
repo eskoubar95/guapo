@@ -53,6 +53,8 @@ export interface Dictionary {
       previousSlide: string;
       nextSlide: string;
       goToSlide: string;
+      pauseAutoplay: string;
+      playAutoplay: string;
       slide1: {
         badge: string;
         title: string;
@@ -216,9 +218,6 @@ export interface Dictionary {
     notEnoughStock: string;
     /** Non-inventory failure updating line quantity */
     quantityUpdateFailed: string;
-    closeModal: string;
-    calculatedAtCheckout: string;
-    inclVatBreakdown: string;
   };
   wishlist: {
     title: string;
@@ -307,6 +306,7 @@ export interface Dictionary {
     mobilePayLabel: string;
     klarnaLabel: string;
     paymentInitFailed: string;
+    shippingMethodRequired: string;
     calculatedWhenDeliverySelected: string;
     vatIncludedBreakdown: string;
   };

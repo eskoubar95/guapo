@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { RotateCw } from "lucide-react";
 import { useCheckoutCart } from "@/contexts/CheckoutCartContext";
 import { formatPrice } from "@/lib/format";
@@ -13,7 +14,6 @@ import {
   isLineDiscounted,
   normalizeShippingForDisplay,
 } from "@/lib/cart-display";
-import type { StoreCart } from "@/lib/cart-data";
 import type { CartItem } from "@/components/cart/CartItems";
 import type { Dictionary } from "@/i18n/dictionaries";
 
@@ -30,12 +30,12 @@ export function CheckoutOrderSummary({
   hasSubscriptionItems: boolean;
 }) {
   const { cart, selectedShippingAmount } = useCheckoutCart();
-  const items = (cart?.items ?? []) as CartItem[];
-  if (items.length === 0) return null;
+  if (!cart?.items?.length) return null;
+  const items = cart.items as CartItem[];
 
-  const itemsOriginalTotal = getCartItemsOriginalTotal(cart as StoreCart);
-  const discountTotal = getCartDiscountTotal(cart as StoreCart);
-  const itemsTotal = getCartItemsTotal(cart as StoreCart);
+  const itemsOriginalTotal = getCartItemsOriginalTotal(cart);
+  const discountTotal = getCartDiscountTotal(cart);
+  const itemsTotal = getCartItemsTotal(cart);
 
   const cartHasShippingMethod = (cart?.shipping_methods?.length ?? 0) > 0;
   const cartShippingTotal =
@@ -87,12 +87,15 @@ export function CheckoutOrderSummary({
 
       <ul className="divide-y divide-border">
         {items.map((item) => {
-          const cycle =
-            typeof (item.metadata as Record<string, unknown> | undefined)
-              ?.subscription_cycle === "number"
-              ? (item.metadata as Record<string, unknown>)
-                  .subscription_cycle as number
-              : 0;
+          const rawCycle = (item.metadata as Record<string, unknown> | undefined)
+            ?.subscription_cycle;
+          const parsedCycle =
+            typeof rawCycle === "number"
+              ? rawCycle
+              : typeof rawCycle === "string"
+                ? Number.parseInt(rawCycle, 10)
+                : 0;
+          const cycle = Number.isFinite(parsedCycle) ? parsedCycle : 0;
           const isSubscription = cycle > 0;
           const lineTotalOriginal = getLineOriginalTotal(item);
           const lineTotal = getLineTotal(item);
@@ -102,10 +105,12 @@ export function CheckoutOrderSummary({
             <li key={item.id} className="flex gap-3 py-3 first:pt-0">
               <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-surface border border-border">
                 {item.thumbnail ? (
-                  <img
+                  <Image
                     src={item.thumbnail}
                     alt={item.title ?? ""}
-                    className="h-full w-full object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="56px"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground" />

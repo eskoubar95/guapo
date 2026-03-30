@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { FilterSystem, type FilterCategory } from "@/components/FilterSystem";
 import { ProductCard } from "@/components/ProductCard";
+import { productCardA11yFromDict } from "@/components/product-card-a11y";
 import {
   fetchCategoryByHandle,
   fetchPayloadCategoryByHandle,
@@ -95,6 +96,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const { locale, handle } = await params;
   const filters = await searchParams;
   const dict = await getDictionary(locale as Locale);
+  const productCardA11y = productCardA11yFromDict(dict);
   const localeKey = locale as "da" | "en";
 
   const sort = (filters.sort as string) || "featured";
@@ -206,7 +208,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         {/* Product Grid */}
         <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 lg:gap-4">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} locale={locale} />
+            <ProductCard key={product.id} product={product} locale={locale} labels={productCardA11y} />
           ))}
         </div>
 

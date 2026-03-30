@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { User, Package, RefreshCw, UserPen, MapPin, ChevronRight, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -38,6 +38,10 @@ type LinkKey = keyof typeof linkIconMap
 const ACCOUNT_STICKY_TOP =
   "top-[calc(3.5rem+0.75rem)] sm:top-[calc(4rem+0.75rem)]"
 
+function normalizePath(pathname: string): string {
+  return pathname !== "/" && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname
+}
+
 const links = (locale: string, labels: AccountLayoutLabels): { href: string; label: string; key: LinkKey }[] => [
   { href: `/${locale}/account`, label: labels.overview, key: "overview" },
   { href: `/${locale}/account/orders`, label: labels.orders, key: "orders" },
@@ -47,11 +51,12 @@ const links = (locale: string, labels: AccountLayoutLabels): { href: string; lab
 ]
 
 function getCurrentSectionLabel(pathname: string, locale: string, labels: AccountLayoutLabels): string {
-  if (pathname === `/${locale}/account` || pathname === `/${locale}/account/`) return labels.overview
-  if (pathname.startsWith(`/${locale}/account/orders`)) return labels.orders
-  if (pathname.startsWith(`/${locale}/account/subscriptions`)) return labels.subscriptions
-  if (pathname.startsWith(`/${locale}/account/profile`)) return labels.profile
-  if (pathname.startsWith(`/${locale}/account/addresses`)) return labels.addresses
+  const currentPath = normalizePath(pathname)
+  if (currentPath === `/${locale}/account`) return labels.overview
+  if (currentPath.startsWith(`/${locale}/account/orders`)) return labels.orders
+  if (currentPath.startsWith(`/${locale}/account/subscriptions`)) return labels.subscriptions
+  if (currentPath.startsWith(`/${locale}/account/profile`)) return labels.profile
+  if (currentPath.startsWith(`/${locale}/account/addresses`)) return labels.addresses
   return labels.accountTitle
 }
 
@@ -71,6 +76,7 @@ function NavLinks({
   linkClassName?: (isActive: boolean) => string
 }) {
   const items = links(locale, labels)
+  const currentPath = normalizePath(pathname)
   const defaultLinkClass = (isActive: boolean) =>
     cn(
       "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors min-h-[44px]",
@@ -85,7 +91,7 @@ function NavLinks({
       {items.map((link) => {
         const Icon = linkIconMap[link.key]
         const isActive =
-          link.href === pathname || (link.key !== "overview" && pathname.startsWith(link.href + "/"))
+          link.href === currentPath || (link.key !== "overview" && currentPath.startsWith(link.href + "/"))
         return (
           <Link
             key={link.href}
@@ -113,9 +119,20 @@ function NavLinks({
 export function AccountLayout({ locale, labels, children }: AccountLayoutProps) {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
+  const menuTriggerRef = useRef<HTMLButtonElement>(null)
+  const sheetPanelRef = useRef<HTMLDivElement>(null)
   const menuLabel = labels.menuLabel ?? labels.accountTitle
   const closeMenuLabel = labels.closeMenu ?? "Close menu"
   const currentSection = getCurrentSectionLabel(pathname, locale, labels)
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)")
+    const onChange = () => {
+      if (mq.matches) setMenuOpen(false)
+    }
+    mq.addEventListener("change", onChange)
+    return () => mq.removeEventListener("change", onChange)
+  }, [])
 
   useEffect(() => {
     if (menuOpen) {
@@ -138,6 +155,43 @@ export function AccountLayout({ locale, labels, children }: AccountLayoutProps) 
     }
   }, [menuOpen])
 
+  useEffect(() => {
+    if (!menuOpen) return
+    const getFocusables = (): HTMLElement[] => {
+      const root = sheetPanelRef.current
+      if (!root) return []
+      return Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => el.offsetParent !== null)
+    }
+    const focusables = getFocusables()
+    focusables[0]?.focus()
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return
+      const nodes = getFocusables()
+      if (nodes.length === 0) return
+      const first = nodes[0]
+      const last = nodes[nodes.length - 1]
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else if (document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener("keydown", onKeyDown, true)
+    return () => {
+      document.removeEventListener("keydown", onKeyDown, true)
+      menuTriggerRef.current?.focus()
+    }
+  }, [menuOpen])
+
   return (
     <div className="min-h-full">
       {/* Mobile: trigger — sticky below site header so it does not sit under the nav */}
@@ -148,6 +202,7 @@ export function AccountLayout({ locale, labels, children }: AccountLayoutProps) 
         )}
       >
         <button
+          ref={menuTriggerRef}
           type="button"
           onClick={() => setMenuOpen(true)}
           className="flex w-full items-center justify-between rounded-xl border border-border px-3 py-2.5 text-left text-sm text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
@@ -171,14 +226,20 @@ export function AccountLayout({ locale, labels, children }: AccountLayoutProps) 
             aria-hidden
           />
           <div
+            ref={sheetPanelRef}
             className={cn(
               "fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-border bg-card shadow-xl transition-transform duration-200 ease-out md:hidden",
               menuOpen ? "translate-y-0" : "translate-y-full"
             )}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="account-menu-title"
           >
             <div className="flex max-h-[78vh] flex-col">
               <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                <span className="font-semibold text-foreground">{labels.accountTitle}</span>
+                <span id="account-menu-title" className="font-semibold text-foreground">
+                  {labels.accountTitle}
+                </span>
                 <button
                   type="button"
                   onClick={() => setMenuOpen(false)}

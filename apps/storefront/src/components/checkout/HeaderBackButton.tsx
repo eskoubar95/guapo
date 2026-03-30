@@ -33,16 +33,17 @@ export function HeaderBackButton({
   const className =
     "inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors";
 
+  const backLabel = dict.checkout.previousStep;
   const content =
     currentStep === 1 ? (
-      <Link href={`/${locale}/cart`} className={className}>
-        <ArrowLeft className="h-4 w-4" />
-        <span className="hidden sm:inline">{dict.checkout.previousStep}</span>
+      <Link href={`/${locale}/cart`} className={className} aria-label={backLabel}>
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        <span className="hidden sm:inline">{backLabel}</span>
       </Link>
     ) : (
-      <button type="button" onClick={onBack} className={className}>
-        <ArrowLeft className="h-4 w-4" />
-        <span className="hidden sm:inline">{dict.checkout.previousStep}</span>
+      <button type="button" onClick={onBack} className={className} aria-label={backLabel}>
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        <span className="hidden sm:inline">{backLabel}</span>
       </button>
     );
 

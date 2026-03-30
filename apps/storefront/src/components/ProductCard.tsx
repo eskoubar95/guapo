@@ -20,6 +20,7 @@ import {
   defaultProductCardA11y,
 } from "@/components/product-card-a11y";
 import { formatLowStockLabel } from "@/lib/product-inventory";
+import { toast } from "sonner";
 
 export interface Product {
   id: string;
@@ -74,26 +75,39 @@ export function ProductCard({ product, locale, className, labels }: ProductCardP
     const vid = product.variantId;
     if (!vid) return;
     startTransition(async () => {
+      let addCart: StoreCart | undefined;
       try {
-        const addCart = (await addToCart(vid, 1)) as StoreCart | undefined;
+        addCart = (await addToCart(vid, 1)) as StoreCart | undefined;
+      } catch (err) {
+        console.error("[ProductCard] quick add failed", err);
+        toast.error(
+          locale === "da" ? "Kunne ikke tilføje til kurven" : "Could not add to cart"
+        );
+        return;
+      }
+      try {
         await refreshCart();
         const cart = (await fetchClientStoreCart()) ?? addCart;
         const last = resolveAddedLineItem(cart, addCart, vid);
         if (cart?.items?.length && last) {
+          const unit = getLineUnitPrice(last);
           openModal({
             productTitle: last.product_title ?? last.title ?? product.name,
             variantTitle: last.variant_title ?? product.variant,
             thumbnail: last.thumbnail ?? product.image,
             quantity: last.quantity ?? 1,
-            unitPrice: getLineUnitPrice(last) || product.price,
+            unitPrice: unit ?? product.price,
             cartTotal: getCartItemsTotal(cart),
             itemCount: cart.items.length,
             lineItemId: last.id,
             metadata: last.metadata,
           });
         }
-      } catch {
-        // Error: could toast or leave silent
+      } catch (err) {
+        console.error("[ProductCard] cart sync after add failed", err);
+        toast.error(
+          locale === "da" ? "Kunne ikke opdatere kurven" : "Could not refresh cart"
+        );
       }
     });
   };
@@ -101,23 +115,24 @@ export function ProductCard({ product, locale, className, labels }: ProductCardP
 
   return (
     <article className={cn("group/card flex flex-col h-full", className)}>
-      {/* Image — link to product */}
-      <Link href={productHref} className="block relative mb-3">
-        <div className="aspect-square overflow-hidden rounded-md bg-surface relative">
-          <ImageWithFallback
-            src={product.image}
-            alt={product.name}
-            className={cn(
-              "w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300",
-              !inStock && "opacity-60"
+      <div className="relative mb-3">
+        <Link href={productHref} className="block relative">
+          <div className="aspect-square overflow-hidden rounded-md bg-surface relative">
+            <ImageWithFallback
+              src={product.image}
+              alt={product.name}
+              className={cn(
+                "w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300",
+                !inStock && "opacity-60"
+              )}
+            />
+            {lowStockBadge && (
+              <span className="absolute bottom-2 left-2 right-2 rounded-md bg-amber-950/90 px-2 py-1 text-center text-[11px] font-medium text-amber-50">
+                {lowStockBadge}
+              </span>
             )}
-          />
-          {lowStockBadge && (
-            <span className="absolute bottom-2 left-2 right-2 rounded-md bg-amber-950/90 px-2 py-1 text-center text-[11px] font-medium text-amber-50">
-              {lowStockBadge}
-            </span>
-          )}
-        </div>
+          </div>
+        </Link>
         <button
           type="button"
           onClick={(e) => {
@@ -135,7 +150,7 @@ export function ProductCard({ product, locale, className, labels }: ProductCardP
             )}
           />
         </button>
-      </Link>
+      </div>
 
       {/* Text content — flex-1 pushes price to bottom */}
       <div className="flex flex-col flex-1 min-h-0">
@@ -201,7 +216,7 @@ export function ProductCard({ product, locale, className, labels }: ProductCardP
               href={productHref}
               onClick={(e) => e.stopPropagation()}
               className="w-8 h-8 shrink-0 rounded-full bg-primary flex items-center justify-center hover:bg-primary-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
-              aria-label={a11y.addToCart}
+              aria-label={a11y.viewProduct}
             >
               <ShoppingCart className="h-4 w-4 text-primary-foreground" />
             </Link>

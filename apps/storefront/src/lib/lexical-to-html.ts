@@ -21,6 +21,14 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+function sanitizeLinkUrl(url: unknown): string {
+  if (typeof url !== "string") return "#";
+  const trimmed = url.trim();
+  if (trimmed.startsWith("/") || trimmed.startsWith("#")) return trimmed;
+  if (/^(https?:|mailto:|tel:)/i.test(trimmed)) return trimmed;
+  return "#";
+}
+
 function renderNode(node: LexicalNode): string {
   if (!node || typeof node !== "object") return "";
 
@@ -36,13 +44,15 @@ function renderNode(node: LexicalNode): string {
       return children;
     case "paragraph":
       return children ? `<p class="mb-4 last:mb-0">${children}</p>` : "";
-    case "text":
+    case "text": {
       let out = text;
       if (bold) out = `<strong>${out}</strong>`;
       if (italic) out = `<em>${out}</em>`;
       return out;
+    }
     case "heading": {
-      const tag = (node.tag as string) || "h2";
+      const rawTag = typeof node.tag === "string" ? node.tag.toLowerCase() : "h2";
+      const tag = /^(h[1-6])$/.test(rawTag) ? rawTag : "h2";
       const level = tag.replace("h", "") || "2";
       const size = level === "1" ? "text-2xl md:text-3xl" : level === "2" ? "text-xl md:text-2xl" : "text-lg";
       return `<${tag} class="${size} font-semibold mb-2">${children}</${tag}>`;
@@ -52,7 +62,7 @@ function renderNode(node: LexicalNode): string {
     case "listitem":
       return `<li class="mb-1">${children}</li>`;
     case "link": {
-      const url = typeof node.url === "string" ? escapeHtml(node.url) : "#";
+      const url = escapeHtml(sanitizeLinkUrl(node.url));
       const fields = node.fields as { newTab?: boolean } | undefined;
       const target = fields?.newTab ? ' target="_blank" rel="noopener noreferrer"' : "";
       return `<a href="${url}" class="text-primary underline hover:no-underline"${target}>${children}</a>`;

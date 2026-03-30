@@ -75,10 +75,12 @@ export function BlogCarouselSection({
         </div>
         <div className="relative">
           <div ref={scrollRef} className="flex gap-4 lg:gap-5 overflow-x-auto scrollbar-hide scroll-smooth pb-2 items-stretch min-w-0">
-            {articles.map((a) => (
+            {articles.map((a) => {
+              if (!a.slug?.trim()) return null;
+              return (
               <Link
-                key={a.slug ?? a.title ?? ""}
-                href={`/${locale}/blog/${a.slug ?? ""}`}
+                key={a.slug}
+                href={`/${locale}/blog/${a.slug}`}
                 className="group/card shrink-0 w-[72%] min-w-[220px] max-w-[260px] sm:max-w-[280px] md:w-[calc(25%-14px)] rounded-lg bg-white overflow-hidden transition-[box-shadow,color] focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
               >
                 <div className="relative aspect-square bg-surface-muted overflow-hidden">
@@ -101,7 +103,8 @@ export function BlogCarouselSection({
                   <h3 className="text-sm font-medium text-text-primary line-clamp-2 group-hover/card:text-primary group-hover/card:underline transition-colors underline-offset-2">{a.title ?? "Article"}</h3>
                 </div>
               </Link>
-            ))}
+              );
+            })}
           </div>
           {articles.length > 1 && (
             <>

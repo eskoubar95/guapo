@@ -66,7 +66,11 @@ export function useShippingOptions(cartId: string | null): {
   const [selectedShippingOptionId, setSelectedShippingOptionId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!cartId) return;
+    if (!cartId) {
+      setShippingOptions([]);
+      setSelectedShippingOptionId(null);
+      return;
+    }
     const ac = new AbortController();
     const baseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000";
     const key = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
@@ -115,7 +119,10 @@ export function useShippingOptions(cartId: string | null): {
             setSelectedShippingOptionId((prev) => pickDefaultShippingOptionId(opts, prev));
           })
           .catch(() => {
-            if (!ac.signal.aborted) setShippingOptions([]);
+            if (!ac.signal.aborted) {
+              setShippingOptions([]);
+              setSelectedShippingOptionId(null);
+            }
           });
       });
 

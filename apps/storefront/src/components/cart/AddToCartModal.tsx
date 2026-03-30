@@ -69,7 +69,7 @@ export function AddToCartModal({ data, locale, dict, onClose }: AddToCartModalPr
         const errBody = (await updateRes.json().catch(() => ({}))) as { error?: string };
         setQtyError(
           userMessageForLineItemError(
-            typeof errBody.error === "string" ? errBody.error : "",
+            errBody.error,
             dict.cart.notEnoughStock,
             dict.cart.quantityUpdateFailed
           )
@@ -89,7 +89,7 @@ export function AddToCartModal({ data, locale, dict, onClose }: AddToCartModalPr
       }
       await refreshCart();
     } catch {
-      setQtyError(dict.cart.quantityUpdateFailed);
+      setQtyError(dict.cart.notEnoughStock);
     } finally {
       setUpdating(false);
     }
@@ -100,7 +100,7 @@ export function AddToCartModal({ data, locale, dict, onClose }: AddToCartModalPr
       <div
         className="fixed inset-0 z-50 bg-black/40"
         onClick={onClose}
-        aria-hidden="true"
+        aria-hidden
       />
       <div
         className="fixed left-0 right-0 bottom-0 z-50 flex w-full min-h-[70vh] max-h-[90vh] flex-col rounded-t-2xl border border-border border-b-0 bg-background shadow-2xl animate-drawer-up md:min-h-0 md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:max-h-none md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-xl md:border-b md:animate-none"
@@ -120,7 +120,7 @@ export function AddToCartModal({ data, locale, dict, onClose }: AddToCartModalPr
             type="button"
             onClick={onClose}
             className="p-2.5 hover:bg-surface rounded-lg transition-colors"
-            aria-label={dict.cart.closeModal}
+            aria-label="Luk"
           >
             <X className="h-5 w-5 text-muted-foreground" />
           </button>

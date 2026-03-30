@@ -31,7 +31,7 @@ interface UsePickupPointSheetSearchParams {
 /**
  * When the pickup sheet opens: sync search from address fields, and debounced search on typing.
  */
-/* eslint-disable react-hooks/exhaustive-deps -- sync effect intentionally omits searchAddress to avoid clobbering typed queries */
+/* eslint-disable react-hooks/exhaustive-deps -- intentional deps match legacy useCheckoutPickup (avoid refetch loops) */
 export function usePickupPointSheetSearch({
   sheetOpen,
   searchAddress,
@@ -46,12 +46,10 @@ export function usePickupPointSheetSearch({
 }: UsePickupPointSheetSearchParams): void {
   const fetchRequestSeqRef = useRef(0);
   const prevSheetOpenRef = useRef(sheetOpen);
-  const lastSyncedFromFormRef = useRef("");
 
   useEffect(() => {
     if (prevSheetOpenRef.current && !sheetOpen) {
       fetchRequestSeqRef.current += 1;
-      lastSyncedFromFormRef.current = "";
     }
     prevSheetOpenRef.current = sheetOpen;
   }, [sheetOpen]);
@@ -66,8 +64,7 @@ export function usePickupPointSheetSearch({
     const combined = addr
       ? `${addr}${zip ? `, ${zip}` : ""}${city ? ` ${city}` : ""}`.trim()
       : `${zip}${city ? ` ${city}` : ""}`.trim();
-    if (!combined || combined === lastSyncedFromFormRef.current) return;
-    lastSyncedFromFormRef.current = combined;
+    if (!combined || searchAddress.trim() === combined) return;
     skipNextDebounceRef.current = true;
     setSearchAddress(combined);
     setPickupLoading(true);
@@ -76,7 +73,8 @@ export function usePickupPointSheetSearch({
     const zipForSearch =
       zip.length >= 3
         ? zip
-        : extractZipcodeFromAddress(combined) || (digitsOnly.length >= 3 ? digitsOnly : "");
+        : extractZipcodeFromAddress(combined) ||
+          (digitsOnly.length >= 3 ? digitsOnly : "");
     if (zipForSearch.length >= 3) {
       const seq = ++fetchRequestSeqRef.current;
       void fetchAllPickupPoints({
@@ -90,11 +88,13 @@ export function usePickupPointSheetSearch({
           setPickupPoints(points);
           setSelectedPoint((prev) => {
             if (!prev) return null;
-            const still = points.some((p) => p.id === prev.id || p.number === prev.number);
+            const still = points.some(
+              (p) => p.id === prev.id || p.number === prev.number
+            );
             return still ? prev : null;
           });
         })
-        .catch((err: unknown) => {
+        .catch((err) => {
           console.error("[usePickupPointSheetSearch] sync fetch failed", err);
         })
         .finally(() => {
@@ -105,7 +105,7 @@ export function usePickupPointSheetSearch({
     } else {
       setPickupLoading(false);
     }
-  }, [sheetOpen, formData.address1, formData.postalCode, formData.city]);
+  }, [sheetOpen, formData.address1, formData.postalCode, formData.city, searchAddress]);
 
   useEffect(() => {
     if (!sheetOpen) return;
@@ -135,11 +135,13 @@ export function usePickupPointSheetSearch({
           setPickupPoints(points);
           setSelectedPoint((prev) => {
             if (!prev) return null;
-            const still = points.some((p) => p.id === prev.id || p.number === prev.number);
+            const still = points.some(
+              (p) => p.id === prev.id || p.number === prev.number
+            );
             return still ? prev : null;
           });
         })
-        .catch((err: unknown) => {
+        .catch((err) => {
           console.error("[usePickupPointSheetSearch] debounced fetch failed", err);
         })
         .finally(() => {

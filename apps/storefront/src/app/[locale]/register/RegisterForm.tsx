@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { medusa } from "@/lib/medusa";
+import { getSafeReturnUrl } from "@/lib/auth-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,7 @@ interface RegisterFormProps {
   labels: AuthLabels;
   /** When provided, called on success instead of navigating to account (e.g. for modal flow). */
   onSuccess?: () => void;
+  /** After register, redirect here if valid (same-origin path). */
   returnUrl?: string;
 }
 
@@ -33,11 +35,16 @@ export function RegisterForm({ locale, labels, onSuccess, returnUrl }: RegisterF
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  const defaultDestination = `/${locale}/account`;
+  const destination = getSafeReturnUrl(returnUrl, defaultDestination);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!firstName || !lastName || !email || !password) return;
     setError(null);
+    setStatusMessage(locale === "da" ? "Opretter konto..." : "Creating account...");
     setLoading(true);
     try {
       let shouldCreateCustomer = true;
@@ -69,18 +76,19 @@ export function RegisterForm({ locale, labels, onSuccess, returnUrl }: RegisterF
         });
       }
       if (onSuccess) {
+        setStatusMessage(locale === "da" ? "Opdaterer..." : "Updating...");
         onSuccess();
+        router.refresh();
+      } else {
+        setStatusMessage(locale === "da" ? "Viderestiller..." : "Redirecting...");
+        router.push(destination);
+        router.refresh();
       }
-      if (returnUrl) {
-        router.push(returnUrl);
-      } else if (!onSuccess) {
-        router.push(`/${locale}/account`);
-      }
-      router.refresh();
     } catch {
       setError(labels.errorRegister);
     } finally {
       setLoading(false);
+      setStatusMessage(null);
     }
   };
 
@@ -137,8 +145,13 @@ export function RegisterForm({ locale, labels, onSuccess, returnUrl }: RegisterF
         />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
+      {statusMessage && !error && (
+        <p className="text-sm text-muted-foreground" role="status" aria-live="polite">
+          {statusMessage}
+        </p>
+      )}
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? "..." : labels.submitRegister}
+        {loading ? (locale === "da" ? "Opretter..." : "Creating...") : labels.submitRegister}
       </Button>
     </form>
   );

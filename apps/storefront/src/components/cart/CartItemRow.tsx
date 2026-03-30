@@ -47,9 +47,14 @@ export function CartItemRow({
   const variantTitle = (item.variant_title || item.variant?.title) ?? "";
   const quantity = item.quantity ?? 1;
   const maxQty = getCartLineQuantityCap(item);
-  const cycle = typeof item.metadata?.subscription_cycle === "number"
-    ? item.metadata.subscription_cycle
-    : 0;
+  const rawCycle = item.metadata?.subscription_cycle;
+  const parsedCycle =
+    typeof rawCycle === "number"
+      ? rawCycle
+      : typeof rawCycle === "string"
+        ? Number.parseInt(rawCycle, 10)
+        : 0;
+  const cycle = Number.isFinite(parsedCycle) ? parsedCycle : 0;
   const isSubscription = cycle > 0;
 
   const lineTotalOriginal = getLineOriginalTotal(item);

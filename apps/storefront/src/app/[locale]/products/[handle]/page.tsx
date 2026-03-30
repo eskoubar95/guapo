@@ -8,9 +8,12 @@ import { ProductPageTabs } from "@/components/ProductPageTabs";
 import { KeyInformationCard } from "@/components/KeyInformationCard";
 import { PDPTrustStrip } from "@/components/PDPTrustStrip";
 import { ProductPurchaseSection } from "@/components/product/ProductPurchaseSection";
+import { WishlistButton } from "@/components/product/WishlistButton";
 import { fetchProductByHandle, fetchRecommendedProducts } from "@/lib/medusa-products";
+import { fetchFreeShippingConfig } from "@/lib/free-shipping-config.server";
 import { fetchPayloadProductByHandle } from "@/lib/payload-products";
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
+import { productCardA11yFromDict } from "@/components/product-card-a11y";
 import { ProductReviewsSection } from "@/components/ProductReviewsSection";
 
 interface ProductPageProps {
@@ -42,11 +45,13 @@ export async function generateMetadata({
 export default async function ProductPage({ params }: ProductPageProps) {
   const { locale, handle } = await params;
   const dict = await getDictionary(locale as Locale);
+  const productCardA11y = productCardA11yFromDict(dict);
   const localeKey = locale as "da" | "en";
 
-  const [medusaProduct, payloadProduct] = await Promise.all([
+  const [medusaProduct, payloadProduct, fsConfig] = await Promise.all([
     fetchProductByHandle(handle),
     fetchPayloadProductByHandle(handle, locale),
+    fetchFreeShippingConfig(),
   ]);
 
   if (!medusaProduct) notFound();
@@ -68,15 +73,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const variants = (medusaProduct.variants ?? []).map((v) => {
     const priceObj = v.calculated_price;
-    const amount = priceObj?.calculated_amount ?? 0;
+    const amount = priceObj?.calculated_amount_with_tax ?? priceObj?.calculated_amount ?? 0;
     return {
       id: v.id ?? "",
       title: v.title ?? "",
       price: amount,
+      manage_inventory: v.manage_inventory,
+      inventory_quantity: v.inventory_quantity,
     };
   });
 
-  // Medusa calculated_amount is in major units (e.g. 150 = 150 kr). No division.
+  // Medusa calculated_amount_with_tax is in major units (e.g. 150 = 150 kr inkl. moms).
   const basePrice = variants[0]?.price ?? 0;
 
   const skinTypes = payloadProduct?.skinTypes ?? [];
@@ -101,8 +108,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   );
 
   return (
-    <div className="min-h-full">
-      <main className="container mx-auto px-4 py-8">
+    <div className="min-h-full min-w-0 overflow-x-clip">
+      <main className="section-container py-8">
         {/* Breadcrumb: Guapo > Category (if any) > Product */}
         <nav className="mb-6" aria-label="Breadcrumb">
           <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
@@ -155,7 +162,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 {payloadProduct.brandName}
               </p>
             )}
-            <h1 className="text-3xl font-bold text-foreground">{title}</h1>
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="text-3xl font-bold text-foreground">{title}</h1>
+              <WishlistButton
+                productId={handle}
+                addLabel={dict.wishlist?.addToWishlist ?? "Tilføj til ønskeliste"}
+                removeLabel={dict.wishlist?.removeFromWishlist ?? "Fjern fra ønskeliste"}
+              />
+            </div>
             {payloadProduct?.subtitle && (
               <p className="mt-2 text-muted-foreground">{payloadProduct.subtitle}</p>
             )}
@@ -181,9 +195,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
               outOfStockLabel={dict.products.outOfStock}
               lowStockWithCountLabel={dict.products.lowStockWithCount}
               subscriptionConfig={{ basePrice, currency: "DKK", locale }}
+              outOfStockLabel={dict.products.outOfStock}
+              lowStockWithCountLabel={dict.products.lowStockWithCount}
             />
 
-            <PDPTrustStrip labels={dict.products.trustStrip} />
+            <PDPTrustStrip labels={{
+              ...dict.products.trustStrip,
+              freeShipping: dict.products.trustStrip.freeShipping.replace("{{threshold}}", String(fsConfig.threshold)),
+            }} />
 
             {/* Product tabs */}
             <ProductPageTabs
@@ -222,6 +241,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             products={recommendedProducts}
             locale={locale}
             layout="carousel"
+            productCardA11y={productCardA11y}
           />
         )}
       </main>

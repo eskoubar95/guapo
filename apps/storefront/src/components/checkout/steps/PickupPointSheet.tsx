@@ -134,11 +134,9 @@ export function PickupPointSheet({
                           <div className="px-3 pb-3 pt-0 text-xs text-muted-foreground border-t border-border/50">
                             <div className="pl-8">
                               {groupedHours.length > 0 ? (
-                                <Accordion defaultValue={["hours"]} className="w-full">
+                                <Accordion className="w-full">
                                   <AccordionItem value="hours" className="border-none">
-                                    <AccordionTrigger
-                                      className="py-1 text-xs font-medium text-muted-foreground hover:no-underline justify-start gap-1.5 w-full **:data-[slot=accordion-trigger-icon]:text-muted-foreground **:data-[slot=accordion-trigger-icon]:ml-0 **:data-[slot=accordion-trigger-icon]:size-3.5"
-                                    >
+                                    <AccordionTrigger className="py-1 text-xs font-medium text-muted-foreground hover:no-underline justify-start gap-1.5 w-full **:data-[slot=accordion-trigger-icon]:text-muted-foreground **:data-[slot=accordion-trigger-icon]:ml-0 **:data-[slot=accordion-trigger-icon]:size-3.5">
                                       {checkout.openingHours}
                                     </AccordionTrigger>
                                     <AccordionContent className="pb-1">
