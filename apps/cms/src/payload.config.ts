@@ -2,7 +2,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { buildConfig } from 'payload'
 import { postgresAdapter } from '@payloadcms/db-postgres'
-import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { EXPERIMENTAL_TableFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
 import { s3Storage } from '@payloadcms/storage-s3'
 
 import { Users } from './collections/Users'
@@ -26,11 +26,27 @@ import { Homepage } from './globals/Homepage'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+const storefrontUrl = process.env.STOREFRONT_URL || 'http://localhost:3000'
+
 export default buildConfig({
   admin: {
     user: Users.slug,
     importMap: {
       baseDir: path.resolve(dirname),
+    },
+    /** Live Preview: opens storefront in iframe with ?draft=1. Set STOREFRONT_URL in .env (e.g. http://localhost:3000). */
+    livePreview: {
+      url: ({ data, collectionConfig, globalConfig, locale }) => {
+        const loc = locale?.code ?? 'da'
+        if (globalConfig?.slug === 'homepage') return `${storefrontUrl}/${loc}?draft=1`
+        if (collectionConfig?.slug === 'pages' && data?.path) {
+          const pathSegment = data.path === 'home' ? '' : `/${data.path}`
+          return `${storefrontUrl}/${loc}${pathSegment}?draft=1`
+        }
+        return `${storefrontUrl}/${loc}?draft=1`
+      },
+      collections: ['pages'],
+      globals: ['homepage'],
     },
   },
 
@@ -92,7 +108,11 @@ export default buildConfig({
     fallbackLanguage: 'da',
   },
 
-  editor: lexicalEditor(),
+  editor: lexicalEditor({
+    // Risk accepted for M11: table support is currently only available via EXPERIMENTAL_TableFeature.
+    // Package is pinned to 3.74.0 in apps/cms/package.json to avoid unplanned breakages on upgrades.
+    features: ({ defaultFeatures }) => [...defaultFeatures, EXPERIMENTAL_TableFeature()],
+  }),
 
   secret: (() => {
     if (process.env.PAYLOAD_SECRET) return process.env.PAYLOAD_SECRET
