@@ -80,10 +80,27 @@ cd apps/commerce && pnpm dev
 
 ## Fejlsøgning
 
+### Fejl 400: redirect_uri_mismatch (Adgangen er blokeret)
+
+Google viser denne fejl, når den **redirect URI** som appen sender, ikke står i listen over "Authorized redirect URIs" i Google Cloud.
+
+**Løsning:**
+
+1. Gå til [Google Cloud Console](https://console.cloud.google.com/) → dit projekt → **APIs & Services** → **Credentials**.
+2. Klik på din **OAuth 2.0 Client ID** (Web application).
+3. Under **Authorized redirect URIs** skal du have **præcis** disse (for lokal dev):
+   - `http://localhost:3000/da/auth/google/callback`
+   - `http://localhost:3000/en/auth/google/callback`
+4. Klik **+ Add URI** for hver, hvis de mangler. **Ingen ekstra sti, ingen trailing slash** – kun URL’en som vist.
+5. Gem (**Save**). Ændringen kan tage et par minutter at træde i kraft.
+6. I `apps/commerce/.env` skal `GOOGLE_CALLBACK_URL` matche én af URI’erne (fx `http://localhost:3000/da/auth/google/callback`).
+
+Storefront sender callback-URL med locale (`/da/` eller `/en/`), så begge URIs skal være tillagt i Google.
+
 | Problem | Tjek |
 |--------|------|
-| "Redirect URI mismatch" | Callback-URL i `.env` skal være **præcis** den samme som i Google Cloud (inkl. http/https, port, sti). |
-| "Access blocked" | OAuth consent screen: tilføj test-brugere under "Test users" hvis appen er i "Testing". |
+| "Redirect URI mismatch" / "Adgangen er blokeret" | Tilføj `http://localhost:3000/da/auth/google/callback` og `http://localhost:3000/en/auth/google/callback` under Authorized redirect URIs i Google Cloud. |
+| "Access blocked" (andre fejl) | OAuth consent screen: tilføj test-brugere under "Test users" hvis appen er i "Testing". |
 | Login knap gør ingenting | Tjek at `GOOGLE_CLIENT_ID` og `GOOGLE_CLIENT_SECRET` er sat i `apps/commerce/.env` og at commerce-backend kører. |
 
 ---
