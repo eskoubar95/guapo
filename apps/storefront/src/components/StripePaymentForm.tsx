@@ -52,6 +52,7 @@ export function StripePaymentForm({
       onProcessing?.(false);
       onError(err instanceof Error ? err.message : "Payment failed");
     } finally {
+      onProcessing?.(false);
       setLoading(false);
     }
   };

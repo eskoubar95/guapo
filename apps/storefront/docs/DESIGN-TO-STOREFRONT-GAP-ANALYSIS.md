@@ -1,5 +1,7 @@
 # Design Repo → Storefront: 1:1 Gap Analysis
 
+> **Historisk:** Skrevet da `design/Ecommercestorefrontdesign` var git submodule i monorepoet. Submodule er fjernet (2026-03); brug dokumentet som arkiv, ikke som aktiv sti.
+
 Præcis gennemgang af hvad der findes i `design/Ecommercestorefrontdesign` vs `apps/storefront`, og hvad der mangler for en-til-en match.
 
 ---

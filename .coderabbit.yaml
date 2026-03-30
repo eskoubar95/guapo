@@ -2,6 +2,9 @@
 # Enables automatic code reviews on both default branch (main) and staging branch
 
 reviews:
+  # Skip tooling/design exports from AI review (helps stay under per-PR file limits)
+  path_filters:
+    - "!apps/storefront/design-assets/**"
   auto_review:
     enabled: true
     base_branches:
