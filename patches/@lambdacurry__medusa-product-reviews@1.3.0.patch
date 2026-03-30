@@ -105,14 +105,6 @@ index f2ac755ff554cfd036eb33c6f1aa4c32cef49f50..f5648a3d1aaa93d6297a953854cba69c
          ] }) });
        }
      }),
-@@ -294,7 +314,7 @@ const getColumns = (showColumns, actions) => {
-      header: "Images",
-      enableSorting: false,
-      cell: ({ row }) => {
--        return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "flex gap-2", children: row.original.images.length });
-+        return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "flex gap-2", children: (row.original.images ?? []).length });
-      }
-    }),
 diff --git a/.medusa/server/src/admin/index.mjs b/.medusa/server/src/admin/index.mjs
 index 729b34734f4db32ee61c345941a79755edf14b3e..ba1d913aef6ab834936656ecc757b651fa7c93e9 100644
 --- a/.medusa/server/src/admin/index.mjs
