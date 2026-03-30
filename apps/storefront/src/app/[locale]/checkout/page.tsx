@@ -2,6 +2,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { CheckoutWithStripe } from "@/components/CheckoutWithStripe";
 import { CheckoutAuthGate } from "@/components/checkout/CheckoutAuthGate";
 import { CheckoutOrderSummary } from "@/components/checkout/CheckoutOrderSummary";
@@ -59,14 +60,16 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
 
       <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 py-6 lg:py-10">
         <CheckoutCartProvider initialCart={c}>
-          <CheckoutAuthGate locale={locale} hasSubscriptionItems={hasSubscriptionItems} authLabels={dict.auth}>
-            <CheckoutWithStripe
-              locale={locale}
-              dict={dict}
-              cartId={cartId}
-              hasSubscriptionItems={hasSubscriptionItems}
-            />
-          </CheckoutAuthGate>
+          <Suspense fallback={null}>
+            <CheckoutAuthGate locale={locale} hasSubscriptionItems={hasSubscriptionItems} authLabels={dict.auth}>
+              <CheckoutWithStripe
+                locale={locale}
+                dict={dict}
+                cartId={cartId}
+                hasSubscriptionItems={hasSubscriptionItems}
+              />
+            </CheckoutAuthGate>
+          </Suspense>
 
           {items.length > 0 && (
             <CheckoutOrderSummary
