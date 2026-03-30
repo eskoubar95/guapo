@@ -4,6 +4,7 @@ import {
   type ProductReviewItem,
   type ProductReviewStats,
 } from "@/lib/medusa-product-reviews";
+import { formatReviewerDisplayName } from "@/lib/review-display-name";
 import { Star } from "lucide-react";
 import { ProductReviewFormBlock } from "./ProductReviewFormBlock";
 
@@ -12,7 +13,7 @@ export interface ProductReviewsSectionLabels {
   count: string;
   count_plural: string;
   noReviews: string;
-  reviewAfterPurchase: string;
+  ratingLabel: string;
   responseLabel: string;
   writeReview: string;
   writeReviewTitle: string;
@@ -81,7 +82,7 @@ function ReviewCard({
   responseLabel: string;
   locale: string;
 }) {
-  const displayName = review.name || (locale === "da" ? "Anonym" : "Anonymous");
+  const displayName = formatReviewerDisplayName(review.name, locale);
   const date = review.created_at
     ? new Date(review.created_at).toLocaleDateString(locale === "da" ? "da-DK" : "en-GB", {
         year: "numeric",
@@ -150,13 +151,16 @@ export async function ProductReviewsSection({
 
   return (
     <section className="mt-10 border-t border-border pt-8" aria-labelledby="reviews-heading">
-      <h2 id="reviews-heading" className="text-xl font-semibold text-foreground">
+      <h2
+        id="reviews-heading"
+        className="text-2xl font-semibold tracking-tight text-foreground"
+      >
         {labels.title}
       </h2>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,280px)_1fr]">
+      <div className="mt-8 flex flex-col gap-10 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,280px)_1fr] lg:items-start lg:gap-8">
         {/* Left: rating overview + star distribution + write review CTA */}
-        <div className="space-y-4">
+        <div className="order-2 space-y-4 lg:order-none">
           {hasStats && stats && (
             <>
               <div className="flex items-center gap-3">
@@ -192,6 +196,7 @@ export async function ProductReviewsSection({
               labels={{
                 writeReview: labels.writeReview,
                 writeReviewTitle: labels.writeReviewTitle,
+                ratingLabel: labels.ratingLabel,
                 headline: labels.headline,
                 headlinePlaceholder: labels.headlinePlaceholder,
                 reviewText: labels.reviewText,
@@ -207,8 +212,8 @@ export async function ProductReviewsSection({
           </div>
         </div>
 
-        {/* Right: review list */}
-        <div>
+        {/* Right: review list (first on mobile) */}
+        <div className="order-1 lg:order-none">
           {reviews.length === 0 ? (
             <p className="text-sm text-muted-foreground">{labels.noReviews}</p>
           ) : (
@@ -225,8 +230,6 @@ export async function ProductReviewsSection({
           )}
         </div>
       </div>
-
-      <p className="mt-6 text-sm text-muted-foreground">{labels.reviewAfterPurchase}</p>
     </section>
   );
 }

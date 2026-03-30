@@ -30,6 +30,8 @@ export default async function AccountLayoutWrapper({
         profile: dict.account.profile,
         addresses: dict.account.addresses,
         loading: dict.account.loading,
+        menuLabel: dict.account.menuLabel,
+        closeMenu: dict.account.closeMenu,
       }}
     >
       <AccountGate locale={locale} loadingLabel={dict.account.loading}>

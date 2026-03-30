@@ -70,13 +70,13 @@ export function RoutineBlock({
   if (layout === "carousel") {
     return (
       <section className={`py-8 lg:py-12 ${backgroundColor}`}>
-        <div className="container mx-auto px-4">
+        <div className="section-container min-w-0">
           <div className="text-center mb-5 lg:mb-6">
-            <h2 className="text-xl lg:text-2xl font-semibold text-primary mb-2">
+            <h2 className="section-heading text-primary mb-2">
               {title}
             </h2>
             {subtitle && (
-              <p className="text-sm text-muted-foreground">{subtitle}</p>
+              <p className="text-sm text-text-muted">{subtitle}</p>
             )}
           </div>
           <div
@@ -106,7 +106,7 @@ export function RoutineBlock({
             )}
             <div
               ref={scrollRef}
-              className="flex gap-3 lg:gap-4 overflow-x-auto scroll-smooth scrollbar-hide"
+              className="flex gap-3 lg:gap-4 overflow-x-auto scroll-smooth scrollbar-hide min-w-0"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
               {routines.map((routine) => (
@@ -123,10 +123,10 @@ export function RoutineBlock({
                     />
                   </div>
                   <div className="p-3 lg:p-4">
-                    <h3 className="font-medium text-foreground text-sm mb-1">
+                    <h3 className="font-medium text-text-primary text-sm mb-1">
                       {routine.title}
                     </h3>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
+                    <p className="text-xs text-text-muted line-clamp-2">
                       {routine.description}
                     </p>
                   </div>
@@ -141,13 +141,13 @@ export function RoutineBlock({
 
   return (
     <section className={`py-8 lg:py-12 ${backgroundColor}`}>
-      <div className="container mx-auto px-4">
+      <div className="section-container min-w-0">
         <div className="text-center mb-6 lg:mb-8">
-          <h2 className="text-xl lg:text-2xl font-semibold text-primary mb-2">
+          <h2 className="section-heading text-primary mb-2">
             {title}
           </h2>
           {subtitle && (
-            <p className="text-sm text-muted-foreground">{subtitle}</p>
+            <p className="text-sm text-text-muted">{subtitle}</p>
           )}
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 lg:gap-4">
@@ -165,10 +165,10 @@ export function RoutineBlock({
                 />
               </div>
               <div className="p-3 lg:p-4">
-                <h3 className="font-medium text-foreground text-sm mb-1">
+                <h3 className="font-medium text-text-primary text-sm mb-1">
                   {routine.title}
                 </h3>
-                <p className="text-xs text-muted-foreground line-clamp-2">
+                <p className="text-xs text-text-muted line-clamp-2">
                   {routine.description}
                 </p>
               </div>

@@ -10,7 +10,7 @@ import Medusa from "@medusajs/js-sdk";
 
 export const MEDUSA_BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000";
 
-/** Relative store paths (e.g. `/store/orders/.../documents/...`) → absolute backend URLs for `<a href>`. */
+/** Turn relative store paths (e.g. `/store/orders/.../documents/...`) into absolute backend URLs for `<a href>`. */
 export function withMedusaBackendUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   if (path.startsWith("http://") || path.startsWith("https://")) return path;

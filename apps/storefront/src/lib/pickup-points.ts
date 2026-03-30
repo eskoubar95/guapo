@@ -75,16 +75,10 @@ function haversineMeters(
 async function geocodeAddress(addressStr: string): Promise<{ lat: number; lon: number } | null> {
   const q = addressStr.trim();
   if (!q || q.length < 2) return null;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
   try {
-    const base =
-      typeof window !== "undefined" ? "" : process.env.NEXT_PUBLIC_STOREFRONT_URL ?? "http://localhost:3000";
+    const base = typeof window !== "undefined" ? "" : process.env.NEXT_PUBLIC_STOREFRONT_URL ?? "http://localhost:3000";
     const url = `${base}/api/geocode?q=${encodeURIComponent(q)}`;
-    const res = await fetch(url, {
-      headers: { Accept: "application/json" },
-      signal: controller.signal,
-    });
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
     if (!res.ok) return null;
     const data = (await res.json()) as { lat: number | null; lon: number | null };
     const lat = data?.lat;
@@ -93,8 +87,6 @@ async function geocodeAddress(addressStr: string): Promise<{ lat: number; lon: n
     return { lat, lon };
   } catch {
     return null;
-  } finally {
-    clearTimeout(timeoutId);
   }
 }
 
@@ -108,10 +100,7 @@ export async function enrichWithDistance(
   fromAddress: string
 ): Promise<PickupPoint[]> {
   const needDistance = points.some(
-    (p) =>
-      (p.distance == null || !Number.isFinite(p.distance)) &&
-      Number.isFinite(p.latitude) &&
-      Number.isFinite(p.longitude)
+    (p) => (p.distance == null || !Number.isFinite(p.distance)) && Number.isFinite(p.latitude) && Number.isFinite(p.longitude)
   );
   if (!needDistance || !fromAddress.trim()) return points;
 

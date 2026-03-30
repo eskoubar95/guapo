@@ -8,7 +8,7 @@ import type { CheckoutFormData } from "./checkout-form.types";
 
 interface ContactFormProps {
   formData: CheckoutFormData;
-  onFormDataChange?: (data: CheckoutFormData) => void;
+  onFormDataChange: (data: CheckoutFormData) => void;
   checkout: Dictionary["checkout"];
   isGuest: boolean;
   hasSubscriptionItems: boolean;
@@ -32,7 +32,7 @@ export function ContactForm({
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label htmlFor="email" className="text-sm">{checkout.email}</Label>
-            <Input type="email" id="email" placeholder="you@example.com" className="w-full" value={formData.email} onChange={(e) => onFormDataChange?.({ ...formData, email: e.target.value })} />
+            <Input type="email" id="email" placeholder="you@example.com" className="w-full" value={formData.email} onChange={(e) => onFormDataChange({ ...formData, email: e.target.value })} />
             {isGuest && !hasSubscriptionItems && (
               <p className="text-xs text-muted-foreground mt-1">{checkout.guestCheckoutNote}</p>
             )}
@@ -43,7 +43,7 @@ export function ContactForm({
               id="marketing"
               checked={formData.marketingOptIn}
               onChange={(e) =>
-                onFormDataChange?.({ ...formData, marketingOptIn: e.target.checked })
+                onFormDataChange({ ...formData, marketingOptIn: e.target.checked })
               }
               className="h-4 w-4 rounded border-border accent-primary"
             />
@@ -57,27 +57,27 @@ export function ContactForm({
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="firstName" className="text-sm">{checkout.firstName}</Label>
-            <Input id="firstName" className="w-full" value={formData.firstName} onChange={(e) => onFormDataChange?.({ ...formData, firstName: e.target.value })} />
+            <Input id="firstName" className="w-full" value={formData.firstName} onChange={(e) => onFormDataChange({ ...formData, firstName: e.target.value })} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="lastName" className="text-sm">{checkout.lastName}</Label>
-            <Input id="lastName" className="w-full" value={formData.lastName} onChange={(e) => onFormDataChange?.({ ...formData, lastName: e.target.value })} />
+            <Input id="lastName" className="w-full" value={formData.lastName} onChange={(e) => onFormDataChange({ ...formData, lastName: e.target.value })} />
           </div>
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="address" className="text-sm">{checkout.address}</Label>
-            <Input id="address" className="w-full" value={formData.address1} onChange={(e) => onFormDataChange?.({ ...formData, address1: e.target.value })} />
+            <Input id="address" className="w-full" value={formData.address1} onChange={(e) => onFormDataChange({ ...formData, address1: e.target.value })} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="postalCode" className="text-sm">{checkout.postalCode}</Label>
-            <Input id="postalCode" className="w-full" value={formData.postalCode} onChange={(e) => onFormDataChange?.({ ...formData, postalCode: e.target.value })} />
+            <Input id="postalCode" className="w-full" value={formData.postalCode} onChange={(e) => onFormDataChange({ ...formData, postalCode: e.target.value })} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="city" className="text-sm">{checkout.city}</Label>
-            <Input id="city" className="w-full" value={formData.city} onChange={(e) => onFormDataChange?.({ ...formData, city: e.target.value })} />
+            <Input id="city" className="w-full" value={formData.city} onChange={(e) => onFormDataChange({ ...formData, city: e.target.value })} />
           </div>
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="phone" className="text-sm">{checkout.phone}</Label>
-            <Input type="tel" id="phone" placeholder="+45" className="w-full" value={formData.phone} onChange={(e) => onFormDataChange?.({ ...formData, phone: e.target.value })} />
+            <Input type="tel" id="phone" placeholder="+45" className="w-full" value={formData.phone} onChange={(e) => onFormDataChange({ ...formData, phone: e.target.value })} />
           </div>
         </div>
       </div>

@@ -165,33 +165,24 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
   const handleRemove = (lineItemId: string) => {
     setQtyError(null);
     startTransition(async () => {
-      try {
-        await removeLineItem(lineItemId);
-        router.refresh();
-        await refreshCart();
-      } catch (e) {
-        const raw = e instanceof Error ? e.message : "";
-        setQtyError({
-          lineId: lineItemId,
-          message: userMessageForLineItemError(
-            raw,
-            dict.cart.notEnoughStock,
-            dict.cart.quantityUpdateFailed
-          ),
-        });
-        await refreshCart();
-      }
+      await removeLineItem(lineItemId);
+      router.refresh();
+      await refreshCart();
     });
   };
 
-  const handleQuantityChange = (lineItemId: string, newQty: number) => {
+  const handleQuantityChange = (
+    lineItemId: string,
+    newQty: number,
+    metadata?: Record<string, unknown>
+  ) => {
     if (newQty < 1) return;
     const item = items.find((i) => i.id === lineItemId);
     if (item && newQty > getCartLineQuantityCap(item)) return;
     setQtyError(null);
     startTransition(async () => {
       try {
-        await updateLineItem(lineItemId, newQty);
+        await updateLineItem(lineItemId, newQty, metadata);
         router.refresh();
         await refreshCart();
       } catch (e) {
@@ -214,16 +205,11 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
     setQtyError(null);
     setIsClearing(true);
     startTransition(async () => {
-      try {
-        await clearCart();
-        await refreshCart();
-        router.refresh();
-        onClose();
-      } catch (e) {
-        console.error("Failed to clear cart:", e);
-      } finally {
-        setIsClearing(false);
-      }
+      await clearCart();
+      await refreshCart();
+      router.refresh();
+      onClose();
+      setIsClearing(false);
     });
   };
 
@@ -264,7 +250,7 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
                   locale={locale}
                   dict={dict}
                   onRemove={() => handleRemove(item.id)}
-                  onQuantityChange={(qty) => handleQuantityChange(item.id, qty)}
+                  onQuantityChange={(qty) => handleQuantityChange(item.id, qty, item.metadata)}
                   isPending={isPending}
                   quantityError={qtyError?.lineId === item.id ? qtyError.message : null}
                 />
@@ -292,7 +278,7 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
                   </span>
                 ) : (
                   <span className="text-muted-foreground text-xs">
-                    {dict.cart.calculatedAtCheckout}
+                    {locale === "da" ? "Beregnes ved kassen" : "Calculated at checkout"}
                   </span>
                 )}
               </div>
@@ -305,7 +291,7 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
                 </div>
                 {taxTotal > 0 && (
                   <div className="flex justify-between text-xs text-muted-foreground mt-0.5">
-                    <span>{dict.cart.inclVatBreakdown}</span>
+                    <span>{locale === "da" ? "Heraf moms (25%)" : "Incl. VAT (25%)"}</span>
                     <span>{formatPrice(taxTotal, locale)}</span>
                   </div>
                 )}

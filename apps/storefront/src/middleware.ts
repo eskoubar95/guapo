@@ -40,8 +40,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(newUrl);
   }
 
-  // Set locale cookie for persistence
-  const response = NextResponse.next();
+  // Forward pathname for server layouts (AuthAwareShell minimal mode: login/register/checkout)
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", pathname);
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
   if (pathnameLocale !== request.cookies.get("NEXT_LOCALE")?.value) {
     response.cookies.set("NEXT_LOCALE", pathnameLocale, {
       path: "/",

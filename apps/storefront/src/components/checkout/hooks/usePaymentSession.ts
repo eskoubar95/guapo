@@ -69,6 +69,7 @@ interface UsePaymentSessionParams {
     | "guestFirstNamePlaceholder"
     | "guestLastNamePlaceholder"
     | "paymentInitFailed"
+    | "shippingMethodRequired"
   >;
   setLiveCart: (cart: StoreCart) => void;
 }
@@ -108,7 +109,7 @@ export function usePaymentSession({
     if (!cartId) return;
     const generation = ++sessionGenerationRef.current;
 
-    const formDataSig = `${formData.email}|${formData.firstName}|${formData.lastName}|${formData.address1}|${formData.postalCode}|${formData.city}|${formData.phone ?? ""}|${formData.marketingOptIn}`;
+    const formDataSig = `${formData.email}|${formData.firstName}|${formData.lastName}|${formData.address1}|${formData.postalCode}|${formData.city}|${formData.phone}|${formData.marketingOptIn}`;
     const shippingDataSig = JSON.stringify(selectedShippingData ?? {});
     const formDataUnchanged = lastAppliedFormDataRef.current === formDataSig;
     const shippingDataUnchanged = lastAppliedShippingDataRef.current === shippingDataSig;
@@ -178,8 +179,16 @@ export function usePaymentSession({
       if (generation !== sessionGenerationRef.current) return;
 
       const { shipping_options } = await medusa.store.fulfillment.listCartOptions({ cart_id: cartId });
-      const optionId = selectedShippingOptionId ?? shipping_options?.[0]?.id;
-      if (shipping_options?.length && optionId) {
+      const optionList = shipping_options ?? [];
+      if (optionList.length > 0) {
+        const optionId =
+          selectedShippingOptionId ??
+          (optionList.length === 1 ? optionList[0].id : null);
+        if (!optionId) {
+          setPaymentError(checkoutMessages.shippingMethodRequired);
+          setStripeLoading(false);
+          return;
+        }
         await medusa.store.cart.addShippingMethod(cartId, {
           option_id: optionId,
           data: Object.keys(selectedShippingData).length ? selectedShippingData : undefined,

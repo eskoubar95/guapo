@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Locale } from "./config";
 
 // Dictionary structure for type safety
@@ -11,6 +12,28 @@ export interface Dictionary {
     signIn: string;
     signOut: string;
     language: string;
+  };
+  search: {
+    placeholder: string;
+    recentSearches: string;
+    clearRecent: string;
+    popularSearches: string;
+    shortcuts: string;
+    bestsellers: string;
+    bestsellersSub: string;
+    newArrivals: string;
+    newArrivalsSub: string;
+    products: string;
+    articles: string;
+    resultsCount: string;
+    resultCount: string;
+    noResults: string;
+    tryDifferent: string;
+    searching: string;
+    selectHint: string;
+    closeHint: string;
+    minChars: string;
+    viewAllResults: string;
   };
   home: {
     hero: {
@@ -27,6 +50,11 @@ export interface Dictionary {
       bar2: { text: string; subtext: string };
     };
     promoSlider: {
+      previousSlide: string;
+      nextSlide: string;
+      goToSlide: string;
+      pauseAutoplay: string;
+      playAutoplay: string;
       slide1: {
         badge: string;
         title: string;
@@ -87,6 +115,8 @@ export interface Dictionary {
   products: {
     addToCart: string;
     outOfStock: string;
+    /** Remaining count, e.g. "Kun {{count}} tilbage på lager" */
+    lowStockWithCount: string;
     viewDetails: string;
     filters: string;
     clearFilters: string;
@@ -122,7 +152,7 @@ export interface Dictionary {
       count: string;
       count_plural: string;
       noReviews: string;
-      reviewAfterPurchase: string;
+      ratingLabel: string;
       responseLabel: string;
       writeReview: string;
       writeReviewTitle: string;
@@ -174,21 +204,31 @@ export interface Dictionary {
     everyXWeeks: string;
     goToShop: string;
     itemsInCart: string;
-    clearCart: string;
-    notEnoughStock: string;
-    quantityUpdateFailed: string;
-    totalDiscount: string;
     goToCart: string;
-    youSavePerTime: string;
-    addedAsSubscription: string;
-    calculatedAtCheckout: string;
-    inclVatBreakdown: string;
     addedToCart: string;
-    cartTotalCount: string;
-    freeShippingProgress: string;
     shopVidere: string;
     seKurv: string;
-    closeModal: string;
+    totalDiscount: string;
+    freeShippingProgress: string;
+    addedAsSubscription: string;
+    youSavePerTime: string;
+    cartTotalCount: string;
+    clearCart: string;
+    /** Shown when quantity cannot exceed available inventory */
+    notEnoughStock: string;
+    /** Non-inventory failure updating line quantity */
+    quantityUpdateFailed: string;
+  };
+  wishlist: {
+    title: string;
+    empty: string;
+    addToWishlist: string;
+    removeFromWishlist: string;
+    goToShop: string;
+    saveToAccount: string;
+    loading: string;
+    saving: string;
+    saved: string;
   };
   checkout: {
     title: string;
@@ -266,6 +306,7 @@ export interface Dictionary {
     mobilePayLabel: string;
     klarnaLabel: string;
     paymentInitFailed: string;
+    shippingMethodRequired: string;
     calculatedWhenDeliverySelected: string;
     vatIncludedBreakdown: string;
   };
@@ -287,6 +328,10 @@ export interface Dictionary {
     errorRegister: string;
     hasAccount: string;
     loginLink: string;
+    backLink?: string;
+    loginDescription?: string;
+    registerDescription?: string;
+    authRequiredMessage?: string;
   };
   account: {
     title: string;
@@ -297,20 +342,63 @@ export interface Dictionary {
     addresses: string;
     signOut: string;
     loading: string;
+    orderRenewalLabel?: string;
+    orderSubscriptionLineLabel?: string;
+    menuLabel?: string;
+    closeMenu?: string;
+    profileTitle: string;
+    profileSaved: string;
+    profileError: string;
+    saving: string;
+    save: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    addressTitle: string;
+    billingAddress: string;
+    address: string;
+    postalCode: string;
+    city: string;
+    addressSaved: string;
+    addressError: string;
+    preferredPickupPoint: string;
+    noPickupPointSaved: string;
+    searchPickupPoint: string;
+    pickupPointSaved: string;
+    pickupPointError: string;
+    change: string;
+    cancel: string;
   };
   orderConfirmation: {
     title: string;
     subtitle: string;
     orderNumber: string;
+    orderDate: string;
+    status: string;
     viewOrder: string;
     continueShopping: string;
     summary: string;
+    items: string;
     subtotal: string;
     shipping: string;
     total: string;
+    freeShipping: string;
+    deliveryAddress: string;
+    pickupPoint: string;
+    pickupPointHint: string;
+    subscriptionTitle: string;
+    subscriptionText: string;
+    manageSubscriptions: string;
+    tracking: string;
+    trackPackage: string;
+    paymentMethod: string;
+    paymentCardEnding: string;
+    paymentCardBrand: string;
     confirming: string;
     errorMessage: string;
     backToCheckout: string;
+    orderLoadError: string;
   };
   subscriptionDetail: {
     title: string;
@@ -339,6 +427,26 @@ export interface Dictionary {
     cancelSuccessBody: string;
     cancelCloseButton: string;
     cancelTryAgain: string;
+    subscriptionLinesTitle: string;
+    orderHistoryTitle: string;
+    discountIncluded: string;
+    openOrderHistory: string;
+  };
+  blog: {
+    title: string;
+    intro: string;
+    empty: string;
+    readMore: string;
+    backToBlog: string;
+    featuredHeading: string;
+    moreArticles: string;
+    categories: {
+      "skincare-tips": string;
+      "product-guides": string;
+      ingredients: string;
+      routines: string;
+      news: string;
+    };
   };
   footer: {
     support: string;
@@ -356,6 +464,6 @@ const dictionaries: Record<Locale, () => Promise<Dictionary>> = {
   en: () => import("./dictionaries/en.json").then((module) => module.default),
 };
 
-export const getDictionary = async (locale: Locale): Promise<Dictionary> => {
+export const getDictionary = cache(async (locale: Locale): Promise<Dictionary> => {
   return dictionaries[locale]();
-};
+});

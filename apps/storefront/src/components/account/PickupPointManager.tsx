@@ -147,15 +147,12 @@ export function PickupPointManager({
           preferred_pickup_point: pickupData,
         },
       });
+      await refetch();
       setSavedPickup(pickupData);
       setPickupFeedback({ type: "success", msg: labels.pickupPointSaved });
-      try {
-        await refetch();
-      } catch {
-        /* update persisted; refresh failure is non-fatal */
-      }
       setTimeout(() => setPickupFeedback(null), 3000);
-    } catch {
+    } catch (err) {
+      console.error("[PickupPointManager] save failed", err);
       setPickupFeedback({ type: "error", msg: labels.pickupPointError });
     } finally {
       setSavingPickup(false);
@@ -209,9 +206,6 @@ export function PickupPointManager({
 
           {pickupFeedback ? (
             <span
-              role={pickupFeedback.type === "error" ? "alert" : "status"}
-              aria-live={pickupFeedback.type === "error" ? "assertive" : "polite"}
-              aria-atomic="true"
               className={`mt-2 inline-flex items-center gap-1.5 text-sm font-medium ${
                 pickupFeedback.type === "success" ? "text-success" : "text-destructive"
               }`}

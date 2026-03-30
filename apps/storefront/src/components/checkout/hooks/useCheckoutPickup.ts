@@ -48,6 +48,13 @@ export function useCheckoutPickup({
     };
   }, []);
 
+  /** When pickup point is cleared (e.g. search), reset carrier so ReviewStep does not show a stale label. */
+  useEffect(() => {
+    if (!selectedPoint) {
+      setSelectedCarrier("gls");
+    }
+  }, [selectedPoint]);
+
   const pakkeshopOption = findDefaultPakkeshopOption(shippingOptions);
 
   const getOptionForCarrier = useCallback(
@@ -111,6 +118,9 @@ export function useCheckoutPickup({
             );
           }
         }
+      })
+      .catch((err) => {
+        console.error("[useCheckoutPickup] prefill fetch failed", err);
       })
       .finally(() => {
         if (mountedRef.current) setPickupLoading(false);

@@ -55,7 +55,7 @@ export function CheckoutSteps({
   selectedShippingOptionId = null,
   onShippingSelect,
   formData = DEFAULT_CHECKOUT_FORM_DATA,
-  onFormDataChange,
+  onFormDataChange = () => {},
   initialPickupZipcode = "",
   initialPickupPointId = "",
   termsAccepted = false,

@@ -2,15 +2,21 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { medusa } from "@/lib/medusa";
+import { getSafeReturnUrl } from "@/lib/auth-utils";
 
 type Customer = { id: string; email?: string | null; first_name?: string | null; last_name?: string | null; [k: string]: unknown };
+
+export type SignOutOptions = {
+  /** Full path (e.g. `/da/login`) — uses hard navigation so account shell unmount cannot skip redirect */
+  redirectTo?: string;
+};
 
 type AuthState = {
   customer: Customer | null;
   loading: boolean;
   isAuthenticated: boolean;
   refetch: () => Promise<void>;
-  signOut: (opts?: { redirectTo?: string }) => Promise<void>;
+  signOut: (options?: SignOutOptions) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -39,16 +45,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const signOut = useCallback(async (opts?: { redirectTo?: string }) => {
+  const signOut = useCallback(async (options?: SignOutOptions) => {
     requestVersionRef.current += 1;
     try {
       await medusa.auth.logout();
     } finally {
       setCustomer(null);
       setLoading(false);
-    }
-    if (typeof window !== "undefined" && opts?.redirectTo) {
-      window.location.assign(opts.redirectTo);
+      const to = options?.redirectTo;
+      if (typeof window !== "undefined" && to) {
+        window.location.replace(getSafeReturnUrl(to, "/"));
+      }
     }
   }, []);
 
