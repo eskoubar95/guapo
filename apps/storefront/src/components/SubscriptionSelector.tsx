@@ -9,7 +9,7 @@ interface SubscriptionSelectorProps {
   onSelect?: (type: "one-time" | "subscription", cycle?: number) => void;
 }
 
-const SUBSCRIPTION_DISCOUNT = 0.05; // 5% discount
+const SUBSCRIPTION_DISCOUNT = 5 / 100; // 5%, must match subscription-config and backend
 const CYCLES = [4, 8, 12] as const;
 
 export function SubscriptionSelector({

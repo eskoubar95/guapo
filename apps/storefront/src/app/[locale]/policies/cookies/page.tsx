@@ -33,11 +33,11 @@ export default async function CookiesPage({ params }: PolicyPageProps) {
       },
       {
         title: "Analytics cookies",
-        content: "Disse cookies hjælper os med at forstå, hvordan besøgende interagerer med vores hjemmeside. Analytics cookies kræver dit samtykke. (Ikke implementeret endnu)",
+        content: "Disse cookies hjælper os med at forstå, hvordan besøgende interagerer med vores hjemmeside. Analytics cookies kræver dit samtykke.",
       },
       {
         title: "Marketing cookies",
-        content: "Disse cookies bruges til at vise relevante annoncer. Marketing cookies kræver dit samtykke. (Ikke implementeret endnu)",
+        content: "Disse cookies bruges til at vise relevante annoncer. Marketing cookies kræver dit samtykke.",
       },
       {
         title: "Administrer dine præferencer",
@@ -59,11 +59,11 @@ export default async function CookiesPage({ params }: PolicyPageProps) {
       },
       {
         title: "Analytics cookies",
-        content: "These cookies help us understand how visitors interact with our website. Analytics cookies require your consent. (Not yet implemented)",
+        content: "These cookies help us understand how visitors interact with our website. Analytics cookies require your consent.",
       },
       {
         title: "Marketing cookies",
-        content: "These cookies are used to show relevant advertisements. Marketing cookies require your consent. (Not yet implemented)",
+        content: "These cookies are used to show relevant advertisements. Marketing cookies require your consent.",
       },
       {
         title: "Manage your preferences",

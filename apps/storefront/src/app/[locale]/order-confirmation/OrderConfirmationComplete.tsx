@@ -43,6 +43,12 @@ export function OrderConfirmationComplete({
             console.warn("Order completed, but cart cleanup failed:", err);
           }
           if (cancelled) return;
+          try {
+            sessionStorage.setItem(
+              `guapo_order_${res.order.id}`,
+              JSON.stringify(res.order)
+            );
+          } catch (_) {}
           setStatus("success");
           router.replace(`/${locale}/order-confirmation/${res.order.id}`);
         } else {

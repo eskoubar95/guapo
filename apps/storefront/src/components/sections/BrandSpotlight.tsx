@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { ProductCard, type Product } from "@/components/ProductCard";
+import type { ProductCardA11yLabels } from "@/components/product-card-a11y";
 import { useRef, useState, useEffect } from "react";
 
 interface BrandSpotlightProps {
@@ -14,6 +15,7 @@ interface BrandSpotlightProps {
   brandPageLink: string;
   locale: string;
   backgroundColor?: string;
+  productCardA11y?: ProductCardA11yLabels;
 }
 
 export function BrandSpotlight({
@@ -24,6 +26,7 @@ export function BrandSpotlight({
   brandPageLink,
   locale,
   backgroundColor = "bg-background",
+  productCardA11y,
 }: BrandSpotlightProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeft, setShowLeft] = useState(false);
@@ -64,19 +67,19 @@ export function BrandSpotlight({
 
   return (
     <section className={`py-8 lg:py-12 ${backgroundColor}`}>
-      <div className="container mx-auto px-4">
+      <div className="section-container min-w-0">
         <div className="bg-white rounded-2xl p-6 lg:p-8 mb-6 border border-border">
           <div className="grid md:grid-cols-2 gap-6 items-center">
             <div>
-              <h2 className="text-2xl lg:text-3xl font-bold text-primary mb-3">
+              <h2 className="section-heading text-primary mb-3">
                 {brandName}
               </h2>
-              <p className="text-muted-foreground mb-6 text-sm lg:text-base">
+              <p className="text-text-muted mb-6 text-sm lg:text-base">
                 {description}
               </p>
               <Link
                 href={`/${locale}${brandPageLink}`}
-                className="inline-flex items-center justify-center gap-2 h-12 px-8 text-base font-medium border-2 border-border bg-background text-foreground hover:bg-surface hover:border-primary rounded-lg focus-visible:border-primary focus-visible:outline-none"
+                className="inline-flex items-center justify-center gap-2 h-12 px-8 text-base font-medium border-2 border-border bg-background text-text-primary hover:bg-surface hover:border-primary rounded-lg focus-visible:border-primary focus-visible:outline-none"
               >
                 Se alle produkter fra {brandName}
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -126,7 +129,7 @@ export function BrandSpotlight({
           )}
           <div
             ref={scrollRef}
-            className="flex gap-3 lg:gap-4 overflow-x-auto scroll-smooth scrollbar-hide"
+            className="flex gap-3 lg:gap-4 overflow-x-auto scroll-smooth scrollbar-hide min-w-0"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {products.map((product) => (
@@ -134,7 +137,7 @@ export function BrandSpotlight({
                 key={product.id}
                 className="flex-shrink-0 w-[45%] sm:w-[30%] md:w-[23%] lg:w-[15%]"
               >
-                <ProductCard product={product} locale={locale} />
+                <ProductCard product={product} locale={locale} labels={productCardA11y} />
               </div>
             ))}
           </div>

@@ -17,8 +17,8 @@ interface CategoryStripProps {
 export function CategoryStrip({ categories, locale }: CategoryStripProps) {
   return (
     <section className="py-8 bg-background">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center gap-6 overflow-x-auto pb-4 scrollbar-hide">
+      <div className="section-container min-w-0">
+        <div className="flex items-center gap-6 overflow-x-auto pb-4 scrollbar-hide min-w-0">
           {categories.map((cat) => (
             <Link
               key={cat.name}
@@ -40,7 +40,7 @@ export function CategoryStrip({ categories, locale }: CategoryStripProps) {
                   <span className="text-2xl">{cat.emoji ?? "✨"}</span>
                 )}
               </div>
-              <span className="text-xs text-center text-text-secondary group-hover:text-primary transition-colors font-medium">
+              <span className="text-xs text-center text-text-muted group-hover:text-primary transition-colors font-medium">
                 {cat.name}
               </span>
             </Link>

@@ -53,7 +53,7 @@ export async function fetchProductReviews(
     });
     const res = await fetch(`${MEDUSA_URL}/product-reviews?${params}`, {
       headers: medusaHeaders(),
-      next: { revalidate: 60 },
+      cache: "no-store",
     });
     if (!res.ok) return { reviews: [], count: 0 };
     const json = (await res.json()) as {
@@ -81,7 +81,7 @@ export async function fetchProductReviewStats(
     const params = new URLSearchParams({ product_id: productId });
     const res = await fetch(`${MEDUSA_URL}/product-review-stats?${params}`, {
       headers: medusaHeaders(),
-      next: { revalidate: 60 },
+      cache: "no-store",
     });
     if (!res.ok) return null;
     const json = (await res.json()) as {

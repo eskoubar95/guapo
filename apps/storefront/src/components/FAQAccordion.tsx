@@ -30,15 +30,13 @@ export function FAQAccordion({ categories }: FAQAccordionProps) {
           <h2 className="border-b border-border pb-3 text-xl font-semibold text-foreground">
             {category.name}
           </h2>
-          <Accordion type="single" defaultValue={null} className="mt-4">
-            {category.faqs.map((faq, j) => {
+          <Accordion className="mt-4">
+            {category.faqs.map((faq) => {
               const value = `faq-${valueIndex++}`;
               return (
                 <AccordionItem key={value} value={value}>
-                  <AccordionTrigger value={value}>
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent value={value}>
+                  <AccordionTrigger>{faq.question}</AccordionTrigger>
+                  <AccordionContent>
                     <p className="text-muted-foreground">{faq.answer}</p>
                   </AccordionContent>
                 </AccordionItem>
