@@ -68,12 +68,13 @@ if (process.env.STRIPE_API_KEY) {
     options: {
       providers: [
         {
-          resolve: "@medusajs/medusa/payment-stripe",
+          resolve: "./src/modules/payment-stripe-guapo",
           id: "stripe",
           options: {
             apiKey: process.env.STRIPE_API_KEY,
             webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
-            automatic_payment_methods: true,
+            // Explicit payment_method_types per checkout (no automatic_payment_methods on PI)
+            automatic_payment_methods: false,
           },
         },
       ],
@@ -106,10 +107,16 @@ modules.push({
 
 modules.push(
   {
+    resolve: "./src/modules/shipmondo-config",
+  },
+  {
     resolve: "./src/modules/brand",
   },
   {
     resolve: "./src/modules/subscription",
+  },
+  {
+    resolve: "./src/modules/guapo-free-shipping",
   },
   {
     resolve: './src/modules/payload',
@@ -194,7 +201,9 @@ export default defineConfig({
     {
       resolve: "@lambdacurry/medusa-product-reviews",
       options: {
-        defaultReviewStatus: "pending", // Pre-moderation per spec (on-site reviews)
+        // "approved" = synlig med det samme på storefront (GET /product-reviews?status=approved).
+        // Sæt til "pending" hvis I vil godkende i Admin før de vises.
+        defaultReviewStatus: "approved",
       },
     },
   ],

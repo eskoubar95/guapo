@@ -1,11 +1,14 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework";
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
 import type { LinkDefinition } from "@medusajs/framework/types";
+import { resolveQuery } from "../lib/container-types";
+import { resolveStripeCustomerAndPaymentMethodFromOrder } from "../lib/stripe-helpers";
 import { SUBSCRIPTION_MODULE } from "../modules/subscription";
 import type SubscriptionModuleService from "../modules/subscription/service";
+import { getSubscriptionDiscountPercentWithProductOverride } from "../lib/subscription-discount";
+import { extractDeliveryDataFromShippingMethodData } from "../lib/subscription-delivery-data";
 
-const DEFAULT_DISCOUNT_PERCENT = 5;
-const ALLOWED_CYCLE_WEEKS = [4, 8, 12] as const;
+const ALLOWED_CYCLE_WEEKS = [4, 8, 12] as const
 
 function isAtomicIdempotencyConflict(err: unknown): boolean {
   const code = (err as { code?: string } | null)?.code;
@@ -15,24 +18,6 @@ function isAtomicIdempotencyConflict(err: unknown): boolean {
     (message.includes("idx_subscription_idempotency_key_unique") ||
       message.includes("subscription_idempotency_key"))
   );
-}
-
-function extractDeliveryDataFromShippingMethodData(
-  data: Record<string, unknown> | null | undefined
-): Record<string, unknown> | null {
-  if (!data || typeof data !== "object") return null;
-  const servicePointId = data.service_point_id;
-  if (typeof servicePointId !== "string" || servicePointId.trim() === "") return null;
-
-  return {
-    service_point_id: data.service_point_id ?? null,
-    service_point_name: data.service_point_name ?? null,
-    service_point_address: data.service_point_address ?? null,
-    service_point_zipcode: data.service_point_zipcode ?? null,
-    service_point_city: data.service_point_city ?? null,
-    carrier_code: data.carrier_code ?? null,
-    service_code: data.service_code ?? null,
-  };
 }
 
 type OrderWithItems = {
@@ -66,16 +51,15 @@ export default async function orderPlacedCreateSubscriptions({
   event,
   container,
 }: SubscriberArgs<{ id: string }>) {
-  const orderId = event?.data?.id;
-  if (!orderId) return;
+  const orderId = event?.data?.id
+  if (!orderId) return
 
-  const query = container.resolve(ContainerRegistrationKeys.QUERY) as {
-    graph: (opts: {
-      entity: string;
-      fields: string[];
-      filters?: Record<string, unknown>;
-    }) => Promise<{ data: unknown[] }>;
-  };
+  const logger = container.resolve(ContainerRegistrationKeys.LOGGER) as { info?: (m: string) => void; warn?: (m: string) => void; error?: (m: string) => void } | undefined
+  const log = (msg: string) => logger?.info?.(msg) ?? console.log(`[order-placed-create-subscriptions] ${msg}`)
+  const logWarn = (msg: string) => logger?.warn?.(msg) ?? console.warn(`[order-placed-create-subscriptions] ${msg}`)
+  const logErr = (msg: string) => logger?.error?.(msg) ?? console.error(`[order-placed-create-subscriptions] ${msg}`)
+
+  const query = resolveQuery(container);
 
   const { data: orders } = await query.graph({
     entity: "order",
@@ -91,72 +75,26 @@ export default async function orderPlacedCreateSubscriptions({
       "items.variant.product.id",
       "items.variant.product.metadata",
       "shipping_methods.shipping_option_id",
+      "shipping_methods.data",
     ],
     filters: { id: orderId },
   });
 
-  const order = orders?.[0] as OrderWithItems | undefined;
-  if (!order?.items?.length) return;
+  const order = orders?.[0] as OrderWithItems | undefined
+  if (!order?.items?.length) return
 
   const subscriptionItems = order.items.filter(
     (item) =>
       item?.metadata &&
       typeof (item.metadata as Record<string, unknown>).subscription_cycle === "number"
-  );
-  if (subscriptionItems.length === 0) return;
+  )
+  if (subscriptionItems.length === 0) return
 
-  if (!order.customer_id) {
-    console.warn(
-      "[order-placed-create-subscriptions] Order has subscription items but no customer_id. Subscriptions require auth."
-    );
-    return;
-  }
+  log(`Order ${orderId}: ${subscriptionItems.length} subscription line item(s) found`)
 
-  // Get Stripe payment_method and customer from the order's payment
-  let stripeCustomerId: string | null = null;
-  let stripePaymentMethodId: string | null = null;
-
-  try {
-    const { data: orderWithPayment } = await query.graph({
-      entity: "order",
-      fields: ["payment_collection.payments.id", "payment_collection.payments.data", "payment_collection.payments.provider_id"],
-      filters: { id: orderId },
-    });
-
-    const orderPayment = (orderWithPayment as Array<{ payment_collection?: { payments?: Array<{ id: string; data?: Record<string, unknown>; provider_id?: string }> } }>)?.[0];
-    const payments = orderPayment?.payment_collection?.payments ?? [];
-    const stripePayment = payments.find(
-      (p) => p.provider_id === "pp_stripe_stripe" || String(p.provider_id).includes("stripe")
-    );
-
-    if (stripePayment?.data) {
-      const d = stripePayment.data as Record<string, unknown>;
-      stripePaymentMethodId = (d.payment_method as string) ?? (d.payment_method_id as string) ?? null;
-      stripeCustomerId = (d.customer as string) ?? (d.customer_id as string) ?? null;
-
-      if (!stripePaymentMethodId) {
-        const piId = (d.payment_intent as string) ?? (d.payment_intent_id as string);
-        if (piId && process.env.STRIPE_API_KEY) {
-          const Stripe = (await import("stripe")).default;
-          const stripe = new Stripe(process.env.STRIPE_API_KEY);
-          const pi = await stripe.paymentIntents.retrieve(piId as string);
-          stripePaymentMethodId = typeof pi.payment_method === "string" ? pi.payment_method : pi.payment_method?.id ?? null;
-          stripeCustomerId = typeof pi.customer === "string" ? pi.customer : pi.customer?.id ?? null;
-        }
-      }
-    }
-  } catch (err) {
-    console.warn(
-      "[order-placed-create-subscriptions] Could not get Stripe payment info:",
-      err instanceof Error ? err.message : String(err)
-    );
-  }
-
-  if (!stripeCustomerId || !stripePaymentMethodId) {
-    console.warn(
-      "[order-placed-create-subscriptions] Missing stripe_customer_id or stripe_payment_method_id. Subscription creation skipped."
-    );
-    return;
+  if (!order.customer_id || String(order.customer_id).trim() === "") {
+    logWarn("Order has subscription items but no customer_id. Subscriptions require auth. Skipping subscription creation.")
+    return
   }
 
   const subscriptionService = container.resolve<SubscriptionModuleService>(SUBSCRIPTION_MODULE);
@@ -168,48 +106,85 @@ export default async function orderPlacedCreateSubscriptions({
       .map((s) => (s.metadata as Record<string, unknown> | null)?.line_item_id)
       .filter((lineItemId): lineItemId is string => typeof lineItemId === "string" && lineItemId.length > 0)
   );
-  const shippingOptionId = order.shipping_methods?.[0]?.shipping_option_id ?? "";
-  const deliveryData = extractDeliveryDataFromShippingMethodData(
-    order.shipping_methods?.[0]?.data ?? undefined
-  );
+  if (existingForOrder.length > 0) {
+    log(
+      `Order ${orderId} already has ${existingForOrder.length} subscription(s). ` +
+        `Will only create missing line items (idempotent).`
+    );
+  }
+
+  let stripeCustomerId: string | null = null;
+  let stripePaymentMethodId: string | null = null;
+
+  try {
+    const resolved = await resolveStripeCustomerAndPaymentMethodFromOrder(
+      container,
+      orderId,
+      50
+    );
+    stripeCustomerId = resolved.customerId;
+    stripePaymentMethodId = resolved.paymentMethodId;
+    log(`Payment collections for order: [${resolved.payColIds.join(", ")}]`);
+    if (resolved.payColIds.length === 0) {
+      logWarn("No payment_collections linked to order.");
+    } else {
+      log(
+        `Found Stripe resolution: customer=${stripeCustomerId}, pm=${stripePaymentMethodId}`
+      );
+    }
+    if (resolved.payColIds.length > 0 && !stripePaymentMethodId) {
+      logWarn("No Stripe payment found in payment collections.");
+    }
+  } catch (err) {
+    logWarn(
+      `Could not get Stripe payment info: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+
+  if (!stripeCustomerId || !stripePaymentMethodId) {
+    logWarn("Missing stripe_customer_id or stripe_payment_method_id. Subscription creation skipped. Ensure STRIPE_API_KEY is set and payment used Stripe.")
+    return
+  }
+
+  const firstMethod = order.shipping_methods?.[0];
+  const shippingOptionId = firstMethod?.shipping_option_id ?? "";
+  const deliveryData = extractDeliveryDataFromShippingMethodData(firstMethod?.data ?? undefined);
 
   const now = new Date();
   for (const item of subscriptionItems) {
     try {
       if (!item.id || existingLineItemIds.has(item.id)) {
+        log(`Skipping already-processed subscription line item ${item.id} on order ${orderId}`);
         continue;
       }
       const idempotencyKey = `${orderId}:${item.id}`;
+
       const existingForKey = await subscriptionService.retrieveByIdempotencyKey(idempotencyKey);
       if (existingForKey?.id) {
         existingLineItemIds.add(item.id);
-        continue;
-      }
-
-      const cycleWeeks = (item.metadata as Record<string, unknown>)?.subscription_cycle as number;
-      if (
-        typeof cycleWeeks !== "number" ||
-        !Number.isInteger(cycleWeeks) ||
-        cycleWeeks <= 0
-      ) {
-        console.warn(
-          `[order-placed-create-subscriptions] Invalid cycle_weeks (${cycleWeeks}) for item ${item.id}, skipping.`
+        log(
+          `Subscription already exists for idempotency_key=${idempotencyKey} ` +
+            `(subscription ${existingForKey.id}). Skipping create.`
         );
         continue;
       }
+
+      const cycleWeeks = (item.metadata as Record<string, unknown>)?.subscription_cycle as number
+      if (typeof cycleWeeks !== "number" || !Number.isInteger(cycleWeeks) || cycleWeeks <= 0) {
+        throw new Error(`Invalid cycle_weeks (${cycleWeeks}) for item ${item.id}.`)
+      }
       if (!(ALLOWED_CYCLE_WEEKS as readonly number[]).includes(cycleWeeks)) {
-        continue;
+        throw new Error(`Cycle ${cycleWeeks} not in allowed [4,8,12] for item ${item.id}.`)
       }
 
       const variantId = item.variant_id;
       const quantity = item.quantity ?? 1;
 
-      let discountPercent = DEFAULT_DISCOUNT_PERCENT;
       const product = item.variant?.product;
-      if (product?.metadata) {
-        const pct = (product.metadata as Record<string, unknown>).subscription_discount_percent;
-        if (typeof pct === "number") discountPercent = pct;
-      }
+      const discountPercent = await getSubscriptionDiscountPercentWithProductOverride(
+        container,
+        product?.metadata as Record<string, unknown> | null | undefined
+      );
 
       const nextRenewal = new Date(now);
       nextRenewal.setDate(nextRenewal.getDate() + cycleWeeks * 7);
@@ -248,6 +223,7 @@ export default async function orderPlacedCreateSubscriptions({
           },
         ]);
         existingLineItemIds.add(item.id);
+        log(`Created subscription ${created.id} for order ${orderId} line item ${item.id} (cycle ${cycleWeeks} weeks)`)
       }
     } catch (err) {
       if (isAtomicIdempotencyConflict(err)) {
@@ -255,13 +231,13 @@ export default async function orderPlacedCreateSubscriptions({
         const existing = await subscriptionService.retrieveByIdempotencyKey(idempotencyKey);
         if (existing?.id) {
           existingLineItemIds.add(item.id);
+          log(
+            `Atomic idempotency conflict for ${idempotencyKey}; using existing subscription ${existing.id}.`
+          );
           continue;
         }
       }
-      console.error(
-        `[order-placed-create-subscriptions] Failed to create subscription for line item ${item.id}:`,
-        err instanceof Error ? err.message : String(err)
-      );
+      logErr(`Failed to create subscription for line item ${item.id}: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
 }
