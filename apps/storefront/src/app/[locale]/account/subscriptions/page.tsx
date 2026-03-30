@@ -122,16 +122,7 @@ export default async function SubscriptionsPage({ params }: SubscriptionsPagePro
                     deliveryCount={sub.delivery_count}
                     minimumCommitment={2}
                     locale={locale}
-                    dict={{
-                      skipNext: dict.subscriptionDetail.skipNext,
-                      pause: dict.subscriptionDetail.pause,
-                      resume: dict.subscriptionDetail.resume,
-                      cancel: dict.subscriptionDetail.cancel,
-                      viewDetails: dict.subscriptionDetail.viewDetails,
-                      cancelConfirm: dict.subscriptionDetail.cancelConfirm,
-                      cancelConfirmTitle: dict.subscriptionDetail.cancelConfirmTitle,
-                      cancelAfter: dict.subscriptionDetail.cancelAfter,
-                    }}
+                    dict={dict.subscriptionDetail}
                   />
                 </div>
               </div>

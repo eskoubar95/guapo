@@ -24,9 +24,11 @@ interface LoginFormProps {
   labels: AuthLabels;
   /** When provided, called on success instead of navigating to account (e.g. for modal flow). */
   onSuccess?: () => void;
+  /** After success, navigate here (e.g. return to checkout). */
+  returnUrl?: string;
 }
 
-export function LoginForm({ locale, labels, onSuccess }: LoginFormProps) {
+export function LoginForm({ locale, labels, onSuccess, returnUrl }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,11 +53,13 @@ export function LoginForm({ locale, labels, onSuccess }: LoginFormProps) {
       }
       if (onSuccess) {
         onSuccess();
-        router.refresh();
-      } else {
-        router.push(`/${locale}/account`);
-        router.refresh();
       }
+      if (returnUrl) {
+        router.push(returnUrl);
+      } else if (!onSuccess) {
+        router.push(`/${locale}/account`);
+      }
+      router.refresh();
     } catch {
       setError(labels.errorLogin);
     } finally {
@@ -76,11 +80,13 @@ export function LoginForm({ locale, labels, onSuccess }: LoginFormProps) {
       if (typeof result === "string") {
         if (onSuccess) {
           onSuccess();
-          router.refresh();
-        } else {
-          router.push(`/${locale}/account`);
-          router.refresh();
         }
+        if (returnUrl) {
+          router.push(returnUrl);
+        } else if (!onSuccess) {
+          router.push(`/${locale}/account`);
+        }
+        router.refresh();
         return;
       }
       setError(labels.errorLogin);

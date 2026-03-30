@@ -185,7 +185,13 @@
     "youSavePerTime": "Du sparer på hver levering",
     "addedAsSubscription": "Tilføjet som abonnement",
     "calculatedAtCheckout": "Beregnes ved kassen",
-    "inclVatBreakdown": "Heraf moms (25%)"
+    "inclVatBreakdown": "Heraf moms (25%)",
+    "addedToCart": "Tilføjet til kurv",
+    "cartTotalCount": "{{count}} vare(r) i kurven",
+    "freeShippingProgress": "Gratis fragt når du når {{threshold}} kr.",
+    "shopVidere": "Shop videre",
+    "seKurv": "Se kurv",
+    "closeModal": "Luk"
   },
   "checkout": {
     "title": "Kassen",
@@ -328,7 +334,14 @@
     "backToSubscriptions": "Tilbage til abonnementer",
     "viewDetails": "Se detaljer",
     "cancelConfirm": "Er du sikker på, at du vil annullere abonnementet?",
-    "cancelConfirmTitle": "Annuller abonnement"
+    "cancelConfirmTitle": "Annuller abonnement",
+    "cancelKeepButton": "Behold abonnement",
+    "cancelSubmitButton": "Annuller abonnement",
+    "cancelLoadingLabel": "Annullerer…",
+    "cancelSuccessTitle": "Abonnement annulleret",
+    "cancelSuccessBody": "Du modtager en bekræftelse på email.",
+    "cancelCloseButton": "Luk",
+    "cancelTryAgain": "Prøv igen"
   },
   "footer": {
     "support": "Support",

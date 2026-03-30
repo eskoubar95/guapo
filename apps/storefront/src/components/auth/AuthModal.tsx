@@ -40,6 +40,8 @@ interface AuthModalProps {
   locale: string;
   labels: AuthModalLabels;
   initialView?: AuthModalView;
+  /** After login/register success, navigate here (e.g. checkout). */
+  returnUrl?: string;
 }
 
 export function AuthModal({
@@ -48,6 +50,7 @@ export function AuthModal({
   locale,
   labels,
   initialView = "login",
+  returnUrl,
 }: AuthModalProps) {
   const { refetch } = useAuth();
   const [view, setView] = useState<AuthModalView>(initialView);
@@ -204,6 +207,7 @@ export function AuthModal({
               <>
                 <LoginForm
                   locale={locale}
+                  returnUrl={returnUrl}
                   labels={{
                     loginTitle: labels.loginTitle,
                     email: labels.email,
@@ -232,6 +236,7 @@ export function AuthModal({
               <>
                 <RegisterForm
                   locale={locale}
+                  returnUrl={returnUrl}
                   labels={{
                     registerTitle: labels.registerTitle,
                     email: labels.email,

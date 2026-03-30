@@ -177,7 +177,7 @@ export function CheckoutWithStripe({
     <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
       <p className="text-destructive text-sm">{stripeConfigError}</p>
     </div>
-  ) : stripePromise && clientSecret && cart ? (
+  ) : clientSecret && cart ? (
     <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: "stripe" } }}>
       <StripePaymentForm
         cartId={cart.id}

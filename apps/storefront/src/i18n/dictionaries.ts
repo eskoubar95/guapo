@@ -183,6 +183,12 @@ export interface Dictionary {
     addedAsSubscription: string;
     calculatedAtCheckout: string;
     inclVatBreakdown: string;
+    addedToCart: string;
+    cartTotalCount: string;
+    freeShippingProgress: string;
+    shopVidere: string;
+    seKurv: string;
+    closeModal: string;
   };
   checkout: {
     title: string;
@@ -326,6 +332,13 @@ export interface Dictionary {
     viewDetails: string;
     cancelConfirm: string;
     cancelConfirmTitle: string;
+    cancelKeepButton: string;
+    cancelSubmitButton: string;
+    cancelLoadingLabel: string;
+    cancelSuccessTitle: string;
+    cancelSuccessBody: string;
+    cancelCloseButton: string;
+    cancelTryAgain: string;
   };
   footer: {
     support: string;

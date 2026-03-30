@@ -185,7 +185,13 @@
     "youSavePerTime": "You save on each delivery",
     "addedAsSubscription": "Added as subscription",
     "calculatedAtCheckout": "Calculated at checkout",
-    "inclVatBreakdown": "Incl. VAT (25%)"
+    "inclVatBreakdown": "Incl. VAT (25%)",
+    "addedToCart": "Added to cart",
+    "cartTotalCount": "{{count}} item(s) in cart",
+    "freeShippingProgress": "Free shipping when you reach {{threshold}} DKK",
+    "shopVidere": "Continue shopping",
+    "seKurv": "View cart",
+    "closeModal": "Close"
   },
   "checkout": {
     "title": "Checkout",
@@ -328,7 +334,14 @@
     "backToSubscriptions": "Back to subscriptions",
     "viewDetails": "View details",
     "cancelConfirm": "Are you sure you want to cancel this subscription?",
-    "cancelConfirmTitle": "Cancel subscription"
+    "cancelConfirmTitle": "Cancel subscription",
+    "cancelKeepButton": "Keep subscription",
+    "cancelSubmitButton": "Cancel subscription",
+    "cancelLoadingLabel": "Cancelling…",
+    "cancelSuccessTitle": "Subscription cancelled",
+    "cancelSuccessBody": "You will receive a confirmation by email.",
+    "cancelCloseButton": "Close",
+    "cancelTryAgain": "Try again"
   },
   "footer": {
     "support": "Support",

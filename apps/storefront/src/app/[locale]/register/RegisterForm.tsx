@@ -22,9 +22,10 @@ interface RegisterFormProps {
   labels: AuthLabels;
   /** When provided, called on success instead of navigating to account (e.g. for modal flow). */
   onSuccess?: () => void;
+  returnUrl?: string;
 }
 
-export function RegisterForm({ locale, labels, onSuccess }: RegisterFormProps) {
+export function RegisterForm({ locale, labels, onSuccess, returnUrl }: RegisterFormProps) {
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -69,11 +70,13 @@ export function RegisterForm({ locale, labels, onSuccess }: RegisterFormProps) {
       }
       if (onSuccess) {
         onSuccess();
-        router.refresh();
-      } else {
-        router.push(`/${locale}/account`);
-        router.refresh();
       }
+      if (returnUrl) {
+        router.push(returnUrl);
+      } else if (!onSuccess) {
+        router.push(`/${locale}/account`);
+      }
+      router.refresh();
     } catch {
       setError(labels.errorRegister);
     } finally {
