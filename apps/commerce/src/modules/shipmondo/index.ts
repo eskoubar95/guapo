@@ -1,5 +1,5 @@
 import { ModuleProvider, Modules } from "@medusajs/framework/utils";
-import ShipmondoFulfillmentService from "./service";
+import ShipmondoFulfillmentService from "./services/shipmondo-fulfillment";
 
 const services = [ShipmondoFulfillmentService];
 

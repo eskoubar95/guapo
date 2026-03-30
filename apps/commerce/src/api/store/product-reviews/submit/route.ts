@@ -52,6 +52,11 @@ export const POST = async (req: AuthenticatedStoreRequest, res: MedusaResponse) 
 
   interface ProductReviewServiceType {
     createProductReviews: (data: unknown[]) => Promise<Array<{ id: string; product_id: string; rating: number; content: string | null; status: string; created_at: Date }>>;
+    listProductReviewStats: (
+      filters: { product_id: string[] },
+      config?: Record<string, unknown>
+    ) => Promise<Array<{ product_id: string }>>;
+    createProductReviewStats: (data: Array<{ product_id: string }>) => Promise<unknown>;
     refreshProductReviewStats: (productIds: string[]) => Promise<unknown>;
   }
   const productReviewService = req.scope.resolve(PRODUCT_REVIEW_MODULE) as ProductReviewServiceType;
@@ -67,6 +72,14 @@ export const POST = async (req: AuthenticatedStoreRequest, res: MedusaResponse) 
     },
   ]);
 
+  // Ensure stats row exists: plugin refresh only queries existing ProductReviewStats (avoids SQL IN ()).
+  const existingStats = await productReviewService.listProductReviewStats(
+    { product_id: [product_id] },
+    {}
+  );
+  if (!existingStats.some((row) => row.product_id === product_id)) {
+    await productReviewService.createProductReviewStats([{ product_id }]);
+  }
   await productReviewService.refreshProductReviewStats([product_id]);
 
   return res.status(201).json({

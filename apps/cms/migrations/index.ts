@@ -5,6 +5,7 @@ import * as migration_20260214_products_description_jsonb from './20260214_produ
 import * as migration_20260214_fix_lexical_empty_root from './20260214_fix_lexical_empty_root';
 import * as migration_20260215_products_application_to_subtitle from './20260215_products_application_to_subtitle';
 import * as migration_20260215_fix_products_localized_json from './20260215_fix_products_localized_json';
+import * as migration_20260308_content_block_text_only_left from './20260308_content_block_text_only_left';
 
 export const migrations = [
   {
@@ -41,5 +42,10 @@ export const migrations = [
     up: migration_20260215_fix_products_localized_json.up,
     down: migration_20260215_fix_products_localized_json.down,
     name: '20260215_fix_products_localized_json',
+  },
+  {
+    up: migration_20260308_content_block_text_only_left.up,
+    down: migration_20260308_content_block_text_only_left.down,
+    name: '20260308_content_block_text_only_left',
   },
 ];
