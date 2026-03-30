@@ -1,8 +1,10 @@
 # Design repo analysis (Ecommercestorefrontdesign)
 
+> **Historisk:** Submodule `design/Ecommercestorefrontdesign` er fjernet fra monorepoet (2026-03). Indholdet nedenfor beskriver den tidligere struktur.
+
 Short analysis for M6: structure, components, tokens/theme, mockup data, and mapping to Guapo sitemap (spec/09).
 
-**Source:** `design/Ecommercestorefrontdesign` (git submodule).  
+**Source (tidligere):** `design/Ecommercestorefrontdesign` (git submodule).  
 **Stack:** Vite + React + Tailwind; design uses shadcn-style UI under `src/app/components/ui/`.
 
 ---

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<title>Guapo — Hero Banner Desktop 2560×875</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary:    #051537;
+    --border:     #e8ecf2;
+    --text-sec:   #4a5568;
+    --text-muted: #7b8599;
+    --rose:       #c05878;
+    --rose-light: #f8f0f3;
+    --radius-md:  6px;
+    --radius-lg:  8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #eef0f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 60px;
+  }
+
+  /* ── Banner: 2560×875 — exact export size ── */
+  .banner {
+    position: relative;
+    width: 2560px;
+    height: 875px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    background: var(--rose-light);
+    display: flex;
+    flex-shrink: 0;
+  }
+
+  /* Diagonal stripe signature */
+  .banner::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(
+      -52deg,
+      transparent 0px, transparent 44px,
+      rgba(5,21,55,0.032) 44px, rgba(5,21,55,0.032) 46px
+    );
+    z-index: 0; pointer-events: none;
+  }
+
+  /* ── Left zone ── */
+  .banner-left {
+    position: relative;
+    z-index: 2;
+    flex: 0 0 52%;
+    padding: 72px 96px 72px 110px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .eyebrow {
+    font-size: 22px; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--primary); opacity: 0.5;
+    margin-bottom: 16px;
+  }
+
+  .headline {
+    font-family: 'Lexend', sans-serif;
+    font-size: 102px;
+    font-weight: 700;
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    color: var(--primary);
+    margin-bottom: 20px;
+    max-width: 100%;
+    width: 100%;
+  }
+  .headline em { font-style: normal; color: var(--rose); }
+
+  .subline {
+    font-size: 25px;
+    font-weight: 400;
+    line-height: 1.45;
+    color: var(--text-sec);
+    max-width: 920px;
+    margin-bottom: 36px;
+  }
+
+  .cta-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 32px;
+  }
+
+  .btn-primary {
+    display: inline-block;
+    padding: 24px 60px; border-radius: var(--radius-md);
+    background: var(--primary); color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 26px; font-weight: 600;
+    letter-spacing: 0.04em; border: none;
+    cursor: pointer; text-decoration: none;
+  }
+
+  .price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .price-now {
+    font-family: 'Lexend', sans-serif;
+    font-size: 60px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .price-unit {
+    font-size: 28px;
+    color: var(--text-muted);
+  }
+
+  /* ── SVG curve divider ── */
+  .curve-divider {
+    position: absolute;
+    left: calc(52% - 2px); top: 0;
+    width: 120px; height: 100%;
+    z-index: 3; pointer-events: none;
+  }
+
+  /* ── Right zone ── */
+  .banner-right {
+    position: relative; z-index: 2;
+    flex: 1;
+    display: flex; align-items: flex-end; justify-content: center;
+    overflow: hidden;
+  }
+
+  .right-bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(155deg, #051537 0%, #0d2456 60%, #051537 100%);
+  }
+  .right-bg::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(
+      -52deg,
+      transparent 0px, transparent 44px,
+      rgba(255,255,255,0.025) 44px, rgba(255,255,255,0.025) 46px
+    );
+  }
+
+  /* ── Product ── */
+  .product-wrap {
+    position: relative;
+    z-index: 4;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: 100%;
+  }
+
+  .product-shot {
+    height: 800px;
+    width: auto;
+    max-width: min(920px, 48vw);
+    object-fit: contain;
+    object-position: bottom center;
+    display: block;
+    flex-shrink: 0;
+    filter: drop-shadow(0 40px 80px rgba(0, 0, 0, 0.45));
+  }
+
+  /* ── Danish Beauty Award: larger, overlaps product for depth ── */
+  .award-badge {
+    position: absolute;
+    right: 22%;
+    bottom: 10%;
+    z-index: 6;
+    width: 248px;
+    height: 248px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transform: translate(18%, -6%);
+  }
+  .award-badge img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 14px 36px rgba(0, 0, 0, 0.4));
+  }
+
+  /* ── "Lav pris" tag ── */
+  .price-tag {
+    position: absolute; top: 48px; right: 48px; z-index: 5;
+    background: var(--rose); color: #fff;
+    border-radius: var(--radius-md);
+    padding: 14px 32px;
+    font-size: 20px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">
+
+  <div class="banner-left">
+    <div class="eyebrow">Prisvindende K-beauty serum</div>
+    <h1 class="headline">
+      Anua <em>Niacinamide</em> 10<br />
+      TXA 4
+    </h1>
+    <p class="subline">
+      Mørk plet — mørk fortid. Klarhed der føles, fra første pump.
+    </p>
+    <div class="cta-row">
+      <a class="btn-primary" href="#">Shop nu</a>
+    </div>
+    <div class="price-row">
+      <span class="price-now">125</span>
+      <span class="price-unit">kr.</span>
+    </div>
+  </div>
+
+  <svg class="curve-divider" viewBox="0 0 120 875" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M120,0 Q0,437 120,875 L0,875 L0,0 Z" fill="#f8f0f3"/>
+  </svg>
+
+  <div class="banner-right">
+    <div class="right-bg"></div>
+    <div class="product-wrap">
+      <img
+        class="product-shot"
+        src="./anua-niacinamide-serum.png"
+        alt="Anua Niacinamide 10 TXA 4 Serum"
+        width="800"
+        height="800"
+      />
+    </div>
+    <div class="award-badge">
+      <img src="./DBA2025-Badge.svg" alt="Danish Beauty Award 2025" width="248" height="248" />
+    </div>
+    <div class="price-tag">Lav pris</div>
+  </div>
+
+</div>
+
+</body>
+</html>
