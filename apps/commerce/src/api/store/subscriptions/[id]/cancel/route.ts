@@ -1,4 +1,6 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
+import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
+import { sendSubscriptionLifecycleMail } from "../../../../../lib/transactional-email/send-subscription-lifecycle-mail";
 import { SUBSCRIPTION_MODULE } from "../../../../../modules/subscription";
 import type SubscriptionModuleService from "../../../../../modules/subscription/service";
 
@@ -34,6 +36,26 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
     });
   }
 
+  const MINIMUM_COMMITMENT_DELIVERIES = 2;
+  const deliveryCount = subscription.delivery_count ?? 0;
+  if (deliveryCount < MINIMUM_COMMITMENT_DELIVERIES) {
+    return res.status(400).json({
+      message:
+        "Du skal modtage mindst to leveringer, før du kan afslutte abonnementet.",
+      code: "MINIMUM_COMMITMENT_NOT_MET",
+      delivery_count: deliveryCount,
+      minimum_required: MINIMUM_COMMITMENT_DELIVERIES,
+    });
+  }
+
   const updated = await subscriptionService.cancel(id);
+  const logger = req.scope.resolve(ContainerRegistrationKeys.LOGGER);
+  sendSubscriptionLifecycleMail({
+    container: req.scope,
+    customerId: updated.customer_id,
+    subscriptionId: updated.id,
+    template: "subscription_cancelled",
+    logger: logger as { info?: (m: string) => void; warn?: (m: string) => void },
+  });
   res.json({ subscription: updated });
 };

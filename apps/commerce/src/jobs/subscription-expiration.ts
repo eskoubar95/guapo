@@ -23,12 +23,17 @@ export default async function subscriptionExpirationJob(
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - ON_HOLD_EXPIRY_DAYS);
 
-  const onHold = await subscriptionService.listSubscriptions(
-    { status: "on_hold" },
-    { take: 500 }
-  );
-
-  const list = onHold ?? [];
+  const list: Awaited<ReturnType<SubscriptionModuleService["listSubscriptions"]>> = [];
+  const pageSize = 100;
+  for (let offset = 0; ; offset += pageSize) {
+    const page = await subscriptionService.listSubscriptions(
+      { status: "on_hold" },
+      { take: pageSize, skip: offset, order: { on_hold_at: "ASC" } }
+    );
+    if (!page?.length) break;
+    list.push(...page);
+    if (page.length < pageSize) break;
+  }
   let expired = 0;
   for (const sub of list) {
     const onHoldAt = (sub as { on_hold_at?: string | Date }).on_hold_at;

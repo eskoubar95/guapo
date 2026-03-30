@@ -21,13 +21,21 @@ export default async function subscriptionRenewalJob(
   );
 
   const now = new Date();
-  const active = await subscriptionService.listSubscriptions(
-    { status: "active" },
-    { take: 500 }
-  );
-  const list = (active ?? []).filter(
-    (s) => s.next_renewal_at && new Date(s.next_renewal_at) <= now
-  );
+  const list: Awaited<ReturnType<SubscriptionModuleService["listSubscriptions"]>> = [];
+  const pageSize = 100;
+  for (let offset = 0; ; offset += pageSize) {
+    const page = await subscriptionService.listSubscriptions(
+      { status: "active" },
+      { take: pageSize, skip: offset, order: { next_renewal_at: "ASC" } }
+    );
+    if (!page?.length) break;
+    for (const sub of page) {
+      if (sub.next_renewal_at && new Date(sub.next_renewal_at) <= now) {
+        list.push(sub);
+      }
+    }
+    if (page.length < pageSize) break;
+  }
   if (list.length === 0) {
     logger?.info?.("[subscription-renewal] No subscriptions due for renewal");
     return;
@@ -37,31 +45,44 @@ export default async function subscriptionRenewalJob(
     `[subscription-renewal] Processing ${list.length} subscription(s)`
   );
 
-  for (const sub of list) {
-    if (sub.next_retry_at && new Date(sub.next_retry_at) > now) {
-      continue;
-    }
-    try {
-      const { result } = await renewSubscriptionWorkflow(container).run({
-        input: { subscriptionId: sub.id },
-      });
-      if (result?.renewed) {
-        logger?.info?.(
-          `[subscription-renewal] Renewed subscription ${sub.id} -> order ${result.orderId}`
-        );
-      } else if (result?.skipped) {
-        logger?.info?.(`[subscription-renewal] Skipped subscription ${sub.id}`);
-      } else if (result?.error) {
+  const queue = list.filter(
+    (sub) => !(sub.next_retry_at && new Date(sub.next_retry_at) > now)
+  );
+
+  const concurrency = 5;
+  for (let i = 0; i < queue.length; i += concurrency) {
+    const batch = queue.slice(i, i + concurrency);
+    const results = await Promise.allSettled(
+      batch.map(async (sub) => {
+        const { result } = await renewSubscriptionWorkflow(container).run({
+          input: { subscriptionId: sub.id },
+        });
+        return { subId: sub.id, result };
+      })
+    );
+    for (const result of results) {
+      if (result.status === "rejected") {
         logger?.error?.(
-          `[subscription-renewal] Failed ${sub.id}: ${result.error}`
+          `[subscription-renewal] Error in batch: ${
+            result.reason instanceof Error
+              ? result.reason.message
+              : String(result.reason)
+          }`
+        );
+        continue;
+      }
+      const { subId, result: renewalResult } = result.value;
+      if (renewalResult?.renewed) {
+        logger?.info?.(
+          `[subscription-renewal] Renewed subscription ${subId} -> order ${renewalResult.orderId}`
+        );
+      } else if (renewalResult?.skipped) {
+        logger?.info?.(`[subscription-renewal] Skipped subscription ${subId}`);
+      } else if (renewalResult?.error) {
+        logger?.error?.(
+          `[subscription-renewal] Failed ${subId}: ${renewalResult.error}`
         );
       }
-    } catch (err) {
-      logger?.error?.(
-        `[subscription-renewal] Error processing ${sub.id}: ${
-          err instanceof Error ? err.message : String(err)
-        }`
-      );
     }
   }
 }

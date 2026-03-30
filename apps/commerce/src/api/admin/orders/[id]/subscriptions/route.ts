@@ -4,23 +4,21 @@ import type SubscriptionModuleService from "../../../../../modules/subscription/
 
 /**
  * GET /admin/orders/:id/subscriptions
- * List subscriptions linked to this order (initial or renewal).
- * Uses metadata.order_id fallback when link is not yet populated.
+ * List subscriptions linked to this order (initial order via metadata.order_id,
+ * latest renewal via last_renewal_order_id, or both).
+ *
+ * Note: Does not query `query.graph` on `order` with `subscriptions.*` — that relation
+ * is not exposed on the Order entity (link is subscription → orders).
  */
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const { id: orderId } = req.params;
 
-  const subscriptionService = req.scope.resolve<SubscriptionModuleService>(
-    SUBSCRIPTION_MODULE
-  );
-
-  // List subscriptions and filter by metadata.order_id
-  // (JSON filter may not be supported by all drivers)
-  const all = await subscriptionService.listSubscriptions({}, { take: 500 });
-  const linked = (all ?? []).filter((s) => {
+  const subscriptionService = req.scope.resolve<SubscriptionModuleService>(SUBSCRIPTION_MODULE);
+  const all = await subscriptionService.listSubscriptions({}, { take: 1000 });
+  const matching = (all ?? []).filter((s) => {
     const meta = s.metadata as Record<string, unknown> | null | undefined;
-    return meta?.order_id === orderId;
+    return meta?.order_id === orderId || s.last_renewal_order_id === orderId;
   });
 
-  res.json({ subscriptions: linked });
+  res.json({ subscriptions: matching });
 };

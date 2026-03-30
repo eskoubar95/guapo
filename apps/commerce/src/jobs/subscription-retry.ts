@@ -21,14 +21,21 @@ export default async function subscriptionRetryJob(
   );
 
   const now = new Date();
-  const all = await subscriptionService.listSubscriptions(
-    { status: "active" },
-    { take: 200 }
-  );
-  const list = (all ?? []).filter(
-    (s) =>
-      s.next_retry_at != null && new Date(s.next_retry_at) <= now
-  );
+  const list: Awaited<ReturnType<SubscriptionModuleService["listSubscriptions"]>> = [];
+  const pageSize = 100;
+  for (let offset = 0; ; offset += pageSize) {
+    const page = await subscriptionService.listSubscriptions(
+      { status: "active" },
+      { take: pageSize, skip: offset, order: { next_retry_at: "ASC" } }
+    );
+    if (!page?.length) break;
+    for (const sub of page) {
+      if (sub.next_retry_at != null && new Date(sub.next_retry_at) <= now) {
+        list.push(sub);
+      }
+    }
+    if (page.length < pageSize) break;
+  }
   if (list.length === 0) {
     return;
   }
