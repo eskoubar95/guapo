@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import type { StoreCart } from "@/lib/cart-data";
+import type { StoreCart } from "./cart-data";
 
 export type { StoreCart };
 
