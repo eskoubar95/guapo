@@ -304,6 +304,7 @@ export interface Dictionary {
     mobilePayLabel: string;
     klarnaLabel: string;
     paymentInitFailed: string;
+    shippingMethodRequired: string;
   };
   auth: {
     loginTitle: string;

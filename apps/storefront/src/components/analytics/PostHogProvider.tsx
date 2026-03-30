@@ -21,9 +21,9 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           person_profiles: "identified_only",
           cookieless_mode: "on_reject",
         });
-        posthog.opt_in_capturing();
         initialized.current = true;
       }
+      posthog.opt_in_capturing();
     } else {
       if (initialized.current) {
         posthog.opt_out_capturing();

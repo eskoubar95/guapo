@@ -20,6 +20,7 @@ import {
   defaultProductCardA11y,
 } from "@/components/product-card-a11y";
 import { formatLowStockLabel } from "@/lib/product-inventory";
+import { toast } from "sonner";
 
 export interface Product {
   id: string;
@@ -92,8 +93,11 @@ export function ProductCard({ product, locale, className, labels }: ProductCardP
             metadata: last.metadata,
           });
         }
-      } catch {
-        // Error: could toast or leave silent
+      } catch (err) {
+        console.error("[ProductCard] quick add failed", err);
+        toast.error(
+          locale === "da" ? "Kunne ikke tilføje til kurven" : "Could not add to cart"
+        );
       }
     });
   };

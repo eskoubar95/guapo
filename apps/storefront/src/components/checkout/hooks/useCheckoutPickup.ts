@@ -112,6 +112,9 @@ export function useCheckoutPickup({
           }
         }
       })
+      .catch((err) => {
+        console.error("[useCheckoutPickup] prefill fetch failed", err);
+      })
       .finally(() => {
         if (mountedRef.current) setPickupLoading(false);
       });

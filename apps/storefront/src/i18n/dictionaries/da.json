@@ -302,7 +302,8 @@
     "guestLastNamePlaceholder": "Bruger",
     "mobilePayLabel": "MobilePay",
     "klarnaLabel": "Klarna",
-    "paymentInitFailed": "Kunne ikke starte betaling"
+    "paymentInitFailed": "Kunne ikke starte betaling",
+    "shippingMethodRequired": "Vælg en leveringsmetode"
   },
   "auth": {
     "backLink": "Tilbage",

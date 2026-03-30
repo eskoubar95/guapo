@@ -120,8 +120,13 @@ export function ProfileForm({ labels }: ProfileFormProps) {
             </button>
 
             {feedback && (
-              <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${feedback.type === "success" ? "text-success" : "text-destructive"}`}>
-                {feedback.type === "success" && <Check className="h-4 w-4" />}
+              <span
+                role={feedback.type === "error" ? "alert" : "status"}
+                aria-live={feedback.type === "error" ? "assertive" : "polite"}
+                aria-atomic="true"
+                className={`inline-flex items-center gap-1.5 text-sm font-medium ${feedback.type === "success" ? "text-success" : "text-destructive"}`}
+              >
+                {feedback.type === "success" && <Check className="h-4 w-4" aria-hidden />}
                 {feedback.msg}
               </span>
             )}

@@ -175,10 +175,15 @@ export function AccountLayout({ locale, labels, children }: AccountLayoutProps) 
               "fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-border bg-card shadow-xl transition-transform duration-200 ease-out md:hidden",
               menuOpen ? "translate-y-0" : "translate-y-full"
             )}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="account-menu-title"
           >
             <div className="flex max-h-[78vh] flex-col">
               <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                <span className="font-semibold text-foreground">{labels.accountTitle}</span>
+                <span id="account-menu-title" className="font-semibold text-foreground">
+                  {labels.accountTitle}
+                </span>
                 <button
                   type="button"
                   onClick={() => setMenuOpen(false)}

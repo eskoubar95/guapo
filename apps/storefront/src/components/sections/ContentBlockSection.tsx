@@ -97,6 +97,16 @@ export function ContentBlockSection({
     );
   }
 
+  if (layout === "full-width") {
+    return (
+      <section className={`py-8 sm:py-10 lg:py-14 ${bgClass}`}>
+        <div className="section-container max-w-none">
+          <div className="w-full">{textBlock}</div>
+        </div>
+      </section>
+    );
+  }
+
   if (layout === "text-image" || layout === "image-text") {
     const isImageFirst = layout === "image-text";
     return (

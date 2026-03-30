@@ -29,8 +29,12 @@ interface PromotionSliderProps {
 
 function resolveHref(slideHref: string | undefined, locale: string): string | undefined {
   if (!slideHref) return undefined;
-  if (slideHref.startsWith("http")) return slideHref;
-  return `/${locale}${slideHref === "/" ? "" : slideHref.startsWith("/") ? slideHref : `/${slideHref}`}`;
+  const t = slideHref.trim();
+  if (t.startsWith("http://") || t.startsWith("https://")) return t;
+  const localePrefix = `/${locale}`;
+  let path = t.startsWith("/") ? t : `/${t}`;
+  if (path === localePrefix || path.startsWith(`${localePrefix}/`)) return path;
+  return `${localePrefix}${path === "/" ? "" : path}`;
 }
 
 export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps) {
@@ -124,6 +128,7 @@ export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps
                     {href ? (
                       <Link
                         href={href}
+                        aria-label={`${l.goToSlide} ${index + 1}`}
                         className="absolute inset-0 block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
                       >
                         {inner}

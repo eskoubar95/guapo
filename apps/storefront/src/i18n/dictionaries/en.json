@@ -302,7 +302,8 @@
     "guestLastNamePlaceholder": "Customer",
     "mobilePayLabel": "MobilePay",
     "klarnaLabel": "Klarna",
-    "paymentInitFailed": "Could not initialize payment"
+    "paymentInitFailed": "Could not initialize payment",
+    "shippingMethodRequired": "Please select a shipping method"
   },
   "auth": {
     "backLink": "Back",

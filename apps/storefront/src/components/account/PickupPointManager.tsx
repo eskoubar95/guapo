@@ -151,9 +151,9 @@ export function PickupPointManager({
       setSavedPickup(pickupData);
       setPickupFeedback({ type: "success", msg: labels.pickupPointSaved });
       setTimeout(() => setPickupFeedback(null), 3000);
-    } catch {
+    } catch (err) {
+      console.error("[PickupPointManager] save failed", err);
       setPickupFeedback({ type: "error", msg: labels.pickupPointError });
-      throw new Error("pickup save failed");
     } finally {
       setSavingPickup(false);
     }

@@ -13,7 +13,8 @@ interface ArticleCardProps {
 }
 
 export function ArticleCard({ article, locale, dict, variant }: ArticleCardProps) {
-  const href = `/${locale}/blog/${article.slug ?? ""}`;
+  if (!article.slug?.trim()) return null;
+  const href = `/${locale}/blog/${article.slug}`;
   const thumbUrl = articleThumbnailUrl(article);
   const title = article.title ?? "";
   const categoryLabel = blogCategoryLabel(article, dict);

@@ -91,20 +91,19 @@ export function CheckoutWithStripe({
     if (!customer || prefillDoneRef.current) return;
     prefillDoneRef.current = true;
 
-    const prefilled = {
-      email: customer.email ?? "",
-      firstName: customer.first_name ?? "",
-      lastName: customer.last_name ?? "",
-      address1: "",
-      postalCode: "",
-      city: "",
-      phone: (customer.phone as string) ?? "",
-      marketingOptIn: false,
-    };
-
     medusa.store.customer
       .listAddress()
       .then(({ addresses }) => {
+        const prefilled = {
+          email: customer.email ?? "",
+          firstName: customer.first_name ?? "",
+          lastName: customer.last_name ?? "",
+          address1: "",
+          postalCode: "",
+          city: "",
+          phone: (customer.phone as string) ?? "",
+          marketingOptIn: false,
+        };
         const addr = addresses?.[0];
         if (addr) {
           prefilled.address1 = addr.address_1 ?? "";
@@ -113,10 +112,40 @@ export function CheckoutWithStripe({
           if (!prefilled.firstName && addr.first_name) prefilled.firstName = addr.first_name;
           if (!prefilled.lastName && addr.last_name) prefilled.lastName = addr.last_name;
         }
-        setFormData(prefilled);
+        setFormData((prev) => ({
+          ...prefilled,
+          email: prev.email.trim() ? prev.email : prefilled.email,
+          firstName: prev.firstName.trim() ? prev.firstName : prefilled.firstName,
+          lastName: prev.lastName.trim() ? prev.lastName : prefilled.lastName,
+          address1: prev.address1.trim() ? prev.address1 : prefilled.address1,
+          postalCode: prev.postalCode.trim() ? prev.postalCode : prefilled.postalCode,
+          city: prev.city.trim() ? prev.city : prefilled.city,
+          phone: prev.phone.trim() ? prev.phone : prefilled.phone,
+          marketingOptIn: prev.marketingOptIn,
+        }));
       })
       .catch(() => {
-        setFormData(prefilled);
+        const prefilled = {
+          email: customer.email ?? "",
+          firstName: customer.first_name ?? "",
+          lastName: customer.last_name ?? "",
+          address1: "",
+          postalCode: "",
+          city: "",
+          phone: (customer.phone as string) ?? "",
+          marketingOptIn: false,
+        };
+        setFormData((prev) => ({
+          ...prefilled,
+          email: prev.email.trim() ? prev.email : prefilled.email,
+          firstName: prev.firstName.trim() ? prev.firstName : prefilled.firstName,
+          lastName: prev.lastName.trim() ? prev.lastName : prefilled.lastName,
+          address1: prev.address1.trim() ? prev.address1 : prefilled.address1,
+          postalCode: prev.postalCode.trim() ? prev.postalCode : prefilled.postalCode,
+          city: prev.city.trim() ? prev.city : prefilled.city,
+          phone: prev.phone.trim() ? prev.phone : prefilled.phone,
+          marketingOptIn: prev.marketingOptIn,
+        }));
       });
 
     const meta = customer.metadata as Record<string, unknown> | undefined;
