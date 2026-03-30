@@ -17,8 +17,22 @@ export default async function simulateRenewal({ container }: ExecArgs) {
     ContainerRegistrationKeys.LOGGER
   ) as { info?: (m: string) => void; error?: (m: string) => void };
 
-  const subscriptionId =
-    process.env.SUBSCRIPTION_ID ?? process.argv.slice(2)[0];
+  /**
+   * `medusa exec ./script.ts <id>` yields argv like: [..., "exec", "./script.ts", "<id>"].
+   * Do not use argv[2] — it is often "exec", not the subscription id.
+   */
+  const argvTail = process.argv.slice(2);
+  const idFromCli = argvTail
+    .filter(
+      (a) =>
+        a !== "exec" &&
+        !a.endsWith(".ts") &&
+        !a.endsWith(".js") &&
+        !a.startsWith("-")
+    )
+    .pop();
+
+  const subscriptionId = process.env.SUBSCRIPTION_ID ?? idFromCli;
 
   if (!subscriptionId) {
     logger?.info?.(
