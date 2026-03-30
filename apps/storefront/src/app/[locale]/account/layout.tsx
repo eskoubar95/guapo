@@ -1,5 +1,6 @@
 import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
+import { Suspense } from "react";
 import { AccountLayout } from "@/components/AccountLayout";
 import { AccountGate } from "@/components/AccountGate";
 
@@ -34,9 +35,11 @@ export default async function AccountLayoutWrapper({
         closeMenu: dict.account.closeMenu,
       }}
     >
-      <AccountGate locale={locale} loadingLabel={dict.account.loading}>
-        {children}
-      </AccountGate>
+      <Suspense fallback={null}>
+        <AccountGate locale={locale} loadingLabel={dict.account.loading}>
+          {children}
+        </AccountGate>
+      </Suspense>
     </AccountLayout>
   );
 }
