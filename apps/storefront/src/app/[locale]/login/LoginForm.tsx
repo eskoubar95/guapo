@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { medusa } from "@/lib/medusa";
+import { getCurrentReturnUrl, getSafeReturnUrl } from "@/lib/auth-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,20 +25,27 @@ interface LoginFormProps {
   labels: AuthLabels;
   /** When provided, called on success instead of navigating to account (e.g. for modal flow). */
   onSuccess?: () => void;
+  /** After login, redirect here if valid (same-origin path). */
+  returnUrl?: string;
 }
 
-export function LoginForm({ locale, labels, onSuccess }: LoginFormProps) {
+export function LoginForm({ locale, labels, onSuccess, returnUrl }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  const defaultDestination = `/${locale}/account`;
+  const destination = getSafeReturnUrl(returnUrl, defaultDestination);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
     setError(null);
+    setStatusMessage(locale === "da" ? "Logger ind..." : "Signing in...");
     setLoading(true);
     try {
       const result = await medusa.auth.login("customer", "emailpass", { email, password });
@@ -50,26 +58,35 @@ export function LoginForm({ locale, labels, onSuccess }: LoginFormProps) {
         return;
       }
       if (onSuccess) {
+        setStatusMessage(locale === "da" ? "Opdaterer..." : "Updating...");
         onSuccess();
         router.refresh();
       } else {
-        router.push(`/${locale}/account`);
+        setStatusMessage(locale === "da" ? "Viderestiller..." : "Redirecting...");
+        router.push(destination);
         router.refresh();
       }
     } catch {
       setError(labels.errorLogin);
     } finally {
       setLoading(false);
+      setStatusMessage(null);
     }
   };
 
   const handleGoogleLogin = async () => {
     setError(null);
+    setStatusMessage(locale === "da" ? "Forbinder til Google..." : "Connecting to Google...");
     setGoogleLoading(true);
     try {
-      const callbackUrl = typeof window !== "undefined" ? `${window.location.origin}/${locale}/auth/google/callback` : "";
-      const result = await medusa.auth.login("customer", "google", callbackUrl ? { callback_url: callbackUrl } : {});
+      const baseCallback = typeof window !== "undefined" ? `${window.location.origin}/${locale}/auth/google/callback` : "";
+      const currentReturnUrl = returnUrl || getCurrentReturnUrl(`/${locale}/account`);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("guapo_google_return_url", currentReturnUrl);
+      }
+      const result = await medusa.auth.login("customer", "google", baseCallback ? { callback_url: baseCallback } : {});
       if (typeof result === "object" && result.location) {
+        setStatusMessage(locale === "da" ? "Viderestiller til Google..." : "Redirecting to Google...");
         window.location.href = result.location;
         return;
       }
@@ -78,7 +95,7 @@ export function LoginForm({ locale, labels, onSuccess }: LoginFormProps) {
           onSuccess();
           router.refresh();
         } else {
-          router.push(`/${locale}/account`);
+          router.push(destination);
           router.refresh();
         }
         return;
@@ -88,6 +105,7 @@ export function LoginForm({ locale, labels, onSuccess }: LoginFormProps) {
       setError(labels.errorLogin);
     } finally {
       setGoogleLoading(false);
+      setStatusMessage(null);
     }
   };
 
@@ -119,8 +137,13 @@ export function LoginForm({ locale, labels, onSuccess }: LoginFormProps) {
           />
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
+        {statusMessage && !error && (
+          <p className="text-sm text-muted-foreground" role="status" aria-live="polite">
+            {statusMessage}
+          </p>
+        )}
         <Button type="submit" disabled={loading} className="w-full">
-          {loading ? "..." : labels.submitLogin}
+          {loading ? (locale === "da" ? "Logger ind..." : "Signing in...") : labels.submitLogin}
         </Button>
       </form>
 
@@ -140,7 +163,7 @@ export function LoginForm({ locale, labels, onSuccess }: LoginFormProps) {
         disabled={googleLoading}
         onClick={handleGoogleLogin}
       >
-        {googleLoading ? "..." : labels.loginWithGoogle}
+        {googleLoading ? (locale === "da" ? "Forbinder..." : "Connecting...") : labels.loginWithGoogle}
       </Button>
     </div>
   );

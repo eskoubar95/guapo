@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { fetchMedusaBrandByHandle } from "@/lib/medusa-brands";
 import { fetchProductsByBrand } from "@/lib/medusa-products";
 import { ProductCard } from "@/components/ProductCard";
+import { productCardA11yFromDict } from "@/components/product-card-a11y";
 
 interface BrandPageProps {
   params: Promise<{ locale: string; handle: string }>;
@@ -26,6 +27,7 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
 export default async function BrandPage({ params }: BrandPageProps) {
   const { locale, handle } = await params;
   const dict = await getDictionary(locale as Locale);
+  const productCardA11y = productCardA11yFromDict(dict);
   const brand = await fetchMedusaBrandByHandle(handle);
   const brandName = brand?.name ?? handle;
   const { products, count } = await fetchProductsByBrand(handle);
@@ -60,7 +62,7 @@ export default async function BrandPage({ params }: BrandPageProps) {
         {/* Product Grid */}
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} locale={locale} />
+            <ProductCard key={product.id} product={product} locale={locale} labels={productCardA11y} />
           ))}
         </div>
       </main>

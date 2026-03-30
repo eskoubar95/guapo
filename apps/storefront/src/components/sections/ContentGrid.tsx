@@ -69,13 +69,13 @@ export function ContentGrid({
   if (layout === "carousel") {
     return (
       <section className="py-8 lg:py-12 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="section-container min-w-0">
           <div className="mb-5 lg:mb-6">
-            <h2 className="text-xl lg:text-2xl font-semibold text-primary mb-1">
+            <h2 className="section-heading text-primary mb-1">
               {title}
             </h2>
             {subtitle && (
-              <p className="text-sm text-muted-foreground">{subtitle}</p>
+              <p className="text-sm text-text-muted">{subtitle}</p>
             )}
           </div>
           <div
@@ -105,7 +105,7 @@ export function ContentGrid({
             )}
             <div
               ref={scrollRef}
-              className="flex gap-4 lg:gap-6 overflow-x-auto scroll-smooth scrollbar-hide"
+              className="flex gap-4 lg:gap-6 overflow-x-auto scroll-smooth scrollbar-hide min-w-0"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
               {content.map((item) => (
@@ -127,11 +127,11 @@ export function ContentGrid({
                     />
                   </div>
                   <div className="p-4 lg:p-5">
-                    <h3 className="font-medium text-foreground mb-2 hover:text-primary transition-colors">
+                    <h3 className="font-medium text-text-primary mb-2 hover:text-primary transition-colors">
                       {item.title}
                     </h3>
                     {item.excerpt && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
+                      <p className="text-sm text-text-muted line-clamp-2">
                         {item.excerpt}
                       </p>
                     )}
@@ -147,13 +147,13 @@ export function ContentGrid({
 
   return (
     <section className="py-8 lg:py-12 bg-white">
-      <div className="container mx-auto px-4">
+      <div className="section-container min-w-0">
         <div className="mb-5 lg:mb-6">
-          <h2 className="text-xl lg:text-2xl font-semibold text-primary mb-1">
+          <h2 className="section-heading text-primary mb-1">
             {title}
           </h2>
           {subtitle && (
-            <p className="text-sm text-muted-foreground">{subtitle}</p>
+            <p className="text-sm text-text-muted">{subtitle}</p>
           )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
@@ -176,11 +176,11 @@ export function ContentGrid({
                 />
               </div>
               <div className="p-4 lg:p-5">
-                <h3 className="font-medium text-foreground mb-2 hover:text-primary transition-colors">
+                <h3 className="font-medium text-text-primary mb-2 hover:text-primary transition-colors">
                   {item.title}
                 </h3>
                 {item.excerpt && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
+                  <p className="text-sm text-text-muted line-clamp-2">
                     {item.excerpt}
                   </p>
                 )}
