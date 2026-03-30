@@ -45,13 +45,12 @@ export function StripePaymentForm({
         },
       });
       if (error) {
-        onProcessing?.(false);
         onError(error.message ?? "Payment failed");
       }
     } catch (err) {
-      onProcessing?.(false);
       onError(err instanceof Error ? err.message : "Payment failed");
     } finally {
+      onProcessing?.(false);
       setLoading(false);
     }
   };

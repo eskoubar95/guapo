@@ -165,9 +165,22 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
   const handleRemove = (lineItemId: string) => {
     setQtyError(null);
     startTransition(async () => {
-      await removeLineItem(lineItemId);
-      router.refresh();
-      await refreshCart();
+      try {
+        await removeLineItem(lineItemId);
+        router.refresh();
+        await refreshCart();
+      } catch (e) {
+        const raw = e instanceof Error ? e.message : "";
+        setQtyError({
+          lineId: lineItemId,
+          message: userMessageForLineItemError(
+            raw,
+            dict.cart.notEnoughStock,
+            dict.cart.quantityUpdateFailed
+          ),
+        });
+        await refreshCart();
+      }
     });
   };
 
@@ -205,11 +218,16 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
     setQtyError(null);
     setIsClearing(true);
     startTransition(async () => {
-      await clearCart();
-      await refreshCart();
-      router.refresh();
-      onClose();
-      setIsClearing(false);
+      try {
+        await clearCart();
+        await refreshCart();
+        router.refresh();
+        onClose();
+      } catch (e) {
+        console.error("Failed to clear cart:", e);
+      } finally {
+        setIsClearing(false);
+      }
     });
   };
 

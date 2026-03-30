@@ -168,30 +168,38 @@ export function CheckoutWithStripe({
     </div>
   );
 
-  const paymentContent =
-    stripePromise && clientSecret && cart ? (
-      <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: "stripe" } }}>
-        <StripePaymentForm
-          cartId={cart.id}
-          onError={(msg) => {
-            setPaymentProcessing(false);
-            setPaymentError(msg);
-          }}
-          onProcessing={setPaymentProcessing}
-          locale={locale}
-          placeOrderLabel={dict.checkout.confirmOrder}
-          termsAccepted={termsAccepted && (!hasSubscriptionItems || subscriptionTermsAccepted)}
-        />
-      </Elements>
-    ) : stripeLoading ? (
-      loadingPaymentBlock
-    ) : paymentError ? (
-      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-        <p className="text-destructive text-sm">{paymentError}</p>
-      </div>
-    ) : (
-      loadingPaymentBlock
-    );
+  const stripeConfigError =
+    locale === "da"
+      ? "Betaling er ikke konfigureret (mangler NEXT_PUBLIC_STRIPE_KEY)."
+      : "Payment is not configured (missing NEXT_PUBLIC_STRIPE_KEY).";
+
+  const paymentContent = !stripePromise ? (
+    <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+      <p className="text-destructive text-sm">{stripeConfigError}</p>
+    </div>
+  ) : stripePromise && clientSecret && cart ? (
+    <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: "stripe" } }}>
+      <StripePaymentForm
+        cartId={cart.id}
+        onError={(msg) => {
+          setPaymentProcessing(false);
+          setPaymentError(msg);
+        }}
+        onProcessing={setPaymentProcessing}
+        locale={locale}
+        placeOrderLabel={dict.checkout.confirmOrder}
+        termsAccepted={termsAccepted && (!hasSubscriptionItems || subscriptionTermsAccepted)}
+      />
+    </Elements>
+  ) : stripeLoading ? (
+    loadingPaymentBlock
+  ) : paymentError ? (
+    <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+      <p className="text-destructive text-sm">{paymentError}</p>
+    </div>
+  ) : (
+    loadingPaymentBlock
+  );
 
   const handleStepChange = useCallback(
     (step: CheckoutStepNum) => {

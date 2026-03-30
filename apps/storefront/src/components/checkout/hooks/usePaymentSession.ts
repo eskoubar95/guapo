@@ -108,7 +108,7 @@ export function usePaymentSession({
     if (!cartId) return;
     const generation = ++sessionGenerationRef.current;
 
-    const formDataSig = `${formData.firstName}|${formData.lastName}|${formData.address1}|${formData.postalCode}|${formData.city}`;
+    const formDataSig = `${formData.email}|${formData.firstName}|${formData.lastName}|${formData.address1}|${formData.postalCode}|${formData.city}|${formData.phone ?? ""}|${formData.marketingOptIn}`;
     const shippingDataSig = JSON.stringify(selectedShippingData ?? {});
     const formDataUnchanged = lastAppliedFormDataRef.current === formDataSig;
     const shippingDataUnchanged = lastAppliedShippingDataRef.current === shippingDataSig;

@@ -94,7 +94,7 @@ export function ReviewStep({
         </div>
       </CollapsedSection>
 
-      <CollapsedSection title={checkout.deliveryMethod} editLabel={checkout.editInfo} onEdit={() => onEditToStep(1)}>
+      <CollapsedSection title={checkout.deliveryMethod} editLabel={checkout.editInfo} onEdit={() => onEditToStep(2)}>
         <div className="flex items-start gap-2.5">
           <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
           <div className="text-sm">

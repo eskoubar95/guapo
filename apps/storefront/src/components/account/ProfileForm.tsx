@@ -48,8 +48,12 @@ export function ProfileForm({ labels }: ProfileFormProps) {
         last_name: lastName,
         phone,
       });
-      await refetch();
       setFeedback({ type: "success", msg: labels.profileSaved });
+      try {
+        await refetch();
+      } catch {
+        /* update persisted; refresh failure is non-fatal */
+      }
       setTimeout(() => setFeedback(null), 3000);
     } catch {
       setFeedback({ type: "error", msg: labels.profileError });
@@ -120,7 +124,12 @@ export function ProfileForm({ labels }: ProfileFormProps) {
             </button>
 
             {feedback && (
-              <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${feedback.type === "success" ? "text-success" : "text-destructive"}`}>
+              <span
+                role={feedback.type === "error" ? "alert" : "status"}
+                aria-live={feedback.type === "error" ? "assertive" : "polite"}
+                aria-atomic="true"
+                className={`inline-flex items-center gap-1.5 text-sm font-medium ${feedback.type === "success" ? "text-success" : "text-destructive"}`}
+              >
                 {feedback.type === "success" && <Check className="h-4 w-4" />}
                 {feedback.msg}
               </span>

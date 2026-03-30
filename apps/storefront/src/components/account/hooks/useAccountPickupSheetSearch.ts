@@ -35,6 +35,7 @@ export function useAccountPickupSheetSearch({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
   const prevOpenRef = useRef(false);
+  const requestSeqRef = useRef(0);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -56,12 +57,23 @@ export function useAccountPickupSheetSearch({
   }, [sheetOpen, seedSearchOnOpen, searchAddress, setSearchAddress]);
 
   useEffect(() => {
-    if (!sheetOpen) return;
+    if (!sheetOpen) {
+      requestSeqRef.current += 1;
+      setPickupLoading(false);
+      return;
+    }
     const zip =
       extractZipcodeFromAddress(searchAddress) ||
       searchAddress.trim().replace(/\D/g, "").slice(0, 4);
-    if (zip.length < 3) return;
+    if (zip.length < 3) {
+      requestSeqRef.current += 1;
+      setPickupLoading(false);
+      setPickupPoints([]);
+      setSelectedPoint(null);
+      return;
+    }
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    const requestSeq = ++requestSeqRef.current;
     debounceRef.current = setTimeout(() => {
       debounceRef.current = null;
       setPickupLoading(true);
@@ -74,12 +86,14 @@ export function useAccountPickupSheetSearch({
       })
         .then((points) => enrichWithDistance(points, addr || zip))
         .then((points) => {
-          if (!mountedRef.current) return;
+          if (!mountedRef.current || requestSeqRef.current !== requestSeq) return;
           setPickupPoints(points);
           setSelectedPoint(null);
         })
         .finally(() => {
-          if (mountedRef.current) setPickupLoading(false);
+          if (mountedRef.current && requestSeqRef.current === requestSeq) {
+            setPickupLoading(false);
+          }
         });
     }, 400);
     return () => {
