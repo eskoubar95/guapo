@@ -14,7 +14,6 @@ import {
   isLineDiscounted,
   normalizeShippingForDisplay,
 } from "@/lib/cart-display";
-import type { StoreCart } from "@/lib/cart-data";
 import type { CartItem } from "@/components/cart/CartItems";
 import type { Dictionary } from "@/i18n/dictionaries";
 
@@ -31,12 +30,12 @@ export function CheckoutOrderSummary({
   hasSubscriptionItems: boolean;
 }) {
   const { cart, selectedShippingAmount } = useCheckoutCart();
-  const items = (cart?.items ?? []) as CartItem[];
-  if (items.length === 0) return null;
+  if (!cart?.items?.length) return null;
+  const items = cart.items as CartItem[];
 
-  const itemsOriginalTotal = getCartItemsOriginalTotal(cart as StoreCart);
-  const discountTotal = getCartDiscountTotal(cart as StoreCart);
-  const itemsTotal = getCartItemsTotal(cart as StoreCart);
+  const itemsOriginalTotal = getCartItemsOriginalTotal(cart);
+  const discountTotal = getCartDiscountTotal(cart);
+  const itemsTotal = getCartItemsTotal(cart);
 
   const cartHasShippingMethod = (cart?.shipping_methods?.length ?? 0) > 0;
   const cartShippingTotal =
@@ -188,9 +187,7 @@ export function CheckoutOrderSummary({
               </span>
             ) : (
               <span className="text-muted-foreground text-xs">
-                {locale === "da"
-                  ? "Beregnes ved valg af levering"
-                  : "Calculated when delivery method is selected"}
+                {dict.checkout.calculatedWhenDeliverySelected}
               </span>
             )}
           </dd>
@@ -206,7 +203,7 @@ export function CheckoutOrderSummary({
         {effectiveTotal > 0 && vatTotalDisplay > 0 && (
           <div className="flex justify-between">
             <dt className="text-xs text-muted-foreground">
-              {locale === "da" ? "Heraf moms (25%)" : "VAT included (25%)"}
+              {dict.checkout.vatIncludedBreakdown}
             </dt>
             <dd className="text-xs text-muted-foreground tabular-nums">
               {formatPrice(vatTotalDisplay, locale)}

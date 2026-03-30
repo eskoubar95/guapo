@@ -122,6 +122,8 @@ export default async function PayloadPageRoute({ params, searchParams }: Payload
             previousSlide: dict.home.promoSlider.previousSlide,
             nextSlide: dict.home.promoSlider.nextSlide,
             goToSlide: dict.home.promoSlider.goToSlide,
+            pauseAutoplay: dict.home.promoSlider.pauseAutoplay,
+            playAutoplay: dict.home.promoSlider.playAutoplay,
           }}
         />
       </div>

@@ -53,6 +53,8 @@ export interface Dictionary {
       previousSlide: string;
       nextSlide: string;
       goToSlide: string;
+      pauseAutoplay: string;
+      playAutoplay: string;
       slide1: {
         badge: string;
         title: string;
@@ -305,6 +307,8 @@ export interface Dictionary {
     klarnaLabel: string;
     paymentInitFailed: string;
     shippingMethodRequired: string;
+    calculatedWhenDeliverySelected: string;
+    vatIncludedBreakdown: string;
   };
   auth: {
     loginTitle: string;

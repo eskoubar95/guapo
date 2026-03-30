@@ -55,6 +55,8 @@
       "previousSlide": "Previous slide",
       "nextSlide": "Next slide",
       "goToSlide": "Go to slide",
+      "pauseAutoplay": "Pause carousel",
+      "playAutoplay": "Play carousel",
       "slide1": {
         "badge": "Valid 26–29 Jan",
         "title": "25%",
@@ -303,7 +305,9 @@
     "mobilePayLabel": "MobilePay",
     "klarnaLabel": "Klarna",
     "paymentInitFailed": "Could not initialize payment",
-    "shippingMethodRequired": "Please select a shipping method"
+    "shippingMethodRequired": "Please select a shipping method",
+    "calculatedWhenDeliverySelected": "Calculated when delivery method is selected",
+    "vatIncludedBreakdown": "VAT included (25%)"
   },
   "auth": {
     "backLink": "Back",

@@ -71,6 +71,8 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
               previousSlide: dict.home.promoSlider.previousSlide,
               nextSlide: dict.home.promoSlider.nextSlide,
               goToSlide: dict.home.promoSlider.goToSlide,
+              pauseAutoplay: dict.home.promoSlider.pauseAutoplay,
+              playAutoplay: dict.home.promoSlider.playAutoplay,
             }}
           />
         </div>
@@ -111,6 +113,8 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
           previousSlide: dict.home.promoSlider.previousSlide,
           nextSlide: dict.home.promoSlider.nextSlide,
           goToSlide: dict.home.promoSlider.goToSlide,
+          pauseAutoplay: dict.home.promoSlider.pauseAutoplay,
+          playAutoplay: dict.home.promoSlider.playAutoplay,
         }}
       />
       <FeaturedProducts

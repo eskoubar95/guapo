@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, type MutableRefObject } from "react";
+import {
+  useEffect,
+  useRef,
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
+} from "react";
 import {
   fetchAllPickupPoints,
   extractZipcodeFromAddress,
@@ -19,7 +25,7 @@ interface UsePickupPointSheetSearchParams {
   mountedRef: MutableRefObject<boolean>;
   setPickupLoading: (v: boolean) => void;
   setPickupPoints: (p: PickupPoint[]) => void;
-  setSelectedPoint: (p: PickupPoint | null) => void;
+  setSelectedPoint: Dispatch<SetStateAction<PickupPoint | null>>;
 }
 
 /**
@@ -39,6 +45,14 @@ export function usePickupPointSheetSearch({
   setSelectedPoint,
 }: UsePickupPointSheetSearchParams): void {
   const fetchRequestSeqRef = useRef(0);
+  const prevSheetOpenRef = useRef(sheetOpen);
+
+  useEffect(() => {
+    if (prevSheetOpenRef.current && !sheetOpen) {
+      fetchRequestSeqRef.current += 1;
+    }
+    prevSheetOpenRef.current = sheetOpen;
+  }, [sheetOpen]);
 
   useEffect(() => {
     if (!sheetOpen) return;
@@ -55,8 +69,12 @@ export function usePickupPointSheetSearch({
     setSearchAddress(combined);
     setPickupLoading(true);
     setPickupPoints([]);
+    const digitsOnly = combined.replace(/\D/g, "").slice(0, 4);
     const zipForSearch =
-      zip.length >= 3 ? zip : extractZipcodeFromAddress(combined) || combined.slice(0, 4);
+      zip.length >= 3
+        ? zip
+        : extractZipcodeFromAddress(combined) ||
+          (digitsOnly.length >= 3 ? digitsOnly : "");
     if (zipForSearch.length >= 3) {
       const seq = ++fetchRequestSeqRef.current;
       void fetchAllPickupPoints({
@@ -68,7 +86,13 @@ export function usePickupPointSheetSearch({
         .then((points) => {
           if (!mountedRef.current || seq !== fetchRequestSeqRef.current) return;
           setPickupPoints(points);
-          setSelectedPoint(null);
+          setSelectedPoint((prev) => {
+            if (!prev) return null;
+            const still = points.some(
+              (p) => p.id === prev.id || p.number === prev.number
+            );
+            return still ? prev : null;
+          });
         })
         .catch((err) => {
           console.error("[usePickupPointSheetSearch] sync fetch failed", err);
@@ -109,7 +133,13 @@ export function usePickupPointSheetSearch({
         .then((points) => {
           if (!mountedRef.current || seq !== fetchRequestSeqRef.current) return;
           setPickupPoints(points);
-          setSelectedPoint(null);
+          setSelectedPoint((prev) => {
+            if (!prev) return null;
+            const still = points.some(
+              (p) => p.id === prev.id || p.number === prev.number
+            );
+            return still ? prev : null;
+          });
         })
         .catch((err) => {
           console.error("[usePickupPointSheetSearch] debounced fetch failed", err);
