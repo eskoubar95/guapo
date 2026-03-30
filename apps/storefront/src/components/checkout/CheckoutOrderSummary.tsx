@@ -182,9 +182,7 @@ export function CheckoutOrderSummary({
               </span>
             ) : (
               <span className="text-muted-foreground text-xs">
-                {locale === "da"
-                  ? "Beregnes ved valg af levering"
-                  : "Calculated when delivery method is selected"}
+                {dict.checkout.calculatedWhenDeliverySelected}
               </span>
             )}
           </dd>
@@ -200,7 +198,7 @@ export function CheckoutOrderSummary({
         {effectiveTotal > 0 && vatTotalDisplay > 0 && (
           <div className="flex justify-between">
             <dt className="text-xs text-muted-foreground">
-              {locale === "da" ? "Heraf moms (25%)" : "VAT included (25%)"}
+              {dict.checkout.vatIncludedBreakdown}
             </dt>
             <dd className="text-xs text-muted-foreground tabular-nums">
               {formatPrice(vatTotalDisplay, locale)}

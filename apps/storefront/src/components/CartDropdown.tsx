@@ -184,18 +184,14 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
     });
   };
 
-  const handleQuantityChange = (
-    lineItemId: string,
-    newQty: number,
-    metadata?: Record<string, unknown>
-  ) => {
+  const handleQuantityChange = (lineItemId: string, newQty: number) => {
     if (newQty < 1) return;
     const item = items.find((i) => i.id === lineItemId);
     if (item && newQty > getCartLineQuantityCap(item)) return;
     setQtyError(null);
     startTransition(async () => {
       try {
-        await updateLineItem(lineItemId, newQty, metadata);
+        await updateLineItem(lineItemId, newQty);
         router.refresh();
         await refreshCart();
       } catch (e) {
@@ -268,7 +264,7 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
                   locale={locale}
                   dict={dict}
                   onRemove={() => handleRemove(item.id)}
-                  onQuantityChange={(qty) => handleQuantityChange(item.id, qty, item.metadata)}
+                  onQuantityChange={(qty) => handleQuantityChange(item.id, qty)}
                   isPending={isPending}
                   quantityError={qtyError?.lineId === item.id ? qtyError.message : null}
                 />
@@ -296,7 +292,7 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
                   </span>
                 ) : (
                   <span className="text-muted-foreground text-xs">
-                    {locale === "da" ? "Beregnes ved kassen" : "Calculated at checkout"}
+                    {dict.cart.calculatedAtCheckout}
                   </span>
                 )}
               </div>
@@ -309,7 +305,7 @@ export function CartDropdown({ isOpen, onClose, locale, dict }: CartDropdownProp
                 </div>
                 {taxTotal > 0 && (
                   <div className="flex justify-between text-xs text-muted-foreground mt-0.5">
-                    <span>{locale === "da" ? "Heraf moms (25%)" : "Incl. VAT (25%)"}</span>
+                    <span>{dict.cart.inclVatBreakdown}</span>
                     <span>{formatPrice(taxTotal, locale)}</span>
                   </div>
                 )}

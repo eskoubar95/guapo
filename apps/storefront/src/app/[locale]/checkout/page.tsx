@@ -47,8 +47,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
             <CheckoutAuthGate locale={locale} hasSubscriptionItems={hasSubscriptionItems} authLabels={dict.auth}>
               <CheckoutWithStripe
                 locale={locale}
-                dict={{ checkout: dict.checkout }}
-                confirmationHref={`/${locale}/order-confirmation/placeholder`}
+                dict={dict}
                 cartId={cartId}
                 hasSubscriptionItems={hasSubscriptionItems}
               />

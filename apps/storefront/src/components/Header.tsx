@@ -6,12 +6,14 @@ import { useState, useEffect } from "react";
 import { SidebarMenu } from "@/components/SidebarMenu";
 import { SearchModal } from "@/components/SearchModal";
 import { CartDropdown } from "@/components/CartDropdown";
+import type { Dictionary } from "@/i18n/dictionaries";
 
 interface HeaderProps {
   locale: string;
+  dict: Dictionary;
 }
 
-export function Header({ locale }: HeaderProps) {
+export function Header({ locale, dict }: HeaderProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -138,6 +140,7 @@ export function Header({ locale }: HeaderProps) {
                   isOpen={isCartOpen}
                   onClose={() => setIsCartOpen(false)}
                   locale={locale}
+                  dict={dict}
                 />
               </div>
 

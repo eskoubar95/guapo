@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { notFound } from "next/navigation";
 import { locales, type Locale } from "@/i18n/config";
+import { getDictionary } from "@/i18n/dictionaries";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -40,6 +41,8 @@ export default async function LocaleLayout({
     notFound();
   }
 
+  const dict = await getDictionary(locale as Locale);
+
   return (
     <html lang={locale} suppressHydrationWarning>
       <body
@@ -47,7 +50,7 @@ export default async function LocaleLayout({
         suppressHydrationWarning
       >
         <AuthProvider>
-          <Header locale={locale} />
+          <Header locale={locale} dict={dict} />
           <main className="flex-1">{children}</main>
           <Footer locale={locale} />
         </AuthProvider>

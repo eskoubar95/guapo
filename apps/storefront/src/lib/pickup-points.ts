@@ -75,11 +75,16 @@ function haversineMeters(
 async function geocodeAddress(addressStr: string): Promise<{ lat: number; lon: number } | null> {
   const q = addressStr.trim();
   if (!q || q.length < 2) return null;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
   try {
     const base =
       typeof window !== "undefined" ? "" : process.env.NEXT_PUBLIC_STOREFRONT_URL ?? "http://localhost:3000";
     const url = `${base}/api/geocode?q=${encodeURIComponent(q)}`;
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    });
     if (!res.ok) return null;
     const data = (await res.json()) as { lat: number | null; lon: number | null };
     const lat = data?.lat;
@@ -88,6 +93,8 @@ async function geocodeAddress(addressStr: string): Promise<{ lat: number; lon: n
     return { lat, lon };
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
