@@ -40,6 +40,7 @@ interface AuthModalProps {
   locale: string;
   labels: AuthModalLabels;
   initialView?: AuthModalView;
+  /** After login/register success, navigate here (e.g. checkout). */
   returnUrl?: string;
 }
 
@@ -206,6 +207,7 @@ export function AuthModal({
               <>
                 <LoginForm
                   locale={locale}
+                  returnUrl={returnUrl}
                   labels={{
                     loginTitle: labels.loginTitle,
                     email: labels.email,
@@ -218,7 +220,6 @@ export function AuthModal({
                     orDivider: labels.orDivider,
                   }}
                   onSuccess={handleSuccess}
-                  returnUrl={returnUrl}
                 />
                 <p className="mt-4 text-center text-sm text-muted-foreground">
                   {labels.noAccount}{" "}
@@ -235,6 +236,7 @@ export function AuthModal({
               <>
                 <RegisterForm
                   locale={locale}
+                  returnUrl={returnUrl}
                   labels={{
                     registerTitle: labels.registerTitle,
                     email: labels.email,
@@ -245,7 +247,6 @@ export function AuthModal({
                     errorRegister: labels.errorRegister,
                   }}
                   onSuccess={handleSuccess}
-                  returnUrl={returnUrl}
                 />
                 <p className="mt-4 text-center text-sm text-muted-foreground">
                   {labels.hasAccount}{" "}

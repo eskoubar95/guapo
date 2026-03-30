@@ -10,7 +10,7 @@ type AuthState = {
   loading: boolean;
   isAuthenticated: boolean;
   refetch: () => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: (opts?: { redirectTo?: string }) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -39,13 +39,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const signOut = useCallback(async () => {
+  const signOut = useCallback(async (opts?: { redirectTo?: string }) => {
     requestVersionRef.current += 1;
     try {
       await medusa.auth.logout();
     } finally {
       setCustomer(null);
       setLoading(false);
+    }
+    if (typeof window !== "undefined" && opts?.redirectTo) {
+      window.location.assign(opts.redirectTo);
     }
   }, []);
 

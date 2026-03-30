@@ -178,6 +178,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
               decreaseQuantityAriaLabel={dict.products.decreaseQuantity}
               increaseQuantityAriaLabel={dict.products.increaseQuantity}
               purchaseOptionsLabel={dict.products.purchaseOptions}
+              outOfStockLabel={dict.products.outOfStock}
+              lowStockWithCountLabel={dict.products.lowStockWithCount}
               subscriptionConfig={{ basePrice, currency: "DKK", locale }}
             />
 

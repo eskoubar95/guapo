@@ -42,33 +42,26 @@ export default async function HomePage({ params }: HomePageProps) {
     ...brandProductsList.map((p, i) => ({ ...p, id: `brand-b-${p.id}-${i}` })),
   ];
 
+  const heroImg =
+    "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=2560&q=80";
   const promoSliderSlides = [
     {
       id: "slide1",
-      variant: "dark" as const,
-      badge: dict.home.promoSlider.slide1.badge,
-      title: dict.home.promoSlider.slide1.title,
-      subtitle: dict.home.promoSlider.slide1.subtitle,
-      disclaimer: dict.home.promoSlider.slide1.disclaimer,
-      ctaText: dict.home.promoSlider.slide1.ctaText,
-      ctaHref: "/categories",
+      imageDesktopUrl: heroImg,
+      imageMobileUrl: heroImg,
+      href: "/categories",
     },
     {
       id: "slide2",
-      variant: "light-blue" as const,
-      title: dict.home.promoSlider.slide2.title,
-      subtitle: dict.home.promoSlider.slide2.subtitle,
-      ctaText: dict.home.promoSlider.slide2.ctaText,
-      ctaHref: "/categories",
+      imageDesktopUrl:
+        "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=2560&q=80",
+      href: "/categories",
     },
     {
       id: "slide3",
-      variant: "light-warm" as const,
-      title: dict.home.promoSlider.slide3.title,
-      subtitle: dict.home.promoSlider.slide3.subtitle,
-      ctaText: dict.home.promoSlider.slide3.ctaText,
-      ctaHref: "/categories",
-      ctaVariant: "outline" as const,
+      imageDesktopUrl:
+        "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=2560&q=80",
+      href: "/categories",
     },
   ];
 
@@ -84,7 +77,15 @@ export default async function HomePage({ params }: HomePageProps) {
       <CategoryStrip categories={homeMockCategories} locale={validLocale} />
 
       {/* Promotion slider (3 slides) */}
-      <PromotionSlider slides={promoSliderSlides} locale={validLocale} />
+      <PromotionSlider
+        slides={promoSliderSlides}
+        locale={validLocale}
+        labels={{
+          previousSlide: dict.home.promoSlider.previousSlide,
+          nextSlide: dict.home.promoSlider.nextSlide,
+          goToSlide: dict.home.promoSlider.goToSlide,
+        }}
+      />
 
       {/* Editor picks */}
       <FeaturedProducts
@@ -169,6 +170,7 @@ export default async function HomePage({ params }: HomePageProps) {
 
       {/* Newsletter */}
       <Newsletter
+        locale={validLocale}
         title={dict.home.newsletter.title}
         description={dict.home.newsletter.description}
         placeholder={dict.home.newsletter.placeholder}
