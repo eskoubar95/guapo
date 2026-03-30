@@ -3,9 +3,12 @@ import { SUBSCRIPTION_MODULE } from "../../../../../modules/subscription";
 import type SubscriptionModuleService from "../../../../../modules/subscription/service";
 
 /** POST /admin/subscriptions/:id/skip */
-export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
+export const POST = async (
+  req: MedusaRequest<{ skip?: boolean }>,
+  res: MedusaResponse
+) => {
   const { id } = req.params;
-  const body = req.body as { skip?: boolean } | undefined;
+  const body = req.validatedBody;
   const skip = body?.skip ?? true;
 
   const subscriptionService = req.scope.resolve<SubscriptionModuleService>(
