@@ -1,117 +1,163 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 
-interface Slide {
+const AUTOPLAY_MS = 7000;
+
+export interface PromotionSliderSlideData {
   id: string;
-  variant: "dark" | "light-blue" | "light-warm";
-  badge?: string;
-  title: string;
-  subtitle?: string;
-  disclaimer?: string;
-  ctaText: string;
-  ctaHref: string;
-  ctaVariant?: "default" | "outline";
+  imageDesktopUrl: string;
+  imageTabletUrl?: string;
+  imageMobileUrl?: string;
+  href?: string;
 }
 
-const variantStyles = {
-  dark: "bg-gradient-to-r from-[#293241] to-[#3D5A80] text-white",
-  "light-blue": "bg-gradient-to-r from-[#E8F1F5] to-[#D0E8F2] text-foreground",
-  "light-warm": "bg-gradient-to-r from-[#F5F3F0] to-[#E8E6E1] text-foreground",
-};
+export interface PromotionSliderLabels {
+  previousSlide: string;
+  nextSlide: string;
+  goToSlide: string;
+}
 
 interface PromotionSliderProps {
-  slides: Slide[];
+  slides: PromotionSliderSlideData[];
   locale: string;
+  /** A11y / UI copy from i18n */
+  labels?: PromotionSliderLabels;
 }
 
-export function PromotionSlider({ slides, locale }: PromotionSliderProps) {
+function resolveHref(slideHref: string | undefined, locale: string): string | undefined {
+  if (!slideHref) return undefined;
+  if (slideHref.startsWith("http")) return slideHref;
+  return `/${locale}${slideHref === "/" ? "" : slideHref.startsWith("/") ? slideHref : `/${slideHref}`}`;
+}
+
+export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps) {
   const [current, setCurrent] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  const l = labels ?? {
+    previousSlide: "Previous slide",
+    nextSlide: "Next slide",
+    goToSlide: "Go to slide",
+  };
+
+  const goNext = useCallback(() => {
+    setCurrent((c) => (c + 1) % slides.length);
+  }, [slides.length]);
+
+  const goPrev = useCallback(() => {
+    setCurrent((c) => (c - 1 + slides.length) % slides.length);
+  }, [slides.length]);
 
   useEffect(() => {
-    const t = setInterval(() => {
-      setCurrent((c) => (c + 1) % slides.length);
-    }, 4000);
+    if (slides.length <= 1 || paused) return;
+    const t = setInterval(goNext, AUTOPLAY_MS);
     return () => clearInterval(t);
-  }, [slides.length]);
+  }, [slides.length, current, paused, goNext]);
 
   if (slides.length === 0) return null;
 
-  const slide = slides[current];
+  const multi = slides.length > 1;
+  const pctPerSlide = 100 / slides.length;
+
+  const navButtonClass =
+    "hidden sm:flex shrink-0 h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
   return (
-    <section className="py-6 bg-background">
-      <div className="container mx-auto px-4">
+    <section className="py-6 sm:py-8 lg:py-10 bg-background">
+      <div className="section-container min-w-0">
+        {/* Figma: desktop 2560×875 (≈2.93:1), mobile square (1:1). Side nav from sm+; mobile uses dots + autoplay only. */}
         <div
-          className={`rounded-xl p-8 md:p-12 flex flex-col md:flex-row md:items-center md:justify-between gap-6 overflow-hidden ${variantStyles[slide.variant]}`}
+          className={multi ? "flex min-w-0 items-center gap-1.5 sm:gap-3 md:gap-4" : "min-w-0"}
+          onMouseEnter={() => multi && setPaused(true)}
+          onMouseLeave={() => multi && setPaused(false)}
         >
-          <div>
-            {slide.badge && (
-              <span
-                className={`inline-block px-3 py-1 rounded-full text-sm mb-4 ${
-                  slide.variant === "dark" ? "bg-white/20" : "bg-primary/10 text-primary"
-                }`}
-              >
-                {slide.badge}
-              </span>
-            )}
-            <h2
-              className={`text-4xl md:text-6xl font-bold mb-2 ${
-                slide.variant === "dark" ? "text-white" : "text-primary"
-              }`}
+          {multi && (
+            <button
+              type="button"
+              onClick={() => goPrev()}
+              className={navButtonClass}
+              aria-label={l.previousSlide}
             >
-              {slide.title}
-            </h2>
-            {slide.subtitle && (
-              <p
-                className={
-                  slide.variant === "dark"
-                    ? "text-xl md:text-2xl text-white/90"
-                    : "text-lg text-text-secondary"
-                }
-              >
-                {slide.subtitle}
-              </p>
-            )}
-            {slide.disclaimer && (
-              <p
-                className={`text-sm mt-2 ${
-                  slide.variant === "dark" ? "text-white/70" : "text-text-muted"
-                }`}
-              >
-                {slide.disclaimer}
-              </p>
-            )}
-            <div className="mt-6">
-              <Link
-                href={`/${locale}${slide.ctaHref}`}
-                className={`inline-flex items-center justify-center gap-2 h-12 px-8 text-base font-medium rounded-lg border-2 focus-visible:outline-none focus-visible:border-primary ${
-                  slide.ctaVariant === "outline"
-                    ? "bg-transparent border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                    : slide.variant === "dark"
-                      ? "bg-white text-primary hover:bg-white/90 border-transparent"
-                      : "bg-primary text-primary-foreground hover:opacity-90 border-transparent"
-                }`}
-              >
-                {slide.ctaText}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
+              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
+            </button>
+          )}
+          <div
+            className={`relative min-w-0 overflow-hidden rounded-lg sm:rounded-xl aspect-square md:aspect-[2560/875] bg-muted ${
+              multi ? "flex-1" : "w-full"
+            }`}
+          >
+            <div
+              className="flex h-full transition-transform duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:duration-0 will-change-transform"
+              style={{
+                width: multi ? `${slides.length * 100}%` : "100%",
+                transform: multi ? `translateX(-${current * pctPerSlide}%)` : undefined,
+              }}
+            >
+              {slides.map((slide, index) => {
+                const desktopUrl = slide.imageDesktopUrl;
+                const tabletUrl = slide.imageTabletUrl ?? desktopUrl;
+                const mobileUrl = slide.imageMobileUrl ?? tabletUrl ?? desktopUrl;
+                const href = resolveHref(slide.href, locale);
+                const inner = (
+                  <picture className="absolute inset-0 block h-full w-full">
+                    <source media="(max-width: 767px)" srcSet={mobileUrl} />
+                    <source media="(max-width: 1023px)" srcSet={tabletUrl} />
+                    <img
+                      src={desktopUrl}
+                      alt=""
+                      width={2560}
+                      height={875}
+                      className="h-full w-full object-cover"
+                      fetchPriority={index === 0 ? "high" : undefined}
+                    />
+                  </picture>
+                );
+                return (
+                  <div
+                    key={slide.id}
+                    className="relative h-full shrink-0 grow-0 overflow-hidden"
+                    style={{ width: multi ? `${pctPerSlide}%` : "100%" }}
+                  >
+                    {href ? (
+                      <Link
+                        href={href}
+                        className="absolute inset-0 block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                      >
+                        {inner}
+                      </Link>
+                    ) : (
+                      <div className="absolute inset-0">{inner}</div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
+          {multi && (
+            <button
+              type="button"
+              onClick={() => goNext()}
+              className={navButtonClass}
+              aria-label={l.nextSlide}
+            >
+              <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden />
+            </button>
+          )}
         </div>
-        {slides.length > 1 && (
-          <div className="flex justify-center gap-2 mt-4">
+        {multi && (
+          <div className="mt-4 flex justify-center gap-2">
             {slides.map((_, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => setCurrent(i)}
-                className={`w-2 h-2 rounded-full transition-colors ${
+                className={`h-2 w-2 rounded-full transition-colors ${
                   i === current ? "bg-primary" : "bg-border"
                 }`}
-                aria-label={`Slide ${i + 1}`}
+                aria-label={`${l.goToSlide} ${i + 1}`}
               />
             ))}
           </div>

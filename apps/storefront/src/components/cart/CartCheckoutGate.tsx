@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthModal, type AuthModalLabels } from "@/components/auth/AuthModal";
 
@@ -12,6 +13,7 @@ interface CartCheckoutGateProps {
   checkoutHref: string;
   disabledMessage?: string;
   authLabels: AuthModalLabels;
+  compact?: boolean;
 }
 
 export function CartCheckoutGate({
@@ -21,10 +23,14 @@ export function CartCheckoutGate({
   checkoutHref,
   disabledMessage,
   authLabels,
+  compact = false,
 }: CartCheckoutGateProps) {
   const { customer } = useAuth();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalView, setAuthModalView] = useState<"login" | "register">("login");
+  const returnUrl = `${pathname ?? `/${locale}/cart`}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}`;
 
   const needsAuth = hasSubscriptionItems && !customer;
   const msg =
@@ -33,17 +39,18 @@ export function CartCheckoutGate({
       ? "Du skal oprette en konto for at abonnere."
       : "You need to create an account to subscribe.");
 
+  const btnBase = compact
+    ? "rounded-lg px-6 py-2.5 text-sm font-medium whitespace-nowrap"
+    : "block w-full rounded-lg px-6 py-3 text-sm font-medium text-center";
+
   return (
-    <div className="space-y-3">
-      {needsAuth && (
+    <div className={compact ? "" : "space-y-3"}>
+      {needsAuth && !compact && (
         <p className="text-sm text-muted-foreground">
           {msg}{" "}
           <button
             type="button"
-            onClick={() => {
-              setAuthModalView("login");
-              setAuthModalOpen(true);
-            }}
+            onClick={() => { setAuthModalView("login"); setAuthModalOpen(true); }}
             className="font-medium text-primary hover:underline"
           >
             {locale === "da" ? "Log ind" : "Log in"}
@@ -51,10 +58,7 @@ export function CartCheckoutGate({
           {" / "}
           <button
             type="button"
-            onClick={() => {
-              setAuthModalView("register");
-              setAuthModalOpen(true);
-            }}
+            onClick={() => { setAuthModalView("register"); setAuthModalOpen(true); }}
             className="font-medium text-primary hover:underline"
           >
             {locale === "da" ? "Opret konto" : "Create account"}
@@ -64,14 +68,14 @@ export function CartCheckoutGate({
       {needsAuth ? (
         <span
           aria-disabled="true"
-          className="block w-full cursor-not-allowed rounded-full border border-border bg-muted/50 px-8 py-4 text-center text-sm font-medium text-muted-foreground"
+          className={`${btnBase} cursor-not-allowed border border-border bg-muted/50 text-muted-foreground`}
         >
           {checkoutLabel}
         </span>
       ) : (
         <Link
           href={checkoutHref}
-          className="block w-full rounded-full bg-primary px-8 py-4 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 border border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          className={`${btnBase} bg-primary text-primary-foreground hover:bg-primary-hover transition-colors border border-transparent`}
         >
           {checkoutLabel}
         </Link>
@@ -82,6 +86,7 @@ export function CartCheckoutGate({
         locale={locale}
         labels={authLabels}
         initialView={authModalView}
+        returnUrl={returnUrl}
       />
     </div>
   );

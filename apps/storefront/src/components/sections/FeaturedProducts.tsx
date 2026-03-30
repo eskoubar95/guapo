@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard, type Product } from "@/components/ProductCard";
+import type { ProductCardA11yLabels } from "@/components/product-card-a11y";
 import { useRef, useState, useEffect } from "react";
 
 interface FeaturedProductsProps {
@@ -13,6 +14,7 @@ interface FeaturedProductsProps {
   viewAllText?: string;
   backgroundColor?: string;
   layout?: "grid" | "carousel";
+  productCardA11y?: ProductCardA11yLabels;
 }
 
 export function FeaturedProducts({
@@ -23,6 +25,7 @@ export function FeaturedProducts({
   viewAllText = "Se alle",
   backgroundColor = "bg-background",
   layout = "carousel",
+  productCardA11y,
 }: FeaturedProductsProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeft, setShowLeft] = useState(false);
@@ -63,10 +66,10 @@ export function FeaturedProducts({
 
   if (layout === "carousel") {
     return (
-      <section className={`py-8 lg:py-12 ${backgroundColor}`}>
-        <div className="container mx-auto px-4">
-          <div className="mb-5 lg:mb-6 flex items-center justify-between">
-            <h2 className="text-xl lg:text-2xl font-semibold text-primary">
+      <section className={`py-6 sm:py-8 lg:py-12 ${backgroundColor}`}>
+        <div className="section-container min-w-0">
+          <div className="mb-4 sm:mb-5 lg:mb-6 flex items-center justify-between gap-3">
+            <h2 className="section-heading text-text-primary">
               {title}
             </h2>
             {viewAllLink && (
@@ -87,7 +90,7 @@ export function FeaturedProducts({
               <button
                 type="button"
                 onClick={() => scroll("left")}
-                className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-slate-50 transition-all border-0 focus-visible:ring-2 focus-visible:ring-primary"
+                className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-surface transition-colors transition-shadow border-0 focus-visible:ring-2 focus-visible:ring-primary"
                 aria-label="Scroll til venstre"
               >
                 <ChevronLeft className="h-6 w-6 text-primary" />
@@ -97,7 +100,7 @@ export function FeaturedProducts({
               <button
                 type="button"
                 onClick={() => scroll("right")}
-                className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-slate-50 transition-all border-0 focus-visible:ring-2 focus-visible:ring-primary"
+                className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-surface transition-colors transition-shadow border-0 focus-visible:ring-2 focus-visible:ring-primary"
                 aria-label="Scroll til højre"
               >
                 <ChevronRight className="h-6 w-6 text-primary" />
@@ -105,15 +108,15 @@ export function FeaturedProducts({
             )}
             <div
               ref={scrollRef}
-              className="flex gap-3 lg:gap-4 overflow-x-auto scroll-smooth scrollbar-hide"
+              className="flex items-stretch gap-3 sm:gap-4 lg:gap-6 overflow-x-auto scroll-smooth scrollbar-hide min-w-0"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className="flex-shrink-0 w-[45%] sm:w-[30%] md:w-[23%] lg:w-[18%]"
+                  className="flex-shrink-0 w-[calc(50%-6px)] min-w-[140px] sm:w-[30%] md:w-[23%] lg:w-[22%]"
                 >
-                  <ProductCard product={product} locale={locale} />
+                  <ProductCard product={product} locale={locale} labels={productCardA11y} />
                 </div>
               ))}
             </div>
@@ -124,19 +127,20 @@ export function FeaturedProducts({
   }
 
   return (
-    <section className={`py-8 lg:py-12 ${backgroundColor}`}>
-      <div className="container mx-auto px-4">
-        <div className="mb-5 lg:mb-6">
-          <h2 className="text-xl lg:text-2xl font-semibold text-primary">
+    <section className={`py-6 sm:py-8 lg:py-12 ${backgroundColor}`}>
+      <div className="section-container min-w-0">
+        <div className="mb-4 sm:mb-5 lg:mb-6">
+          <h2 className="section-heading text-text-primary">
             {title}
           </h2>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 items-stretch">
           {products.map((product) => (
             <ProductCard
               key={product.id}
               product={product}
               locale={locale}
+              labels={productCardA11y}
             />
           ))}
         </div>

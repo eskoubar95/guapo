@@ -10,49 +10,54 @@ const MEDUSA_URL = (
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
 const UPSTREAM_TIMEOUT_MS = 5000;
 
+/** Same shape as successful free-shipping responses when upstream is unavailable. */
+const FREE_SHIPPING_DEGRADED = {
+  threshold: null,
+  cart_total: 0,
+  remaining: null,
+  qualifies: false,
+  enabled: true,
+  promotion_code: "FREESHIPPING",
+} as const;
+
 export async function GET() {
+  let cartId: string | null = null;
   try {
-    const cartId = await getCartId();
+    cartId = await getCartId();
     const headers: HeadersInit = {
       "Content-Type": "application/json",
       ...(PUBLISHABLE_KEY && { "x-publishable-api-key": PUBLISHABLE_KEY }),
     };
 
     if (!cartId) {
-      const cfgController = new AbortController();
-      const cfgTimeoutId = setTimeout(() => cfgController.abort(), UPSTREAM_TIMEOUT_MS);
-      const cfgRes = await fetch(`${MEDUSA_URL}/store/free-shipping-config`, {
-        headers,
-        cache: "no-store",
-        signal: cfgController.signal,
-      }).finally(() => clearTimeout(cfgTimeoutId));
-      if (cfgRes.ok) {
-        const cfg = (await cfgRes.json()) as {
-          threshold?: number;
-          enabled?: boolean;
-          promotion_code?: string;
-        };
-        const threshold = typeof cfg.threshold === "number" ? cfg.threshold : 499;
-        return NextResponse.json({
-          threshold,
-          cart_total: 0,
-          remaining: threshold,
-          qualifies: false,
-          enabled: cfg.enabled !== false,
-          promotion_code: cfg.promotion_code ?? "FREESHIPPING",
-        });
+      try {
+        const cfgController = new AbortController();
+        const cfgTimeoutId = setTimeout(() => cfgController.abort(), UPSTREAM_TIMEOUT_MS);
+        const cfgRes = await fetch(`${MEDUSA_URL}/store/free-shipping-config`, {
+          headers,
+          cache: "no-store",
+          signal: cfgController.signal,
+        }).finally(() => clearTimeout(cfgTimeoutId));
+        if (cfgRes.ok) {
+          const cfg = (await cfgRes.json()) as {
+            threshold?: number;
+            enabled?: boolean;
+            promotion_code?: string;
+          };
+          const threshold = typeof cfg.threshold === "number" ? cfg.threshold : 499;
+          return NextResponse.json({
+            threshold,
+            cart_total: 0,
+            remaining: threshold,
+            qualifies: false,
+            enabled: cfg.enabled !== false,
+            promotion_code: cfg.promotion_code ?? "FREESHIPPING",
+          });
+        }
+      } catch (err) {
+        console.error("[free-shipping] Upstream config fetch failed", err);
       }
-      return NextResponse.json(
-        {
-          threshold: null,
-          cart_total: 0,
-          remaining: null,
-          qualifies: false,
-          enabled: true,
-          promotion_code: "FREESHIPPING",
-        },
-        { status: 200 }
-      );
+      return NextResponse.json(FREE_SHIPPING_DEGRADED, { status: 200 });
     }
 
     const statusController = new AbortController();
@@ -74,7 +79,11 @@ export async function GET() {
     }
     const data = await res.json();
     return NextResponse.json(data);
-  } catch {
+  } catch (err) {
+    console.error("[free-shipping] Route error", err);
+    if (cartId == null) {
+      return NextResponse.json(FREE_SHIPPING_DEGRADED, { status: 200 });
+    }
     return NextResponse.json(
       { message: "Free shipping status failed", code: "ERROR" },
       { status: 500 }

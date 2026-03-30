@@ -343,7 +343,7 @@ h4 {
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
 }
@@ -357,7 +357,7 @@ h4 {
   padding: 0.5rem 1rem;
   margin: 0;
   overflow: visible;
-  clip: auto;
+  clip-path: none;
   background: var(--primary);
   color: var(--primary-foreground);
   border-radius: var(--radius-md);
@@ -376,17 +376,21 @@ html {
   }
 }
 
-/* Search modal: no focus border/ring on input or form (only one X = close modal) */
+/* Search modal: suppress default ring on container; keep visible :focus-visible on input */
 .search-modal-form:focus-within {
   outline: none !important;
   box-shadow: none !important;
 }
 .search-modal-input,
 .search-modal-input:focus,
-.search-modal-input:focus-visible,
 .search-modal-input:active {
   outline: none !important;
   box-shadow: none !important;
+}
+.search-modal-input:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-color: var(--primary);
 }
 
 /* Design is light-only: no prefers-color-scheme override. */
@@ -425,6 +429,7 @@ html {
 @layer base {
   body {
     @apply bg-background;
+
     color: var(--text-primary);
   }
 

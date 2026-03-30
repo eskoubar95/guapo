@@ -40,6 +40,7 @@ interface AuthModalProps {
   locale: string;
   labels: AuthModalLabels;
   initialView?: AuthModalView;
+  returnUrl?: string;
 }
 
 export function AuthModal({
@@ -48,6 +49,7 @@ export function AuthModal({
   locale,
   labels,
   initialView = "login",
+  returnUrl,
 }: AuthModalProps) {
   const { refetch } = useAuth();
   const [view, setView] = useState<AuthModalView>(initialView);
@@ -167,7 +169,7 @@ export function AuthModal({
 
   const content = (
     <div
-      className="fixed inset-0 z-[100] overflow-hidden"
+      className="fixed inset-0 z-100 overflow-hidden"
       aria-hidden={exiting}
     >
       <div
@@ -216,6 +218,7 @@ export function AuthModal({
                     orDivider: labels.orDivider,
                   }}
                   onSuccess={handleSuccess}
+                  returnUrl={returnUrl}
                 />
                 <p className="mt-4 text-center text-sm text-muted-foreground">
                   {labels.noAccount}{" "}
@@ -242,6 +245,7 @@ export function AuthModal({
                     errorRegister: labels.errorRegister,
                   }}
                   onSuccess={handleSuccess}
+                  returnUrl={returnUrl}
                 />
                 <p className="mt-4 text-center text-sm text-muted-foreground">
                   {labels.hasAccount}{" "}
