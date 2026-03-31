@@ -5,6 +5,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "postinstall": "node ./scripts/patch-product-reviews-admin.mjs",
     "build": "medusa build",
     "seed": "medusa exec ./src/scripts/seed.ts",
     "sync:payload": "medusa exec ./src/scripts/sync-payload-products.ts",
