@@ -1,12 +1,14 @@
 /* Global styles for the CMS app */
-* {
+.site-root,
+.site-root *,
+.site-root *::before,
+.site-root *::after {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
 }
 
-html,
-body {
+.site-root {
   max-width: 100vw;
   overflow-x: hidden;
 }

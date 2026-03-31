@@ -7,7 +7,7 @@ export default function SiteLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="site-root">{children}</body>
     </html>
   )
 }
