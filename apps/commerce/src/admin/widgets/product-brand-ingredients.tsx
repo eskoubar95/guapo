@@ -1,13 +1,43 @@
 import { defineWidgetConfig } from "@medusajs/admin-sdk"
 import type { DetailWidgetProps } from "@medusajs/framework/types"
 import { Container, Heading, toast } from "@medusajs/ui"
-import { useCallback, useEffect, useState } from "react"
+import { Component, type ErrorInfo, type ReactNode, useCallback, useEffect, useState } from "react"
 
 import { BrandSection } from "./_components/BrandSection"
 import { IngredientsSection } from "./_components/IngredientsSection"
 import type { Brand, Ingredient } from "./_components/product-brand-ingredients.types"
 
 const BASE = import.meta.env.VITE_BACKEND_URL || ""
+
+class WidgetErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("ProductBrandIngredientsWidget crashed", error, info)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Container>
+          <Heading level="h2">Brand & Ingredients</Heading>
+        </Container>
+      )
+    }
+
+    return this.props.children
+  }
+}
 
 const ProductBrandIngredientsWidget = ({ data: product }: DetailWidgetProps) => {
   const [brands, setBrands] = useState<Brand[]>([])
@@ -30,7 +60,7 @@ const ProductBrandIngredientsWidget = ({ data: product }: DetailWidgetProps) => 
       })
       if (res.ok) {
         const json = await res.json()
-        setBrands(json.brands ?? [])
+        setBrands(Array.isArray(json?.brands) ? json.brands : [])
       }
     } catch {
       setBrands([])
@@ -65,7 +95,7 @@ const ProductBrandIngredientsWidget = ({ data: product }: DetailWidgetProps) => 
       })
       if (res.ok) {
         const json = await res.json()
-        setAllIngredients(json.ingredients ?? [])
+        setAllIngredients(Array.isArray(json?.ingredients) ? json.ingredients : [])
       }
     } catch {
       setAllIngredients([])
@@ -84,7 +114,7 @@ const ProductBrandIngredientsWidget = ({ data: product }: DetailWidgetProps) => 
       })
       if (res.ok) {
         const json = await res.json()
-        setCurrentIngredients(json.ingredients ?? [])
+        setCurrentIngredients(Array.isArray(json?.ingredients) ? json.ingredients : [])
         setPayloadProductId(json.payloadProductId ?? null)
       }
     } catch {
@@ -217,35 +247,37 @@ const ProductBrandIngredientsWidget = ({ data: product }: DetailWidgetProps) => 
   }
 
   return (
-    <Container className="divide-y p-0">
-      <div className="flex items-center justify-between px-6 py-4">
-        <Heading level="h2">Brand & Ingredients</Heading>
-      </div>
-      <div className="space-y-6 px-6 py-4">
-        <BrandSection
-          brands={brands}
-          currentBrandId={currentBrandId}
-          brandLoading={brandLoading}
-          saving={saving}
-          onBrandChange={handleBrandChange}
-        />
-        <IngredientsSection
-          payloadProductId={payloadProductId}
-          allIngredients={allIngredients}
-          currentIngredients={currentIngredients}
-          ingredientsLoading={ingredientsLoading}
-          saving={saving}
-          parsing={parsing}
-          rawList={rawList}
-          addSelectValue={addSelectValue}
-          onRawListChange={setRawList}
-          onParse={handleParse}
-          onAddSelectChange={setAddSelectValue}
-          onAddIngredient={handleAddIngredient}
-          onRemoveIngredient={handleRemoveIngredient}
-        />
-      </div>
-    </Container>
+    <WidgetErrorBoundary>
+      <Container className="divide-y p-0">
+        <div className="flex items-center justify-between px-6 py-4">
+          <Heading level="h2">Brand & Ingredients</Heading>
+        </div>
+        <div className="space-y-6 px-6 py-4">
+          <BrandSection
+            brands={brands}
+            currentBrandId={currentBrandId}
+            brandLoading={brandLoading}
+            saving={saving}
+            onBrandChange={handleBrandChange}
+          />
+          <IngredientsSection
+            payloadProductId={payloadProductId}
+            allIngredients={allIngredients}
+            currentIngredients={currentIngredients}
+            ingredientsLoading={ingredientsLoading}
+            saving={saving}
+            parsing={parsing}
+            rawList={rawList}
+            addSelectValue={addSelectValue}
+            onRawListChange={setRawList}
+            onParse={handleParse}
+            onAddSelectChange={setAddSelectValue}
+            onAddIngredient={handleAddIngredient}
+            onRemoveIngredient={handleRemoveIngredient}
+          />
+        </div>
+      </Container>
+    </WidgetErrorBoundary>
   )
 }
 

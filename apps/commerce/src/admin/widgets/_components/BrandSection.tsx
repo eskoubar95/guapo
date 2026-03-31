@@ -1,6 +1,6 @@
 import { Select, Text } from "@medusajs/ui"
 
-import type { Brand } from "./product-brand-ingredients.types"
+import { getBrandLabel, type Brand } from "./product-brand-ingredients.types"
 
 type Props = {
   brands: Brand[]
@@ -39,7 +39,7 @@ export function BrandSection({
             <Select.Item value="__none__">No brand</Select.Item>
             {brands.map((b) => (
               <Select.Item key={b.id} value={b.id}>
-                {b.name}
+                {getBrandLabel(b)}
               </Select.Item>
             ))}
           </Select.Content>
