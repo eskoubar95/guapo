@@ -6,6 +6,7 @@ WORKDIR /app
 # Install dependencies (matches Railway npm + .npmrc legacy-peer-deps)
 FROM base AS install-deps
 COPY package.json .npmrc* ./
+COPY scripts ./scripts
 RUN npm install --legacy-peer-deps
 
 # Build: medusa build (no NODE_ENV=production here – Medusa then requires REDIS_URL/JWT_SECRET/COOKIE_SECRET at build time; Railway only provides them at runtime).
