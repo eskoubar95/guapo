@@ -63,6 +63,8 @@ This file is a lightweight index of project facts and conventions that are usefu
 - **CMS workflow (MVP)**: Draft → Review → Publish. Roles: Admin, Editor, Writer, Support.
 - **Reviews (MVP)**: On-site only + pre-moderation.
 - **Observability (MVP)**: Sentry + structured logs + uptime + alerts for payment failures and subscriptions on hold.
+- **Payload CMS styling guardrail**: Keep `apps/cms/src/app/globals.css` scoped to `(site)` only (e.g. `.site-root`). Never apply global `* { margin/padding reset }` to Payload admin route group, or admin spacing/layout collapses.
+- **Medusa Admin product list + brand**: Default product table cannot add columns via widgets (`product.list.before/after` is outside the table). For brand-in-list, use nested UI route `apps/commerce/src/admin/routes/products/brand-overview/page.tsx` (sidebar under Products → “Brand overview”): fetches `GET /admin/products?fields=+brand.*,id,title,status,thumbnail,handle` with search + pagination.
 
 ## Components
 - **Subscription Module (M9):** Custom Medusa module in `apps/commerce/src/modules/subscription`. Model: status (active/paused/on_hold/cancelled/expired), cycle_weeks, discount_percent, Stripe customer+payment_method IDs, retry state (retry_count, next_retry_at, on_hold_at). Link: Subscription → Order (1:many). Store API: GET /store/subscriptions, GET /store/subscriptions/:id, POST /store/subscriptions/:id/{pause|resume|skip|cancel}. Admin: Subscriptions list/detail pages, order-subscription widget. Renewal: job subscription-renewal (8 AM), workflow renew-subscription (Stripe off-session charge, create order, link, update next_renewal_at). Retry job (9 AM), expiration job (10 AM, on_hold>30d → expired). Simulation: SUBSCRIPTION_ID=xxx pnpm simulate-renewal.
