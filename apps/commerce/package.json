@@ -18,6 +18,7 @@
     "simulate-e2e": "medusa exec ./src/scripts/simulate-e2e-subscription.ts",
     "seed-subscription-promo": "medusa exec ./src/scripts/seed-subscription-promotion.ts",
     "purge:orders": "medusa exec ./src/scripts/purge-orders.ts",
+    "purge:subscriptions": "medusa exec ./src/scripts/purge-subscriptions.ts",
     "start": "medusa start",
     "dev": "medusa develop",
     "db:setup": "medusa db:setup",
