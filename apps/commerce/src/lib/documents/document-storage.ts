@@ -56,3 +56,15 @@ export function writeTransactionalMarker(
     },
   };
 }
+
+export type OrderDocumentType = "order-confirmation" | "invoice";
+
+/** Resolve base64 PDF payload from order metadata (used by store + admin document routes). */
+export function getOrderDocumentBase64(
+  metadata: Record<string, unknown> | null | undefined,
+  type: OrderDocumentType
+): string | null {
+  const state = readOrderMetadata(metadata);
+  if (type === "order-confirmation") return state.documents?.order_confirmation_pdf_base64 ?? null;
+  return state.documents?.invoice_pdf_base64 ?? null;
+}

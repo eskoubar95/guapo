@@ -1,9 +1,4 @@
-import {
-  bodyLink,
-  buildGuapoEmailDocument,
-  ctaButton,
-  escapeHtml,
-} from "./email-layout";
+import { buildGuapoEmailDocument, ctaButton, escapeHtml } from "./email-layout";
 import { renderLifecycleTransactionalTemplate } from "./lifecycle-email-templates";
 import type {
   TransactionalLocale,
@@ -21,9 +16,6 @@ const P_INTRO =
   "margin:0 0 16px 0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:15px;line-height:26px;color:#4a5568;text-align:center;";
 const P_SMALL =
   "margin:0 0 8px 0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:13px;line-height:22px;color:#7b8599;text-align:center;";
-const H_SECTION =
-  "margin:28px 0 12px 0;font-family:'Lexend',Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;letter-spacing:3px;color:#7b8599;text-transform:uppercase;text-align:center;";
-
 const orderConfirmationRenderer: Renderer<"order_confirmation"> = (locale, payload) => {
   const isDa = locale === "da";
   const orderLabel = payload.displayId != null ? `#${payload.displayId}` : payload.orderId;
@@ -32,27 +24,19 @@ const orderConfirmationRenderer: Renderer<"order_confirmation"> = (locale, paylo
   const mainHtml = isDa
     ? `
       <p style="${P_INTRO}">Din ordre ${escapeHtml(orderLabel)} er modtaget og behandles nu.</p>
-      <div style="margin:8px 0 28px 0;text-align:center;">
+      <p style="${P_SMALL}">Fakturaen er vedhæftet denne e-mail som PDF.</p>
+      <div style="margin:16px 0 28px 0;text-align:center;">
         ${ctaButton(payload.storefrontOrderUrl, "Se ordrestatus")}
       </div>
-      <p style="${H_SECTION}">Dokumenter</p>
-      <p style="${P_SMALL}">Hent PDF (kræver login på din konto):</p>
-      <p style="margin:0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:14px;line-height:26px;color:#4a5568;text-align:center;">
-        ${bodyLink(payload.orderConfirmationPdfUrl, "Ordrebekræftelse (PDF)")}<br><br>
-        ${bodyLink(payload.invoicePdfUrl, "Faktura (PDF)")}
-      </p>
+      <p style="${P_SMALL}">Har du en konto, kan du også følge ordren under Min konto.</p>
     `.trim()
     : `
       <p style="${P_INTRO}">Your order ${escapeHtml(orderLabel)} has been received and is being processed.</p>
-      <div style="margin:8px 0 28px 0;text-align:center;">
+      <p style="${P_SMALL}">Your invoice is attached to this email as a PDF.</p>
+      <div style="margin:16px 0 28px 0;text-align:center;">
         ${ctaButton(payload.storefrontOrderUrl, "View order status")}
       </div>
-      <p style="${H_SECTION}">Documents</p>
-      <p style="${P_SMALL}">Download PDFs (login required on your account):</p>
-      <p style="margin:0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:14px;line-height:26px;color:#4a5568;text-align:center;">
-        ${bodyLink(payload.orderConfirmationPdfUrl, "Order confirmation (PDF)")}<br><br>
-        ${bodyLink(payload.invoicePdfUrl, "Invoice (PDF)")}
-      </p>
+      <p style="${P_SMALL}">If you have an account, you can also track your order there.</p>
     `.trim();
 
   const html = buildGuapoEmailDocument({
@@ -83,8 +67,6 @@ const orderConfirmationRenderer: Renderer<"order_confirmation"> = (locale, paylo
       order_id: payload.orderId,
       display_id: payload.displayId != null ? String(payload.displayId) : "",
       storefront_order_url: payload.storefrontOrderUrl,
-      order_confirmation_pdf_url: payload.orderConfirmationPdfUrl,
-      invoice_pdf_url: payload.invoicePdfUrl,
     },
   };
 };

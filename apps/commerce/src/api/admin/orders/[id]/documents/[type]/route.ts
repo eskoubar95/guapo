@@ -7,16 +7,15 @@ import {
 type OrderDocumentRow = {
   id: string;
   display_id?: number;
-  customer_id?: string;
   metadata?: Record<string, unknown> | null;
 };
 
+/**
+ * GET /admin/orders/:id/documents/:type
+ * type = order-confirmation | invoice
+ * Streams PDF from order.metadata.documents (same source as transactional subscriber).
+ */
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
-  const authContext = (req as unknown as { auth_context?: { actor_id: string } }).auth_context;
-  if (!authContext?.actor_id) {
-    return res.status(401).json({ message: "Login required", code: "UNAUTHORIZED" });
-  }
-
   const orderId = req.params?.id;
   const type = req.params?.type as OrderDocumentType | undefined;
   if (!orderId || (type !== "order-confirmation" && type !== "invoice")) {
@@ -33,16 +32,13 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
 
   const { data } = await query.graph({
     entity: "order",
-    fields: ["id", "display_id", "customer_id", "metadata"],
+    fields: ["id", "display_id", "metadata"],
     filters: { id: orderId },
   });
 
   const order = data?.[0] as OrderDocumentRow | undefined;
   if (!order) {
     return res.status(404).json({ message: "Order not found", code: "ORDER_NOT_FOUND" });
-  }
-  if (order.customer_id !== authContext.actor_id) {
-    return res.status(403).json({ message: "Forbidden", code: "FORBIDDEN" });
   }
 
   const payload = getOrderDocumentBase64(order.metadata, type);

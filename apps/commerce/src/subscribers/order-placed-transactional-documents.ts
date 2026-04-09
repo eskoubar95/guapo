@@ -157,12 +157,12 @@ export default async function orderPlacedTransactionalDocuments({
         ((order.shipping_address?.country_code as string | undefined)?.toLowerCase() === "dk" ? "da" : "en")
     ) ?? "da";
 
-  const backendUrl = (process.env.MEDUSA_BACKEND_URL ?? "http://localhost:9000").replace(/\/$/, "");
   const storefrontUrl = (process.env.STOREFRONT_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const storefrontOrderUrl = `${storefrontUrl}/${locale}/account/orders/${encodeURIComponent(orderId)}`;
   const storefrontSubscriptionsUrl = `${storefrontUrl}/${locale}/account/subscriptions`;
-  const orderConfirmationPdfUrl = `${backendUrl}/store/orders/${encodeURIComponent(orderId)}/documents/order-confirmation`;
-  const invoicePdfUrl = `${backendUrl}/store/orders/${encodeURIComponent(orderId)}/documents/invoice`;
+
+  const invoiceLabel =
+    order.display_id != null ? String(order.display_id) : orderId.replace(/[^a-zA-Z0-9_-]/g, "").slice(-12) || "order";
 
   if (!metadata.transactional?.order_confirmation_sent_at && order.email) {
     const emailResult = await sendTransactionalEmail(
@@ -175,9 +175,14 @@ export default async function orderPlacedTransactionalDocuments({
           orderId,
           displayId: order.display_id,
           storefrontOrderUrl,
-          orderConfirmationPdfUrl,
-          invoicePdfUrl,
         },
+        attachments: [
+          {
+            filename: `faktura-${invoiceLabel}.pdf`,
+            contentBase64: invoicePdf.toString("base64"),
+            contentType: "application/pdf",
+          },
+        ],
       },
       logger
     );

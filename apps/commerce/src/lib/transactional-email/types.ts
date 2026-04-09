@@ -16,8 +16,6 @@ export type OrderConfirmationEmailPayload = {
   orderId: string;
   displayId?: number;
   storefrontOrderUrl: string;
-  orderConfirmationPdfUrl: string;
-  invoicePdfUrl: string;
 };
 
 export type SubscriptionCreatedEmailPayload = {
@@ -71,12 +69,20 @@ export type TransactionalPayloadByTemplate = {
   shipment_tracking_available: ShipmentTrackingPayload;
 };
 
+export type TransactionalEmailAttachment = {
+  filename: string;
+  contentBase64: string;
+  contentType: string;
+};
+
 export type TransactionalEmailInput<T extends TransactionalTemplate> = {
   template: T;
   to: string;
   locale: TransactionalLocale;
   payload: TransactionalPayloadByTemplate[T];
   idempotencyKey: string;
+  /** Optional PDF etc. for Plunk /v1/send (e.g. invoice on order_confirmation). */
+  attachments?: TransactionalEmailAttachment[];
 };
 
 export type TransactionalRenderResult = {

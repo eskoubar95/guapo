@@ -18,6 +18,8 @@ export async function sendTransactionalEmail<T extends TransactionalTemplate>(
     `[transactional-email] Sending template=${input.template} to=${input.to} locale=${input.locale} key=${input.idempotencyKey}`
   );
 
+  // Plunk `template` on POST /v1/send is a saved dashboard template ID (e.g. clx…), not our internal name.
+  // We always send rendered subject + HTML (same pattern as invite-email); passing "order_confirmation" breaks sends.
   const result = await sendPlunkEmail({
     to: input.to,
     subject: rendered.subject,
@@ -27,7 +29,15 @@ export async function sendTransactionalEmail<T extends TransactionalTemplate>(
       locale: input.locale,
       idempotency_key: input.idempotencyKey,
     },
-    template: input.template,
+    ...(input.attachments?.length
+      ? {
+          attachments: input.attachments.map((a) => ({
+            filename: a.filename,
+            content: a.contentBase64,
+            contentType: a.contentType,
+          })),
+        }
+      : {}),
   });
 
   if (!result.success) {

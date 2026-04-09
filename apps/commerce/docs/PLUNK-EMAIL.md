@@ -30,12 +30,11 @@ HTML-skallen (Inter/Lexend, farver, hero-baggrund, logo, navy footer) ligger i `
   Klient: `src/lib/plunk.ts` + samme visuelle skal som nyhedsbrev (`email-layout.ts`).
 - **Order placed transactional baseline (M11)**  
   Ved `order.placed` opretter subscriber `src/subscribers/order-placed-transactional-documents.ts`:
-  - `order_confirmation` mail (locale-aware `da`/`en`)
+  - `order_confirmation` mail (locale-aware `da`/`en`): HTML uden PDF-downloadlinks; **faktura vedhæftet** som PDF via Plunk `attachments` (gæster uden login). CTA til storefront ordrestatus.
   - `subscription_created` mail når ordre har subscription-linje
-  - Ordrebekræftelse-PDF + faktura-PDF gemmes i `order.metadata.documents.*` og kan downloades via:
-    - `GET /store/orders/:id/documents/order-confirmation`
-    - `GET /store/orders/:id/documents/invoice`
-  Download kræver customer auth + ownership og er rate-limited.
+  - Ordrebekræftelse-PDF + faktura-PDF gemmes i `order.metadata.documents.*`:
+    - **Kunde (logget ind):** `GET /store/orders/:id/documents/order-confirmation` og `.../invoice` (auth + ownership, rate-limited).
+    - **Admin:** `GET /admin/orders/:id/documents/order-confirmation` og `.../invoice` (session/bearer/api-key). Widget på ordredetalje: `src/admin/widgets/order-documents.tsx` (zone `order.details.side.after`).
 - **Abonnement + fornyelse + forsendelse (M11)**  
   Central dispatch: `src/lib/transactional-email/service.ts` (`sendTransactionalEmail`) med idempotency-keys og HTML fra `lifecycle-email-templates.ts` / `email-layout.ts`.
   - `renewal_reminder_3_days` — job `src/jobs/subscription-renewal-reminder.ts` (cron); metadata `renewal_reminder_sent_for` på subscription.
@@ -46,11 +45,12 @@ HTML-skallen (Inter/Lexend, farver, hero-baggrund, logo, navy footer) ligger i `
 ## Fejlfinding: "Ingen mail sendt"
 
 - **HTTP 200 på resend** betyder kun, at Medusa modtog anmodningen – ikke at Plunk sendte mailen.
-- Tjek **Railway → server → Deploy logs / Application logs** (ikke kun HTTP Logs). Søg efter:
+- Tjek **Railway → server og worker → Application logs** (ikke kun HTTP Logs). `order.placed`-subscriber (PDF + mail) kører på **worker** i production. Søg efter:
   - `[Plunk] PLUNK_SECRET_KEY not set` → sæt **PLUNK_SECRET_KEY** (sk_*) i Railway Variables.
+  - `[transactional-email] Failed` / `[Plunk] send failed` → vedhæftninger eller afsender (422).
   - `[invite-email] Plunk send failed` → se fejldetaljer (fx 401 = forkert key, 422 = from mangler eller ugyldig).
   - `[invite-email] Invite email sent to ...` → mailen blev sendt til Plunk.
-- På Railway skal **server**-service have: **PLUNK_SECRET_KEY** og **PLUNK_FROM_EMAIL** (verificeret domain i Plunk). Redeploy efter ændring af Variables.
+- På Railway skal **server** og **worker** have: **PLUNK_SECRET_KEY** og **PLUNK_FROM_EMAIL** (verificeret domain i Plunk). Redeploy efter ændring af Variables.
 
 ## MVP transactional email matrix
 
@@ -58,7 +58,7 @@ Events and suggested Plunk template names. Implement by adding subscribers or wo
 
 | Trigger (source) | Template name | Recipient | Notes |
 |------------------|---------------|-----------|--------|
-| Order placed (order.placed) | `order_confirmation` | Customer email | Include order id, total, link to account/orders |
+| Order placed (order.placed) | `order_confirmation` | Customer email | HTML + invoice PDF attachment; storefront link; no Plunk `template` slug (inline HTML only) |
 | Subscription created (after order.placed + subscription created) | `subscription_created` | Customer email | Cycle, discount, next renewal date |
 | 3 days before renewal (subscription-renewal job / scheduler) | `renewal_reminder_3_days` | Customer email | Next charge date, amount, link to manage subscription |
 | Payment retry #1 failed (subscription-retry job) | `payment_failed_retry_1` | Customer email | Ask to update payment method |
@@ -75,7 +75,7 @@ Implementation order (recommended): `order_confirmation` → `subscription_creat
 
 - `PLUNK_SECRET_KEY` må kun ligge i server-miljø (Railway variables), aldrig i client kode.
 - Brug verified sender domain for `PLUNK_FROM_EMAIL` (SPF/DKIM/DMARC).
-- PDF links i mails peger på auth-beskyttede store-routes; dokumenter er ikke offentlige.
+- Ordrebekræftelsesmailen vedhæfter faktura-PDF (modtageren kan gemme filen). Kunder med login kan stadig hente PDF via auth-beskyttede store-routes; admin via `/admin/orders/:id/documents/*`. Ingen offentlige download-URL’er uden auth.
 - Rate-limit for dokumentdownloads styres via:
   - `ORDER_DOCUMENTS_RATE_LIMIT_MAX` (default `40` per minut per IP)
   - `ORDER_DOCUMENTS_RATE_LIMIT_DISABLED=true` (kun til lokal fejlsøgning)

@@ -6,6 +6,14 @@
 
 const PLUNK_API_BASE = "https://next-api.useplunk.com";
 
+export type PlunkAttachment = {
+  filename: string;
+  /** Base64-encoded file bytes */
+  content: string;
+  contentType: string;
+  disposition?: "attachment" | "inline";
+};
+
 export type PlunkSendOptions = {
   to: string | { email: string; name?: string } | Array<string | { email: string; name?: string }>;
   subject: string;
@@ -14,6 +22,7 @@ export type PlunkSendOptions = {
   reply?: string;
   data?: Record<string, string>;
   template?: string;
+  attachments?: PlunkAttachment[];
 };
 
 export type PlunkSendResult = {
@@ -47,6 +56,14 @@ export async function sendPlunkEmail(options: PlunkSendOptions): Promise<PlunkSe
     ...(options.reply && { reply: options.reply }),
     ...(options.data && { data: options.data }),
     ...(options.template && { template: options.template }),
+    ...(options.attachments?.length && {
+      attachments: options.attachments.map((a) => ({
+        filename: a.filename,
+        content: a.content,
+        contentType: a.contentType,
+        ...(a.disposition && { disposition: a.disposition }),
+      })),
+    }),
   };
 
   const res = await fetch(`${PLUNK_API_BASE}/v1/send`, {
