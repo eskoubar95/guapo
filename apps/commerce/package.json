@@ -19,6 +19,7 @@
     "seed-subscription-promo": "medusa exec ./src/scripts/seed-subscription-promotion.ts",
     "purge:orders": "medusa exec ./src/scripts/purge-orders.ts",
     "purge:subscriptions": "medusa exec ./src/scripts/purge-subscriptions.ts",
+    "reconcile:inventory-reserved": "medusa exec ./src/scripts/reconcile-inventory-reserved.ts",
     "start": "medusa start",
     "dev": "medusa develop",
     "db:setup": "medusa db:setup",

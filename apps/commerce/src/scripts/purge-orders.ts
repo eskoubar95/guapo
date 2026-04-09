@@ -174,13 +174,43 @@ export default async function purgeOrders({ container }: ExecArgs) {
       )
     `);
 
-    // ── Phase 10: reset display_id sequences ─────────────────────────────
+    // ── Phase 10: reconcile inventory reserved counts ───────────────────
+    // Direct SQL deletes of reservation_item do not update inventory_level.reserved_quantity /
+    // raw_reserved_quantity (Medusa normally adjusts these via the inventory service). Recompute
+    // from remaining reservation rows so UI does not show stale "reserved" after a purge.
+    const schema = process.env.DATABASE_SCHEMA || "medusa";
+    const reconciled = await trx.raw(`
+      UPDATE "${schema}"."inventory_level" il
+      SET
+        reserved_quantity = COALESCE((
+          SELECT SUM(ri.quantity)
+          FROM "${schema}"."reservation_item" ri
+          WHERE ri.inventory_item_id = il.inventory_item_id
+            AND ri.location_id = il.location_id
+            AND ri.deleted_at IS NULL
+        ), 0),
+        raw_reserved_quantity = jsonb_build_object(
+          'value', COALESCE((
+            SELECT SUM(ri.quantity)::text
+            FROM "${schema}"."reservation_item" ri
+            WHERE ri.inventory_item_id = il.inventory_item_id
+              AND ri.location_id = il.location_id
+              AND ri.deleted_at IS NULL
+          ), '0'),
+          'precision', 20
+        )
+      WHERE il.deleted_at IS NULL
+    `);
+    const n = reconciled?.rowCount ?? 0;
+    if (n) logger.info(`  Reconciled reserved_quantity on ${n} inventory_level row(s)`);
+
+    // ── Phase 11: reset display_id sequences ─────────────────────────────
     for (const seq of [
-      "medusa.order_display_id_seq",
-      "medusa.order_claim_display_id_seq",
-      "medusa.order_exchange_display_id_seq",
-      "medusa.return_display_id_seq",
-      "medusa.order_change_action_ordering_seq",
+      `${schema}.order_display_id_seq`,
+      `${schema}.order_claim_display_id_seq`,
+      `${schema}.order_exchange_display_id_seq`,
+      `${schema}.return_display_id_seq`,
+      `${schema}.order_change_action_ordering_seq`,
     ]) {
       await trx.raw(`SELECT setval('${seq}', 1, false)`);
     }
