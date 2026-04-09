@@ -31,6 +31,8 @@ Serveren forventer admin-build i `.medusa/server/public/admin/`. Hvis du bruger 
 
 **Begge services** skal have de samme fælles env vars (DB, Redis, secrets, Payload). Kun mode/admin adskiller.
 
+**Vigtigt — ordre-mails og PDF-faktura:** `order.placed`-subscriber (e-mail + PDF) kører på **worker**. Sæt derfor **de samme** `PLUNK_*`, `STOREFRONT_URL` og `GUAPO_INVOICE_*` på **både server og worker** (ellers mangler nøgler eller dansk sælgerblok når PDF genereres). Butikken er **dansk marked** (DKK/moms); PDF er dansk ved DK-levering, ellers engelsk — se `apps/commerce/env.template`.
+
 ### Fælles (server + worker)
 
 | Env | Beskrivelse |
@@ -45,6 +47,12 @@ Serveren forventer admin-build i `.medusa/server/public/admin/`. Hvis du bruger 
 | `PAYLOAD_API_KEY` | API key til Payload (sync/kald fra worker) |
 | `PAYLOAD_USER_COLLECTION` | Valgfri, default `users` |
 | `PAYLOAD_MEDUSA_SYNC_SECRET` | Valgfri, til sync-endpoints |
+| `STOREFRONT_URL` | Fuldt origin til storefront (fx `https://…up.railway.app`) — links i ordre-mails. **Server + worker.** |
+| `PLUNK_SECRET_KEY` | Plunk secret (`sk_*`). **Server + worker** (transactional mail fra worker). |
+| `PLUNK_FROM_EMAIL` | Afsender (verificeret domæne i Plunk). **Server + worker.** |
+| `PLUNK_FROM_NAME` | Valgfri afsendernavn. **Server + worker.** |
+| `PLUNK_STORE_NAME` | Valgfri butiksnavn i invite-mail. **Server + worker.** |
+| `GUAPO_INVOICE_*` | Sælger, adresse, CVR, moms, logo, fodnoter til **ordre-PDF/faktura** (dansk marked). Fuld liste: `apps/commerce/env.template`. **Server + worker.** |
 
 Hvis I bruger S3/Supabase Storage til filer: `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_REGION`, evt. `S3_FILE_URL`.
 
@@ -57,10 +65,8 @@ Hvis I bruger S3/Supabase Storage til filer: `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, 
 | `STORE_CORS` | Tillatte origins for storefront (fx `https://store.xxx.up.railway.app`) |
 | `ADMIN_CORS` | Tillatte origins for admin |
 | `AUTH_CORS` | Tillatte origins for auth |
-| `PLUNK_SECRET_KEY` | Plunk secret key (sk_*) for transactional email – [Next API](https://next-wiki.useplunk.com/) |
-| `PLUNK_FROM_EMAIL` | Sender email (verified domain i Plunk). Påkrævet for at sende mails. |
-| `PLUNK_FROM_NAME` | Valgfri afsender-navn (fx Guapo). |
-| `PLUNK_STORE_NAME` | Valgfri butiksnavn i invite-mail (default: Guapo). |
+
+Plunk- og invoice-variabler er flyttet til **fælles** (server + worker) ovenfor — de skal også findes på server så admin/invite m.m. virker ens.
 
 **"Failed to fetch" på login:** Hvis login-siden vises men "Continue with Email" giver "Failed to fetch", sender admin-UI’en kald til den URL som `MEDUSA_BACKEND_URL` peger på. Er den ikke sat (eller er den `http://localhost:9000`), forsøger browseren at kalde localhost fra din maskine → fejl. Sæt på **server**-service: `MEDUSA_BACKEND_URL=${{RAILWAY_STATIC_URL}}` (eller den fulde URL, fx `https://guapo-server-staging.up.railway.app`). `AUTH_CORS` og `ADMIN_CORS` skal inkludere samme origin (fx også `${{RAILWAY_STATIC_URL}}`).
 
