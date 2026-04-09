@@ -1,7 +1,8 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework";
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
 import { updateOrderWorkflow } from "@medusajs/medusa/core-flows";
-import { buildOrderPdf } from "../lib/documents/build-order-pdf";
+import { buildOrderPdf, type PdfLocale } from "../lib/documents/build-order-pdf";
+import { formatPaymentMethodLabel } from "../lib/documents/pdf-payment-label";
 import {
   readOrderMetadata,
   writeDocumentPayloads,
@@ -21,11 +22,14 @@ type OrderShape = {
   currency_code?: string;
   total?: number;
   shipping_total?: number;
+  tax_total?: number;
+  discount_total?: number;
   metadata?: Record<string, unknown> | null;
   shipping_address?: Record<string, unknown> | null;
   items?: Array<{
     id: string;
     title?: string;
+    variant?: { title?: string | null } | null;
     quantity?: number;
     unit_price?: number;
     total?: number;
@@ -64,10 +68,13 @@ export default async function orderPlacedTransactionalDocuments({
       "currency_code",
       "total",
       "shipping_total",
+      "tax_total",
+      "discount_total",
       "metadata",
       "shipping_address",
       "items.id",
       "items.title",
+      "items.variant.title",
       "items.quantity",
       "items.unit_price",
       "items.total",
@@ -108,16 +115,43 @@ export default async function orderPlacedTransactionalDocuments({
         ? lineTotalMinor / quantity
         : majorToMinorOre(Number(item.unit_price ?? 0))
     );
+    const variantTitle =
+      typeof item.variant?.title === "string" && item.variant.title.trim()
+        ? item.variant.title.trim()
+        : "";
+    const productTitle = typeof item.title === "string" && item.title.trim() ? item.title.trim() : "";
+    const title =
+      [variantTitle, productTitle].filter(Boolean).join(" — ") || item.id;
     return {
-      title: item.title ?? item.id,
+      title,
       quantity,
       unitPriceMinor,
       lineTotalMinor,
     };
   });
 
+  const localePdf: PdfLocale =
+    String(order.shipping_address?.country_code ?? "")
+      .trim()
+      .toLowerCase() === "dk"
+      ? "da"
+      : "en";
+
+  const taxTotalMinor =
+    order.tax_total != null && Number.isFinite(Number(order.tax_total))
+      ? majorToMinorOre(Number(order.tax_total))
+      : undefined;
+  const discountTotalMinor =
+    order.discount_total != null &&
+    Number.isFinite(Number(order.discount_total)) &&
+    Number(order.discount_total) > 0
+      ? majorToMinorOre(Number(order.discount_total))
+      : undefined;
+  const paymentMethodLabel = formatPaymentMethodLabel(order.metadata);
+
   const orderConfirmationPdf = await buildOrderPdf({
-    documentTitle: "Order confirmation",
+    documentKind: "order_confirmation",
+    locale: localePdf,
     orderId,
     displayId: order.display_id,
     createdAt: order.created_at,
@@ -128,9 +162,13 @@ export default async function orderPlacedTransactionalDocuments({
     subtotalMinor,
     shippingMinor,
     totalMinor,
+    taxTotalMinor,
+    discountTotalMinor,
+    paymentMethodLabel,
   });
   const invoicePdf = await buildOrderPdf({
-    documentTitle: "Invoice",
+    documentKind: "invoice",
+    locale: localePdf,
     orderId,
     displayId: order.display_id,
     createdAt: order.created_at,
@@ -141,6 +179,9 @@ export default async function orderPlacedTransactionalDocuments({
     subtotalMinor,
     shippingMinor,
     totalMinor,
+    taxTotalMinor,
+    discountTotalMinor,
+    paymentMethodLabel,
   });
 
   const generatedAt = new Date().toISOString();
