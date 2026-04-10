@@ -1,8 +1,12 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework";
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
 import { updateOrderWorkflow } from "@medusajs/medusa/core-flows";
-import { buildOrderPdf, type PdfLocale } from "../lib/documents/build-order-pdf";
-import { formatPaymentMethodLabel } from "../lib/documents/pdf-payment-label";
+import {
+  buildOrderDocumentPdfBuffers,
+  getOrderDocumentGraphFields,
+  type OrderShapeForDocuments,
+} from "../lib/documents/order-document-generation";
+import { resolvePdfSellerForOrder } from "../lib/documents/resolve-pdf-seller";
 import {
   readOrderMetadata,
   writeDocumentPayloads,
@@ -12,30 +16,6 @@ import {
   resolveTransactionalLocale,
   sendTransactionalEmail,
 } from "../lib/transactional-email/service";
-
-type OrderShape = {
-  id: string;
-  display_id?: number;
-  customer_id?: string | null;
-  email?: string | null;
-  created_at?: string;
-  currency_code?: string;
-  total?: number;
-  shipping_total?: number;
-  tax_total?: number;
-  discount_total?: number;
-  metadata?: Record<string, unknown> | null;
-  shipping_address?: Record<string, unknown> | null;
-  items?: Array<{
-    id: string;
-    title?: string;
-    variant?: { title?: string | null } | null;
-    quantity?: number;
-    unit_price?: number;
-    total?: number;
-    metadata?: Record<string, unknown> | null;
-  }> | null;
-};
 
 export default async function orderPlacedTransactionalDocuments({
   event,
@@ -59,30 +39,10 @@ export default async function orderPlacedTransactionalDocuments({
 
   const { data } = await query.graph({
     entity: "order",
-    fields: [
-      "id",
-      "display_id",
-      "customer_id",
-      "email",
-      "created_at",
-      "currency_code",
-      "total",
-      "shipping_total",
-      "tax_total",
-      "discount_total",
-      "metadata",
-      "shipping_address",
-      "items.id",
-      "items.title",
-      "items.variant.title",
-      "items.quantity",
-      "items.unit_price",
-      "items.total",
-      "items.metadata",
-    ],
+    fields: [...getOrderDocumentGraphFields()],
     filters: { id: orderId },
   });
-  const order = data?.[0] as OrderShape | undefined;
+  const order = data?.[0] as OrderShapeForDocuments | undefined;
   if (!order) return;
 
   const metadata = readOrderMetadata(order.metadata);
@@ -91,100 +51,13 @@ export default async function orderPlacedTransactionalDocuments({
     return;
   }
 
-  /** Graph amounts are decimal DKK (major); buildOrderPdf expects integer øre. */
-  const majorToMinorOre = (m: number) => Math.round(m * 100);
+  const seller = await resolvePdfSellerForOrder(container, order.currency_code ?? "dkk");
+  const { orderConfirmationPdf, invoicePdf, generatedAt } = await buildOrderDocumentPdfBuffers(
+    order,
+    seller
+  );
 
   const items = order.items ?? [];
-  const subtotalMinor = items.reduce((sum, item) => {
-    const qty = Math.max(1, item.quantity ?? 1);
-    const lineMajor = item.total ?? (item.unit_price ?? 0) * qty;
-    return sum + majorToMinorOre(Number(lineMajor));
-  }, 0);
-  const shippingMinor = majorToMinorOre(Number(order.shipping_total ?? 0));
-  const totalMinor =
-    order.total != null ? majorToMinorOre(Number(order.total)) : subtotalMinor + shippingMinor;
-  const currencyCode = String(order.currency_code ?? "dkk");
-
-  const lines = items.map((item) => {
-    const quantity = Math.max(1, item.quantity ?? 1);
-    const lineTotalMinor = majorToMinorOre(
-      Number(item.total ?? (item.unit_price ?? 0) * quantity)
-    );
-    const unitPriceMinor = Math.round(
-      item.total != null
-        ? lineTotalMinor / quantity
-        : majorToMinorOre(Number(item.unit_price ?? 0))
-    );
-    const variantTitle =
-      typeof item.variant?.title === "string" && item.variant.title.trim()
-        ? item.variant.title.trim()
-        : "";
-    const productTitle = typeof item.title === "string" && item.title.trim() ? item.title.trim() : "";
-    const title =
-      [variantTitle, productTitle].filter(Boolean).join(" — ") || item.id;
-    return {
-      title,
-      quantity,
-      unitPriceMinor,
-      lineTotalMinor,
-    };
-  });
-
-  const localePdf: PdfLocale =
-    String(order.shipping_address?.country_code ?? "")
-      .trim()
-      .toLowerCase() === "dk"
-      ? "da"
-      : "en";
-
-  const taxTotalMinor =
-    order.tax_total != null && Number.isFinite(Number(order.tax_total))
-      ? majorToMinorOre(Number(order.tax_total))
-      : undefined;
-  const discountTotalMinor =
-    order.discount_total != null &&
-    Number.isFinite(Number(order.discount_total)) &&
-    Number(order.discount_total) > 0
-      ? majorToMinorOre(Number(order.discount_total))
-      : undefined;
-  const paymentMethodLabel = formatPaymentMethodLabel(order.metadata);
-
-  const orderConfirmationPdf = await buildOrderPdf({
-    documentKind: "order_confirmation",
-    locale: localePdf,
-    orderId,
-    displayId: order.display_id,
-    createdAt: order.created_at,
-    currencyCode,
-    customerEmail: order.email ?? undefined,
-    shippingAddress: (order.shipping_address ?? null) as Record<string, string> | null,
-    lines,
-    subtotalMinor,
-    shippingMinor,
-    totalMinor,
-    taxTotalMinor,
-    discountTotalMinor,
-    paymentMethodLabel,
-  });
-  const invoicePdf = await buildOrderPdf({
-    documentKind: "invoice",
-    locale: localePdf,
-    orderId,
-    displayId: order.display_id,
-    createdAt: order.created_at,
-    currencyCode,
-    customerEmail: order.email ?? undefined,
-    shippingAddress: (order.shipping_address ?? null) as Record<string, string> | null,
-    lines,
-    subtotalMinor,
-    shippingMinor,
-    totalMinor,
-    taxTotalMinor,
-    discountTotalMinor,
-    paymentMethodLabel,
-  });
-
-  const generatedAt = new Date().toISOString();
   let mergedMetadata = writeDocumentPayloads(order.metadata, {
     orderConfirmationPdfBase64: orderConfirmationPdf.toString("base64"),
     invoicePdfBase64: invoicePdf.toString("base64"),

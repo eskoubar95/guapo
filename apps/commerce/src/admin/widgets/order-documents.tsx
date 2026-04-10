@@ -46,6 +46,8 @@ const OrderDocumentsWidget = ({ data }: DetailWidgetProps) => {
   const orderId = order?.id;
   const [resolved, setResolved] = useState<OrderWithMeta | null>(null);
   const [fetchDone, setFetchDone] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenerateError, setRegenerateError] = useState<string | null>(null);
 
   const fromProps = readDocuments(order?.metadata ?? undefined);
   const fromResolved = readDocuments(resolved?.metadata ?? undefined);
@@ -64,6 +66,28 @@ const OrderDocumentsWidget = ({ data }: DetailWidgetProps) => {
       /* ignore */
     }
   }, [orderId]);
+
+  const regeneratePdfs = useCallback(async () => {
+    if (!orderId) return;
+    setRegenerating(true);
+    setRegenerateError(null);
+    try {
+      const res = await fetch(
+        `${BASE}/admin/orders/${encodeURIComponent(orderId)}/documents/regenerate`,
+        { method: "POST", credentials: "include" }
+      );
+      const json = (await res.json().catch(() => ({}))) as { message?: string };
+      if (!res.ok) {
+        setRegenerateError(typeof json.message === "string" ? json.message : "Regeneration failed");
+        return;
+      }
+      await load();
+    } catch {
+      setRegenerateError("Regeneration failed");
+    } finally {
+      setRegenerating(false);
+    }
+  }, [orderId, load]);
 
   useEffect(() => {
     if (!orderId) {
@@ -101,13 +125,9 @@ const OrderDocumentsWidget = ({ data }: DetailWidgetProps) => {
     );
   }
 
-  if (!hasConfirmation && !hasInvoice) {
-    return null;
-  }
-
   const displayHint = docs?.generated_at
     ? `Generated ${new Date(docs.generated_at).toLocaleString()}`
-    : "PDFs from order confirmation flow";
+    : "PDFs are stored on the order. Regenerate after layout or seller data changes.";
 
   return (
     <Container className="divide-y p-0">
@@ -118,7 +138,28 @@ const OrderDocumentsWidget = ({ data }: DetailWidgetProps) => {
         <Text size="small" className="mb-3 text-ui-fg-muted">
           {displayHint}
         </Text>
+        {!hasConfirmation && !hasInvoice && (
+          <Text size="small" className="mb-3 text-ui-fg-subtle">
+            No PDFs in metadata yet. Use Regenerate to build them with the current template and seller
+            settings (region metadata / env).
+          </Text>
+        )}
+        {regenerateError && (
+          <Text size="small" className="mb-2 text-ui-fg-error">
+            {regenerateError}
+          </Text>
+        )}
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="secondary"
+            size="small"
+            type="button"
+            isLoading={regenerating}
+            disabled={regenerating}
+            onClick={() => void regeneratePdfs()}
+          >
+            Regenerate PDFs
+          </Button>
           {hasConfirmation && (
             <Button
               variant="secondary"

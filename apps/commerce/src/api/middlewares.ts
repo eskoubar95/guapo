@@ -200,6 +200,11 @@ export default defineMiddlewares({
       middlewares: [authenticate("user", ["session", "bearer", "api-key"])],
     },
     {
+      matcher: "/admin/orders/*/documents/regenerate",
+      method: "POST",
+      middlewares: [authenticate("user", ["session", "bearer", "api-key"])],
+    },
+    {
       matcher: "/admin/shipmondo/options/*",
       method: "PATCH",
       middlewares: [validateAndTransformBody(shipmondoOptionPatchSchema)],
