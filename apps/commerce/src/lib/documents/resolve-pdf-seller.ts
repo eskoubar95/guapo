@@ -9,30 +9,52 @@ type QueryLike = {
   }) => Promise<{ data: unknown[] }>;
 };
 
+/** Keys we read from region metadata (nested under `guapo_invoice` **or** flat on region metadata). */
+const GUAPO_INVOICE_METADATA_KEYS = [
+  "company_name",
+  "address_line1",
+  "address_line2",
+  "postal_code",
+  "city",
+  "country",
+  "cvr",
+  "vat_number",
+  "email",
+  "website",
+  "logo_url",
+  "footer_legal_da",
+  "footer_legal_en",
+  "vat_rate_percent",
+] as const;
+
 /**
- * Optional JSON on **Region → metadata → guapo_invoice** (Admin: Regions → Denmark → Metadata).
- * Overrides env-based `GUAPO_INVOICE_*` when fields are set — single source of truth in DB for CVR/adresse.
+ * Region → metadata: either **`guapo_invoice`** object (preferred) **or** the same keys **flat**
+ * on region metadata (Medusa Admin key/value table). Merges over `GUAPO_INVOICE_*` env.
  *
- * Example:
+ * Nested example:
  * ```json
- * "guapo_invoice": {
- *   "company_name": "Guapo ApS",
- *   "address_line1": "Gadenavn 1",
- *   "address_line2": "",
- *   "postal_code": "2100",
- *   "city": "København Ø",
- *   "country": "DK",
- *   "cvr": "12345678",
- *   "vat_number": "DK12345678",
- *   "email": "kontakt@guapo.dk",
- *   "website": "https://guapo.dk",
- *   "logo_url": "https://…/logo.png",
- *   "footer_legal_da": "…",
- *   "footer_legal_en": "…",
- *   "vat_rate_percent": 25
- * }
+ * { "guapo_invoice": { "company_name": "Guapo ApS", "cvr": "12345678", ... } }
  * ```
+ *
+ * Flat example (same keys as top-level metadata entries):
+ * `company_name`, `address_line1`, `cvr`, `vat_number`, …
  */
+export function extractGuapoInvoicePayloadFromRegionMetadata(
+  meta: Record<string, unknown> | null | undefined
+): Record<string, unknown> | null {
+  if (!meta || typeof meta !== "object") return null;
+  const nested = meta.guapo_invoice;
+  if (nested && typeof nested === "object" && !Array.isArray(nested)) {
+    return nested as Record<string, unknown>;
+  }
+  const picked: Record<string, unknown> = {};
+  for (const k of GUAPO_INVOICE_METADATA_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(meta, k)) continue;
+    const v = meta[k];
+    if (v != null && v !== "") picked[k] = v;
+  }
+  return Object.keys(picked).length > 0 ? picked : null;
+}
 export function mergeGuapoInvoiceMetadataIntoSeller(
   base: PdfSellerProfile,
   raw: Record<string, unknown>
@@ -40,7 +62,12 @@ export function mergeGuapoInvoiceMetadataIntoSeller(
   const str = (k: string) => (typeof raw[k] === "string" ? (raw[k] as string).trim() : "");
   const num = (k: string) => {
     const v = raw[k];
-    return typeof v === "number" && Number.isFinite(v) ? v : undefined;
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+    if (typeof v === "string" && v.trim() !== "") {
+      const n = Number(v.trim());
+      if (Number.isFinite(n)) return n;
+    }
+    return undefined;
   };
 
   const companyName = str("company_name");
@@ -58,6 +85,11 @@ export function mergeGuapoInvoiceMetadataIntoSeller(
   const addressLines = [line1, line2].map((s) => s.trim()).filter(Boolean);
   const vatPct = num("vat_rate_percent");
 
+  let website = str("website");
+  if (website && !/^https?:\/\//i.test(website)) {
+    website = `https://${website}`;
+  }
+
   return {
     companyName: companyName || base.companyName,
     addressLines: addressLines.length > 0 ? addressLines : base.addressLines,
@@ -65,7 +97,7 @@ export function mergeGuapoInvoiceMetadataIntoSeller(
     cvr: str("cvr") || base.cvr,
     vatNumber: str("vat_number") || base.vatNumber,
     email: str("email") || base.email,
-    website: str("website") || base.website,
+    website: website || base.website,
     logoUrl: str("logo_url") || base.logoUrl,
     footerLegalDa: str("footer_legal_da") || base.footerLegalDa,
     footerLegalEn: str("footer_legal_en") || base.footerLegalEn,
@@ -91,9 +123,9 @@ export async function resolvePdfSellerForOrder(
       filters: { currency_code: code },
     });
     const row = data?.[0] as { metadata?: Record<string, unknown> } | undefined;
-    const inv = row?.metadata?.guapo_invoice;
-    if (inv && typeof inv === "object" && !Array.isArray(inv)) {
-      return mergeGuapoInvoiceMetadataIntoSeller(base, inv as Record<string, unknown>);
+    const inv = extractGuapoInvoicePayloadFromRegionMetadata(row?.metadata ?? undefined);
+    if (inv) {
+      return mergeGuapoInvoiceMetadataIntoSeller(base, inv);
     }
   } catch {
     /* fall back to env-only */

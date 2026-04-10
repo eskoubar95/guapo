@@ -1,6 +1,8 @@
 import { buildOrderPdf, type PdfLocale } from "./build-order-pdf";
 import type { PdfSellerProfile } from "./pdf-seller-config";
 import { formatPaymentMethodLabel } from "./pdf-payment-label";
+import { flattenOrderItemFromGraph, resolveLineTotalMajor } from "../store-order-graph-item";
+import { toAmountMajor } from "../store-order-money";
 
 /** Order shape from query.graph — shared by subscriber + admin regenerate. */
 export type OrderShapeForDocuments = {
@@ -10,23 +12,22 @@ export type OrderShapeForDocuments = {
   email?: string | null;
   created_at?: string;
   currency_code?: string;
-  total?: number;
-  shipping_total?: number;
-  tax_total?: number;
-  discount_total?: number;
+  total?: unknown;
+  raw_total?: unknown;
+  shipping_total?: unknown;
+  raw_shipping_total?: unknown;
+  tax_total?: unknown;
+  discount_total?: unknown;
   metadata?: Record<string, unknown> | null;
   shipping_address?: Record<string, unknown> | null;
-  items?: Array<{
-    id: string;
-    title?: string;
-    variant?: { title?: string | null } | null;
-    quantity?: number;
-    unit_price?: number;
-    total?: number;
-    metadata?: Record<string, unknown> | null;
-  }> | null;
+  /** Graph returns OrderItem rows; use `flattenOrderItemFromGraph` before reading prices. */
+  items?: Array<Record<string, unknown>> | null;
 };
 
+/**
+ * Same join shape as GET /store/orders/:id — line amounts live on `items.item` + `items.detail`,
+ * often only reliably via `raw_*` / BigNumber JSON.
+ */
 const GRAPH_FIELDS = [
   "id",
   "display_id",
@@ -35,18 +36,44 @@ const GRAPH_FIELDS = [
   "created_at",
   "currency_code",
   "total",
+  "raw_total",
   "shipping_total",
+  "raw_shipping_total",
   "tax_total",
   "discount_total",
   "metadata",
   "shipping_address",
+  "shipping_address.first_name",
+  "shipping_address.last_name",
+  "shipping_address.address_1",
+  "shipping_address.address_2",
+  "shipping_address.city",
+  "shipping_address.postal_code",
+  "shipping_address.country_code",
+  "shipping_address.phone",
   "items.id",
   "items.title",
-  "items.variant.title",
   "items.quantity",
   "items.unit_price",
+  "items.raw_unit_price",
   "items.total",
+  "items.raw_total",
   "items.metadata",
+  "items.variant.title",
+  "items.variant_id",
+  "items.detail",
+  "items.detail.quantity",
+  "items.detail.unit_price",
+  "items.detail.raw_unit_price",
+  "items.item",
+  "items.item.id",
+  "items.item.title",
+  "items.item.unit_price",
+  "items.item.raw_unit_price",
+  "items.item.total",
+  "items.item.raw_total",
+  "items.item.item_total",
+  "items.item.metadata",
 ] as const;
 
 export function getOrderDocumentGraphFields(): readonly string[] {
@@ -78,34 +105,33 @@ export async function buildOrderDocumentPdfBuffers(
   generatedAt: string;
 }> {
   const majorToMinor = majorToMinorOre;
-  const items = order.items ?? [];
-  const subtotalMinor = items.reduce((sum, item) => {
-    const qty = Math.max(1, item.quantity ?? 1);
-    const lineMajor = item.total ?? (item.unit_price ?? 0) * qty;
-    return sum + majorToMinor(Number(lineMajor));
-  }, 0);
-  const shippingMinor = majorToMinor(Number(order.shipping_total ?? 0));
-  const totalMinor =
-    order.total != null ? majorToMinor(Number(order.total)) : subtotalMinor + shippingMinor;
-  const currencyCode = String(order.currency_code ?? "dkk");
+  const rawRows = (order.items ?? []) as Record<string, unknown>[];
 
-  const lines = items.map((item) => {
-    const quantity = Math.max(1, item.quantity ?? 1);
-    const lineTotalMinor = majorToMinor(
-      Number(item.total ?? (item.unit_price ?? 0) * quantity)
+  const lines = rawRows.map((row) => {
+    const flat = flattenOrderItemFromGraph(row) as Record<string, unknown>;
+    const quantity = Math.max(1, typeof flat.quantity === "number" ? flat.quantity : 1);
+    const unitPriceMajor = toAmountMajor(
+      (flat as { raw_unit_price?: unknown }).raw_unit_price ?? flat.unit_price
     );
-    const unitPriceMinor = Math.round(
-      item.total != null
-        ? lineTotalMinor / quantity
-        : majorToMinor(Number(item.unit_price ?? 0))
-    );
+    const lineTotalMajor =
+      resolveLineTotalMajor(flat, unitPriceMajor, quantity) ??
+      (unitPriceMajor != null ? unitPriceMajor * quantity : 0);
+    const lineTotalMinor = majorToMinor(lineTotalMajor);
+    const unitPriceMinor = Math.round(lineTotalMinor / quantity);
+
+    const variantFromRow = row.variant as { title?: string | null } | undefined;
+    const variantFromFlat = flat.variant as { title?: string | null } | undefined;
     const variantTitle =
-      typeof item.variant?.title === "string" && item.variant.title.trim()
-        ? item.variant.title.trim()
-        : "";
-    const productTitle = typeof item.title === "string" && item.title.trim() ? item.title.trim() : "";
-    const title =
-      [variantTitle, productTitle].filter(Boolean).join(" — ") || item.id;
+      (typeof variantFromFlat?.title === "string" && variantFromFlat.title.trim()
+        ? variantFromFlat.title.trim()
+        : "") ||
+      (typeof variantFromRow?.title === "string" && variantFromRow.title.trim()
+        ? variantFromRow.title.trim()
+        : "");
+    const productTitle =
+      typeof flat.title === "string" && flat.title.trim() ? flat.title.trim() : "";
+    const id = typeof flat.id === "string" ? flat.id : String(row.id ?? "");
+    const title = [variantTitle, productTitle].filter(Boolean).join(" — ") || id;
     return {
       title,
       quantity,
@@ -114,18 +140,27 @@ export async function buildOrderDocumentPdfBuffers(
     };
   });
 
+  const subtotalMinor = lines.reduce((sum, line) => sum + line.lineTotalMinor, 0);
+
+  const orderRec = order as Record<string, unknown>;
+  const shippingMajor =
+    toAmountMajor(orderRec.raw_shipping_total ?? order.shipping_total) ?? 0;
+  const totalMajor = toAmountMajor(orderRec.raw_total ?? order.total);
+  const shippingMinor = majorToMinor(shippingMajor);
+  const totalMinor =
+    totalMajor != null && Number.isFinite(totalMajor)
+      ? majorToMinor(totalMajor)
+      : subtotalMinor + shippingMinor;
+  const currencyCode = String(order.currency_code ?? "dkk");
+
   const localePdf = computeLocalePdf(order);
 
+  const taxMajor = toAmountMajor(order.tax_total);
   const taxTotalMinor =
-    order.tax_total != null && Number.isFinite(Number(order.tax_total))
-      ? majorToMinor(Number(order.tax_total))
-      : undefined;
+    taxMajor != null && taxMajor > 0 ? majorToMinor(taxMajor) : undefined;
+  const discountMajor = toAmountMajor(order.discount_total);
   const discountTotalMinor =
-    order.discount_total != null &&
-    Number.isFinite(Number(order.discount_total)) &&
-    Number(order.discount_total) > 0
-      ? majorToMinor(Number(order.discount_total))
-      : undefined;
+    discountMajor != null && discountMajor > 0 ? majorToMinor(discountMajor) : undefined;
   const paymentMethodLabel = formatPaymentMethodLabel(order.metadata);
 
   const common = {

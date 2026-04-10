@@ -6,6 +6,7 @@ import {
   getOrderDocumentGraphFields,
   type OrderShapeForDocuments,
 } from "../lib/documents/order-document-generation";
+import { flattenOrderItemFromGraph } from "../lib/store-order-graph-item";
 import { resolvePdfSellerForOrder } from "../lib/documents/resolve-pdf-seller";
 import {
   readOrderMetadata,
@@ -57,7 +58,13 @@ export default async function orderPlacedTransactionalDocuments({
     seller
   );
 
-  const items = order.items ?? [];
+  const rawItemRows = (order.items ?? []) as Record<string, unknown>[];
+  const hasSubscriptionLine = rawItemRows.some((row) => {
+    const flat = flattenOrderItemFromGraph(row);
+    const meta = flat.metadata as Record<string, unknown> | null | undefined;
+    return typeof meta?.subscription_cycle === "number";
+  });
+
   let mergedMetadata = writeDocumentPayloads(order.metadata, {
     orderConfirmationPdfBase64: orderConfirmationPdf.toString("base64"),
     invoicePdfBase64: invoicePdf.toString("base64"),
@@ -108,7 +115,6 @@ export default async function orderPlacedTransactionalDocuments({
     }
   }
 
-  const hasSubscriptionLine = items.some((item) => typeof item.metadata?.subscription_cycle === "number");
   if (hasSubscriptionLine && !metadata.transactional?.subscription_created_sent_at && order.email) {
     const emailResult = await sendTransactionalEmail(
       {
