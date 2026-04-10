@@ -14,7 +14,10 @@ type OrderAddress = {
 };
 
 export type OrderDocumentLine = {
+  /** Primær linje (fx brand — produkt); bruges også som fallback én-linje. */
   title: string;
+  /** Variant / undertitel, mindre skrift under `title`. */
+  subtitle?: string;
   quantity: number;
   unitPriceMinor: number;
   lineTotalMinor: number;
@@ -56,8 +59,14 @@ const BRAND = {
   line: "#cbd5e1",
 };
 
-const MARGIN = 52;
-const CONTENT_W = 595.28 - MARGIN * 2;
+/** Symmetriske sider på A4 (PDFKit page width 595.28 pt). */
+const MARGIN = 48;
+const PAGE_W = 595.28;
+const CONTENT_W = PAGE_W - MARGIN * 2;
+/** Indrykning af tabel / totaler så højre kolonne ikke sidder flush mod papirkant. */
+const INNER_PAD = 12;
+const TABLE_LEFT = MARGIN + INNER_PAD;
+const TABLE_WIDTH = CONTENT_W - INNER_PAD * 2;
 
 /** PDFKit document handle (pdfkit ships without strict exported instance type). */
 type PdfDoc = InstanceType<typeof PDFDocument>;
@@ -70,7 +79,6 @@ type Labels = {
   docRefInvoice: string;
   docRefOrder: string;
   date: string;
-  internalRef: string;
   payment: string;
   colNr: string;
   colDesc: string;
@@ -85,7 +93,6 @@ type Labels = {
   page: string;
   original: string;
   orderNote: string;
-  vatReg: string;
   cvrLabel: string;
 };
 
@@ -94,11 +101,10 @@ const LABEL: Record<PdfLocale, Labels> = {
     orderTitle: "Ordrebekræftelse",
     invoiceTitle: "Faktura",
     seller: "Sælger",
-    customer: "Kunde / leveringsadresse",
+    customer: "Kunde",
     docRefInvoice: "Fakturanr.",
     docRefOrder: "Ordrenr.",
     date: "Dato",
-    internalRef: "Intern reference",
     payment: "Betalingsmetode",
     colNr: "Nr.",
     colDesc: "Beskrivelse",
@@ -114,7 +120,6 @@ const LABEL: Record<PdfLocale, Labels> = {
     original: "ORIGINAL",
     orderNote:
       "Oversigt over din ordre. Faktura følger som vedhæftet fil i ordrebekræftelsesmailen og kan også hentes på Min konto.",
-    vatReg: "CVR-/momsnr.",
     cvrLabel: "CVR",
   },
   en: {
@@ -125,7 +130,6 @@ const LABEL: Record<PdfLocale, Labels> = {
     docRefInvoice: "Invoice no.",
     docRefOrder: "Order no.",
     date: "Date",
-    internalRef: "Internal reference",
     payment: "Payment method",
     colNr: "No.",
     colDesc: "Description",
@@ -141,7 +145,6 @@ const LABEL: Record<PdfLocale, Labels> = {
     original: "ORIGINAL",
     orderNote:
       "Summary of your order. The invoice is attached to your confirmation email and available in your account.",
-    vatReg: "VAT reg. no.",
     cvrLabel: "Company reg. (CVR)",
   },
 };
@@ -175,14 +178,28 @@ function addressToLines(address: OrderAddress | null | undefined): string[] {
   if (!address) return [];
   const fullName = [address.first_name, address.last_name].filter(Boolean).join(" ").trim();
   const cityLine = [address.postal_code, address.city].filter(Boolean).join(" ").trim();
-  const country =
-    address.country_code && address.country_code.length === 2
-      ? address.country_code.toUpperCase()
-      : address.country_code;
-  const lines = [fullName, address.address_1, address.address_2, cityLine, country, address.phone]
+  const cc = String(address.country_code ?? "")
+    .trim()
+    .toLowerCase();
+  const countryDisplay =
+    cc === "dk" ? "Danmark" : cc.length === 2 ? address.country_code!.toUpperCase() : address.country_code;
+  const lines = [fullName, address.address_1, address.address_2, cityLine, countryDisplay, address.phone]
     .map((v) => String(v ?? "").trim())
     .filter((v) => v.length > 0);
   return lines;
+}
+
+/** Én CVR-linje på faktura: metadata `cvr`, ellers 8 cifre ud fra `vat_number` (fx DKxxxxxxxx). */
+function sellerDisplayCvr(seller: PdfSellerProfile): string | null {
+  const c = seller.cvr?.trim();
+  if (c) return c;
+  const v = seller.vatNumber?.trim();
+  if (!v) return null;
+  const dk = v.match(/^DK\s*(\d{8})$/i);
+  if (dk) return dk[1];
+  if (/^\d{8}$/.test(v)) return v;
+  const stripped = v.replace(/^DK\s*/i, "").trim();
+  return stripped.length > 0 ? stripped : null;
 }
 
 /**
@@ -240,23 +257,23 @@ function drawHeader(
   const docRefLabel = isInvoice ? labels.docRefInvoice : labels.docRefOrder;
   const refValue = publicOrderRef(input.displayId, input.orderId);
 
-  const logoW = 122;
-  const logoH = 46;
-  const titleBlockW = logoBuf ? CONTENT_W - logoW - 20 : CONTENT_W * 0.58;
+  const logoW = 118;
+  const logoH = 44;
+  const titleBlockW = logoBuf ? CONTENT_W - logoW - 28 : CONTENT_W * 0.62;
 
   doc.save();
-  doc.fillColor(BRAND.accent).lineWidth(3).moveTo(MARGIN, y + 8).lineTo(MARGIN + 84, y + 8).stroke();
+  doc.fillColor(BRAND.accent).rect(MARGIN, y, 3, 30).fill();
   doc.restore();
 
-  doc.fillColor(BRAND.navy).fontSize(23).font("Helvetica-Bold").text(title, MARGIN, y, {
-    width: titleBlockW,
-  });
+  doc
+    .fillColor(BRAND.navy)
+    .fontSize(24)
+    .font("Helvetica-Bold")
+    .text(title, MARGIN + 10, y, {
+      width: titleBlockW,
+    });
 
-  doc.font("Helvetica").fontSize(9.5).fillColor(BRAND.muted).text(`${docRefLabel} ${refValue}`, MARGIN, y + 30, {
-    width: titleBlockW,
-  });
-
-  doc.fontSize(8.5).text(`${labels.internalRef}: ${input.orderId}`, MARGIN, y + 44, {
+  doc.font("Helvetica").fontSize(10).fillColor(BRAND.muted).text(`${docRefLabel} ${refValue}`, MARGIN + 10, y + 32, {
     width: titleBlockW,
   });
 
@@ -264,24 +281,28 @@ function drawHeader(
     .fillColor(BRAND.muted)
     .font("Helvetica-Bold")
     .fontSize(8)
-    .text(labels.original, MARGIN + CONTENT_W - 84, y + 2, { width: 84, align: "right" });
+    .text(labels.original, PAGE_W - MARGIN - 88, y + 2, { width: 88, align: "right" });
 
   if (logoBuf) {
     try {
-      const lx = MARGIN + CONTENT_W - logoW;
-      const logoY = y + 22;
+      const lx = PAGE_W - MARGIN - logoW;
+      const logoY = y + 20;
       doc.image(logoBuf, lx, logoY, { width: logoW, height: logoH, fit: [logoW, logoH] });
     } catch {
       /* unsupported raster */
     }
   }
 
-  const ruleY = y + (logoBuf ? 76 : 60);
+  const ruleY = y + (logoBuf ? 72 : 52);
   doc.save();
-  doc.strokeColor(BRAND.line).lineWidth(0.75).moveTo(MARGIN, ruleY).lineTo(MARGIN + CONTENT_W, ruleY).stroke();
+  doc.strokeColor(BRAND.line)
+    .lineWidth(0.75)
+    .moveTo(MARGIN, ruleY)
+    .lineTo(MARGIN + CONTENT_W, ruleY)
+    .stroke();
   doc.restore();
 
-  return ruleY + 18;
+  return ruleY + 16;
 }
 
 function drawSellerCustomer(
@@ -292,43 +313,16 @@ function drawSellerCustomer(
   customerLines: string[],
   customerEmail?: string
 ): number {
-  const colW = CONTENT_W / 2 - 20;
-  const mid = MARGIN + CONTENT_W / 2 + 6;
-  const inner = 14;
+  const gap = 20;
+  const colW = (TABLE_WIDTH - gap) / 2;
+  const lx = TABLE_LEFT;
+  const rx = TABLE_LEFT + colW + gap;
   const lineH = 12;
+  let leftY = y;
+  let rightY = y;
 
-  const leftBodyH =
-    16 +
-    13 +
-    seller.addressLines.length * lineH +
-    (seller.postalCityLine ? lineH : 0) +
-    (seller.cvr ? lineH : 0) +
-    (seller.vatNumber ? lineH : 0) +
-    (seller.email ? lineH : 0) +
-    (seller.website ? lineH : 0);
-  const rightBodyH =
-    16 +
-    (customerLines.length === 0 ? lineH : customerLines.length * lineH) +
-    (customerEmail ? lineH : 0);
-
-  const contentH = Math.max(leftBodyH, rightBodyH, 92);
-  const boxH = contentH + inner * 2;
-  const boxTop = y;
-  const boxW = colW + inner * 2 + 6;
-
-  doc.save();
-  doc.roundedRect(MARGIN, boxTop, boxW, boxH, 8).fill(BRAND.cardFill);
-  doc.roundedRect(mid, boxTop, boxW, boxH, 8).fill("#ffffff");
-  doc.strokeColor(BRAND.line).lineWidth(0.4);
-  doc.roundedRect(MARGIN, boxTop, boxW, boxH, 8).stroke();
-  doc.roundedRect(mid, boxTop, boxW, boxH, 8).stroke();
-  doc.fillColor(BRAND.accent).rect(MARGIN + inner, boxTop + inner, 3, 17).fill();
-  doc.restore();
-
-  const lx = MARGIN + inner + 8;
-  let leftY = boxTop + inner;
   doc.fillColor(BRAND.navy).font("Helvetica-Bold").fontSize(11).text(labels.seller, lx, leftY);
-  leftY += 16;
+  leftY += 15;
   doc.font("Helvetica-Bold").fontSize(10).text(seller.companyName, lx, leftY, { width: colW });
   leftY += 13;
   doc.font("Helvetica").fontSize(9.5).fillColor(BRAND.navy);
@@ -340,14 +334,10 @@ function drawSellerCustomer(
     doc.text(seller.postalCityLine, lx, leftY, { width: colW });
     leftY += lineH;
   }
-  if (seller.cvr) {
+  const cvrDisplay = sellerDisplayCvr(seller);
+  if (cvrDisplay) {
     doc.font("Helvetica-Bold").text(`${labels.cvrLabel}: `, lx, leftY, { continued: true });
-    doc.font("Helvetica").text(seller.cvr, { width: colW });
-    leftY += lineH;
-  }
-  if (seller.vatNumber) {
-    doc.font("Helvetica-Bold").text(`${labels.vatReg}: `, lx, leftY, { continued: true });
-    doc.font("Helvetica").text(seller.vatNumber, { width: colW });
+    doc.font("Helvetica").text(cvrDisplay, { width: colW });
     leftY += lineH;
   }
   if (seller.email) {
@@ -359,10 +349,8 @@ function drawSellerCustomer(
     leftY += lineH;
   }
 
-  const rx = mid + inner + 8;
-  let rightY = boxTop + inner;
   doc.fillColor(BRAND.navy).font("Helvetica-Bold").fontSize(11).text(labels.customer, rx, rightY);
-  rightY += 16;
+  rightY += 15;
   doc.font("Helvetica").fontSize(9.5);
   if (customerLines.length === 0) {
     doc.fillColor(BRAND.muted).text("—", rx, rightY, { width: colW });
@@ -378,7 +366,7 @@ function drawSellerCustomer(
     rightY += lineH;
   }
 
-  return boxTop + boxH + 22;
+  return Math.max(leftY, rightY) + 20;
 }
 
 function drawMetaBand(
@@ -391,8 +379,8 @@ function drawMetaBand(
 ): number {
   const boxH = 40;
   doc.save();
-  doc.roundedRect(MARGIN, y, CONTENT_W, boxH, 6).fill(BRAND.tableRowAlt);
-  doc.strokeColor(BRAND.line).lineWidth(0.35).roundedRect(MARGIN, y, CONTENT_W, boxH, 6).stroke();
+  doc.roundedRect(TABLE_LEFT, y, TABLE_WIDTH, boxH, 6).fill(BRAND.tableRowAlt);
+  doc.strokeColor(BRAND.line).lineWidth(0.35).roundedRect(TABLE_LEFT, y, TABLE_WIDTH, boxH, 6).stroke();
   doc.restore();
 
   const cols = [
@@ -402,9 +390,9 @@ function drawMetaBand(
       value: paymentLabel && paymentLabel.length > 0 ? paymentLabel : "—",
     },
   ];
-  const colW = CONTENT_W / cols.length;
+  const colW = TABLE_WIDTH / cols.length;
   cols.forEach((c, i) => {
-    const x = MARGIN + i * colW + 12;
+    const x = TABLE_LEFT + i * colW + 12;
     doc.fillColor(BRAND.muted).font("Helvetica").fontSize(7.5).text(c.label.toUpperCase(), x, y + 9);
     doc.fillColor(BRAND.navy).font("Helvetica-Bold").fontSize(9.5).text(c.value, x, y + 20, {
       width: colW - 24,
@@ -414,24 +402,34 @@ function drawMetaBand(
   return y + boxH + 20;
 }
 
+const COL_NR = 26;
+const COL_QTY = 46;
+const COL_UNIT = 74;
+const COL_AMT = 76;
+
+function tableDescWidth(): number {
+  return TABLE_WIDTH - COL_NR - COL_QTY - COL_UNIT - COL_AMT;
+}
+
 function drawTableHeader(doc: PdfDoc, y: number, labels: Labels): number {
   const rowH = 26;
+  const descW = tableDescWidth();
   doc.save();
-  doc.roundedRect(MARGIN, y, CONTENT_W, rowH, 4).fill(BRAND.tableHeaderBg);
-  doc.strokeColor(BRAND.line).lineWidth(0.35).roundedRect(MARGIN, y, CONTENT_W, rowH, 4).stroke();
+  doc.roundedRect(TABLE_LEFT, y, TABLE_WIDTH, rowH, 4).fill(BRAND.tableHeaderBg);
+  doc.strokeColor(BRAND.line).lineWidth(0.35).roundedRect(TABLE_LEFT, y, TABLE_WIDTH, rowH, 4).stroke();
   doc.restore();
 
   const cols = [
-    { w: 28, text: labels.colNr, align: "left" as const },
-    { w: CONTENT_W - 28 - 52 - 78 - 78, text: labels.colDesc, align: "left" as const },
-    { w: 52, text: labels.colQty, align: "right" as const },
-    { w: 78, text: labels.colUnit, align: "right" as const },
-    { w: 78, text: labels.colLine, align: "right" as const },
+    { w: COL_NR, text: labels.colNr, align: "left" as const },
+    { w: descW, text: labels.colDesc, align: "left" as const },
+    { w: COL_QTY, text: labels.colQty, align: "right" as const },
+    { w: COL_UNIT, text: labels.colUnit, align: "right" as const },
+    { w: COL_AMT, text: labels.colLine, align: "right" as const },
   ];
-  let x = MARGIN + 8;
+  let x = TABLE_LEFT + 6;
   doc.fillColor(BRAND.navy).font("Helvetica-Bold").fontSize(9);
   for (const c of cols) {
-    doc.text(c.text, x, y + 9, { width: c.w - 8, align: c.align });
+    doc.text(c.text, x, y + 9, { width: c.w - 6, align: c.align });
     x += c.w;
   }
   return y + rowH;
@@ -445,33 +443,58 @@ function drawTableRow(
   currency: string,
   locale: PdfLocale
 ): number {
-  const rowH = 30;
+  const sub = line.subtitle?.trim();
+  const rowH = sub ? 42 : 34;
+  const descW = tableDescWidth();
+  const xNr = TABLE_LEFT + 6;
+  const xDesc = TABLE_LEFT + COL_NR + 4;
+  const xQty = TABLE_LEFT + COL_NR + descW;
+  const xUnit = xQty + COL_QTY;
+  const xAmt = xUnit + COL_UNIT;
+
   if (idx % 2 === 1) {
     doc.save();
-    doc.rect(MARGIN, y, CONTENT_W, rowH).fill("#fafbfc");
+    doc.rect(TABLE_LEFT, y, TABLE_WIDTH, rowH).fill("#fafbfc");
     doc.restore();
   }
 
-  const descW = CONTENT_W - 28 - 52 - 78 - 78;
   doc.fillColor(BRAND.navy).font("Helvetica").fontSize(9);
-  doc.text(String(idx + 1), MARGIN + 8, y + 10, { width: 22, align: "left" });
-  doc.text(line.title, MARGIN + 28 + 8, y + 10, { width: descW - 16, ellipsis: true });
-  doc.text(formatQty(line.quantity, locale), MARGIN + 28 + descW, y + 10, {
-    width: 52 - 8,
+  doc.text(String(idx + 1), xNr, y + (sub ? 14 : 11), { width: COL_NR - 8, align: "left" });
+
+  doc.font("Helvetica-Bold").fontSize(9).text(line.title, xDesc, y + (sub ? 10 : 11), {
+    width: descW - 10,
+    ellipsis: true,
+  });
+  if (sub) {
+    doc.font("Helvetica").fontSize(7.5).fillColor(BRAND.muted).text(sub, xDesc, y + 22, {
+      width: descW - 10,
+      ellipsis: true,
+    });
+    doc.fillColor(BRAND.navy);
+  }
+
+  const numY = y + (sub ? 14 : 11);
+  doc.font("Helvetica").fontSize(9);
+  doc.text(formatQty(line.quantity, locale), xQty, numY, {
+    width: COL_QTY - 6,
     align: "right",
   });
-  doc.text(formatMoney(line.unitPriceMinor, currency), MARGIN + 28 + descW + 52, y + 10, {
-    width: 78 - 8,
+  doc.text(formatMoney(line.unitPriceMinor, currency), xUnit, numY, {
+    width: COL_UNIT - 6,
     align: "right",
   });
-  doc.font("Helvetica-Bold").text(formatMoney(line.lineTotalMinor, currency), MARGIN + 28 + descW + 52 + 78, y + 10, {
-    width: 78 - 10,
+  doc.font("Helvetica-Bold").text(formatMoney(line.lineTotalMinor, currency), xAmt, numY, {
+    width: COL_AMT - 8,
     align: "right",
   });
   doc.font("Helvetica");
 
   doc.save();
-  doc.strokeColor(BRAND.line).lineWidth(0.25).moveTo(MARGIN, y + rowH).lineTo(MARGIN + CONTENT_W, y + rowH).stroke();
+  doc.strokeColor(BRAND.line)
+    .lineWidth(0.25)
+    .moveTo(TABLE_LEFT, y + rowH)
+    .lineTo(TABLE_LEFT + TABLE_WIDTH, y + rowH)
+    .stroke();
   doc.restore();
 
   return y + rowH;
@@ -488,8 +511,9 @@ function drawTotals(
   const currency = (input.currencyCode ?? "dkk").toUpperCase();
   const labelW = 200;
   const valueW = 100;
-  const xLabel = MARGIN + CONTENT_W - labelW - valueW;
-  const xVal = MARGIN + CONTENT_W - valueW;
+  const totalsRight = TABLE_LEFT + TABLE_WIDTH - INNER_PAD;
+  const xVal = totalsRight - valueW;
+  const xLabel = xVal - labelW;
   let rowY = y;
 
   const row = (label: string, value: string, bold = false) => {
@@ -512,7 +536,7 @@ function drawTotals(
   }
   rowY += 4;
   doc.save();
-  doc.strokeColor(BRAND.navy).lineWidth(1).moveTo(xLabel, rowY).lineTo(MARGIN + CONTENT_W, rowY).stroke();
+  doc.strokeColor(BRAND.navy).lineWidth(1).moveTo(xLabel, rowY).lineTo(totalsRight, rowY).stroke();
   doc.restore();
   rowY += 8;
   row(labels.total, formatMoney(input.totalMinor, currency), true);
@@ -523,7 +547,7 @@ function drawTotals(
       .font("Helvetica")
       .fontSize(8.5)
       .fillColor(BRAND.muted)
-      .text(labels.orderNote, MARGIN, rowY, { width: CONTENT_W, align: "left" });
+      .text(labels.orderNote, TABLE_LEFT, rowY, { width: TABLE_WIDTH, align: "left" });
     rowY += 28;
   }
 
@@ -544,8 +568,8 @@ function drawFooter(
   }
   doc.font("Helvetica").fontSize(7.5).fillColor(BRAND.muted);
   const legal = locale === "en" ? seller.footerLegalEn : seller.footerLegalDa;
-  doc.text(legal, MARGIN, y, {
-    width: CONTENT_W,
+  doc.text(legal, TABLE_LEFT, y, {
+    width: TABLE_WIDTH,
     align: "left",
     lineGap: 3,
   });

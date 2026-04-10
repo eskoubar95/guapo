@@ -59,7 +59,12 @@ export function mergeGuapoInvoiceMetadataIntoSeller(
   base: PdfSellerProfile,
   raw: Record<string, unknown>
 ): PdfSellerProfile {
-  const str = (k: string) => (typeof raw[k] === "string" ? (raw[k] as string).trim() : "");
+  const str = (k: string) => {
+    const v = raw[k];
+    if (typeof v === "string") return v.trim();
+    if (typeof v === "number" && Number.isFinite(v)) return String(v);
+    return "";
+  };
   const num = (k: string) => {
     const v = raw[k];
     if (typeof v === "number" && Number.isFinite(v)) return v;
@@ -85,10 +90,7 @@ export function mergeGuapoInvoiceMetadataIntoSeller(
   const addressLines = [line1, line2].map((s) => s.trim()).filter(Boolean);
   const vatPct = num("vat_rate_percent");
 
-  let website = str("website");
-  if (website && !/^https?:\/\//i.test(website)) {
-    website = `https://${website}`;
-  }
+  const website = str("website");
 
   return {
     companyName: companyName || base.companyName,

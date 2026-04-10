@@ -74,6 +74,12 @@ const GRAPH_FIELDS = [
   "items.item.raw_total",
   "items.item.item_total",
   "items.item.metadata",
+  "items.item.variant",
+  "items.item.variant.title",
+  "items.item.variant.product",
+  "items.item.variant.product.title",
+  "items.item.variant.product.brand",
+  "items.item.variant.product.brand.name",
 ] as const;
 
 export function getOrderDocumentGraphFields(): readonly string[] {
@@ -91,6 +97,50 @@ export function computeLocalePdf(order: OrderShapeForDocuments): PdfLocale {
     .toLowerCase() === "dk"
     ? "da"
     : "en";
+}
+
+function readNestedString(obj: unknown, path: string[]): string {
+  let cur: unknown = obj;
+  for (const key of path) {
+    if (cur == null || typeof cur !== "object") return "";
+    cur = (cur as Record<string, unknown>)[key];
+  }
+  return typeof cur === "string" ? cur.trim() : "";
+}
+
+/** Brand + produkt som primær linje; variant som undertitel når den adskiller sig fra produktnavnet. */
+function linePresentationFromGraphRow(
+  row: Record<string, unknown>,
+  flat: Record<string, unknown>,
+  fallbackId: string
+): { title: string; subtitle?: string } {
+  const item = row.item as Record<string, unknown> | undefined;
+  const variant =
+    (flat.variant as Record<string, unknown> | undefined) ??
+    (item?.variant as Record<string, unknown> | undefined) ??
+    (row.variant as Record<string, unknown> | undefined);
+  const product =
+    (variant?.product as Record<string, unknown> | undefined) ??
+    (item?.product as Record<string, unknown> | undefined);
+
+  const brandName = readNestedString(product, ["brand", "name"]);
+  const productTitle =
+    (typeof product?.title === "string" ? product.title.trim() : "") ||
+    (typeof flat.title === "string" ? flat.title.trim() : "");
+  const variantTitle =
+    (typeof variant?.title === "string" ? variant.title.trim() : "") ||
+    readNestedString(row, ["variant", "title"]);
+
+  const mainParts = [brandName, productTitle].filter((s) => s.length > 0);
+  const primaryLine =
+    mainParts.length > 0
+      ? mainParts.join(" — ")
+      : productTitle || variantTitle || (typeof flat.title === "string" ? flat.title.trim() : "") || fallbackId;
+
+  const subtitle =
+    variantTitle && primaryLine !== variantTitle ? variantTitle : undefined;
+
+  return { title: primaryLine, subtitle };
 }
 
 /**
@@ -119,21 +169,11 @@ export async function buildOrderDocumentPdfBuffers(
     const lineTotalMinor = majorToMinor(lineTotalMajor);
     const unitPriceMinor = Math.round(lineTotalMinor / quantity);
 
-    const variantFromRow = row.variant as { title?: string | null } | undefined;
-    const variantFromFlat = flat.variant as { title?: string | null } | undefined;
-    const variantTitle =
-      (typeof variantFromFlat?.title === "string" && variantFromFlat.title.trim()
-        ? variantFromFlat.title.trim()
-        : "") ||
-      (typeof variantFromRow?.title === "string" && variantFromRow.title.trim()
-        ? variantFromRow.title.trim()
-        : "");
-    const productTitle =
-      typeof flat.title === "string" && flat.title.trim() ? flat.title.trim() : "";
     const id = typeof flat.id === "string" ? flat.id : String(row.id ?? "");
-    const title = [variantTitle, productTitle].filter(Boolean).join(" — ") || id;
+    const { title, subtitle } = linePresentationFromGraphRow(row, flat, id);
     return {
       title,
+      subtitle,
       quantity,
       unitPriceMinor,
       lineTotalMinor,
