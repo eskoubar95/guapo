@@ -1,5 +1,5 @@
 import type { PdfSellerProfile } from "./pdf-seller-config";
-import { resolvePdfSellerProfile } from "./pdf-seller-config";
+import { getDefaultPdfSellerProfile } from "./pdf-seller-config";
 
 type QueryLike = {
   graph: (opts: {
@@ -29,7 +29,7 @@ const GUAPO_INVOICE_METADATA_KEYS = [
 
 /**
  * Region → metadata: either **`guapo_invoice`** object (preferred) **or** the same keys **flat**
- * on region metadata (Medusa Admin key/value table). Merges over `GUAPO_INVOICE_*` env.
+ * on region metadata (Medusa Admin key/value table). Merges over **code defaults** from `getDefaultPdfSellerProfile()`.
  *
  * Nested example:
  * ```json
@@ -107,13 +107,13 @@ export function mergeGuapoInvoiceMetadataIntoSeller(
 }
 
 /**
- * Resolve seller block for PDFs: **region metadata `guapo_invoice`** (if present) merged over **env** defaults.
+ * Resolve seller block for PDFs: **region metadata** (flat or `guapo_invoice`) merged over **defaults**.
  */
 export async function resolvePdfSellerForOrder(
   container: { resolve: (key: string) => unknown },
   currencyCode: string
 ): Promise<PdfSellerProfile> {
-  const base = resolvePdfSellerProfile();
+  const base = getDefaultPdfSellerProfile();
   const code = (currencyCode || "dkk").toLowerCase();
   try {
     const query = container.resolve("query") as QueryLike;
@@ -128,7 +128,7 @@ export async function resolvePdfSellerForOrder(
       return mergeGuapoInvoiceMetadataIntoSeller(base, inv);
     }
   } catch {
-    /* fall back to env-only */
+    /* fall back to defaults */
   }
   return base;
 }
