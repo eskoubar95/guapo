@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { getCart } from "@/lib/cart-data";
+import { getCartDiscountTotal } from "@/lib/cart-display";
 
 const MEDUSA_URL = (
   process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
@@ -120,6 +121,16 @@ export async function addToCart(
   if (!res.ok) {
     throw new Error((data as { message?: string }).message || "Failed to add item to cart");
   }
+  if (options?.subscription_cycle) {
+    try {
+      await fetch(
+        `${MEDUSA_URL}/store/carts/${cartId}/subscription-discount/sync`,
+        { method: "POST", headers: headers() }
+      );
+    } catch {
+      /* best-effort */
+    }
+  }
   return (data as { cart: unknown }).cart;
 }
 
@@ -187,13 +198,26 @@ export async function setLineItemSubscription(
 
   await updateLineItem(lineItemId, quantity, metadata);
 
+  /** Same process as cart.updated subscriber — avoids waiting on Redis/worker (staging). */
+  const cartIdAfter = await getCartId();
+  if (cartIdAfter) {
+    try {
+      await fetch(
+        `${MEDUSA_URL}/store/carts/${cartIdAfter}/subscription-discount/sync`,
+        { method: "POST", headers: headers() }
+      );
+    } catch {
+      /* older backends without route: rely on polling */
+    }
+  }
+
   const expectDiscount = subscriptionCycleWeeks !== null && subscriptionCycleWeeks > 0;
-  for (let i = 0; i < 5; i++) {
-    await new Promise((r) => setTimeout(r, 250));
+  for (let i = 0; i < 10; i++) {
+    await new Promise((r) => setTimeout(r, 200));
     const cart = await getCart();
     if (!cart) break;
-    const hasDiscount = (cart.discount_total ?? 0) > 0;
-    if (hasDiscount === expectDiscount) break;
+    if (!expectDiscount) break;
+    if (getCartDiscountTotal(cart) > 0.005) break;
   }
 }
 

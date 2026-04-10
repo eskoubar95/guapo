@@ -7,6 +7,7 @@ import { SUBSCRIPTION_MODULE } from "../modules/subscription";
 import type SubscriptionModuleService from "../modules/subscription/service";
 import { getSubscriptionDiscountPercentWithProductOverride } from "../lib/subscription-discount";
 import { extractDeliveryDataFromShippingMethodData } from "../lib/subscription-delivery-data";
+import { getSubscriptionCycleWeeksFromMetadata } from "../lib/subscription-cycle-metadata";
 
 const ALLOWED_CYCLE_WEEKS = [4, 8, 12] as const
 
@@ -83,10 +84,10 @@ export default async function orderPlacedCreateSubscriptions({
   const order = orders?.[0] as OrderWithItems | undefined
   if (!order?.items?.length) return
 
-  const subscriptionItems = order.items.filter(
-    (item) =>
-      item?.metadata &&
-      typeof (item.metadata as Record<string, unknown>).subscription_cycle === "number"
+  const subscriptionItems = order.items.filter((item) =>
+    getSubscriptionCycleWeeksFromMetadata(
+      item.metadata as Record<string, unknown> | null | undefined
+  ) > 0
   )
   if (subscriptionItems.length === 0) return
 
@@ -169,8 +170,10 @@ export default async function orderPlacedCreateSubscriptions({
         continue;
       }
 
-      const cycleWeeks = (item.metadata as Record<string, unknown>)?.subscription_cycle as number
-      if (typeof cycleWeeks !== "number" || !Number.isInteger(cycleWeeks) || cycleWeeks <= 0) {
+      const cycleWeeks = getSubscriptionCycleWeeksFromMetadata(
+        item.metadata as Record<string, unknown> | null | undefined
+      )
+      if (!Number.isInteger(cycleWeeks) || cycleWeeks <= 0) {
         throw new Error(`Invalid cycle_weeks (${cycleWeeks}) for item ${item.id}.`)
       }
       if (!(ALLOWED_CYCLE_WEEKS as readonly number[]).includes(cycleWeeks)) {

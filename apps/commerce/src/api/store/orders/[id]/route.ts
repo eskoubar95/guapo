@@ -4,6 +4,7 @@ import {
   resolveLineTotalMajor,
 } from "../../../../lib/store-order-graph-item";
 import { toAmountMajor } from "../../../../lib/store-order-money";
+import { getSubscriptionCycleWeeksFromMetadata } from "../../../../lib/subscription-cycle-metadata";
 
 /**
  * Explicit graph fields only — no `*items.variant.product`-style wildcards.
@@ -164,7 +165,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
         unit_price: unitPriceMajor,
         total: resolveLineTotalMajor(item, unitPriceMajor, quantity),
         metadata: item.metadata ?? {},
-        is_subscription_line: typeof itemMeta.subscription_cycle === "number",
+        is_subscription_line: getSubscriptionCycleWeeksFromMetadata(itemMeta) > 0,
       };
     });
     const itemsSubtotalMajor = roundToTwo(

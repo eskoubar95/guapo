@@ -21,6 +21,7 @@ import type { CartItem } from "@/components/cart/CartItems";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { userMessageForLineItemError } from "@/lib/cart-errors";
 import { getCartLineQuantityCap } from "@/lib/product-inventory";
+import { getSubscriptionCycleWeeksFromMetadata } from "@/lib/subscription-cycle";
 
 interface CartDropdownProps {
   isOpen: boolean;
@@ -49,7 +50,9 @@ function CartDropdownItem({
   const thumbnail = item.thumbnail || item.variant?.product?.thumbnail;
   const title = item.product_title || item.title || "";
   const variantTitle = (item.variant_title || item.variant?.title) ?? "";
-  const cycle = typeof item.metadata?.subscription_cycle === "number" ? item.metadata.subscription_cycle : 0;
+  const cycle = getSubscriptionCycleWeeksFromMetadata(
+    item.metadata as Record<string, unknown> | undefined
+  );
   const isSubscription = cycle > 0;
   const quantity = item.quantity ?? 1;
   const maxQty = getCartLineQuantityCap(item);

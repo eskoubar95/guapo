@@ -1,3 +1,4 @@
+import { isSubscriptionLineMetadata } from "../../../lib/subscription-cycle-metadata";
 import type { GuapoCartLine, PaymentMethodChoice } from "./guapo-stripe.types";
 
 const CHOICE_TO_TYPES: Record<PaymentMethodChoice, string[]> = {
@@ -7,11 +8,8 @@ const CHOICE_TO_TYPES: Record<PaymentMethodChoice, string[]> = {
 };
 
 export function lineHasSubscription(item: GuapoCartLine): boolean {
-  const m = item.metadata;
-  return (
-    !!m &&
-    typeof m.subscription_cycle === "number" &&
-    (m.subscription_cycle as number) > 0
+  return isSubscriptionLineMetadata(
+    item.metadata as Record<string, unknown> | null | undefined
   );
 }
 

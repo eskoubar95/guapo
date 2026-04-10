@@ -15,6 +15,7 @@
     "verify:shipmondo": "medusa exec ./src/scripts/verify-shipmondo-sandbox.ts",
     "simulate-renewal": "medusa exec ./src/scripts/simulate-renewal.ts",
     "simulate-subscription-from-order": "medusa exec ./src/scripts/simulate-subscription-from-order.ts",
+    "inspect:order-subscription": "medusa exec ./src/scripts/inspect-order-subscription.ts",
     "simulate-e2e": "medusa exec ./src/scripts/simulate-e2e-subscription.ts",
     "seed-subscription-promo": "medusa exec ./src/scripts/seed-subscription-promotion.ts",
     "purge:orders": "medusa exec ./src/scripts/purge-orders.ts",

@@ -1,4 +1,5 @@
 import type { StoreCart } from "./cart";
+import { cartItemHasSubscription } from "./subscription-cycle";
 
 /** Returns true if cart has any line item with subscription_cycle in metadata */
 export function cartHasSubscriptionItems(cart: StoreCart | null): boolean {
@@ -7,7 +8,6 @@ export function cartHasSubscriptionItems(cart: StoreCart | null): boolean {
     (item) =>
       item?.metadata &&
       typeof item.metadata === "object" &&
-      typeof (item.metadata as Record<string, unknown>).subscription_cycle ===
-        "number"
+      cartItemHasSubscription(item.metadata as Record<string, unknown>)
   );
 }

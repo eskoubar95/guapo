@@ -1,4 +1,5 @@
 import type { StoreOrderDetail, StoreOrderDetailItem } from "@/lib/orders";
+import { getSubscriptionCycleWeeksFromMetadata } from "@/lib/subscription-cycle";
 
 function extractShippingMethodData(o: Record<string, unknown>): Record<string, unknown> | null | undefined {
   const direct = o.shipping_method_data;
@@ -75,8 +76,9 @@ export function normalizeOrder(raw: unknown, fromSessionStorage = false): StoreO
       total: fromSessionStorage ? sessionAmountToMajor(tot) ?? tot : tot,
       metadata: (item.metadata as Record<string, unknown>) ?? {},
       is_subscription_line:
-        typeof (item.metadata as Record<string, unknown>)?.subscription_cycle === "number" ||
-        Boolean(item.is_subscription_line),
+        getSubscriptionCycleWeeksFromMetadata(
+          item.metadata as Record<string, unknown> | undefined
+        ) > 0 || Boolean(item.is_subscription_line),
     };
   });
   const totalRaw = o.total as number | undefined;

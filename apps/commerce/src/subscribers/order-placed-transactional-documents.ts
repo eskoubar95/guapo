@@ -17,6 +17,7 @@ import {
   resolveTransactionalLocale,
   sendTransactionalEmail,
 } from "../lib/transactional-email/service";
+import { isSubscriptionLineMetadata } from "../lib/subscription-cycle-metadata";
 
 export default async function orderPlacedTransactionalDocuments({
   event,
@@ -62,7 +63,7 @@ export default async function orderPlacedTransactionalDocuments({
   const hasSubscriptionLine = rawItemRows.some((row) => {
     const flat = flattenOrderItemFromGraph(row);
     const meta = flat.metadata as Record<string, unknown> | null | undefined;
-    return typeof meta?.subscription_cycle === "number";
+    return isSubscriptionLineMetadata(meta);
   });
 
   let mergedMetadata = writeDocumentPayloads(order.metadata, {

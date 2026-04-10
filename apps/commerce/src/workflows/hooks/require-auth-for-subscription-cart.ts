@@ -1,6 +1,7 @@
 import { completeCartWorkflow } from "@medusajs/medusa/core-flows"
 import { MedusaError, Modules } from "@medusajs/framework/utils"
 import { computeSubscriptionLineAdjustmentAmount } from "../../lib/subscription-discount"
+import { getSubscriptionCycleWeeksFromMetadata } from "../../lib/subscription-cycle-metadata"
 
 const PROMO_CODE = "SUBSCRIPTION-5PCT"
 const DEFAULT_DISCOUNT_PCT = 5
@@ -30,9 +31,9 @@ completeCartWorkflow.hooks.validate(
     const items = cart?.items ?? []
     const subscriptionItems = items.filter(
       (item) =>
-        item?.metadata &&
-        typeof (item.metadata as Record<string, unknown>).subscription_cycle === "number" &&
-        ((item.metadata as Record<string, unknown>).subscription_cycle as number) > 0
+        getSubscriptionCycleWeeksFromMetadata(
+          item.metadata as Record<string, unknown> | null | undefined
+        ) > 0
     )
 
     if (subscriptionItems.length === 0) return
