@@ -1,6 +1,7 @@
-import { buildOrderPdf, type PdfLocale } from "./build-order-pdf";
+import { buildOrderPdf, type OrderDocumentLine, type PdfLocale } from "./build-order-pdf";
 import type { PdfSellerProfile } from "./pdf-seller-config";
 import { formatPaymentMethodLabel } from "./pdf-payment-label";
+import { resolveCatalogMediaUrl } from "../resolve-catalog-media-url";
 import { flattenOrderItemFromGraph, resolveLineTotalMajor } from "../store-order-graph-item";
 import { toAmountMajor } from "../store-order-money";
 
@@ -80,6 +81,7 @@ const GRAPH_FIELDS = [
   "items.item.variant.product.title",
   "items.item.variant.product.brand",
   "items.item.variant.product.brand.name",
+  "items.item.variant.product.thumbnail",
 ] as const;
 
 export function getOrderDocumentGraphFields(): readonly string[] {
@@ -143,21 +145,55 @@ function linePresentationFromGraphRow(
   return { title: primaryLine, subtitle };
 }
 
-/**
- * Build both PDF buffers + generatedAt. Caller merges into order metadata.
- */
-export async function buildOrderDocumentPdfBuffers(
+function productThumbnailFromGraphRow(
+  row: Record<string, unknown>,
+  flat: Record<string, unknown>
+): string | undefined {
+  const item = row.item as Record<string, unknown> | undefined;
+  const variant =
+    (flat.variant as Record<string, unknown> | undefined) ??
+    (item?.variant as Record<string, unknown> | undefined) ??
+    (row.variant as Record<string, unknown> | undefined);
+  const product =
+    (variant?.product as Record<string, unknown> | undefined) ??
+    (item?.product as Record<string, unknown> | undefined);
+  const thumb = product?.thumbnail;
+  return resolveCatalogMediaUrl(typeof thumb === "string" ? thumb : null);
+}
+
+/** Major-currency line rows for transactional order confirmation email (same math as PDF). */
+export type OrderEmailLineRow = {
+  title: string;
+  subtitle?: string;
+  quantity: number;
+  unitPriceMajor: number;
+  lineTotalMajor: number;
+  /** Absolute URL for product image when available */
+  thumbnailUrl?: string;
+};
+
+export type OrderEmailMoneySummary = {
+  lines: OrderEmailLineRow[];
+  subtotalMajor: number;
+  shippingMajor: number;
+  taxMajor?: number;
+  discountMajor?: number;
+  totalMajor: number;
+  currencyCode: string;
+};
+
+type PdfLineFromOrder = OrderDocumentLine;
+
+function computeOrderPdfLinesAndEmailLines(
   order: OrderShapeForDocuments,
-  seller: PdfSellerProfile
-): Promise<{
-  orderConfirmationPdf: Buffer;
-  invoicePdf: Buffer;
-  generatedAt: string;
-}> {
-  const majorToMinor = majorToMinorOre;
+  majorToMinor: (m: number) => number
+): { pdfLines: PdfLineFromOrder[]; emailLines: OrderEmailLineRow[]; subtotalMinor: number } {
   const rawRows = (order.items ?? []) as Record<string, unknown>[];
 
-  const lines = rawRows.map((row) => {
+  const pdfLines: PdfLineFromOrder[] = [];
+  const emailLines: OrderEmailLineRow[] = [];
+
+  for (const row of rawRows) {
     const flat = flattenOrderItemFromGraph(row) as Record<string, unknown>;
     const quantity = Math.max(1, typeof flat.quantity === "number" ? flat.quantity : 1);
     const unitPriceMajor = toAmountMajor(
@@ -171,16 +207,72 @@ export async function buildOrderDocumentPdfBuffers(
 
     const id = typeof flat.id === "string" ? flat.id : String(row.id ?? "");
     const { title, subtitle } = linePresentationFromGraphRow(row, flat, id);
-    return {
+    const thumbnailUrl = productThumbnailFromGraphRow(row, flat);
+    pdfLines.push({
       title,
       subtitle,
       quantity,
       unitPriceMinor,
       lineTotalMinor,
-    };
-  });
+    });
+    const resolvedUnit =
+      unitPriceMajor != null && Number.isFinite(unitPriceMajor)
+        ? unitPriceMajor
+        : lineTotalMajor / Math.max(1, quantity);
+    emailLines.push({
+      title,
+      subtitle,
+      quantity,
+      unitPriceMajor: resolvedUnit,
+      lineTotalMajor,
+      ...(thumbnailUrl ? { thumbnailUrl } : {}),
+    });
+  }
 
-  const subtotalMinor = lines.reduce((sum, line) => sum + line.lineTotalMinor, 0);
+  const subtotalMinor = pdfLines.reduce((sum, line) => sum + line.lineTotalMinor, 0);
+  return { pdfLines, emailLines, subtotalMinor };
+}
+
+/**
+ * Money + line breakdown for HTML order confirmation (aligned with PDF / store order totals).
+ */
+export function buildOrderEmailMoneySummary(order: OrderShapeForDocuments): OrderEmailMoneySummary {
+  const majorToMinor = majorToMinorOre;
+  const { emailLines, subtotalMinor } = computeOrderPdfLinesAndEmailLines(order, majorToMinor);
+  const subtotalMajor = subtotalMinor / 100;
+
+  const orderRec = order as Record<string, unknown>;
+  const shippingMajor = toAmountMajor(orderRec.raw_shipping_total ?? order.shipping_total) ?? 0;
+  const totalMajor = toAmountMajor(orderRec.raw_total ?? order.total);
+  const taxMajor = toAmountMajor(order.tax_total);
+  const discountMajor = toAmountMajor(order.discount_total);
+  const totalMajorResolved =
+    totalMajor != null && Number.isFinite(totalMajor) ? totalMajor : subtotalMajor + shippingMajor;
+
+  return {
+    lines: emailLines,
+    subtotalMajor,
+    shippingMajor,
+    taxMajor: taxMajor != null && taxMajor > 0 ? taxMajor : undefined,
+    discountMajor: discountMajor != null && discountMajor > 0 ? discountMajor : undefined,
+    totalMajor: totalMajorResolved,
+    currencyCode: String(order.currency_code ?? "dkk"),
+  };
+}
+
+/**
+ * Build both PDF buffers + generatedAt. Caller merges into order metadata.
+ */
+export async function buildOrderDocumentPdfBuffers(
+  order: OrderShapeForDocuments,
+  seller: PdfSellerProfile
+): Promise<{
+  orderConfirmationPdf: Buffer;
+  invoicePdf: Buffer;
+  generatedAt: string;
+}> {
+  const majorToMinor = majorToMinorOre;
+  const { pdfLines: lines, subtotalMinor } = computeOrderPdfLinesAndEmailLines(order, majorToMinor);
 
   const orderRec = order as Record<string, unknown>;
   const shippingMajor =

@@ -12,15 +12,33 @@ export type TransactionalTemplate =
   | "subscription_cancelled"
   | "shipment_tracking_available";
 
+import type { OrderEmailMoneySummary } from "../documents/order-document-generation";
+
 export type OrderConfirmationEmailPayload = {
   orderId: string;
   displayId?: number;
   storefrontOrderUrl: string;
+  /** Same line + total math as PDF / invoice */
+  money: OrderEmailMoneySummary;
+  /** VAT % label for tax row (region / seller default) */
+  vatRatePercent: number;
+};
+
+export type SubscriptionCreatedItemPayload = {
+  productTitle: string;
+  variantTitle?: string;
+  cycleWeeks: number;
+  quantity: number;
+  nextRenewalAtIso: string;
+  discountPercent: number;
 };
 
 export type SubscriptionCreatedEmailPayload = {
   orderId: string;
+  displayId?: number;
   storefrontSubscriptionsUrl: string;
+  storefrontOrderUrl: string;
+  subscriptions: SubscriptionCreatedItemPayload[];
 };
 
 export type RenewalReminderPayload = {

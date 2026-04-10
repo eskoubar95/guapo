@@ -1,6 +1,6 @@
 /**
- * Shared HTML shell for Guapo transactional emails — matches newsletter visual system
- * (Inter/Lexend, #eff1f5 / #051537, hero image + logo from public newsletter assets).
+ * Shared HTML shell for Guapo transactional emails — brand colors + logo, compact header
+ * (no marketing hero). Commerce vs admin tone controls optional closing banner.
  */
 
 const DEFAULT_ASSET_BASE =
@@ -27,7 +27,7 @@ export function escapeAttr(text: string): string {
 }
 
 const PRIMARY_BUTTON_STYLE =
-  "display:inline-block;background-color:#051537;color:#ffffff;padding:14px 28px;text-decoration:none;border-radius:8px;font-family:'Lexend',Arial,Helvetica,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.02em;";
+  "display:inline-block;background-color:#051537;color:#ffffff;padding:12px 24px;text-decoration:none;border-radius:8px;font-family:'Lexend',Arial,Helvetica,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.02em;";
 
 const LINK_STYLE =
   "color:#051537;text-decoration:underline;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;";
@@ -40,26 +40,35 @@ export function bodyLink(href: string, label: string): string {
   return `<a href="${escapeAttr(href)}" style="${LINK_STYLE}">${escapeHtml(label)}</a>`;
 }
 
+export type GuapoEmailTone = "commerce" | "admin";
+
 export type GuapoEmailLayoutInput = {
   lang: "da" | "en";
+  /** `admin`: no large closing banner (Medusa invite etc.). */
+  tone?: GuapoEmailTone;
   documentTitle: string;
   preheader: string;
+  /** Main heading (H1) */
   heroTitle: string;
+  /** Subheading under H1 */
   heroSubtitle: string;
   /** Trusted HTML fragment (built by our templates from escaped pieces + URLs) */
   mainHtml: string;
+  /** Shown in slim navy band when tone is commerce (ignored for admin if empty) */
   closingTitle: string;
   closingSubtitle?: string;
   closingBody?: string;
   footerLegal: string;
+  /** Default center; order confirmation uses left for tables */
+  mainAlign?: "center" | "left";
 };
 
 /**
- * Full HTML document: outer table, hero (background + logo), main content, navy closing, footer.
+ * Full HTML document: compact header (logo + titles), main, optional slim closing, footer.
  */
 export function buildGuapoEmailDocument(input: GuapoEmailLayoutInput): string {
+  const tone = input.tone ?? "commerce";
   const base = getGuapoEmailAssetBase();
-  const heroBg = `${base}/hero-background.png`;
   const logo = `${base}/guapo-logo.svg`;
   const langAttr = input.lang;
   const pre = escapeHtml(input.preheader);
@@ -70,6 +79,12 @@ export function buildGuapoEmailDocument(input: GuapoEmailLayoutInput): string {
   const closingBody = input.closingBody ? escapeHtml(input.closingBody) : "";
   const footerLegal = escapeHtml(input.footerLegal).replace(/\n/g, "<br>");
   const docTitle = escapeHtml(input.documentTitle);
+  const mainAlign = input.mainAlign === "left" ? "left" : "center";
+  const showClosing =
+    tone === "commerce" &&
+    (input.closingTitle.trim().length > 0 ||
+      (input.closingSubtitle?.trim().length ?? 0) > 0 ||
+      (input.closingBody?.trim().length ?? 0) > 0);
 
   return `<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="${langAttr}" xml:lang="${langAttr}">
@@ -92,10 +107,19 @@ export function buildGuapoEmailDocument(input: GuapoEmailLayoutInput): string {
     @media only screen and (max-width:620px){
       .email-container{width:100%!important}
       .mob-pad{padding-left:16px!important;padding-right:16px!important}
-      .hero-title{font-size:26px!important;line-height:34px!important}
-      .closing-title{font-size:24px!important;line-height:30px!important}
-      .header-pad{padding:24px 20px!important}
-      .footer-pad{padding:28px 20px!important}
+      .hero-title{font-size:22px!important;line-height:28px!important}
+      .closing-title{font-size:18px!important;line-height:24px!important}
+      .header-inner{padding:20px 16px 16px 16px!important}
+      .footer-pad{padding:20px 16px 24px 16px!important}
+      .oc-line-wrap tr td.oc-line-thumb,
+      .oc-line-wrap tr td.oc-line-desc,
+      .oc-line-wrap tr td.oc-line-price{
+        display:block!important;width:100%!important;max-width:100%!important;
+        padding-left:0!important;padding-right:0!important;text-align:left!important;
+      }
+      .oc-line-wrap tr td.oc-line-thumb{text-align:center!important;padding:12px 0 0 0!important;}
+      .oc-line-wrap tr td.oc-line-thumb img{margin:0 auto!important;}
+      .oc-line-wrap tr td.oc-line-price{padding-top:8px!important;}
     }
   </style>
 </head>
@@ -107,87 +131,62 @@ export function buildGuapoEmailDocument(input: GuapoEmailLayoutInput): string {
 
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#eff1f5;">
     <tr>
-      <td style="padding:24px 16px;" align="center">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" class="email-container" style="max-width:600px;width:100%;margin:0 auto;border-radius:12px;overflow:hidden;background-color:#ffffff;">
+      <td style="padding:20px 12px;" align="center">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" class="email-container" style="max-width:600px;width:100%;margin:0 auto;border-radius:10px;overflow:hidden;background-color:#ffffff;border:1px solid #e2e8f0;">
 
           <tr>
-            <td style="padding:0;text-align:center;">
-              <!--[if gte mso 9]>
-              <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;height:380px;">
-              <v:fill type="frame" src="${escapeAttr(heroBg)}" color="#f5e0e4"/>
-              <v:textbox inset="0,0,0,0">
-              <![endif]-->
-              <div style="background:url('${escapeAttr(heroBg)}') center top / cover no-repeat #f5e0e4;max-width:600px;margin:0 auto;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:600px;">
-                  <tr>
-                    <td style="padding:30px 40px 0 40px;text-align:center;">
-                      <img src="${escapeAttr(logo)}" alt="GUAPO" width="130" style="display:inline-block;width:130px;height:auto;">
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="mob-pad" style="padding:22px 36px 4px 36px;text-align:center;">
-                      <h1 class="hero-title" style="margin:0;font-family:'Lexend',Arial,Helvetica,sans-serif;font-size:32px;font-weight:800;line-height:40px;color:#051537;letter-spacing:-0.03em;">${heroTitle}</h1>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding:6px 44px 0 44px;text-align:center;">
-                      <p style="margin:0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#4a5568;">${heroSub}</p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="height:120px;font-size:1px;line-height:1px;">&nbsp;</td>
-                  </tr>
-                </table>
-              </div>
-              <!--[if gte mso 9]>
-              </v:textbox>
-              </v:rect>
-              <![endif]-->
+            <td class="header-inner mob-pad" style="padding:28px 28px 20px 28px;text-align:center;background-color:#ffffff;border-bottom:1px solid #e8ecf1;">
+              <img src="${escapeAttr(logo)}" alt="GUAPO" width="108" style="display:inline-block;width:108px;height:auto;margin:0 0 16px 0;">
+              <h1 class="hero-title" style="margin:0;font-family:'Lexend',Arial,Helvetica,sans-serif;font-size:24px;font-weight:800;line-height:32px;color:#051537;letter-spacing:-0.03em;">${heroTitle}</h1>
+              <p style="margin:8px 0 0 0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#64748b;">${heroSub}</p>
             </td>
           </tr>
 
           <tr>
-            <td class="mob-pad" style="padding:36px 48px 28px 48px;text-align:center;background-color:#ffffff;">
+            <td class="mob-pad" style="padding:28px 28px 24px 28px;text-align:${mainAlign};background-color:#ffffff;">
               ${input.mainHtml}
             </td>
           </tr>
 
-          <tr>
-            <td style="padding:0 44px;background-color:#ffffff;">
+          ${
+            showClosing
+              ? `<tr>
+            <td style="padding:0 24px;background-color:#ffffff;">
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr><td style="border-top:2px solid #051537;font-size:0;line-height:0;">&nbsp;</td></tr>
+                <tr><td style="border-top:1px solid #e2e8f0;font-size:0;line-height:0;">&nbsp;</td></tr>
               </table>
             </td>
           </tr>
-
           <tr>
-            <td style="background-color:#051537;padding:44px 40px;text-align:center;">
-              <h2 class="closing-title" style="margin:0;font-family:'Lexend',Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;line-height:34px;color:#ffffff;letter-spacing:-0.02em;">${closingTitle}</h2>
+            <td style="background-color:#051537;padding:28px 28px;text-align:center;">
+              <h2 class="closing-title" style="margin:0;font-family:'Lexend',Arial,Helvetica,sans-serif;font-size:20px;font-weight:700;line-height:28px;color:#ffffff;letter-spacing:-0.02em;">${closingTitle}</h2>
               ${
                 closingSub
-                  ? `<p style="margin:18px 0 0 0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:rgba(255,255,255,0.7);font-style:italic;">${closingSub}</p>`
+                  ? `<p style="margin:12px 0 0 0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:rgba(255,255,255,0.75);font-style:italic;">${closingSub}</p>`
                   : ""
               }
               ${
                 closingBody
-                  ? `<div style="height:20px;font-size:1px;line-height:1px;">&nbsp;</div><p style="margin:0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:14px;line-height:24px;color:rgba(255,255,255,0.55);">${closingBody}</p>`
+                  ? `<div style="height:14px;font-size:1px;line-height:1px;">&nbsp;</div><p style="margin:0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:13px;line-height:22px;color:rgba(255,255,255,0.6);">${closingBody}</p>`
                   : ""
               }
             </td>
-          </tr>
+          </tr>`
+              : ""
+          }
 
           <tr>
-            <td class="footer-pad" style="background-color:#051537;padding:0 40px 32px 40px;text-align:center;">
+            <td class="footer-pad" style="background-color:#051537;padding:20px 28px 26px 28px;text-align:center;">
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr><td style="border-top:1px solid rgba(255,255,255,0.1);font-size:0;line-height:0;">&nbsp;</td></tr>
+                <tr><td style="border-top:1px solid rgba(255,255,255,0.12);font-size:0;line-height:0;">&nbsp;</td></tr>
               </table>
-              <div style="height:20px;font-size:1px;line-height:1px;">&nbsp;</div>
-              <a href="https://www.guapo.dk" style="font-family:'Inter',Arial,Helvetica,sans-serif;font-size:11px;font-weight:500;letter-spacing:2px;color:rgba(255,255,255,0.4);text-decoration:none;text-transform:uppercase;">www.guapo.dk</a>
               <div style="height:16px;font-size:1px;line-height:1px;">&nbsp;</div>
-              <p style="margin:0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:11px;line-height:18px;color:rgba(255,255,255,0.3);">
+              <a href="https://www.guapo.dk" style="font-family:'Inter',Arial,Helvetica,sans-serif;font-size:11px;font-weight:500;letter-spacing:2px;color:rgba(255,255,255,0.45);text-decoration:none;text-transform:uppercase;">www.guapo.dk</a>
+              <div style="height:14px;font-size:1px;line-height:1px;">&nbsp;</div>
+              <p style="margin:0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:11px;line-height:18px;color:rgba(255,255,255,0.35);">
                 ${footerLegal}
               </p>
-              <p style="margin:10px 0 0 0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:10px;line-height:16px;color:rgba(255,255,255,0.2);">
+              <p style="margin:10px 0 0 0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:10px;line-height:16px;color:rgba(255,255,255,0.22);">
                 &copy; 2026 Guapo ApS &middot; CVR: 45285191
               </p>
             </td>

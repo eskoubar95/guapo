@@ -31,24 +31,27 @@ export default async function inviteEmailHandler({
 
   const subject = `You've been invited to join ${STORE_NAME}`;
   const pIntro =
-    "margin:0 0 16px 0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:15px;line-height:26px;color:#4a5568;text-align:center;";
+    "margin:0 0 16px 0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:15px;line-height:26px;color:#334155;text-align:left;";
   const pMuted =
-    "margin:16px 0 0 0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:12px;line-height:20px;color:#7b8599;text-align:center;word-break:break-all;";
+    "margin:16px 0 0 0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#64748b;text-align:left;";
   const body = buildGuapoEmailDocument({
     lang: "en",
+    tone: "admin",
     documentTitle: subject,
     preheader: `Accept your invitation to join the ${STORE_NAME} admin team.`,
-    heroTitle: "You're invited",
-    heroSubtitle: `${escapeHtml(STORE_NAME)} Admin`,
+    heroTitle: "Admin invitation",
+    heroSubtitle: `${escapeHtml(STORE_NAME)} · Medusa`,
+    mainAlign: "left",
     mainHtml: `
-      <p style="${pIntro}">You have been invited to join <strong style="color:#0a0e1a;">${escapeHtml(STORE_NAME)}</strong> on Medusa Admin. Click the button below to accept and set up your account.</p>
-      <div style="margin:8px 0 24px 0;text-align:center;">
+      <p style="${pIntro}">You have been invited to join <strong style="color:#051537;">${escapeHtml(STORE_NAME)}</strong> on Medusa Admin. Use the button below to accept and set your password.</p>
+      <div style="margin:12px 0 20px 0;text-align:left;">
         ${ctaButton(inviteUrl, "Accept invitation")}
       </div>
-      <p style="${pMuted}">If the button does not work, copy and paste this link into your browser:<br>${escapeHtml(inviteUrl)}</p>
+      <p style="${pMuted}">If the button does not work, open this link in your browser (personal — do not forward):</p>
+      <p style="margin:8px 0 0 0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;line-height:16px;color:#475569;word-break:break-all;">${escapeHtml(inviteUrl)}</p>
     `.trim(),
-    closingTitle: "We will see you\nin the dashboard",
-    closingSubtitle: "This link is personal — do not share it.",
+    closingTitle: "",
+    closingSubtitle: "",
     closingBody: "",
     footerLegal:
       "You are receiving this email because an administrator invited you to Guapo Admin. If this was a mistake, you can ignore this message.",

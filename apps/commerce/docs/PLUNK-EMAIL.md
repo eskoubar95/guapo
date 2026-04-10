@@ -20,7 +20,7 @@ Transactional emails via [Plunk](https://useplunk.com/) using the **Next API** (
    | `PLUNK_STORE_NAME`| Valgfri butiksnavn i invite-mails (default: Guapo). |
    | `GUAPO_EMAIL_ASSET_BASE` | Valgfri base-URL til hero/logo i HTML-mails (samme som nyhedsbrev). Default: Supabase `newsletter`-mappe. |
 
-HTML-skallen (Inter/Lexend, farver, hero-baggrund, logo, navy footer) ligger i `src/lib/transactional-email/email-layout.ts` og bruges af invite + `order_confirmation` + `subscription_created`.
+HTML-skallen (Inter/Lexend, farver, **kompakt header** med logo — uden newsletter-hero) ligger i `src/lib/transactional-email/email-layout.ts` og bruges af invite + `order_confirmation` + `subscription_created` (+ øvrige lifecycle-skabeloner). Admin-invite bruger `tone: "admin"` (ingen stor navy “closing”-banner).
 
 ## Hvad der er implementeret
 

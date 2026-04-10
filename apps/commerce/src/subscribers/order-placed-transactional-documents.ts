@@ -1,8 +1,9 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework";
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
 import { updateOrderWorkflow } from "@medusajs/medusa/core-flows";
 import {
   buildOrderDocumentPdfBuffers,
+  buildOrderEmailMoneySummary,
   getOrderDocumentGraphFields,
   type OrderShapeForDocuments,
 } from "../lib/documents/order-document-generation";
@@ -98,6 +99,7 @@ export default async function orderPlacedTransactionalDocuments({
     order.display_id != null ? String(order.display_id) : orderId.replace(/[^a-zA-Z0-9_-]/g, "").slice(-12) || "order";
 
   if (!metadata.transactional?.order_confirmation_sent_at && order.email) {
+    const money = buildOrderEmailMoneySummary(order);
     const emailResult = await sendTransactionalEmail(
       {
         template: "order_confirmation",
@@ -108,6 +110,8 @@ export default async function orderPlacedTransactionalDocuments({
           orderId,
           displayId: order.display_id,
           storefrontOrderUrl,
+          money,
+          vatRatePercent: seller.vatRatePercent,
         },
         attachments: [
           {
@@ -147,6 +151,48 @@ export default async function orderPlacedTransactionalDocuments({
     !metadata.transactional?.subscription_created_sent_at &&
     order.email
   ) {
+    const productModule = container.resolve(Modules.PRODUCT) as {
+      listProductVariants: (
+        filters: { id: string | string[] },
+        config?: { relations?: string[] }
+      ) => Promise<
+        Array<{
+          title?: string | null;
+          product?: { title?: string | null };
+        }>
+      >;
+    };
+
+    const subscriptionsPayload = [];
+    for (const s of subscriptionsForOrder) {
+      let productTitle = locale === "da" ? "Produkt" : "Product";
+      let variantTitle: string | undefined;
+      try {
+        const variants = await productModule.listProductVariants(
+          { id: s.variant_id },
+          { relations: ["product"] }
+        );
+        const v = variants?.[0];
+        if (v) {
+          const pt = v.product?.title?.trim();
+          const vt = v.title?.trim();
+          if (pt) productTitle = pt;
+          if (vt && vt !== pt) variantTitle = vt;
+        }
+      } catch {
+        /* product enrichment is best-effort */
+      }
+      const nextAt = s.next_renewal_at ? new Date(s.next_renewal_at) : new Date();
+      subscriptionsPayload.push({
+        productTitle,
+        variantTitle,
+        cycleWeeks: s.cycle_weeks,
+        quantity: s.quantity,
+        nextRenewalAtIso: Number.isNaN(nextAt.getTime()) ? new Date().toISOString() : nextAt.toISOString(),
+        discountPercent: s.discount_percent,
+      });
+    }
+
     const emailResult = await sendTransactionalEmail(
       {
         template: "subscription_created",
@@ -155,7 +201,10 @@ export default async function orderPlacedTransactionalDocuments({
         idempotencyKey: `subscription_created:${orderId}`,
         payload: {
           orderId,
+          displayId: order.display_id,
           storefrontSubscriptionsUrl,
+          storefrontOrderUrl,
+          subscriptions: subscriptionsPayload,
         },
       },
       logger

@@ -253,16 +253,33 @@ export async function createSubscriptionsForPlacedOrder(
   }
 }
 
+/** Subscriptions linked to an order (for transactional email enrichment). */
+export type SubscriptionForOrderList = {
+  id: string;
+  cycle_weeks: number;
+  next_renewal_at: Date | string;
+  variant_id: string;
+  quantity: number;
+  discount_percent: number;
+};
+
 /**
  * Returns subscriptions whose metadata.order_id matches (for gating emails).
  */
 export async function listSubscriptionsForOrder(
   container: MedusaContainer,
   orderId: string
-): Promise<Array<{ id: string }>> {
+): Promise<SubscriptionForOrderList[]> {
   const subscriptionService = container.resolve<SubscriptionModuleService>(SUBSCRIPTION_MODULE);
   const list = await subscriptionService.listSubscriptions({}, { take: 2000 });
-  return (list ?? []).filter(
-    (s) => (s.metadata as Record<string, unknown> | null)?.order_id === orderId
-  );
+  return (list ?? [])
+    .filter((s) => (s.metadata as Record<string, unknown> | null)?.order_id === orderId)
+    .map((s) => ({
+      id: s.id,
+      cycle_weeks: s.cycle_weeks ?? 8,
+      next_renewal_at: s.next_renewal_at,
+      variant_id: s.variant_id,
+      quantity: s.quantity ?? 1,
+      discount_percent: s.discount_percent ?? 5,
+    }));
 }
