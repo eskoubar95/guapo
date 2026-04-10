@@ -18,6 +18,10 @@ import {
   sendTransactionalEmail,
 } from "../lib/transactional-email/service";
 import { isSubscriptionLineMetadata } from "../lib/subscription-cycle-metadata";
+import {
+  createSubscriptionsForPlacedOrder,
+  listSubscriptionsForOrder,
+} from "../lib/create-subscriptions-from-placed-order";
 
 export default async function orderPlacedTransactionalDocuments({
   event,
@@ -46,6 +50,13 @@ export default async function orderPlacedTransactionalDocuments({
   });
   const order = data?.[0] as OrderShapeForDocuments | undefined;
   if (!order) return;
+
+  /**
+   * Ensure Subscription rows exist in the same process as PDFs/emails (worker often handles this
+   * subscriber while order-placed-create-subscriptions may not run or may run later on Redis).
+   * Idempotent with the dedicated order.placed subscriber.
+   */
+  await createSubscriptionsForPlacedOrder(container, orderId);
 
   const metadata = readOrderMetadata(order.metadata);
   if (metadata.documents?.order_confirmation_pdf_base64 && metadata.documents?.invoice_pdf_base64) {
@@ -116,7 +127,26 @@ export default async function orderPlacedTransactionalDocuments({
     }
   }
 
-  if (hasSubscriptionLine && !metadata.transactional?.subscription_created_sent_at && order.email) {
+  const subscriptionsForOrder =
+    hasSubscriptionLine && order.email
+      ? await listSubscriptionsForOrder(container, orderId)
+      : [];
+  if (
+    hasSubscriptionLine &&
+    subscriptionsForOrder.length === 0 &&
+    !metadata.transactional?.subscription_created_sent_at &&
+    order.email
+  ) {
+    logger?.warn?.(
+      `[order-placed-transactional-documents] Skipping subscription_created email for ${orderId}: no Subscription rows (Stripe/customer/payment resolution failed).`
+    );
+  }
+  if (
+    hasSubscriptionLine &&
+    subscriptionsForOrder.length > 0 &&
+    !metadata.transactional?.subscription_created_sent_at &&
+    order.email
+  ) {
     const emailResult = await sendTransactionalEmail(
       {
         template: "subscription_created",
