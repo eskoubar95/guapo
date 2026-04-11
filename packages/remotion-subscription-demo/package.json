@@ -1,0 +1,23 @@
+{
+  "name": "@guapo/remotion-subscription-demo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "remotion studio src/index.ts",
+    "build": "remotion bundle src/index.ts",
+    "render": "remotion render src/index.ts SubscriptionLoop out/subscription-loop.mp4",
+    "render:still": "remotion still src/index.ts SubscriptionLoop out/poster.png --frame=45"
+  },
+  "dependencies": {
+    "@remotion/google-fonts": "4.0.448",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.448",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@remotion/cli": "4.0.448",
+    "@types/react": "^19",
+    "typescript": "^5"
+  }
+}
