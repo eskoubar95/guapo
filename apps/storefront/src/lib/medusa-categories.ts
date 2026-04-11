@@ -1,14 +1,18 @@
 /**
  * Medusa Store API — categories for storefront.
  * Fetches from NEXT_PUBLIC_MEDUSA_BACKEND_URL/store/product-categories.
- * Optional Payload enrichment via PAYLOAD_API_URL for CMS fields (name, body, SEO).
+ * Optional Payload enrichment via PAYLOAD_API_URL / NEXT_PUBLIC_PAYLOAD_API_URL for CMS fields (name, body, SEO).
  */
 
 const MEDUSA_URL =
   (process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000").replace(/\/$/, "") +
   "/store";
 
-const PAYLOAD_URL = process.env.PAYLOAD_API_URL?.replace(/\/$/, "");
+/** Same resolution as payload-media-url / articles — many hosts only set NEXT_PUBLIC_*. */
+const PAYLOAD_URL = (process.env.NEXT_PUBLIC_PAYLOAD_API_URL ?? process.env.PAYLOAD_API_URL ?? "").replace(
+  /\/$/,
+  ""
+);
 
 const CACHE_TTL_MS = 60 * 1000; // 1 min
 const cache = new Map<string, { data: unknown; expires: number }>();
@@ -191,18 +195,22 @@ export async function fetchPayloadCategoryByHandle(
 ): Promise<PayloadCategoryEnrichment | null> {
   if (!PAYLOAD_URL) return null;
   try {
+    const fallbackLocale = locale === "da" ? "en" : "da";
     const params = new URLSearchParams({
-      "where[handle][equals]": handle,
-      limit: "1",
       locale,
-      depth: "1",
-      /** Match other Payload storefront loaders: fill fields when requested locale is empty. */
-      "fallback-locale": locale === "da" ? "en" : "da",
+      "fallback-locale": fallbackLocale,
     });
-    const res = await fetch(`${PAYLOAD_URL}/api/categories?${params}`, {
-      headers: { "Content-Type": "application/json" },
-      next: { revalidate: 60 },
-    });
+    /** Storefront proxy route uses Payload Local API (reliable vs raw REST where-queries). */
+    const res = await fetch(
+      `${PAYLOAD_URL}/api/storefront/category/${encodeURIComponent(handle)}?${params}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Accept-Language": locale === "da" ? "da,en" : "en,da",
+        },
+        next: { revalidate: 60 },
+      }
+    );
     if (!res.ok) return null;
     const json = (await res.json()) as { docs?: Array<Record<string, unknown>> };
     const doc = json.docs?.[0];
