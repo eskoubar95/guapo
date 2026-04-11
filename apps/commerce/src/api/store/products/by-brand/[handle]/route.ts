@@ -33,17 +33,13 @@ const STORE_BRAND_PLP_FIELDS = [
 /**
  * GET /store/products/by-brand/:handle
  *
- * **Why not `filters: { brand: { handle } }` on `product`?** Medusa’s own docs note that
- * filtering by *linked* models via `query.graph` is limited; the index engine path also
- * diverges from graph. That produced **empty lists** in production while the brand still exists.
+ * Mirrors how core `GET /store/products` applies **sales channels**:
+ * - With **more than one** sales channel in the DB, filtering is done via the
+ *   **`product_sales_channel` link** (see `maybeApplyLinkFilter` in Medusa), not by passing
+ *   `sales_channel_id` on the `product` graph filter (that pattern does not match the core list route).
+ * - With **at most one** channel, the store list **drops** the sales-channel filter (same as core middleware).
  *
- * **Stable approach** (documented for `query.graph`):
- * 1. Load the brand and **linked product ids** (`brand → products.id`) — same discovery as the
- *    original pre-pricing route, which did return rows.
- * 2. Load `product` rows with **native** filters: `id: [ ... ]` (see Query “Apply filters”),
- *    plus `status`, `sales_channel_id`, and `variants.calculated_price` via {@link QueryContext}.
- *
- * Caching is disabled for these queries so empty/stale responses are not sticky during rollout.
+ * Brand → product ids: `query.graph` on `brand` with linked **`products.*`** (list link; Medusa docs).
  */
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const handle = req.params.handle as string | undefined
@@ -81,19 +77,54 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const { data: brandRows = [] } = await query.graph(
     {
       entity: 'brand',
-      fields: ['id', 'handle', 'products.id'],
+      fields: ['id', 'handle', 'products.*'],
       filters: { handle },
     },
     { cache: { enable: false } },
   )
 
   const brand = brandRows[0] as { products?: Array<{ id?: string }> } | undefined
-  const productIds = (brand?.products ?? [])
+  let productIds = (brand?.products ?? [])
     .map((p) => p.id)
     .filter((id): id is string => typeof id === 'string' && id.length > 0)
 
   if (productIds.length === 0) {
     return res.json({ products: [], count: 0 })
+  }
+
+  /** Same idea as `applyMaybeLinkFilterIfNecessary` in Medusa store product middlewares. */
+  const salesChannelsQueryRes = await query.graph(
+    {
+      entity: 'sales_channels',
+      fields: ['id'],
+      pagination: { skip: 0, take: 1 },
+    },
+    { cache: { enable: false } },
+  )
+  const salesChannelCount = salesChannelsQueryRes.metadata?.count ?? 0
+
+  if (salesChannelCount > 1) {
+    const { data: linkRows = [] } = await query.graph(
+      {
+        entity: 'product_sales_channel',
+        fields: ['product_id'],
+        filters: {
+          sales_channel_id: salesChannelIds,
+          product_id: productIds,
+        },
+      },
+      { cache: { enable: false } },
+    )
+    productIds = [
+      ...new Set(
+        linkRows
+          .map((row: { product_id?: string }) => row.product_id)
+          .filter((id): id is string => typeof id === 'string' && id.length > 0),
+      ),
+    ]
+    if (productIds.length === 0) {
+      return res.json({ products: [], count: 0 })
+    }
   }
 
   let fields = [...STORE_BRAND_PLP_FIELDS]
@@ -160,14 +191,9 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     }
   }
 
-  /**
-   * Native `id` array filter — supported by `query.graph` (Query docs).
-   * Same sales-channel shape as GET /store/products (`sales_channel_id` on graph path).
-   */
   const productFilters: Record<string, unknown> = {
     id: productIds,
     status: ProductStatus.PUBLISHED,
-    sales_channel_id: salesChannelIds,
   }
 
   const { data: products = [], metadata } = await query.graph(
