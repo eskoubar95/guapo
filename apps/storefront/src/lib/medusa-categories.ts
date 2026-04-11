@@ -208,7 +208,8 @@ export async function fetchPayloadCategoryByHandle(
           "Content-Type": "application/json",
           "Accept-Language": locale === "da" ? "da,en" : "en,da",
         },
-        next: { revalidate: 60 },
+        /** No Data Cache: avoid stale empty `{ docs: [] }` after misconfigured env; no Redis in storefront — this is Next fetch cache. */
+        cache: "no-store",
       }
     );
     if (!res.ok) return null;
