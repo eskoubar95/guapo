@@ -56,6 +56,8 @@ export interface PayloadProductEnrichment {
   title?: string;
   description?: string;
   subtitle?: string;
+  /** SEO group from Payload (OG image populated when API returns depth ≥ 2). */
+  meta?: { title?: string; description?: string; image?: unknown };
   brandName?: string;
   keyIngredients: { name: string; benefit: string }[];
   ingredients: { name: string; inciName?: string }[];
@@ -181,11 +183,24 @@ export async function fetchPayloadProductByHandle(
       .map((c) => extractRelationLabel(c, localeKey))
       .filter((c) => c.da.length > 0 || c.en.length > 0);
 
+    const metaRaw = doc.meta;
+    let meta: PayloadProductEnrichment["meta"];
+    if (metaRaw && typeof metaRaw === "object" && !Array.isArray(metaRaw)) {
+      const m = metaRaw as Record<string, unknown>;
+      const mt = typeof m.title === "string" ? m.title : undefined;
+      const md = typeof m.description === "string" ? m.description : undefined;
+      const img = m.image;
+      if (mt || md || img != null) {
+        meta = { title: mt, description: md, image: img };
+      }
+    }
+
     const result: PayloadProductEnrichment = {
       id: doc.id as string,
       title: title || undefined,
       description: description || undefined,
       subtitle: subtitle || undefined,
+      meta,
       brandName: brandName || undefined,
       keyIngredients,
       ingredients,

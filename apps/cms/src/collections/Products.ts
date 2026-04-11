@@ -1,10 +1,17 @@
 import type { CollectionConfig } from 'payload'
+import {
+  MetaDescriptionField,
+  MetaImageField,
+  MetaTitleField,
+  OverviewField,
+} from '@payloadcms/plugin-seo/fields'
 import { isFromMedusa } from '../lib/access'
 import { medusaProductHandleExists } from '../lib/medusa'
 
 /**
  * Products – Medusa products with CMS content mapped on.
  * Create/delete only from Medusa; editors can only update content.
+ * SEO: @payloadcms/plugin-seo fields (meta title, description, OG image) — storefront PDP metadata.
  */
 export const Products: CollectionConfig = {
   slug: 'products',
@@ -35,7 +42,8 @@ export const Products: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['handle', 'title', 'updatedAt'],
     group: 'Product Content',
-    description: 'Product content keyed by Medusa handle; add from Medusa then edit',
+    description:
+      'Product content keyed by Medusa handle. Sync creates the row from Medusa; edit **per locale** (DA/EN): title, description, ingredients, and **SEO** for the PDP.',
   },
   fields: [
     {
@@ -193,6 +201,35 @@ export const Products: CollectionConfig = {
                   type: 'text',
                   label: 'Manufacturer contact',
                 },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'SEO',
+          description: 'Search snippets (Google) and Open Graph (social / iMessage). Use Generate, then edit.',
+          fields: [
+            {
+              name: 'meta',
+              type: 'group',
+              label: 'SEO & sharing',
+              localized: true,
+              admin: {
+                description:
+                  'Used for **HTML `<title>`**, **meta description**, and **Open Graph** on the product page — **not** the long description in the Description tab.',
+              },
+              fields: [
+                MetaTitleField({ hasGenerateFn: true }),
+                MetaDescriptionField({ hasGenerateFn: true }),
+                MetaImageField({
+                  relationTo: 'media',
+                  hasGenerateFn: true,
+                }),
+                OverviewField({
+                  titlePath: 'meta.title',
+                  descriptionPath: 'meta.description',
+                  imagePath: 'meta.image',
+                }),
               ],
             },
           ],

@@ -12,6 +12,7 @@ import { WishlistButton } from "@/components/product/WishlistButton";
 import { fetchProductByHandle, fetchRecommendedProducts } from "@/lib/medusa-products";
 import { fetchFreeShippingConfig } from "@/lib/free-shipping-config.server";
 import { fetchPayloadProductByHandle } from "@/lib/payload-products";
+import { resolvePayloadMediaUrl } from "@/lib/payload-media-url";
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
 import { productCardA11yFromDict } from "@/components/product-card-a11y";
 import { ProductReviewsSection } from "@/components/ProductReviewsSection";
@@ -31,14 +32,27 @@ export async function generateMetadata({
 
   if (!medusaProduct) return { title: "Product Not Found" };
 
-  const title =
+  const displayTitle =
     payloadProduct?.title ?? medusaProduct.title ?? handle;
-  const description = payloadProduct?.description;
+  const metaTitle = payloadProduct?.meta?.title?.trim();
+  const metaDesc = payloadProduct?.meta?.description?.trim();
+  const ogImage = resolvePayloadMediaUrl(
+    payloadProduct?.meta?.image as Parameters<typeof resolvePayloadMediaUrl>[0],
+  );
 
   return {
-    title,
-    ...(description && { description }),
+    title: metaTitle ? { absolute: metaTitle } : displayTitle,
+    description: metaDesc || undefined,
     alternates: { canonical: `/${locale}/products/${handle}` },
+    openGraph: {
+      title: metaTitle || displayTitle,
+      description: metaDesc || undefined,
+      url: `/${locale}/products/${handle}`,
+      ...(ogImage ? { images: [{ url: ogImage }] } : {}),
+    },
+    ...(ogImage
+      ? { twitter: { card: "summary_large_image" as const, images: [ogImage] } }
+      : {}),
   };
 }
 

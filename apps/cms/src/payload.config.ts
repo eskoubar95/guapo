@@ -62,13 +62,16 @@ export default buildConfig({
         if (collectionConfig?.slug === 'categories' && data?.handle) {
           return `${storefrontUrl}/${loc}/categories/${data.handle}`
         }
+        if (collectionConfig?.slug === 'products' && data?.handle) {
+          return `${storefrontUrl}/${loc}/products/${data.handle}`
+        }
         if (collectionConfig?.slug === 'pages' && data?.path) {
           const pathSegment = data.path === 'home' ? '' : `/${data.path}`
           return `${storefrontUrl}/${loc}${pathSegment}?draft=1`
         }
         return `${storefrontUrl}/${loc}?draft=1`
       },
-      collections: ['pages', 'categories'],
+      collections: ['pages', 'categories', 'products'],
       globals: ['homepage'],
     },
   },
@@ -111,12 +114,16 @@ export default buildConfig({
         const loc = seoLocaleCode(locale)
         const name = pickLocalizedText(doc?.name, loc)
         if (name) return `${name} | Guapo`
+        const productTitle = pickLocalizedText((doc as { title?: unknown })?.title, loc)
+        if (productTitle) return `${productTitle} | Guapo`
         const title = (doc as { title?: string })?.title
-        return title ?? ''
+        return typeof title === 'string' ? title : ''
       },
       generateDescription: ({ doc, locale }) => {
         const loc = seoLocaleCode(locale)
-        const name = pickLocalizedText(doc?.name, loc)
+        const name =
+          pickLocalizedText(doc?.name, loc) ||
+          pickLocalizedText((doc as { title?: unknown })?.title, loc)
         const code = loc ?? 'da'
         if (!name) return ''
         return code === 'da'
