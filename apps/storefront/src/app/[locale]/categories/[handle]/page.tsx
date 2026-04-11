@@ -17,7 +17,7 @@ import { fetchProductsByCategory } from "@/lib/medusa-products";
 import { lexicalToHtml } from "@/lib/lexical-to-html";
 import { resolvePayloadMediaUrl } from "@/lib/payload-media-url";
 import { categoryPlpFiltersEnabled } from "@/lib/feature-flags";
-import { PLPSortSelect } from "./PLPSortSelect";
+import { PLPSortSelect } from "@/components/plp/PLPSortSelect";
 
 interface CategoryPageProps {
   params: Promise<{ locale: string; handle: string }>;

@@ -9,11 +9,7 @@ interface PLPSortSelectProps {
   options: { value: string; label: string }[];
 }
 
-export function PLPSortSelect({
-  currentSort,
-  dictSort,
-  options,
-}: PLPSortSelectProps) {
+export function PLPSortSelect({ currentSort, dictSort, options }: PLPSortSelectProps) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -31,9 +27,7 @@ export function PLPSortSelect({
 
   return (
     <div className="flex items-center gap-3">
-      <label className="text-sm text-muted-foreground hidden sm:block">
-        {dictSort}:
-      </label>
+      <label className="text-sm text-muted-foreground hidden sm:block">{dictSort}:</label>
       <select
         value={currentSort}
         onChange={(e) => handleChange(e.target.value)}

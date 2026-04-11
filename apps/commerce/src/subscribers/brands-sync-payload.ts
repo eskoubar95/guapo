@@ -23,7 +23,11 @@ export default async function brandsSyncPayloadHandler({
 
   await syncPayloadBrandsWorkflow(container).run({
     input: {
-      items: missing.map((b) => ({ brandKey: b.handle, displayName: b.name })),
+      items: missing.map((b) => ({
+        brandKey: b.handle,
+        displayName: b.name,
+        medusa_id: b.id,
+      })),
     },
   })
 }

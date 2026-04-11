@@ -10,7 +10,13 @@ export default async function brandCreatedHandler({
 
   await syncPayloadBrandsWorkflow(container).run({
     input: {
-      items: [{ brandKey: data.handle, displayName: data.name ?? data.handle }],
+      items: [
+        {
+          brandKey: data.handle,
+          displayName: data.name ?? data.handle,
+          medusa_id: data.id,
+        },
+      ],
     },
   })
 }
