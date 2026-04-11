@@ -92,8 +92,8 @@ export function buildGuapoEmailDocument(input: GuapoEmailLayoutInput): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="color-scheme" content="light">
-  <meta name="supported-color-schemes" content="light">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
   <title>${docTitle}</title>
   <!--[if mso]>
   <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
@@ -104,6 +104,28 @@ export function buildGuapoEmailDocument(input: GuapoEmailLayoutInput): string {
     table,td{mso-table-lspace:0pt;mso-table-rspace:0pt}
     img{-ms-interpolation-mode:bicubic;border:0;height:auto;line-height:100%;outline:none;text-decoration:none}
     body{margin:0;padding:0;width:100%!important;height:100%!important}
+    @media (prefers-color-scheme: dark){
+      .guapo-email-outer{background-color:#0f172a!important}
+      .guapo-email-card{background-color:#1e293b!important;border-color:#334155!important}
+      .guapo-email-panel{background-color:#1e293b!important;border-bottom-color:#334155!important}
+      .guapo-email-main{background-color:#1e293b!important}
+      .guapo-email-main-split{background-color:#1e293b!important}
+      .hero-title{color:#f8fafc!important}
+      .hero-sub{color:#94a3b8!important}
+      .guapo-email-main p{color:#cbd5e1!important}
+      .guapo-email-main a{color:#93c5fd!important}
+      .guapo-email-main a[style*="background-color:#051537"]{color:#ffffff!important}
+      .guapo-order-summary{border-color:#334155!important}
+      .guapo-order-line-sep{border-bottom-color:#334155!important}
+      .guapo-order-summary .oc-mt{color:#f1f5f9!important}
+      .guapo-order-summary .oc-ms{color:#94a3b8!important}
+      .guapo-order-summary .oc-mq{color:#94a3b8!important}
+      .guapo-order-summary .oc-line-price{color:#f1f5f9!important}
+      .guapo-order-summary .oc-line-img{border-color:#334155!important}
+      .guapo-order-totals{background-color:#0f172a!important;border-top-color:#334155!important}
+      .guapo-order-totals td{color:#cbd5e1!important}
+      .guapo-order-totals tr:last-child td{color:#f8fafc!important;font-weight:700!important}
+    }
     @media only screen and (max-width:620px){
       .email-container{width:100%!important}
       .mob-pad{padding-left:16px!important;padding-right:16px!important}
@@ -129,21 +151,21 @@ export function buildGuapoEmailDocument(input: GuapoEmailLayoutInput): string {
     ${pre}
   </div>
 
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#eff1f5;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" class="guapo-email-outer" style="background-color:#eff1f5;">
     <tr>
       <td style="padding:20px 12px;" align="center">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" class="email-container" style="max-width:600px;width:100%;margin:0 auto;border-radius:10px;overflow:hidden;background-color:#ffffff;border:1px solid #e2e8f0;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" class="email-container guapo-email-card" style="max-width:600px;width:100%;margin:0 auto;border-radius:10px;overflow:hidden;background-color:#ffffff;border:1px solid #e2e8f0;">
 
           <tr>
-            <td class="header-inner mob-pad" style="padding:28px 28px 20px 28px;text-align:center;background-color:#ffffff;border-bottom:1px solid #e8ecf1;">
+            <td class="header-inner mob-pad guapo-email-panel" style="padding:28px 28px 20px 28px;text-align:center;background-color:#ffffff;border-bottom:1px solid #e8ecf1;">
               <img src="${escapeAttr(logo)}" alt="GUAPO" width="108" style="display:inline-block;width:108px;height:auto;margin:0 0 16px 0;">
               <h1 class="hero-title" style="margin:0;font-family:'Lexend',Arial,Helvetica,sans-serif;font-size:24px;font-weight:800;line-height:32px;color:#051537;letter-spacing:-0.03em;">${heroTitle}</h1>
-              <p style="margin:8px 0 0 0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#64748b;">${heroSub}</p>
+              <p class="hero-sub" style="margin:8px 0 0 0;font-family:'Inter',Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#64748b;">${heroSub}</p>
             </td>
           </tr>
 
           <tr>
-            <td class="mob-pad" style="padding:28px 28px 24px 28px;text-align:${mainAlign};background-color:#ffffff;">
+            <td class="mob-pad guapo-email-main" style="padding:28px 28px 24px 28px;text-align:${mainAlign};background-color:#ffffff;">
               ${input.mainHtml}
             </td>
           </tr>
@@ -151,7 +173,7 @@ export function buildGuapoEmailDocument(input: GuapoEmailLayoutInput): string {
           ${
             showClosing
               ? `<tr>
-            <td style="padding:0 24px;background-color:#ffffff;">
+            <td class="guapo-email-main-split" style="padding:0 24px;background-color:#ffffff;">
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                 <tr><td style="border-top:1px solid #e2e8f0;font-size:0;line-height:0;">&nbsp;</td></tr>
               </table>
