@@ -104,6 +104,64 @@ export interface PayloadCategoryEnrichment {
   meta?: { title?: string; description?: string; image?: unknown };
 }
 
+function pickLocalizedTextField(
+  value: unknown,
+  locale: string
+): string | undefined {
+  if (value == null) return undefined;
+  if (typeof value === "string") {
+    const t = value.trim();
+    return t.length > 0 ? t : undefined;
+  }
+  if (typeof value === "object" && !Array.isArray(value)) {
+    const o = value as Record<string, string | undefined>;
+    const key = locale === "da" ? "da" : "en";
+    const raw = o[key] ?? o.da ?? o.en;
+    if (typeof raw === "string") {
+      const t = raw.trim();
+      return t.length > 0 ? t : undefined;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Localized `meta` group can be flat (REST + ?locale) or nested per locale depending on Payload version.
+ */
+function normalizePayloadCategoryMeta(
+  metaVal: unknown,
+  locale: string
+): PayloadCategoryEnrichment["meta"] | undefined {
+  if (metaVal == null) return undefined;
+  if (typeof metaVal !== "object" || Array.isArray(metaVal)) return undefined;
+  const m = metaVal as Record<string, unknown>;
+
+  const flatTitle = typeof m.title === "string" ? m.title.trim() : undefined;
+  const flatDesc = typeof m.description === "string" ? m.description.trim() : undefined;
+  const flatImage = m.image;
+
+  if (flatTitle || flatDesc || flatImage != null) {
+    return {
+      title: flatTitle || undefined,
+      description: flatDesc || undefined,
+      image: flatImage,
+    };
+  }
+
+  const key = locale === "da" ? "da" : "en";
+  const inner = (m[key] ?? m.da ?? m.en) as Record<string, unknown> | undefined;
+  if (!inner || typeof inner !== "object") return undefined;
+  const t = typeof inner.title === "string" ? inner.title.trim() : undefined;
+  const d = typeof inner.description === "string" ? inner.description.trim() : undefined;
+  const img = inner.image;
+  if (!t && !d && img == null) return undefined;
+  return {
+    title: t || undefined,
+    description: d || undefined,
+    image: img,
+  };
+}
+
 /** Optional: enrich with Payload CMS category data (name override, body, SEO). */
 export async function fetchPayloadCategoryByHandle(
   handle: string,
@@ -125,13 +183,11 @@ export async function fetchPayloadCategoryByHandle(
     const json = (await res.json()) as { docs?: Array<Record<string, unknown>> };
     const doc = json.docs?.[0];
     if (!doc) return null;
-    const nameVal = doc.name;
-    const name = typeof nameVal === "string" ? nameVal : (nameVal as { da?: string; en?: string })?.[locale === "da" ? "da" : "en"];
-    const metaVal = doc.meta;
-    const meta = metaVal as PayloadCategoryEnrichment["meta"] | undefined;
+    const name = pickLocalizedTextField(doc.name, locale);
+    const meta = normalizePayloadCategoryMeta(doc.meta, locale);
     return {
-      name: name as string | undefined,
-      slug: doc.slug as string | undefined,
+      name,
+      slug: pickLocalizedTextField(doc.slug, locale),
       body: doc.body,
       meta,
     };

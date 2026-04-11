@@ -11,6 +11,7 @@ import { productCardA11yFromDict } from "@/components/product-card-a11y";
 import {
   fetchCategoryByHandle,
   fetchPayloadCategoryByHandle,
+  type PayloadCategoryEnrichment,
 } from "@/lib/medusa-categories";
 import { fetchProductsByCategory } from "@/lib/medusa-products";
 import { lexicalToHtml } from "@/lib/lexical-to-html";
@@ -86,6 +87,45 @@ function getPlpSortOptions(locale: string) {
   ];
 }
 
+/** Avoid duplicate "| Guapo" when editors paste full SEO title from SERP preview. */
+function stripTrailingBrandSuffix(title: string): string {
+  return title.replace(/\s*\|\s*Guapo\s*$/i, "").trim();
+}
+
+function CategorySeoBelowProducts({
+  payloadCat,
+  locale,
+}: {
+  payloadCat: PayloadCategoryEnrichment | null;
+  locale: string;
+}) {
+  const meta = payloadCat?.meta;
+  const rawTitle = meta?.title?.trim();
+  const rawDesc = meta?.description?.trim();
+  if (!rawTitle && !rawDesc) return null;
+
+  const heading = rawTitle ? stripTrailingBrandSuffix(rawTitle) : null;
+  const sectionLabel =
+    locale === "da" ? "Kategoribeskrivelse" : "Category description";
+
+  return (
+    <section
+      className="mt-12 border-t border-border pt-8"
+      aria-labelledby={heading ? "category-plp-seo-heading" : undefined}
+      aria-label={heading ? undefined : sectionLabel}
+    >
+      {heading ? (
+        <h2 id="category-plp-seo-heading" className="text-lg font-semibold text-foreground mb-3">
+          {heading}
+        </h2>
+      ) : null}
+      {rawDesc ? (
+        <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">{rawDesc}</p>
+      ) : null}
+    </section>
+  );
+}
+
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { locale, handle } = await params;
   const [medusaCat, payloadCat] = await loadCategoryPageData(handle, locale);
@@ -94,19 +134,19 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const displayName = payloadCat?.name ?? medusaCat.name ?? medusaCat.handle;
   const metaTitle = payloadCat?.meta?.title?.trim();
   const metaDesc = payloadCat?.meta?.description?.trim();
-  const title = metaTitle || displayName;
   const ogImage = resolvePayloadMediaUrl(
     payloadCat?.meta?.image as Parameters<typeof resolvePayloadMediaUrl>[0],
   );
 
   return {
-    title,
+    // Use absolute when SEO title is set so root layout template "%s | Guapo" does not double the suffix.
+    title: metaTitle ? { absolute: metaTitle } : displayName,
     description: metaDesc || undefined,
     alternates: {
       canonical: `/${locale}/categories/${handle}`,
     },
     openGraph: {
-      title,
+      title: metaTitle || displayName,
       description: metaDesc || undefined,
       url: `/${locale}/categories/${handle}`,
       ...(ogImage ? { images: [{ url: ogImage }] } : {}),
@@ -238,6 +278,8 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             <ProductCard key={product.id} product={product} locale={locale} labels={productCardA11y} />
           ))}
         </div>
+
+        <CategorySeoBelowProducts payloadCat={payloadCat} locale={locale} />
 
         {/* Empty state */}
         {products.length === 0 && (
