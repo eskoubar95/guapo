@@ -15,9 +15,12 @@ import { wrapVariantsWithTotalInventoryQuantity } from '@medusajs/medusa/api/uti
 /**
  * GET /store/products/by-brand/:handle
  *
- * Same pricing & sales-channel behaviour as GET /store/products (category PLP), but filtered by
- * linked brand handle. The previous implementation loaded products via `brand → products` graph
- * without `QueryContext` for `variants.calculated_price`, so storefront showed 0 kr.
+ * 1) Resolve product ids via `brand → products` (same discovery as the original route — reliable).
+ * 2) Load those products with `query.graph` using published + sales-channel + pricing context
+ *    (parity with GET /store/products), so variants get `calculated_price`.
+ *
+ * Filtering products only with `brand: { handle }` on the product entity returned **empty** results
+ * in some deployments (graph vs index / filter shape), while the brand graph still lists links.
  */
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const handle = req.params.handle as string | undefined
@@ -52,6 +55,24 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
 
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
 
+  const { data: brands = [] } = await query.graph(
+    {
+      entity: 'brand',
+      fields: ['id', 'products.id'],
+      filters: { handle },
+    },
+    { cache: { enable: true } },
+  )
+
+  const brand = brands[0] as { products?: Array<{ id?: string }> } | undefined
+  const productIds = (brand?.products ?? [])
+    .map((p) => p.id)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0)
+
+  if (productIds.length === 0) {
+    return res.json({ products: [], count: 0 })
+  }
+
   const context: {
     variants?: { calculated_price: ReturnType<typeof QueryContext> }
   } = {}
@@ -83,8 +104,8 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   }
 
   const filters: Record<string, unknown> = {
+    id: { $in: productIds },
     status: ProductStatus.PUBLISHED,
-    brand: { handle },
     sales_channels: { id: salesChannelIds },
   }
 
