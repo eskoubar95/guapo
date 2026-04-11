@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { medusa } from "@/lib/medusa";
 import { clearCartId } from "@/lib/cart";
+import { useCart } from "@/contexts/CartContext";
 
 interface OrderConfirmationCompleteProps {
   locale: string;
@@ -22,6 +23,7 @@ export function OrderConfirmationComplete({
   dict,
 }: OrderConfirmationCompleteProps) {
   const router = useRouter();
+  const { refreshCart } = useCart();
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     cartId ? "loading" : "error"
   );
@@ -39,6 +41,8 @@ export function OrderConfirmationComplete({
         if (res.type === "order" && "order" in res && res.order?.id) {
           try {
             await clearCartId();
+            await refreshCart();
+            router.refresh();
           } catch (err) {
             console.warn("Order completed, but cart cleanup failed:", err);
           }
@@ -63,7 +67,7 @@ export function OrderConfirmationComplete({
     return () => {
       cancelled = true;
     };
-  }, [cartId, locale, router]);
+  }, [cartId, locale, router, refreshCart]);
 
   if (status === "loading") {
     return (

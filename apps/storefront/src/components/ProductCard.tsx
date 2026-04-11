@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, ShoppingCart } from "lucide-react";
+import { Heart, Loader2, ShoppingCart } from "lucide-react";
 import { useTransition } from "react";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { addToCart } from "@/lib/cart";
@@ -206,10 +206,20 @@ export function ProductCard({ product, locale, className, labels }: ProductCardP
               type="button"
               onClick={handleAddToCart}
               disabled={isPending}
-              className="w-8 h-8 shrink-0 rounded-full bg-primary flex items-center justify-center hover:bg-primary-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-70"
+              aria-busy={isPending}
+              className={cn(
+                "w-8 h-8 shrink-0 rounded-full bg-primary flex items-center justify-center transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2",
+                isPending
+                  ? "cursor-wait"
+                  : "hover:bg-primary-hover disabled:opacity-70"
+              )}
               aria-label={a11y.addToCart}
             >
-              <ShoppingCart className="h-4 w-4 text-primary-foreground" />
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin text-primary-foreground" aria-hidden />
+              ) : (
+                <ShoppingCart className="h-4 w-4 text-primary-foreground" />
+              )}
             </button>
           ) : (
             <Link

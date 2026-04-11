@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Minus, Plus } from "lucide-react";
+import { Loader2, Minus, Plus } from "lucide-react";
 import { addToCart } from "@/lib/cart";
 import {
   getCartItemsTotal,
@@ -18,6 +18,7 @@ import {
   formatLowStockLabel,
   getVariantStockInfo,
 } from "@/lib/product-inventory";
+import { cn } from "@/lib/utils";
 
 interface Variant {
   id: string;
@@ -273,10 +274,17 @@ export function ProductPurchaseSection({
         type="button"
         onClick={handleAddToCart}
         disabled={isPending || !selectedVariantId || !stock.inStock}
-        className="mt-6 w-full"
+        aria-busy={isPending}
+        className={cn("mt-6 w-full", isPending && "!opacity-100")}
         size="lg"
       >
-        {isPending ? "..." : added ? addedLabel : addToCartLabel}
+        {isPending ? (
+          <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+        ) : added ? (
+          addedLabel
+        ) : (
+          addToCartLabel
+        )}
       </Button>
       {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
     </>

@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const AUTOPLAY_MS = 7000;
+const SWIPE_THRESHOLD_RATIO = 0.12;
+const CLICK_TOLERANCE_PX = 14;
 
 export interface PromotionSliderSlideData {
   id: string;
@@ -20,8 +22,6 @@ export interface PromotionSliderLabels {
   previousSlide: string;
   nextSlide: string;
   goToSlide: string;
-  pauseAutoplay: string;
-  playAutoplay: string;
 }
 
 interface PromotionSliderProps {
@@ -43,14 +43,20 @@ function resolveHref(slideHref: string | undefined, locale: string): string | un
 
 export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps) {
   const [current, setCurrent] = useState(0);
-  const [paused, setPaused] = useState(false);
+  const [hoverPaused, setHoverPaused] = useState(false);
+  const [focusPaused, setFocusPaused] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const trackRef = useRef<HTMLDivElement>(null);
+  const dragStartXRef = useRef<number | null>(null);
+  const activePointerIdRef = useRef<number | null>(null);
+  const suppressLinkClickRef = useRef(false);
 
   const l = labels ?? {
     previousSlide: "Previous slide",
     nextSlide: "Next slide",
     goToSlide: "Go to slide",
-    pauseAutoplay: "Pause carousel",
-    playAutoplay: "Play carousel",
   };
 
   const goNext = useCallback(() => {
@@ -61,11 +67,13 @@ export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps
     setCurrent((c) => (c - 1 + slides.length) % slides.length);
   }, [slides.length]);
 
+  const autoplayPaused = hoverPaused || focusPaused || isDragging;
+
   useEffect(() => {
-    if (slides.length <= 1 || paused) return;
+    if (slides.length <= 1 || autoplayPaused) return;
     const t = setInterval(goNext, AUTOPLAY_MS);
     return () => clearInterval(t);
-  }, [slides.length, current, paused, goNext]);
+  }, [slides.length, current, autoplayPaused, goNext]);
 
   if (slides.length === 0) return null;
 
@@ -75,24 +83,97 @@ export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps
   const navButtonClass =
     "hidden sm:flex shrink-0 h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (suppressLinkClickRef.current) {
+      e.preventDefault();
+      suppressLinkClickRef.current = false;
+    }
+  };
+
+  const onTrackPointerDownCapture = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!multi) return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    dragStartXRef.current = e.clientX;
+    activePointerIdRef.current = e.pointerId;
+    setIsDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const onTrackPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (activePointerIdRef.current !== e.pointerId || dragStartXRef.current == null) return;
+    setDragOffset(e.clientX - dragStartXRef.current);
+  };
+
+  const finishPointerGesture = (e: React.PointerEvent<HTMLDivElement>, clientX: number) => {
+    if (activePointerIdRef.current !== e.pointerId) return;
+
+    const startX = dragStartXRef.current;
+    const dx = startX != null ? clientX - startX : 0;
+
+    dragStartXRef.current = null;
+    activePointerIdRef.current = null;
+    setIsDragging(false);
+    setDragOffset(0);
+
+    if (Math.abs(dx) > CLICK_TOLERANCE_PX) {
+      suppressLinkClickRef.current = true;
+    }
+
+    const w = trackRef.current?.offsetWidth ?? 300;
+    const threshold = w * SWIPE_THRESHOLD_RATIO;
+    if (Math.abs(dx) > threshold) {
+      if (dx > 0) goPrev();
+      else goNext();
+    }
+
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* already released */
+    }
+  };
+
+  const onTrackPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    finishPointerGesture(e, e.clientX);
+  };
+
+  const onTrackPointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (activePointerIdRef.current !== e.pointerId) return;
+    dragStartXRef.current = null;
+    activePointerIdRef.current = null;
+    setIsDragging(false);
+    setDragOffset(0);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* already released */
+    }
+  };
+
+  const onLostPointerCapture = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (activePointerIdRef.current !== e.pointerId) return;
+    dragStartXRef.current = null;
+    activePointerIdRef.current = null;
+    setIsDragging(false);
+    setDragOffset(0);
+  };
+
   return (
     <section
       className="py-6 sm:py-8 lg:py-10 bg-background"
-      onFocusCapture={() => multi && setPaused(true)}
+      onFocusCapture={() => multi && setFocusPaused(true)}
       onBlurCapture={(e) => {
         if (!multi) return;
         if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-          setPaused(false);
+          setFocusPaused(false);
         }
       }}
-      onTouchStart={() => multi && setPaused(true)}
     >
       <div className="section-container min-w-0">
-        {/* Figma: desktop 2560×875 (≈2.93:1), mobile square (1:1). Side nav from sm+; mobile uses dots + autoplay only. */}
         <div
           className={multi ? "flex min-w-0 items-center gap-1.5 sm:gap-3 md:gap-4" : "min-w-0"}
-          onMouseEnter={() => multi && setPaused(true)}
-          onMouseLeave={() => multi && setPaused(false)}
+          onMouseEnter={() => multi && setHoverPaused(true)}
+          onMouseLeave={() => multi && setHoverPaused(false)}
         >
           {multi && (
             <button
@@ -105,15 +186,27 @@ export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps
             </button>
           )}
           <div
-            className={`relative min-w-0 overflow-hidden rounded-lg sm:rounded-xl aspect-square md:aspect-[2560/875] bg-muted ${
-              multi ? "flex-1" : "w-full"
-            }`}
+            ref={trackRef}
+            className={`relative min-w-0 overflow-hidden rounded-lg sm:rounded-xl aspect-square md:aspect-[2560/875] bg-muted touch-pan-y ${
+              multi ? "flex-1 cursor-grab active:cursor-grabbing" : "w-full"
+            } ${isDragging ? "select-none" : ""}`}
+            onPointerDownCapture={onTrackPointerDownCapture}
+            onPointerMove={onTrackPointerMove}
+            onPointerUp={onTrackPointerUp}
+            onPointerCancel={onTrackPointerCancel}
+            onLostPointerCapture={onLostPointerCapture}
           >
             <div
-              className="flex h-full transition-transform duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:duration-0 will-change-transform"
+              className={`flex h-full will-change-transform ${
+                isDragging
+                  ? "transition-none motion-reduce:transition-none"
+                  : "transition-transform duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:duration-0"
+              }`}
               style={{
                 width: multi ? `${slides.length * 100}%` : "100%",
-                transform: multi ? `translateX(-${current * pctPerSlide}%)` : undefined,
+                transform: multi
+                  ? `translateX(calc(-${current * pctPerSlide}% + ${dragOffset}px))`
+                  : undefined,
               }}
             >
               {slides.map((slide, index) => {
@@ -134,7 +227,7 @@ export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps
                       alt=""
                       width={2560}
                       height={875}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover pointer-events-none"
                       loading={eagerLoad ? "eager" : "lazy"}
                       fetchPriority={index === 0 ? "high" : undefined}
                     />
@@ -150,6 +243,7 @@ export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps
                       <Link
                         href={href}
                         aria-label={slideLabel}
+                        onClick={handleLinkClick}
                         className="absolute inset-0 block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
                       >
                         {inner}
@@ -174,33 +268,18 @@ export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps
           )}
         </div>
         {multi && (
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => setPaused((p) => !p)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              aria-pressed={paused}
-              aria-label={paused ? l.playAutoplay : l.pauseAutoplay}
-            >
-              {paused ? (
-                <Play className="h-4 w-4" aria-hidden />
-              ) : (
-                <Pause className="h-4 w-4" aria-hidden />
-              )}
-            </button>
-            <div className="flex justify-center gap-2">
-              {slides.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setCurrent(i)}
-                  className={`h-2 w-2 rounded-full transition-colors ${
-                    i === current ? "bg-primary" : "bg-border"
-                  }`}
-                  aria-label={`${l.goToSlide} ${i + 1}`}
-                />
-              ))}
-            </div>
+          <div className="mt-4 flex justify-center gap-2">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setCurrent(i)}
+                className={`h-2 w-2 rounded-full transition-colors ${
+                  i === current ? "bg-primary" : "bg-border"
+                }`}
+                aria-label={`${l.goToSlide} ${i + 1}`}
+              />
+            ))}
           </div>
         )}
       </div>
