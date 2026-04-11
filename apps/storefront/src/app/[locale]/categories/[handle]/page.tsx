@@ -12,8 +12,6 @@ import {
   fetchCategoryByHandle,
   fetchPayloadCategoryByHandle,
   resolveCategoryDisplayTitle,
-  stripCategorySeoTitleSuffix,
-  type PayloadCategoryEnrichment,
 } from "@/lib/medusa-categories";
 import { fetchProductsByCategory } from "@/lib/medusa-products";
 import { lexicalToHtml } from "@/lib/lexical-to-html";
@@ -94,48 +92,6 @@ function getPlpSortOptions(locale: string) {
     { value: "price-desc", label: locale === "da" ? "Pris: Høj til lav" : "Price: High to low" },
     { value: "newest", label: locale === "da" ? "Nyeste" : "Newest" },
   ];
-}
-
-/**
- * Meta snippet under the grid: show description; optional H2 from SEO title only if it adds value vs page H1.
- */
-function CategorySeoBelowProducts({
-  payloadCat,
-  locale,
-  pageHeading,
-}: {
-  payloadCat: PayloadCategoryEnrichment | null;
-  locale: string;
-  pageHeading: string;
-}) {
-  const meta = payloadCat?.meta;
-  const rawTitle = meta?.title?.trim();
-  const rawDesc = meta?.description?.trim();
-  if (!rawTitle && !rawDesc) return null;
-
-  const headingFromMeta = rawTitle ? stripCategorySeoTitleSuffix(rawTitle) : null;
-  const showSubheading =
-    Boolean(headingFromMeta) &&
-    headingFromMeta!.toLowerCase() !== pageHeading.trim().toLowerCase();
-  const sectionLabel =
-    locale === "da" ? "Kategoribeskrivelse" : "Category description";
-
-  return (
-    <section
-      className="mt-12 border-t border-border pt-8"
-      aria-labelledby={showSubheading ? "category-plp-seo-heading" : undefined}
-      aria-label={showSubheading ? undefined : sectionLabel}
-    >
-      {showSubheading ? (
-        <h2 id="category-plp-seo-heading" className="text-lg font-semibold text-foreground mb-3">
-          {headingFromMeta}
-        </h2>
-      ) : null}
-      {rawDesc ? (
-        <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">{rawDesc}</p>
-      ) : null}
-    </section>
-  );
 }
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
@@ -312,12 +268,6 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             dangerouslySetInnerHTML={{ __html: introHtml }}
           />
         ) : null}
-
-        <CategorySeoBelowProducts
-          payloadCat={payloadCat}
-          locale={locale}
-          pageHeading={categoryName}
-        />
       </main>
     </div>
   );

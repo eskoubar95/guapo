@@ -109,7 +109,7 @@ export const Categories: CollectionConfig = {
               localized: true,
               admin: {
                 description:
-                  '**Meta title** and **Meta description** power Google results; **Meta image** is the OG image for shares. Fields are per locale — switch locale in the admin bar.',
+                  'Used for **HTML `<title>`**, **meta description**, and **Open Graph** on the storefront — **not** shown as visible page copy. Long-form text belongs in **Category page body** above.',
               },
               fields: [
                 MetaTitleField({ hasGenerateFn: true }),
