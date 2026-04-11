@@ -39,6 +39,7 @@ This file is a lightweight index of project facts and conventions that are usefu
 - **Supplier**: Qogita (investigation; decision later)
 
 ## Patterns
+- **Storefront product search (`/api/search`, `fetchProductsByQuery`)**: Medusa `GET /store/products?q=` søger ikke i brand-relationen. Søgning suppleres med brands fra `GET /store/brands` og produkter via `GET /store/products/by-brand/:handle` (`fetchProductsByBrand`). Brand-handles scores og sorteres (eksakt handle/navn og hele ord før delstreng; flerords: bedste token eller hele sætningen), derefter flettet og deduplikeret med tekst-resultater først.
 - **Focus styling**: Do **not** use focus rings. Use **active/focus borders** as the focus indicator (especially on inputs). See `spec/07-design-system.md`.
 - **Subscriptions (MVP)**: Cycles 4/8/12 weeks, 5% discount on all renewals, minimum commitment 2 deliveries before cancellation. Controls: skip next delivery, pause, resume, cancel (after commitment). Email-only notifications; renewal reminder 3 days before; failed payments: 2 retries over 3 days then subscription on hold until payment method update. Returns/refunds: same 14-day policy as normal orders; opened products not returnable (except defective); partial refunds supported; if a subscription delivery is refunded/returned, subscription auto-pauses until customer resumes.
 - **Checkout (MVP)**: Guest checkout allowed for one-time purchases; subscriptions require an account.

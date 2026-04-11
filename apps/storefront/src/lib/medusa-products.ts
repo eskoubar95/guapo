@@ -52,7 +52,9 @@ function appendPricingParams(params: URLSearchParams): Promise<void> {
 }
 
 type BrandInfo = { name: string; handle: string };
+type BrandRow = { id: string; name: string; handle: string };
 let brandLookup: Map<string, BrandInfo> | null = null;
+let brandRowsCache: BrandRow[] | null = null;
 let brandLookupExpires = 0;
 
 async function getBrandLookup(): Promise<Map<string, BrandInfo>> {
@@ -64,14 +66,112 @@ async function getBrandLookup(): Promise<Map<string, BrandInfo>> {
     });
     if (res.ok) {
       const json = (await res.json()) as { brands?: Array<{ id: string; name?: string; handle?: string }> };
-      brandLookup = new Map(
-        (json.brands ?? []).map((b) => [b.id, { name: b.name ?? "", handle: b.handle ?? b.id }])
-      );
+      const rows: BrandRow[] = (json.brands ?? []).map((b) => ({
+        id: b.id,
+        name: b.name ?? "",
+        handle: b.handle ?? b.id,
+      }));
+      brandRowsCache = rows;
+      brandLookup = new Map(rows.map((b) => [b.id, { name: b.name, handle: b.handle }]));
       brandLookupExpires = Date.now() + 5 * 60 * 1000;
       return brandLookup;
     }
   } catch { /* fall through */ }
   return brandLookup ?? new Map();
+}
+
+/** Brand rows for search; shares cache with getBrandLookup(). */
+async function getBrandRows(): Promise<BrandRow[]> {
+  await getBrandLookup();
+  return brandRowsCache ?? [];
+}
+
+/** Split brand text into comparable tokens (whole-word matching). */
+function brandTokenSet(text: string): Set<string> {
+  return new Set(
+    text
+      .toLowerCase()
+      .split(/[\s\-_/&,+.]+/)
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0)
+  );
+}
+
+function scoreSingleWordAgainstBrand(
+  name: string,
+  handle: string,
+  nameTokens: Set<string>,
+  handleTokens: Set<string>,
+  w: string
+): number {
+  if (w.length < 2) return 0;
+  if (handle === w) return 100;
+  if (name === w) return 98;
+  if (nameTokens.has(w) || handleTokens.has(w)) return 88;
+  if (name.startsWith(`${w} `) || name.startsWith(`${w}-`) || name.startsWith(`${w}/`)) return 78;
+  if (handle.startsWith(`${w}-`) || handle.startsWith(w)) return 74;
+  if (name.includes(w) || handle.includes(w)) {
+    return w.length <= 3 ? 34 : 52;
+  }
+  return 0;
+}
+
+/**
+ * Higher score = better match. Whole-word and exact handle/name win over arbitrary substring.
+ * Multi-word queries: full phrase or best single meaningful token (e.g. "Anua serum" → brand Anua).
+ */
+function brandMatchScore(b: BrandRow, q: string): number {
+  const trimmed = q.trim().toLowerCase();
+  if (trimmed.length < 2) return 0;
+  const name = b.name.toLowerCase();
+  const handle = b.handle.toLowerCase();
+  const nameTokens = brandTokenSet(b.name);
+  const handleTokens = brandTokenSet(b.handle.replace(/_/g, "-"));
+
+  const queryParts = trimmed.split(/\s+/).filter((p) => p.length >= 2);
+  if (queryParts.length === 0) return 0;
+
+  if (queryParts.length === 1) {
+    return scoreSingleWordAgainstBrand(name, handle, nameTokens, handleTokens, queryParts[0]);
+  }
+
+  const phrase = queryParts.join(" ");
+  const phraseAsHandle = phrase.replace(/\s+/g, "-");
+  if (name.includes(phrase) || handle === phraseAsHandle || handle.includes(phraseAsHandle)) {
+    return 92;
+  }
+
+  let best = 0;
+  for (const w of queryParts) {
+    const s = scoreSingleWordAgainstBrand(name, handle, nameTokens, handleTokens, w);
+    if (s > best) best = s;
+  }
+  if (best >= 88) return best - 2;
+  if (best > 0) return best - 8;
+  return 0;
+}
+
+/** Distinct brand handles matching the query, best matches first (for product fetch order). */
+function brandHandlesMatchingSearchQuery(rows: BrandRow[], q: string): string[] {
+  const trimmed = q.trim().toLowerCase();
+  if (trimmed.length < 2) return [];
+
+  const scored: Array<{ handle: string; score: number }> = [];
+  for (const b of rows) {
+    if (!b.handle) continue;
+    const score = brandMatchScore(b, trimmed);
+    if (score > 0) scored.push({ handle: b.handle, score });
+  }
+  scored.sort((a, b) => b.score - a.score || a.handle.localeCompare(b.handle));
+
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const { handle } of scored) {
+    if (seen.has(handle)) continue;
+    seen.add(handle);
+    out.push(handle);
+  }
+  return out;
 }
 
 interface MedusaProductResponse {
@@ -382,7 +482,8 @@ export async function fetchProductsBoughtTogether(
 }
 
 /**
- * Search products by query string (Medusa Store API q param).
+ * Search products by query string (Medusa Store API `q`) plus products linked to brands
+ * whose name/handle matches the query (Medusa `q` does not search brand relation).
  */
 export async function fetchProductsByQuery(
   q: string,
@@ -406,12 +507,34 @@ export async function fetchProductsByQuery(
       headers: medusaHeaders(),
       next: { revalidate: 30 },
     });
-    if (!res.ok) return [];
-    const json = (await res.json()) as { products?: MedusaProductResponse[] };
-    const list = json.products ?? [];
-    const products = await Promise.all(list.map(mapMedusaToProduct));
-    setCache(key, products);
-    return products;
+    let primary: Product[] = [];
+    if (res.ok) {
+      const json = (await res.json()) as { products?: MedusaProductResponse[] };
+      const list = json.products ?? [];
+      primary = await Promise.all(list.map(mapMedusaToProduct));
+    }
+
+    const merged: Product[] = [...primary];
+    const seen = new Set(merged.map((p) => p.id));
+
+    if (merged.length < limit) {
+      const rows = await getBrandRows();
+      const handles = brandHandlesMatchingSearchQuery(rows, trimmed).slice(0, 8);
+      for (const h of handles) {
+        if (merged.length >= limit) break;
+        const { products: fromBrand } = await fetchProductsByBrand(h);
+        for (const p of fromBrand) {
+          if (merged.length >= limit) break;
+          if (!seen.has(p.id)) {
+            seen.add(p.id);
+            merged.push(p);
+          }
+        }
+      }
+    }
+
+    setCache(key, merged);
+    return merged;
   } catch {
     return [];
   }
