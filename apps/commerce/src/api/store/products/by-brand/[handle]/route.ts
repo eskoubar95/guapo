@@ -2,13 +2,10 @@ import type { MedusaRequest, MedusaResponse, MedusaStoreRequest } from '@medusaj
 import { refetchEntity } from '@medusajs/framework/http'
 import {
   ContainerRegistrationKeys,
-  FeatureFlag,
-  isPresent,
   MedusaError,
   ProductStatus,
   QueryContext,
 } from '@medusajs/framework/utils'
-import IndexEngineFeatureFlag from '@medusajs/medusa/feature-flags/index-engine'
 import {
   filterOutInternalProductCategories,
   wrapProductsWithTaxPrices,
@@ -16,8 +13,7 @@ import {
 import { wrapVariantsWithInventoryQuantityForSalesChannel } from '@medusajs/medusa/api/utils/middlewares/products/variant-inventory-quantity'
 
 /**
- * Store product list fields aligned with storefront PLP (`medusa-products`); inventory is applied
- * after query via {@link wrapVariantsWithInventoryQuantityForSalesChannel} like GET /store/products.
+ * Store product list fields aligned with storefront PLP (`medusa-products`).
  */
 const STORE_BRAND_PLP_FIELDS = [
   'id',
@@ -37,11 +33,17 @@ const STORE_BRAND_PLP_FIELDS = [
 /**
  * GET /store/products/by-brand/:handle
  *
- * Mirrors core {@link https://github.com/medusajs/medusa/blob/develop/packages/medusa/src/api/store/products/route.ts GET /store/products}:
- * - Same **index engine vs graph** branch (`MEDUSA_FF_INDEX_ENGINE` / FeatureFlag).
- * - **Graph** path: `filters` use `sales_channel_id` (not `sales_channels`) — see `getProducts()`.
- * - **Index** path: `sales_channel_id` → `sales_channels.id` — see `getProductsWithIndexEngine()`.
- * - Pricing: `QueryContext` on `variants.calculated_price` from `region_id` (same as `setPricingContext` middleware).
+ * **Why not `filters: { brand: { handle } }` on `product`?** Medusa’s own docs note that
+ * filtering by *linked* models via `query.graph` is limited; the index engine path also
+ * diverges from graph. That produced **empty lists** in production while the brand still exists.
+ *
+ * **Stable approach** (documented for `query.graph`):
+ * 1. Load the brand and **linked product ids** (`brand → products.id`) — same discovery as the
+ *    original pre-pricing route, which did return rows.
+ * 2. Load `product` rows with **native** filters: `id: [ ... ]` (see Query “Apply filters”),
+ *    plus `status`, `sales_channel_id`, and `variants.calculated_price` via {@link QueryContext}.
+ *
+ * Caching is disabled for these queries so empty/stale responses are not sticky during rollout.
  */
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const handle = req.params.handle as string | undefined
@@ -75,6 +77,24 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
       : 50
 
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+
+  const { data: brandRows = [] } = await query.graph(
+    {
+      entity: 'brand',
+      fields: ['id', 'handle', 'products.id'],
+      filters: { handle },
+    },
+    { cache: { enable: false } },
+  )
+
+  const brand = brandRows[0] as { products?: Array<{ id?: string }> } | undefined
+  const productIds = (brand?.products ?? [])
+    .map((p) => p.id)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0)
+
+  if (productIds.length === 0) {
+    return res.json({ products: [], count: 0 })
+  }
 
   let fields = [...STORE_BRAND_PLP_FIELDS]
   const withInventoryQuantity = fields.some((field) => field.includes('variants.inventory_quantity'))
@@ -140,58 +160,29 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     }
   }
 
-  const baseFilters: Record<string, unknown> = {
+  /**
+   * Native `id` array filter — supported by `query.graph` (Query docs).
+   * Same sales-channel shape as GET /store/products (`sales_channel_id` on graph path).
+   */
+  const productFilters: Record<string, unknown> = {
+    id: productIds,
     status: ProductStatus.PUBLISHED,
-    brand: { handle },
     sales_channel_id: salesChannelIds,
   }
 
-  const queryOptions = {
-    cache: {
-      enable: true,
+  const { data: products = [], metadata } = await query.graph(
+    {
+      entity: 'product',
+      fields,
+      filters: productFilters,
+      pagination,
+      context,
     },
-    locale: req.locale,
-  }
-
-  const useIndexEngine = FeatureFlag.isFeatureEnabled(IndexEngineFeatureFlag.key)
-
-  let products: unknown[] = []
-  let count = 0
-
-  if (useIndexEngine) {
-    const filters = { ...baseFilters }
-    if (isPresent(filters.sales_channel_id)) {
-      const sc = filters.sales_channel_id as string[]
-      filters.sales_channels ??= {}
-      ;(filters.sales_channels as Record<string, unknown>).id = sc
-      delete filters.sales_channel_id
-    }
-    const result = await query.index(
-      {
-        entity: 'product',
-        fields,
-        filters,
-        pagination,
-        context,
-      },
-      queryOptions,
-    )
-    products = result.data ?? []
-    count = result.metadata?.estimate_count ?? products.length
-  } else {
-    const result = await query.graph(
-      {
-        entity: 'product',
-        fields,
-        filters: baseFilters,
-        pagination,
-        context,
-      },
-      queryOptions,
-    )
-    products = result.data ?? []
-    count = result.metadata?.count ?? products.length
-  }
+    {
+      cache: { enable: false },
+      locale: req.locale,
+    },
+  )
 
   filterOutInternalProductCategories(products as Parameters<typeof filterOutInternalProductCategories>[0])
 
@@ -209,6 +200,6 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
 
   res.json({
     products,
-    count,
+    count: metadata?.count ?? products.length,
   })
 }
