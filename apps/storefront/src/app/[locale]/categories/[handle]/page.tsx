@@ -15,6 +15,7 @@ import {
 import { fetchProductsByCategory } from "@/lib/medusa-products";
 import { lexicalToHtml } from "@/lib/lexical-to-html";
 import { resolvePayloadMediaUrl } from "@/lib/payload-media-url";
+import { categoryPlpFiltersEnabled } from "@/lib/feature-flags";
 import { PLPSortSelect } from "./PLPSortSelect";
 
 interface CategoryPageProps {
@@ -27,6 +28,7 @@ const loadCategoryPageData = cache(async (handle: string, locale: string) =>
   Promise.all([fetchCategoryByHandle(handle), fetchPayloadCategoryByHandle(handle, locale)] as const)
 );
 
+/** Hardcoded facet data for FilterSystem; kept when PLP filters are disabled via env (see feature-flags). */
 function getFilterCategories(locale: string): FilterCategory[] {
   const isDa = locale === "da";
   return [
@@ -72,6 +74,15 @@ function getFilterCategories(locale: string): FilterCategory[] {
         { value: isDa ? "Tør hud" : "Dry skin", count: 1234 },
       ],
     },
+  ];
+}
+
+function getPlpSortOptions(locale: string) {
+  return [
+    { value: "featured", label: locale === "da" ? "Anbefalet" : "Featured" },
+    { value: "price-asc", label: locale === "da" ? "Pris: Lav til høj" : "Price: Low to high" },
+    { value: "price-desc", label: locale === "da" ? "Pris: Høj til lav" : "Price: High to low" },
+    { value: "newest", label: locale === "da" ? "Nyeste" : "Newest" },
   ];
 }
 
@@ -177,39 +188,49 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           </div>
         )}
 
-        {/* Filter bar + sort (samme række), uden redundans "Viser X produkter" */}
-        <Suspense fallback={<div className="border-b border-border py-3" />}>
-          <FilterSystem
-            categories={getFilterCategories(locale)}
-            labels={{
-              filters: dict.products.filters,
-              clearFilters: dict.products.clearFilters,
-              activeFilters: dict.products.activeFilters,
-            }}
-            className="mt-6"
-            trailingSlot={
-              <Suspense fallback={<div className="h-10 w-40 rounded-lg border border-border bg-surface-muted" />}>
-                <PLPSortSelect
-                  locale={locale}
-                  currentSort={sort}
-                  dictSort={dict.products.sort}
-                  options={[
-                    { value: "featured", label: locale === "da" ? "Anbefalet" : "Featured" },
-                    {
-                      value: "price-asc",
-                      label: locale === "da" ? "Pris: Lav til høj" : "Price: Low to high",
-                    },
-                    {
-                      value: "price-desc",
-                      label: locale === "da" ? "Pris: Høj til lav" : "Price: High to low",
-                    },
-                    { value: "newest", label: locale === "da" ? "Nyeste" : "Newest" },
-                  ]}
-                />
-              </Suspense>
-            }
-          />
-        </Suspense>
+        {/* Filter bar + sort, eller kun sort når NEXT_PUBLIC_ENABLE_CATEGORY_PLP_FILTERS ikke er true */}
+        {categoryPlpFiltersEnabled ? (
+          <Suspense fallback={<div className="border-b border-border py-3" />}>
+            <FilterSystem
+              categories={getFilterCategories(locale)}
+              labels={{
+                filters: dict.products.filters,
+                clearFilters: dict.products.clearFilters,
+                activeFilters: dict.products.activeFilters,
+              }}
+              className="mt-6"
+              trailingSlot={
+                <Suspense
+                  fallback={<div className="h-10 w-40 rounded-lg border border-border bg-surface-muted" />}
+                >
+                  <PLPSortSelect
+                    locale={locale}
+                    currentSort={sort}
+                    dictSort={dict.products.sort}
+                    options={getPlpSortOptions(locale)}
+                  />
+                </Suspense>
+              }
+            />
+          </Suspense>
+        ) : (
+          <div className="mt-6">
+            <div className="sticky top-0 z-30 border-b border-border bg-white">
+              <div className="flex items-center justify-end gap-3 overflow-x-auto py-3 scrollbar-hide">
+                <Suspense
+                  fallback={<div className="h-10 w-40 rounded-lg border border-border bg-surface-muted" />}
+                >
+                  <PLPSortSelect
+                    locale={locale}
+                    currentSort={sort}
+                    dictSort={dict.products.sort}
+                    options={getPlpSortOptions(locale)}
+                  />
+                </Suspense>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Product Grid */}
         <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 lg:gap-4">
@@ -222,16 +243,20 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         {products.length === 0 && (
           <div className="py-16 text-center">
             <p className="text-muted-foreground mb-4">
-              {locale === "da"
-                ? "Ingen produkter matcher dine filtre"
-                : "No products match your filters"}
+              {categoryPlpFiltersEnabled
+                ? locale === "da"
+                  ? "Ingen produkter matcher dine filtre"
+                  : "No products match your filters"
+                : dict.products.noResults}
             </p>
-            <Link
-              href={`/${locale}/categories/${handle}`}
-              className="font-medium text-primary hover:underline"
-            >
-              {dict.products.clearFilters}
-            </Link>
+            {categoryPlpFiltersEnabled ? (
+              <Link
+                href={`/${locale}/categories/${handle}`}
+                className="font-medium text-primary hover:underline"
+              >
+                {dict.products.clearFilters}
+              </Link>
+            ) : null}
           </div>
         )}
       </main>
