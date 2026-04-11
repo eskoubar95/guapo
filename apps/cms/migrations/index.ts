@@ -6,6 +6,7 @@ import * as migration_20260214_fix_lexical_empty_root from './20260214_fix_lexic
 import * as migration_20260215_products_application_to_subtitle from './20260215_products_application_to_subtitle';
 import * as migration_20260215_fix_products_localized_json from './20260215_fix_products_localized_json';
 import * as migration_20260308_content_block_text_only_left from './20260308_content_block_text_only_left';
+import * as migration_20260411_image_text_breakout_visual_video from './20260411_image_text_breakout_visual_video';
 
 export const migrations = [
   {
@@ -47,5 +48,10 @@ export const migrations = [
     up: migration_20260308_content_block_text_only_left.up,
     down: migration_20260308_content_block_text_only_left.down,
     name: '20260308_content_block_text_only_left',
+  },
+  {
+    up: migration_20260411_image_text_breakout_visual_video.up,
+    down: migration_20260411_image_text_breakout_visual_video.down,
+    name: '20260411_image_text_breakout_visual_video',
   },
 ];
