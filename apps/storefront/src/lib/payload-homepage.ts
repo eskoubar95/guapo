@@ -89,7 +89,9 @@ export interface ContentBlockBlock extends HomepageBlockBase {
 
 export interface ImageTextBreakoutBlock extends HomepageBlockBase {
   blockType: "image-text-breakout";
+  visualType?: "image" | "video" | null;
   image?: PayloadMedia | number | null;
+  video?: PayloadMedia | number | null;
   imagePosition?: "left" | "right" | null;
   heading?: string | null;
   body?: string | null;

@@ -8,7 +8,10 @@ const bgClassMap = {
 } as const;
 
 export interface ImageTextBreakoutSectionProps {
-  imageUrl: string;
+  /** Billede-URL (tom når kun video bruges). */
+  imageUrl: string | null;
+  /** Uploadet videofil fra Payload; prioriteres over imageUrl når sat. */
+  videoUrl?: string | null;
   imagePosition: "left" | "right";
   heading: string;
   body?: string | null;
@@ -18,8 +21,54 @@ export interface ImageTextBreakoutSectionProps {
   locale: string;
 }
 
+function BreakoutColumnMedia({
+  imageUrl,
+  videoUrl,
+  layout,
+}: {
+  imageUrl: string | null;
+  videoUrl?: string | null;
+  layout: "mobile" | "desktop";
+}) {
+  const isDesktop = layout === "desktop";
+  if (videoUrl) {
+    return (
+      <video
+        src={videoUrl}
+        className={
+          isDesktop
+            ? "block w-full h-full object-contain object-center"
+            : "w-full h-full object-cover object-center"
+        }
+        style={isDesktop ? { borderRadius: "var(--radius-lg)" } : undefined}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        // Decorative loop; copy is in the text column. Muted is required for autoplay in browsers.
+        aria-hidden="true"
+      />
+    );
+  }
+  if (!imageUrl) return null;
+  return (
+    <ImageWithFallback
+      src={imageUrl}
+      alt=""
+      className={
+        isDesktop
+          ? "block w-full h-full object-contain object-center"
+          : "w-full h-full object-cover object-center"
+      }
+      style={isDesktop ? { borderRadius: "var(--radius-lg)" } : undefined}
+    />
+  );
+}
+
 export function ImageTextBreakoutSection({
   imageUrl,
+  videoUrl,
   imagePosition,
   heading,
   body,
@@ -53,10 +102,10 @@ export function ImageTextBreakoutSection({
               >
                 {/* Mobile only: fills row, aligns with text */}
                 <div className="md:hidden w-full h-full rounded-lg overflow-hidden">
-                  <ImageWithFallback
-                    src={imageUrl}
-                    alt=""
-                    className="w-full h-full object-cover object-center"
+                  <BreakoutColumnMedia
+                    imageUrl={imageUrl}
+                    videoUrl={videoUrl}
+                    layout="mobile"
                   />
                 </div>
                 {/* Tablet + desktop: absolute breakout, size scales with breakpoint */}
@@ -65,11 +114,10 @@ export function ImageTextBreakoutSection({
                     className="w-full max-w-[280px] md:max-w-md lg:max-w-lg h-[220px] md:h-[260px] lg:h-[320px] xl:h-[380px] pointer-events-auto overflow-hidden isolate"
                     style={{ borderRadius: "var(--radius-lg)" }}
                   >
-                    <ImageWithFallback
-                      src={imageUrl}
-                      alt=""
-                      className="block w-full h-full object-contain object-center"
-                      style={{ borderRadius: "var(--radius-lg)" }}
+                    <BreakoutColumnMedia
+                      imageUrl={imageUrl}
+                      videoUrl={videoUrl}
+                      layout="desktop"
                     />
                   </div>
                 </div>

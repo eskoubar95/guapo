@@ -175,12 +175,20 @@ export function HomePageSections({
 
           case "image-text-breakout": {
             const b = block as import("@/lib/payload-homepage").ImageTextBreakoutBlock;
+            const useVideo = b.visualType === "video";
             const imgUrl = resolvePayloadMediaUrl(b.image);
-            if (!imgUrl || !b.heading) return null;
+            const videoUrl = useVideo ? resolvePayloadMediaUrl(b.video) : "";
+            if (!b.heading) return null;
+            if (useVideo) {
+              if (!videoUrl) return null;
+            } else if (!imgUrl) {
+              return null;
+            }
             return (
               <ImageTextBreakoutSection
                 key={key}
-                imageUrl={imgUrl}
+                imageUrl={imgUrl || null}
+                videoUrl={useVideo ? videoUrl : null}
                 imagePosition={b.imagePosition === "right" ? "right" : "left"}
                 heading={b.heading}
                 body={b.body ?? null}

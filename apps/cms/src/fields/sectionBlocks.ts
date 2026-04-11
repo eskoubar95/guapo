@@ -403,12 +403,44 @@ export const sectionBlocks: Block[] = [
     },
     fields: [
       {
+        name: 'visualType',
+        type: 'select',
+        defaultValue: 'image',
+        options: [
+          { label: 'Billede', value: 'image' },
+          { label: 'Video (upload)', value: 'video' },
+        ],
+        admin: {
+          description: 'Vælg om kolonnen viser et billede eller en uploadet videofil (MP4/WebM).',
+        },
+      },
+      {
         name: 'image',
         type: 'upload',
         relationTo: 'media',
-        required: true,
         admin: {
           description: 'Billede der vises i den ene kolonne og “bryder ud” over baggrundens højde.',
+          condition: (_: ConditionArg, siblingData: ConditionArg) =>
+            siblingData?.visualType !== 'video',
+        },
+        validate: (value: unknown, { siblingData }: { siblingData: Record<string, unknown> }) => {
+          if (siblingData?.visualType === 'video') return true
+          if (!value) return 'Billede er påkrævet når visuel type er billede'
+          return true
+        },
+      },
+      {
+        name: 'video',
+        type: 'upload',
+        relationTo: 'media',
+        admin: {
+          description: 'Video (fx MP4) — samme breakout-layout som billedet.',
+          condition: (_: ConditionArg, siblingData: ConditionArg) => siblingData?.visualType === 'video',
+        },
+        validate: (value: unknown, { siblingData }: { siblingData: Record<string, unknown> }) => {
+          if (siblingData?.visualType !== 'video') return true
+          if (!value) return 'Video er påkrævet når visuel type er video'
+          return true
         },
       },
       {
