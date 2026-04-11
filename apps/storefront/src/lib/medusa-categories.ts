@@ -191,7 +191,9 @@ function normalizePayloadCategoryMeta(
 /** Optional: enrich with Payload CMS category data (name override, body, SEO). */
 export async function fetchPayloadCategoryByHandle(
   handle: string,
-  locale: string
+  locale: string,
+  /** Medusa `product_category.id` — use when Payload `handle` may differ from URL (sync suffix). */
+  medusaCategoryId?: string
 ): Promise<PayloadCategoryEnrichment | null> {
   if (!PAYLOAD_URL) return null;
   try {
@@ -200,6 +202,9 @@ export async function fetchPayloadCategoryByHandle(
       locale,
       "fallback-locale": fallbackLocale,
     });
+    if (medusaCategoryId) {
+      params.set("medusa_id", medusaCategoryId);
+    }
     /** Storefront proxy route uses Payload Local API (reliable vs raw REST where-queries). */
     const res = await fetch(
       `${PAYLOAD_URL}/api/storefront/category/${encodeURIComponent(handle)}?${params}`,

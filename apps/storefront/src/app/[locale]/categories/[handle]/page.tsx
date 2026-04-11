@@ -26,10 +26,17 @@ interface CategoryPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-/** One fetch per request for metadata + page (Medusa is source of truth for valid handles). */
-const loadCategoryPageData = cache(async (handle: string, locale: string) =>
-  Promise.all([fetchCategoryByHandle(handle), fetchPayloadCategoryByHandle(handle, locale)] as const)
-);
+/**
+ * Medusa first (canonical id), then Payload — sync may store a different `handle` in Payload than the storefront URL.
+ */
+const loadCategoryPageData = cache(async (handle: string, locale: string) => {
+  const medusaCat = await fetchCategoryByHandle(handle);
+  const payloadCat =
+    medusaCat != null
+      ? await fetchPayloadCategoryByHandle(handle, locale, medusaCat.id)
+      : null;
+  return [medusaCat, payloadCat] as const;
+});
 
 /** Hardcoded facet data for FilterSystem; kept when PLP filters are disabled via env (see feature-flags). */
 function getFilterCategories(locale: string): FilterCategory[] {

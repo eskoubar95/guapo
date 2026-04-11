@@ -17,16 +17,27 @@ export async function GET(
     const { searchParams } = new URL(req.url)
     const locale = (searchParams.get('locale') ?? 'da') as 'da' | 'en'
     const fallbackLocale = (searchParams.get('fallback-locale') ?? 'da') as 'da' | 'en'
+    /** Medusa product_category id — preferred lookup when sync gave Payload a suffixed handle (≠ storefront URL handle). */
+    const medusaId = searchParams.get('medusa_id')?.trim() || ''
 
     const payload = await getPayload({ config })
-    const result = await payload.find({
-      collection: 'categories',
-      where: { handle: { equals: handle } },
+    const base = {
+      collection: 'categories' as const,
       limit: 1,
       depth: 2,
       locale,
       fallbackLocale,
-    })
+    }
+    const result =
+      medusaId.length > 0
+        ? await payload.find({
+            ...base,
+            where: { medusa_id: { equals: medusaId } },
+          })
+        : await payload.find({
+            ...base,
+            where: { handle: { equals: handle } },
+          })
 
     const doc = result.docs[0]
     if (!doc) {
