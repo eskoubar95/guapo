@@ -9,12 +9,16 @@ import { isFromMedusa } from '../lib/access'
 import { medusaCategoryHandleExists } from '../lib/medusa'
 
 /**
- * Categories – one document per Medusa product category.
- * handle/medusa_id from Medusa; CMS fields for SEO (plugin) and body (rich text).
- * Create/delete only from Medusa (sync); editors can only update content.
+ * Categories – one document per Medusa product category (sync creates the row; editors own content).
+ * Storefront URL: /{locale}/categories/{handle} — handle comes from Medusa (Medusa tab) and must not be edited to match routing.
+ * SEO: official @payloadcms/plugin-seo fields (meta title, description, OG image) + optional intro body (Lexical).
  */
 export const Categories: CollectionConfig = {
   slug: 'categories',
+  labels: {
+    singular: 'Category',
+    plural: 'Categories',
+  },
   access: {
     read: () => true,
     create: ({ req }) => isFromMedusa(req),
@@ -42,7 +46,8 @@ export const Categories: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['medusa_id', 'handle', 'name', 'parent', 'updatedAt'],
     group: 'Product Content',
-    description: 'Category pages; handle must match Medusa product category',
+    description:
+      'Each row mirrors a Medusa product category. Run **Settings → Payload CMS sync → Categories** in Medusa Admin to create missing documents. Then edit **per locale** (DA/EN): display name, intro body, and SEO. Re-sync updates handle/parent only — it does not overwrite your copy.',
   },
   fields: [
     {
@@ -50,13 +55,26 @@ export const Categories: CollectionConfig = {
       tabs: [
         {
           label: 'Content',
+          description:
+            'What customers see on the category page (H1, intro). Switch locale in the admin bar to translate.',
           fields: [
             {
               name: 'name',
               type: 'text',
               localized: true,
               admin: {
-                description: 'Display name (from Medusa or override)',
+                description:
+                  'Shown as the main heading (H1) on the storefront category page. Override Medusa’s default name per language — e.g. Danish “Ansigtsmasker” while the URL handle stays `face-masks`.',
+              },
+            },
+            {
+              name: 'body',
+              type: 'richText',
+              label: 'Intro (category page)',
+              localized: true,
+              admin: {
+                description:
+                  'Optional editorial intro above the product grid: who it’s for, how to choose, links to guides. Helps SEO and AI summaries; keep it substantive, not keyword stuffing.',
               },
             },
             {
@@ -65,7 +83,7 @@ export const Categories: CollectionConfig = {
               relationTo: 'categories',
               hasMany: false,
               admin: {
-                description: 'Parent category (Medusa hierarchy; set by sync)',
+                description: 'Hierarchy from Medusa; updated by sync. Read-only.',
                 readOnly: true,
               },
             },
@@ -74,29 +92,32 @@ export const Categories: CollectionConfig = {
               type: 'text',
               localized: true,
               admin: {
-                description: 'URL slug override (defaults to handle)',
+                description:
+                  'Reserved for a future localized URL scheme. The live storefront still uses **Medusa handle** in the path (`/da/categories/{handle}`). Safe to leave empty.',
               },
-            },
-            {
-              name: 'body',
-              type: 'richText',
-              label: 'Body content',
-              localized: true,
             },
           ],
         },
         {
           label: 'SEO',
+          description: 'Search snippets (Google) and Open Graph (social / iMessage). Use Generate, then edit.',
           fields: [
             {
               name: 'meta',
               type: 'group',
-              label: 'SEO',
+              label: 'SEO & sharing',
               localized: true,
+              admin: {
+                description:
+                  '**Meta title** and **Meta description** power Google results; **Meta image** is the OG image for shares. Fields are per locale — switch locale in the admin bar.',
+              },
               fields: [
                 MetaTitleField({ hasGenerateFn: true }),
                 MetaDescriptionField({ hasGenerateFn: true }),
-                MetaImageField({ relationTo: 'media', hasGenerateFn: true }),
+                MetaImageField({
+                  relationTo: 'media',
+                  hasGenerateFn: true,
+                }),
                 OverviewField({
                   titlePath: 'meta.title',
                   descriptionPath: 'meta.description',
@@ -108,12 +129,13 @@ export const Categories: CollectionConfig = {
         },
         {
           label: 'Medusa',
+          description: 'Commerce identifiers — synced from Medusa; do not change handle without updating Medusa.',
           fields: [
             {
               name: 'medusa_id',
               type: 'text',
               admin: {
-                description: 'Medusa product_category ID (set by Medusa sync for delete-by-id)',
+                description: 'Medusa `product_category` id — used by sync for updates and deletes.',
                 readOnly: true,
               },
             },
@@ -129,7 +151,8 @@ export const Categories: CollectionConfig = {
                 return true
               },
               admin: {
-                description: 'Medusa category handle (match exactly)',
+                description:
+                  'Canonical URL segment on the storefront: `/{locale}/categories/{handle}`. Must match Medusa; updated by sync.',
                 readOnly: true,
               },
             },

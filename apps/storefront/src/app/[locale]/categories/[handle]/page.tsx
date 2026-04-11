@@ -1,8 +1,10 @@
 import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, cache } from "react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import type { Product } from "@/components/ProductCard";
 import { FilterSystem, type FilterCategory } from "@/components/FilterSystem";
 import { ProductCard } from "@/components/ProductCard";
 import { productCardA11yFromDict } from "@/components/product-card-a11y";
@@ -11,7 +13,8 @@ import {
   fetchPayloadCategoryByHandle,
 } from "@/lib/medusa-categories";
 import { fetchProductsByCategory } from "@/lib/medusa-products";
-import { getProductsForCategory } from "@/lib/plp-products";
+import { lexicalToHtml } from "@/lib/lexical-to-html";
+import { resolvePayloadMediaUrl } from "@/lib/payload-media-url";
 import { PLPSortSelect } from "./PLPSortSelect";
 
 interface CategoryPageProps {
@@ -19,13 +22,10 @@ interface CategoryPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-const fallbackCategoryNames: Record<string, { da: string; en: string }> = {
-  skincare: { da: "Skincare", en: "Skincare" },
-  cleansers: { da: "Rensere", en: "Cleansers" },
-  serums: { da: "Serum", en: "Serums" },
-  moisturizers: { da: "Fugtighedscremer", en: "Moisturizers" },
-  spf: { da: "Solbeskyttelse", en: "Sun Protection" },
-};
+/** One fetch per request for metadata + page (Medusa is source of truth for valid handles). */
+const loadCategoryPageData = cache(async (handle: string, locale: string) =>
+  Promise.all([fetchCategoryByHandle(handle), fetchPayloadCategoryByHandle(handle, locale)] as const)
+);
 
 function getFilterCategories(locale: string): FilterCategory[] {
   const isDa = locale === "da";
@@ -77,18 +77,32 @@ function getFilterCategories(locale: string): FilterCategory[] {
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { locale, handle } = await params;
-  const [medusaCat, payloadCat] = await Promise.all([
-    fetchCategoryByHandle(handle),
-    fetchPayloadCategoryByHandle(handle, locale),
-  ]);
-  const name =
-    payloadCat?.name ?? medusaCat?.name ?? fallbackCategoryNames[handle]?.[locale as "da" | "en"] ?? handle;
+  const [medusaCat, payloadCat] = await loadCategoryPageData(handle, locale);
+  if (!medusaCat) notFound();
+
+  const displayName = payloadCat?.name ?? medusaCat.name ?? medusaCat.handle;
+  const metaTitle = payloadCat?.meta?.title?.trim();
+  const metaDesc = payloadCat?.meta?.description?.trim();
+  const title = metaTitle || displayName;
+  const ogImage = resolvePayloadMediaUrl(
+    payloadCat?.meta?.image as Parameters<typeof resolvePayloadMediaUrl>[0],
+  );
 
   return {
-    title: name,
+    title,
+    description: metaDesc || undefined,
     alternates: {
       canonical: `/${locale}/categories/${handle}`,
     },
+    openGraph: {
+      title,
+      description: metaDesc || undefined,
+      url: `/${locale}/categories/${handle}`,
+      ...(ogImage ? { images: [{ url: ogImage }] } : {}),
+    },
+    ...(ogImage
+      ? { twitter: { card: "summary_large_image" as const, images: [ogImage] } }
+      : {}),
   };
 }
 
@@ -97,33 +111,18 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const filters = await searchParams;
   const dict = await getDictionary(locale as Locale);
   const productCardA11y = productCardA11yFromDict(dict);
-  const localeKey = locale as "da" | "en";
 
   const sort = (filters.sort as string) || "featured";
 
-  // Fetch from Medusa + Payload
-  const [medusaCat, payloadCat] = await Promise.all([
-    fetchCategoryByHandle(handle),
-    fetchPayloadCategoryByHandle(handle, locale),
-  ]);
+  const [medusaCat, payloadCat] = await loadCategoryPageData(handle, locale);
+  if (!medusaCat) notFound();
 
-  const categoryName =
-    payloadCat?.name ?? medusaCat?.name ?? fallbackCategoryNames[handle]?.[localeKey] ?? handle;
+  const categoryName = payloadCat?.name ?? medusaCat.name ?? medusaCat.handle;
+  const introHtml = lexicalToHtml(payloadCat?.body);
 
-  let products: Awaited<ReturnType<typeof getProductsForCategory>>["products"];
-  let total: number;
+  const { products, count: total } = await fetchProductsByCategory(medusaCat.id, sort);
 
-  if (medusaCat?.id) {
-    const res = await fetchProductsByCategory(medusaCat.id, sort);
-    products = res.products;
-    total = res.count;
-  } else {
-    const res = getProductsForCategory(handle, undefined, sort);
-    products = res.products;
-    total = res.total;
-  }
-
-  const subcategories = medusaCat?.category_children ?? [];
+  const subcategories = medusaCat.category_children ?? [];
 
   return (
     <div className="min-h-full bg-white">
@@ -150,6 +149,13 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             {total} {locale === "da" ? "produkter" : "products"}
           </p>
         </div>
+
+        {introHtml ? (
+          <div
+            className="mb-8 prose prose-neutral dark:prose-invert max-w-none text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-4 [&_ul]:list-disc [&_ol]:list-decimal [&_li]:mb-1"
+            dangerouslySetInnerHTML={{ __html: introHtml }}
+          />
+        ) : null}
 
         {/* Subcategories (when category has children from Medusa) */}
         {subcategories.length > 0 && (
@@ -207,7 +213,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
         {/* Product Grid */}
         <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 lg:gap-4">
-          {products.map((product) => (
+          {products.map((product: Product) => (
             <ProductCard key={product.id} product={product} locale={locale} labels={productCardA11y} />
           ))}
         </div>

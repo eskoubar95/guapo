@@ -28,24 +28,47 @@ const dirname = path.dirname(filename)
 
 const storefrontUrl = process.env.STOREFRONT_URL || 'http://localhost:3000'
 
+/** SEO plugin passes `locale` as string or `{ code }` depending on context. */
+function seoLocaleCode(locale: unknown): string | undefined {
+  if (typeof locale === 'string') return locale
+  if (locale && typeof locale === 'object' && 'code' in locale) {
+    return String((locale as { code?: string }).code ?? '')
+  }
+  return undefined
+}
+
+/** Localized or plain string field (e.g. categories.name) → current locale text. */
+function pickLocalizedText(value: unknown, localeCode: string | undefined): string {
+  if (typeof value === 'string') return value.trim()
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const o = value as Record<string, string>
+    const loc = localeCode ?? 'da'
+    return (o[loc] ?? o.da ?? o.en ?? '').trim()
+  }
+  return ''
+}
+
 export default buildConfig({
   admin: {
     user: Users.slug,
     importMap: {
       baseDir: path.resolve(dirname),
     },
-    /** Live Preview: opens storefront in iframe with ?draft=1. Set STOREFRONT_URL in .env (e.g. http://localhost:3000). */
+    /** Live Preview: pages/homepage use ?draft=1; categories open public PLP (same URL as production). */
     livePreview: {
       url: ({ data, collectionConfig, globalConfig, locale }) => {
         const loc = locale?.code ?? 'da'
         if (globalConfig?.slug === 'homepage') return `${storefrontUrl}/${loc}?draft=1`
+        if (collectionConfig?.slug === 'categories' && data?.handle) {
+          return `${storefrontUrl}/${loc}/categories/${data.handle}`
+        }
         if (collectionConfig?.slug === 'pages' && data?.path) {
           const pathSegment = data.path === 'home' ? '' : `/${data.path}`
           return `${storefrontUrl}/${loc}${pathSegment}?draft=1`
         }
         return `${storefrontUrl}/${loc}?draft=1`
       },
-      collections: ['pages'],
+      collections: ['pages', 'categories'],
       globals: ['homepage'],
     },
   },
@@ -81,13 +104,24 @@ export default buildConfig({
       },
     }),
     seoPlugin({
-      collections: [], // categories uses plugin fields directly in tabs (Content | SEO | Medusa)
+      collections: [], // categories (and others) use Meta* fields from plugin in collection tabs
       uploadsCollection: 'media',
       tabbedUI: false,
-      generateTitle: ({ doc }) => {
-        const name = typeof doc?.name === 'string' ? doc.name : (doc?.name as { da?: string } | undefined)?.da
-        if (name) return name
-        return (doc as { title?: string })?.title ?? ''
+      generateTitle: ({ doc, locale }) => {
+        const loc = seoLocaleCode(locale)
+        const name = pickLocalizedText(doc?.name, loc)
+        if (name) return `${name} | Guapo`
+        const title = (doc as { title?: string })?.title
+        return title ?? ''
+      },
+      generateDescription: ({ doc, locale }) => {
+        const loc = seoLocaleCode(locale)
+        const name = pickLocalizedText(doc?.name, loc)
+        const code = loc ?? 'da'
+        if (!name) return ''
+        return code === 'da'
+          ? `Køb ${name} hos Guapo — udvalgte brands, hurtig levering og tryg e-handel.`
+          : `Shop ${name} at Guapo — curated brands, fast delivery and secure checkout.`
       },
     }),
   ],

@@ -100,7 +100,8 @@ export interface PayloadCategoryEnrichment {
   name?: string;
   slug?: string;
   body?: unknown;
-  meta?: { title?: string; description?: string };
+  /** SEO group from Payload (incl. optional OG image relation when fetched with depth). */
+  meta?: { title?: string; description?: string; image?: unknown };
 }
 
 /** Optional: enrich with Payload CMS category data (name override, body, SEO). */
@@ -114,7 +115,7 @@ export async function fetchPayloadCategoryByHandle(
       "where[handle][equals]": handle,
       limit: "1",
       locale,
-      depth: "0",
+      depth: "1",
     });
     const res = await fetch(`${PAYLOAD_URL}/api/categories?${params}`, {
       headers: { "Content-Type": "application/json" },

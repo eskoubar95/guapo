@@ -31,6 +31,14 @@ Payload CMS for Guapo: pages, blog/articles, navigation/footer, homepage builder
 
 Tables live in Postgres schema `payload`. Do not mix with Medusa schema `medusa`.
 
+### Product categories (marketing)
+
+1. In **Medusa Admin**, ensure product categories exist, then open **Settings → Payload CMS sync** and run **Categories** (creates Payload documents with `medusa_id` + `handle`).
+2. In **Payload Admin → Categories**, switch **locale** (DA/EN) and edit:
+   - **Content:** display name (H1), optional intro rich text.
+   - **SEO:** meta title, meta description, OG image — use **Generate** for a starter from the display name, then refine.
+3. Live storefront URL remains `/{locale}/categories/{handle}` from Medusa until a future slug-routing feature. The optional **slug** field in Payload is reserved for later.
+
 ## Troubleshooting: "Tenant or user not found"
 
 This error comes from Supabase’s pooler when the tenant (project) or credentials are not accepted.
