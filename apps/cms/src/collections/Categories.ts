@@ -56,7 +56,7 @@ export const Categories: CollectionConfig = {
         {
           label: 'Content',
           description:
-            'What customers see on the category page (H1, intro). Switch locale in the admin bar to translate.',
+            'Display name (H1), then body below products. Switch locale in the admin bar to translate.',
           fields: [
             {
               name: 'name',
@@ -70,11 +70,11 @@ export const Categories: CollectionConfig = {
             {
               name: 'body',
               type: 'richText',
-              label: 'Intro (category page)',
+              label: 'Category page body',
               localized: true,
               admin: {
                 description:
-                  'Optional editorial intro above the product grid: who it’s for, how to choose, links to guides. Helps SEO and AI summaries; keep it substantive, not keyword stuffing.',
+                  'Editorial content shown **below the product grid** on the storefront (per locale). Use for guides, FAQs, internal links — complements the SEO snippet.',
               },
             },
             {

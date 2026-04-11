@@ -104,6 +104,28 @@ export interface PayloadCategoryEnrichment {
   meta?: { title?: string; description?: string; image?: unknown };
 }
 
+/** Strip trailing brand suffix from SEO titles for use as H1 / headings. */
+export function stripCategorySeoTitleSuffix(title: string): string {
+  return title.replace(/\s*\|\s*Guapo\s*$/i, "").trim();
+}
+
+/**
+ * H1 + `<title>` fallback when `meta.title` is unset: Payload name → stripped SEO title → Medusa name → handle.
+ */
+export function resolveCategoryDisplayTitle(
+  payloadCat: PayloadCategoryEnrichment | null,
+  medusaName: string | undefined,
+  medusaHandle: string
+): string {
+  const fromName = payloadCat?.name?.trim();
+  if (fromName) return fromName;
+  const mt = payloadCat?.meta?.title?.trim();
+  if (mt) return stripCategorySeoTitleSuffix(mt);
+  const m = medusaName?.trim();
+  if (m) return m;
+  return medusaHandle;
+}
+
 function pickLocalizedTextField(
   value: unknown,
   locale: string
@@ -174,6 +196,8 @@ export async function fetchPayloadCategoryByHandle(
       limit: "1",
       locale,
       depth: "1",
+      /** Match other Payload storefront loaders: fill fields when requested locale is empty. */
+      "fallback-locale": locale === "da" ? "en" : "da",
     });
     const res = await fetch(`${PAYLOAD_URL}/api/categories?${params}`, {
       headers: { "Content-Type": "application/json" },

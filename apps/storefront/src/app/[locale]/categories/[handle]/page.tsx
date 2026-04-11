@@ -11,6 +11,8 @@ import { productCardA11yFromDict } from "@/components/product-card-a11y";
 import {
   fetchCategoryByHandle,
   fetchPayloadCategoryByHandle,
+  resolveCategoryDisplayTitle,
+  stripCategorySeoTitleSuffix,
   type PayloadCategoryEnrichment,
 } from "@/lib/medusa-categories";
 import { fetchProductsByCategory } from "@/lib/medusa-products";
@@ -87,36 +89,39 @@ function getPlpSortOptions(locale: string) {
   ];
 }
 
-/** Avoid duplicate "| Guapo" when editors paste full SEO title from SERP preview. */
-function stripTrailingBrandSuffix(title: string): string {
-  return title.replace(/\s*\|\s*Guapo\s*$/i, "").trim();
-}
-
+/**
+ * Meta snippet under the grid: show description; optional H2 from SEO title only if it adds value vs page H1.
+ */
 function CategorySeoBelowProducts({
   payloadCat,
   locale,
+  pageHeading,
 }: {
   payloadCat: PayloadCategoryEnrichment | null;
   locale: string;
+  pageHeading: string;
 }) {
   const meta = payloadCat?.meta;
   const rawTitle = meta?.title?.trim();
   const rawDesc = meta?.description?.trim();
   if (!rawTitle && !rawDesc) return null;
 
-  const heading = rawTitle ? stripTrailingBrandSuffix(rawTitle) : null;
+  const headingFromMeta = rawTitle ? stripCategorySeoTitleSuffix(rawTitle) : null;
+  const showSubheading =
+    Boolean(headingFromMeta) &&
+    headingFromMeta!.toLowerCase() !== pageHeading.trim().toLowerCase();
   const sectionLabel =
     locale === "da" ? "Kategoribeskrivelse" : "Category description";
 
   return (
     <section
       className="mt-12 border-t border-border pt-8"
-      aria-labelledby={heading ? "category-plp-seo-heading" : undefined}
-      aria-label={heading ? undefined : sectionLabel}
+      aria-labelledby={showSubheading ? "category-plp-seo-heading" : undefined}
+      aria-label={showSubheading ? undefined : sectionLabel}
     >
-      {heading ? (
+      {showSubheading ? (
         <h2 id="category-plp-seo-heading" className="text-lg font-semibold text-foreground mb-3">
-          {heading}
+          {headingFromMeta}
         </h2>
       ) : null}
       {rawDesc ? (
@@ -131,7 +136,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const [medusaCat, payloadCat] = await loadCategoryPageData(handle, locale);
   if (!medusaCat) notFound();
 
-  const displayName = payloadCat?.name ?? medusaCat.name ?? medusaCat.handle;
+  const displayName = resolveCategoryDisplayTitle(payloadCat, medusaCat.name, medusaCat.handle);
   const metaTitle = payloadCat?.meta?.title?.trim();
   const metaDesc = payloadCat?.meta?.description?.trim();
   const ogImage = resolvePayloadMediaUrl(
@@ -168,7 +173,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const [medusaCat, payloadCat] = await loadCategoryPageData(handle, locale);
   if (!medusaCat) notFound();
 
-  const categoryName = payloadCat?.name ?? medusaCat.name ?? medusaCat.handle;
+  const categoryName = resolveCategoryDisplayTitle(payloadCat, medusaCat.name, medusaCat.handle);
   const introHtml = lexicalToHtml(payloadCat?.body);
 
   const { products, count: total } = await fetchProductsByCategory(medusaCat.id, sort);
@@ -200,13 +205,6 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             {total} {locale === "da" ? "produkter" : "products"}
           </p>
         </div>
-
-        {introHtml ? (
-          <div
-            className="mb-8 prose prose-neutral dark:prose-invert max-w-none text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-4 [&_ul]:list-disc [&_ol]:list-decimal [&_li]:mb-1"
-            dangerouslySetInnerHTML={{ __html: introHtml }}
-          />
-        ) : null}
 
         {/* Subcategories (when category has children from Medusa) */}
         {subcategories.length > 0 && (
@@ -279,9 +277,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           ))}
         </div>
 
-        <CategorySeoBelowProducts payloadCat={payloadCat} locale={locale} />
-
-        {/* Empty state */}
+        {/* Empty state (above editorial blocks) */}
         {products.length === 0 && (
           <div className="py-16 text-center">
             <p className="text-muted-foreground mb-4">
@@ -301,6 +297,20 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             ) : null}
           </div>
         )}
+
+        {/* Payload rich text — under product grid (CMS "Intro (category page)") */}
+        {introHtml ? (
+          <div
+            className="mt-12 border-t border-border pt-8 prose prose-neutral dark:prose-invert max-w-none text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-4 [&_ul]:list-disc [&_ol]:list-decimal [&_li]:mb-1"
+            dangerouslySetInnerHTML={{ __html: introHtml }}
+          />
+        ) : null}
+
+        <CategorySeoBelowProducts
+          payloadCat={payloadCat}
+          locale={locale}
+          pageHeading={categoryName}
+        />
       </main>
     </div>
   );
