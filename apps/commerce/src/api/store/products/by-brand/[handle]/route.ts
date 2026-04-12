@@ -105,7 +105,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     const { data: brandLinkRows = [] } = await query.graph(
       {
         entity: getProductBrandLinkEntity(),
-        fields: ['product_id', 'product.id'],
+        fields: ['product_id'],
         filters: { brand_id: brand.id },
         pagination: { skip: 0, take: 5000 },
       },
@@ -114,7 +114,7 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     productIds = [
       ...new Set(
         brandLinkRows
-          .map((row: { product_id?: string; product?: { id?: string } }) => row.product_id ?? row.product?.id)
+          .map((row: { product_id?: string }) => row.product_id)
           .filter((id): id is string => typeof id === 'string' && id.length > 0),
       ),
     ]
@@ -220,10 +220,17 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     }
   }
 
+  /**
+   * `wrapVariantsWithInventoryQuantityForSalesChannel` requires either a single channel on the
+   * publishable key OR exactly one `sales_channel_id` on `validatedQuery` (see Medusa
+   * `variant-inventory-quantity.js`). Core `/store/products` gets this via query validation;
+   * we mirror it here so multi-channel keys do not throw a 500.
+   */
+  const primarySalesChannelId = salesChannelIds[0]
   storeReq.validatedQuery = {
     ...(storeReq.validatedQuery ?? {}),
     region_id: regionId,
-    sales_channel_id: salesChannelIds,
+    sales_channel_id: primarySalesChannelId,
   }
 
   const pagination: {
