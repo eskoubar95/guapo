@@ -257,6 +257,10 @@ export interface ProductsResult {
   fetchError?: { status: number; path: string; message?: string };
 }
 
+/** Same bundle as category PLP — keep in sync when changing PLP cards. */
+const MEDUSA_PLP_PRODUCT_FIELDS =
+  "id,handle,title,subtitle,metadata,thumbnail,*images.url,*variants.title,*variants.calculated_price,+variants.inventory_quantity,+variants.manage_inventory,*brand.*";
+
 /**
  * Fetch products by category_id from Medusa.
  * Falls back to mock data when Medusa returns empty or errors.
@@ -273,8 +277,7 @@ export async function fetchProductsByCategory(
     const params = new URLSearchParams({
       category_id: categoryId,
       limit: "50",
-      fields:
-        "id,handle,title,subtitle,metadata,thumbnail,*images.url,*variants.title,*variants.calculated_price,+variants.inventory_quantity,+variants.manage_inventory,*brand.*",
+      fields: MEDUSA_PLP_PRODUCT_FIELDS,
     });
     await appendPricingParams(params);
     if (_sort === "price-asc") params.set("order", "variants.calculated_price:asc");
@@ -350,6 +353,8 @@ function logBrandProductsFetchFailure(
 
 /**
  * Fetch products by brand handle from Medusa.
+ * Uses the same **GET /store/products** path as category PLP (fields, pricing, inventory middleware);
+ * brand linkage is resolved via **GET /store/products/by-brand/:handle/product-ids** on the server.
  */
 export async function fetchProductsByBrand(
   brandHandle: string,
@@ -359,32 +364,57 @@ export async function fetchProductsByBrand(
   const cached = getCached<ProductsResult>(key);
   if (cached !== null) return cached;
 
-  const url = new URL(`${MEDUSA_URL}/products/by-brand/${encodeURIComponent(brandHandle)}`);
-  const regionId = await getRegionId();
-  if (regionId) {
-    url.searchParams.set("region_id", regionId);
-    url.searchParams.set("country_code", "dk");
-  }
-  if (_sort === "price-asc") url.searchParams.set("order", "variants.calculated_price:asc");
-  else if (_sort === "price-desc") url.searchParams.set("order", "variants.calculated_price:desc");
-  else if (_sort === "newest") url.searchParams.set("order", "created_at:desc");
+  const idsUrl = new URL(
+    `${MEDUSA_URL}/products/by-brand/${encodeURIComponent(brandHandle)}/product-ids`
+  );
 
-  const pathForLog = `${url.pathname}${url.search}`;
-  const errorResult = (status: number, message?: string): ProductsResult => ({
+  const errorResult = (pathForLog: string, status: number, message?: string): ProductsResult => ({
     products: [],
     count: 0,
     fetchError: { status, path: pathForLog, message },
   });
 
   try {
-    const res = await fetch(String(url), {
+    const idsRes = await fetch(String(idsUrl), {
+      headers: medusaHeaders(),
+      next: { revalidate: 60 },
+    });
+    const idsPathForLog = `${idsUrl.pathname}${idsUrl.search}`;
+    if (!idsRes.ok) {
+      const bodySnippet = (await idsRes.text()).slice(0, 240).replace(/\s+/g, " ").trim();
+      logBrandProductsFetchFailure(idsPathForLog, idsRes.status, bodySnippet || idsRes.statusText);
+      return errorResult(idsPathForLog, idsRes.status, idsRes.statusText || bodySnippet);
+    }
+    const idsJson = (await idsRes.json()) as { product_ids?: string[] };
+    const rawIds = idsJson.product_ids ?? [];
+    if (rawIds.length === 0) {
+      const empty: ProductsResult = { products: [], count: 0 };
+      setCache(key, empty);
+      return empty;
+    }
+
+    const idList = rawIds.slice(0, 50);
+    const params = new URLSearchParams({
+      limit: "50",
+      fields: MEDUSA_PLP_PRODUCT_FIELDS,
+    });
+    for (const id of idList) {
+      params.append("id", id);
+    }
+    await appendPricingParams(params);
+    if (_sort === "price-asc") params.set("order", "variants.calculated_price:asc");
+    else if (_sort === "price-desc") params.set("order", "variants.calculated_price:desc");
+    else if (_sort === "newest") params.set("order", "created_at:desc");
+
+    const listPathForLog = `/store/products?${params.toString()}`;
+    const res = await fetch(`${MEDUSA_URL}/products?${params}`, {
       headers: medusaHeaders(),
       next: { revalidate: 60 },
     });
     if (!res.ok) {
       const bodySnippet = (await res.text()).slice(0, 240).replace(/\s+/g, " ").trim();
-      logBrandProductsFetchFailure(pathForLog, res.status, bodySnippet || res.statusText);
-      return errorResult(res.status, res.statusText || bodySnippet);
+      logBrandProductsFetchFailure(listPathForLog, res.status, bodySnippet || res.statusText);
+      return errorResult(listPathForLog, res.status, res.statusText || bodySnippet);
     }
     const json = (await res.json()) as { products?: MedusaProductResponse[]; count?: number };
     const list = json.products ?? [];
@@ -394,8 +424,8 @@ export async function fetchProductsByBrand(
     return result;
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    logBrandProductsFetchFailure(pathForLog, 0, message);
-    return errorResult(0, message);
+    logBrandProductsFetchFailure(`/products/by-brand/${encodeURIComponent(brandHandle)}`, 0, message);
+    return errorResult(`/products/by-brand/${encodeURIComponent(brandHandle)}`, 0, message);
   }
 }
 
