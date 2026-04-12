@@ -9,6 +9,29 @@ import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
+/** SEO upload field sometimes serializes as id only; populate so storefront can build og:image. */
+async function ensureProductMetaImage(
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  doc: Record<string, unknown>,
+): Promise<void> {
+  const meta = doc.meta
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return
+  const m = meta as Record<string, unknown>
+  const img = m.image
+  if (typeof img === 'number') {
+    try {
+      const media = await payload.findByID({
+        collection: 'media',
+        id: img,
+        depth: 0,
+      })
+      m.image = media
+    } catch {
+      /* leave as id */
+    }
+  }
+}
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ handle: string }> }
@@ -24,7 +47,7 @@ export async function GET(
       collection: 'products',
       where: { handle: { equals: handle } },
       limit: 1,
-      depth: 3,
+      depth: 4,
       locale,
       fallbackLocale,
     })
@@ -33,6 +56,8 @@ export async function GET(
     if (!doc) {
       return NextResponse.json({ docs: [] }, { status: 200 })
     }
+
+    await ensureProductMetaImage(payload, doc as unknown as Record<string, unknown>)
 
     return NextResponse.json({ docs: [doc] }, { status: 200 })
   } catch (err) {

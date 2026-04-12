@@ -13,6 +13,7 @@ import { fetchProductByHandle, fetchRecommendedProducts } from "@/lib/medusa-pro
 import { fetchFreeShippingConfig } from "@/lib/free-shipping-config.server";
 import { fetchPayloadProductByHandle } from "@/lib/payload-products";
 import { resolvePayloadMediaUrl } from "@/lib/payload-media-url";
+import { getStorefrontSiteUrl, normalizeImageUrlForSharing } from "@/lib/site-url";
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
 import { productCardA11yFromDict } from "@/components/product-card-a11y";
 import { ProductReviewsSection } from "@/components/ProductReviewsSection";
@@ -36,18 +37,33 @@ export async function generateMetadata({
     payloadProduct?.title ?? medusaProduct.title ?? handle;
   const metaTitle = payloadProduct?.meta?.title?.trim();
   const metaDesc = payloadProduct?.meta?.description?.trim();
-  const ogImage = resolvePayloadMediaUrl(
+  const siteUrl = getStorefrontSiteUrl();
+  const pageUrl = `${siteUrl}/${locale}/products/${handle}`;
+
+  const payloadOgRaw = resolvePayloadMediaUrl(
     payloadProduct?.meta?.image as Parameters<typeof resolvePayloadMediaUrl>[0],
   );
+  const medusaGallery = (medusaProduct.images ?? [])
+    .map((img) => img.url)
+    .filter((u): u is string => !!u);
+  const medusaFallback =
+    medusaGallery[0] ?? (medusaProduct.thumbnail ? medusaProduct.thumbnail : undefined);
+  const ogImage =
+    normalizeImageUrlForSharing(payloadOgRaw) ||
+    (medusaFallback ? normalizeImageUrlForSharing(medusaFallback) : "");
 
   return {
+    metadataBase: new URL(siteUrl),
     title: metaTitle ? { absolute: metaTitle } : displayTitle,
     description: metaDesc || undefined,
-    alternates: { canonical: `/${locale}/products/${handle}` },
+    alternates: { canonical: pageUrl },
     openGraph: {
+      type: "website",
+      siteName: "Guapo",
       title: metaTitle || displayTitle,
       description: metaDesc || undefined,
-      url: `/${locale}/products/${handle}`,
+      url: pageUrl,
+      locale,
       ...(ogImage ? { images: [{ url: ogImage }] } : {}),
     },
     ...(ogImage
