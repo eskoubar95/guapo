@@ -134,7 +134,7 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
   const brandName = resolveBrandDisplayTitle(payloadBrand, medusaBrand.name, medusaBrand.handle);
   const introHtml = lexicalToHtml(payloadBrand?.body);
 
-  const { products, count: total } = await fetchProductsByBrand(handle, sort);
+  const { products, count: total, fetchError } = await fetchProductsByBrand(handle, sort);
 
   return (
     <div className="min-h-full bg-white">
@@ -154,9 +154,32 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
         <div className="mb-6">
           <h1 className="text-2xl lg:text-3xl font-semibold text-primary mb-2">{brandName}</h1>
           <p className="text-sm text-muted-foreground">
-            {total} {locale === "da" ? "produkter" : "products"}
+            {fetchError
+              ? locale === "da"
+                ? "Kunne ikke hente antal produkter"
+                : "Could not load product count"
+              : `${total} ${locale === "da" ? "produkter" : "products"}`}
           </p>
         </div>
+
+        {fetchError ? (
+          <div
+            role="alert"
+            className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
+          >
+            <p className="font-medium">
+              {locale === "da"
+                ? "Produktlisten kunne ikke indlæses lige nu. Prøv igen om lidt."
+                : "The product list could not be loaded. Please try again in a moment."}
+            </p>
+            {process.env.NODE_ENV === "development" ? (
+              <p className="mt-2 font-mono text-xs opacity-90">
+                {fetchError.status ? `HTTP ${fetchError.status}` : "Network / parse error"}
+                {fetchError.message ? ` — ${fetchError.message}` : ""}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
         {categoryPlpFiltersEnabled ? (
           <Suspense fallback={<div className="border-b border-border py-3" />}>
@@ -207,7 +230,7 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
           ))}
         </div>
 
-        {products.length === 0 && (
+        {products.length === 0 && !fetchError && (
           <div className="py-16 text-center">
             <p className="text-muted-foreground mb-4">
               {categoryPlpFiltersEnabled

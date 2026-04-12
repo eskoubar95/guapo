@@ -6,6 +6,7 @@ import {
   ProductStatus,
   QueryContext,
 } from '@medusajs/framework/utils'
+import ProductBrandLink from '../../../../../links/product-brand'
 import {
   filterOutInternalProductCategories,
   wrapProductsWithTaxPrices,
@@ -30,12 +31,13 @@ const STORE_BRAND_PLP_FIELDS = [
   '*brand',
 ]
 
-/**
- * Link entity between Product and Brand (see `src/links/product-brand.ts` — `defineLink` entryPoint).
- * Do not rely on `brand` → `products.*` in `query.graph` alone: nested lists can be empty due to
- * join/pagination behaviour; the link row is the source of truth.
- */
-const PRODUCT_BRAND_LINK_ENTITY = 'product_brand'
+const getProductBrandLinkEntity = () => {
+  const entryPoint = (ProductBrandLink as { entryPoint?: string }).entryPoint
+  if (typeof entryPoint === 'string' && entryPoint.length > 0) {
+    return entryPoint
+  }
+  return 'product_brand'
+}
 
 /**
  * GET /store/products/by-brand/:handle
@@ -80,6 +82,9 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
       : 50
 
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+  const logger = req.scope.resolve(ContainerRegistrationKeys.LOGGER) as {
+    warn: (msg: string) => void
+  }
 
   const { data: brandRows = [] } = await query.graph(
     {
@@ -95,19 +100,48 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
     return res.json({ products: [], count: 0 })
   }
 
-  const { data: brandLinkRows = [] } = await query.graph(
-    {
-      entity: PRODUCT_BRAND_LINK_ENTITY,
-      fields: ['product_id'],
-      filters: { brand_id: brand.id },
-      pagination: { skip: 0, take: 5000 },
-    },
-    { cache: { enable: false } },
-  )
+  let productIds: string[] = []
+  try {
+    const { data: brandLinkRows = [] } = await query.graph(
+      {
+        entity: getProductBrandLinkEntity(),
+        fields: ['product_id', 'product.id'],
+        filters: { brand_id: brand.id },
+        pagination: { skip: 0, take: 5000 },
+      },
+      { cache: { enable: false } },
+    )
+    productIds = [
+      ...new Set(
+        brandLinkRows
+          .map((row: { product_id?: string; product?: { id?: string } }) => row.product_id ?? row.product?.id)
+          .filter((id): id is string => typeof id === 'string' && id.length > 0),
+      ),
+    ]
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e)
+    logger.warn(`[store/by-brand] Link query failed for brand ${brand.id}: ${message}`)
+  }
 
-  let productIds = brandLinkRows
-    .map((row: { product_id?: string }) => row.product_id)
-    .filter((id): id is string => typeof id === 'string' && id.length > 0)
+  // Fallback to linked relation query if the link entry point fails or returns empty.
+  if (productIds.length === 0) {
+    const { data: brandWithProducts = [] } = await query.graph(
+      {
+        entity: 'brand',
+        fields: ['id', 'products.id'],
+        filters: { id: brand.id },
+      },
+      { cache: { enable: false } },
+    )
+    const fallbackProducts = (brandWithProducts[0] as { products?: Array<{ id?: string }> } | undefined)?.products ?? []
+    productIds = [
+      ...new Set(
+        fallbackProducts
+          .map((p) => p.id)
+          .filter((id): id is string => typeof id === 'string' && id.length > 0),
+      ),
+    ]
+  }
 
   if (productIds.length === 0) {
     return res.json({ products: [], count: 0 })
