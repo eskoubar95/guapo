@@ -31,6 +31,13 @@ const STORE_BRAND_PLP_FIELDS = [
 ]
 
 /**
+ * Link entity between Product and Brand (see `src/links/product-brand.ts` — `defineLink` entryPoint).
+ * Do not rely on `brand` → `products.*` in `query.graph` alone: nested lists can be empty due to
+ * join/pagination behaviour; the link row is the source of truth.
+ */
+const PRODUCT_BRAND_LINK_ENTITY = 'product_brand'
+
+/**
  * GET /store/products/by-brand/:handle
  *
  * Mirrors how core `GET /store/products` applies **sales channels**:
@@ -39,7 +46,7 @@ const STORE_BRAND_PLP_FIELDS = [
  *   `sales_channel_id` on the `product` graph filter (that pattern does not match the core list route).
  * - With **at most one** channel, the store list **drops** the sales-channel filter (same as core middleware).
  *
- * Brand → product ids: `query.graph` on `brand` with linked **`products.*`** (list link; Medusa docs).
+ * Brand → product ids: `query.graph` on **`product_brand`** with `brand_id` (same link table as Admin).
  */
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const handle = req.params.handle as string | undefined
@@ -77,15 +84,29 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const { data: brandRows = [] } = await query.graph(
     {
       entity: 'brand',
-      fields: ['id', 'handle', 'products.*'],
+      fields: ['id', 'handle'],
       filters: { handle },
     },
     { cache: { enable: false } },
   )
 
-  const brand = brandRows[0] as { products?: Array<{ id?: string }> } | undefined
-  let productIds = (brand?.products ?? [])
-    .map((p) => p.id)
+  const brand = brandRows[0] as { id?: string } | undefined
+  if (!brand?.id) {
+    return res.json({ products: [], count: 0 })
+  }
+
+  const { data: brandLinkRows = [] } = await query.graph(
+    {
+      entity: PRODUCT_BRAND_LINK_ENTITY,
+      fields: ['product_id'],
+      filters: { brand_id: brand.id },
+      pagination: { skip: 0, take: 5000 },
+    },
+    { cache: { enable: false } },
+  )
+
+  let productIds = brandLinkRows
+    .map((row: { product_id?: string }) => row.product_id)
     .filter((id): id is string => typeof id === 'string' && id.length > 0)
 
   if (productIds.length === 0) {

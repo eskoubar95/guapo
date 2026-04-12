@@ -250,6 +250,11 @@ async function mapMedusaToProduct(p: MedusaProductResponse): Promise<Product> {
 export interface ProductsResult {
   products: Product[];
   count: number;
+  /**
+   * When set, the Medusa Store API call failed (non-OK status or network).
+   * Distinguishes “API error” from a real empty catalog. Not cached.
+   */
+  fetchError?: { status: number; path: string; message?: string };
 }
 
 /**
@@ -334,6 +339,15 @@ export async function fetchProductsByHandles(handles: string[]): Promise<Product
   return Promise.all(valid.map(mapMedusaToProduct));
 }
 
+function logBrandProductsFetchFailure(
+  pathForLog: string,
+  status: number,
+  detail?: string
+): void {
+  const msg = `[medusa-products] Brand PLP: GET ${pathForLog} failed${status ? ` (${status})` : ""}${detail ? `: ${detail}` : ""}`;
+  console.error(msg);
+}
+
 /**
  * Fetch products by brand handle from Medusa.
  */
@@ -345,29 +359,43 @@ export async function fetchProductsByBrand(
   const cached = getCached<ProductsResult>(key);
   if (cached !== null) return cached;
 
+  const url = new URL(`${MEDUSA_URL}/products/by-brand/${encodeURIComponent(brandHandle)}`);
+  const regionId = await getRegionId();
+  if (regionId) {
+    url.searchParams.set("region_id", regionId);
+    url.searchParams.set("country_code", "dk");
+  }
+  if (_sort === "price-asc") url.searchParams.set("order", "variants.calculated_price:asc");
+  else if (_sort === "price-desc") url.searchParams.set("order", "variants.calculated_price:desc");
+  else if (_sort === "newest") url.searchParams.set("order", "created_at:desc");
+
+  const pathForLog = `${url.pathname}${url.search}`;
+  const errorResult = (status: number, message?: string): ProductsResult => ({
+    products: [],
+    count: 0,
+    fetchError: { status, path: pathForLog, message },
+  });
+
   try {
-    const url = new URL(`${MEDUSA_URL}/products/by-brand/${encodeURIComponent(brandHandle)}`);
-    const regionId = await getRegionId();
-    if (regionId) {
-      url.searchParams.set("region_id", regionId);
-      url.searchParams.set("country_code", "dk");
-    }
-    if (_sort === "price-asc") url.searchParams.set("order", "variants.calculated_price:asc");
-    else if (_sort === "price-desc") url.searchParams.set("order", "variants.calculated_price:desc");
-    else if (_sort === "newest") url.searchParams.set("order", "created_at:desc");
     const res = await fetch(String(url), {
       headers: medusaHeaders(),
       next: { revalidate: 60 },
     });
-    if (!res.ok) return { products: [], count: 0 };
+    if (!res.ok) {
+      const bodySnippet = (await res.text()).slice(0, 240).replace(/\s+/g, " ").trim();
+      logBrandProductsFetchFailure(pathForLog, res.status, bodySnippet || res.statusText);
+      return errorResult(res.status, res.statusText || bodySnippet);
+    }
     const json = (await res.json()) as { products?: MedusaProductResponse[]; count?: number };
     const list = json.products ?? [];
     const products = await Promise.all(list.map(mapMedusaToProduct));
-    const result = { products, count: json.count ?? products.length };
+    const result: ProductsResult = { products, count: json.count ?? products.length };
     setCache(key, result);
     return result;
-  } catch {
-    return { products: [], count: 0 };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    logBrandProductsFetchFailure(pathForLog, 0, message);
+    return errorResult(0, message);
   }
 }
 
