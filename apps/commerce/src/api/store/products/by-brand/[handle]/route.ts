@@ -22,6 +22,10 @@ import {
  * Stock on PLP cards falls back to “available” when `manage_inventory` is omitted (see storefront
  * `getVariantStockInfo`).
  */
+/**
+ * `query.graph` field paths differ from Store API comma-fields (`*variants` works there only after
+ * middleware transforms). For Remote Query use `relation.*` (see Medusa “Field selection”).
+ */
 const STORE_BRAND_PLP_FIELDS = [
   'id',
   'handle',
@@ -29,10 +33,11 @@ const STORE_BRAND_PLP_FIELDS = [
   'subtitle',
   'metadata',
   'thumbnail',
-  '*images',
-  '*variants',
-  '*variants.options',
-  '*brand',
+  'images.*',
+  'variants.*',
+  'variants.options.*',
+  '+variants.calculated_price',
+  'brand.*',
 ]
 
 const getProductBrandLinkEntity = () => {
@@ -188,7 +193,10 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
       }
     }
 
-    const fields = [...STORE_BRAND_PLP_FIELDS]
+    let fields = [...STORE_BRAND_PLP_FIELDS]
+    if (!regionId) {
+      fields = fields.filter((f) => !f.includes('calculated_price'))
+    }
 
     const context: {
       variants?: { calculated_price: ReturnType<typeof QueryContext> }
