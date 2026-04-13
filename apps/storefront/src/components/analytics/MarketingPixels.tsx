@@ -1,27 +1,11 @@
 "use client";
 
 /**
- * Placeholder for marketing pixels (Meta, TikTok, etc.).
- * Add ConsentScript components with category="marketing" when pixels are configured.
- * Only loads when user has accepted marketing cookies.
+ * Marketing pixels (Meta, TikTok, etc.) should be added inside **Google Tag Manager**
+ * with consent-aware tag configuration, not as separate React snippets.
  *
- * Example Meta Pixel:
- * <ConsentScript
- *   id="meta-pixel"
- *   src="https://connect.facebook.net/en_US/fbevents.js"
- *   category="marketing"
- *   onLoad={() => { fbq('init', 'PIXEL_ID'); fbq('track', 'PageView'); }}
- *   onRevoke={() => { scriptCleanupHelpers.facebookPixel(); }}
- * />
- *
- * Example TikTok Pixel:
- * <ConsentScript
- *   id="tiktok-pixel"
- *   src="https://analytics.tiktok.com/i18n/pixel/... .js"
- *   category="marketing"
- *   onLoad={() => { ttq.load('PIXEL_ID'); ttq.page(); }}
- *   onRevoke={() => { ... clear ttq / cookies ... }}
- * />
+ * The storefront loads GTM after analytics or marketing consent when the container ID
+ * is set in Payload (Tracking global) or NEXT_PUBLIC_GTM_CONTAINER_ID.
  */
 export function MarketingPixels() {
   return null;

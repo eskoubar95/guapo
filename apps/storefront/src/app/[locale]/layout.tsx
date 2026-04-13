@@ -8,6 +8,7 @@ import { CartAndModalProviders } from "@/components/providers/CartAndModalProvid
 import { fetchNavigation, normalizeMenuSections } from "@/lib/payload-navigation";
 import type { NavSection } from "@/lib/payload-navigation";
 import { fetchFooter, resolveFooter } from "@/lib/payload-footer";
+import { fetchTrackingGlobal, resolveGtmContainerId } from "@/lib/payload-tracking";
 import { Toaster } from "sonner";
 import { CookieConsentWrapper } from "@/components/CookieConsentWrapper";
 import { AuthAwareShell } from "@/components/AuthAwareShell";
@@ -71,6 +72,11 @@ export default async function LocaleLayout({
 
   const footerData = await fetchFooter(locale);
   const footer = resolveFooter(locale, footerData);
+  const tracking = await fetchTrackingGlobal();
+  const gtmContainerId = resolveGtmContainerId(
+    tracking,
+    process.env.NEXT_PUBLIC_GTM_CONTAINER_ID
+  );
   const dict = await getDictionary(locale as Locale);
 
   return (
@@ -79,7 +85,7 @@ export default async function LocaleLayout({
         className={`${inter.variable} ${lexend.variable} font-sans antialiased bg-white text-foreground flex min-h-screen flex-col`}
         suppressHydrationWarning
       >
-        <CookieConsentWrapper locale={locale}>
+        <CookieConsentWrapper locale={locale} gtmContainerId={gtmContainerId}>
           <AuthProvider>
             <CartAndModalProviders locale={locale} dict={dict}>
             <AuthAwareShell

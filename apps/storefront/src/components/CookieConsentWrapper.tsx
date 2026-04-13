@@ -9,15 +9,22 @@ import {
 } from "@/components/cookie-consent";
 import { PostHogProvider } from "@/components/analytics/PostHogProvider";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
+import { GoogleTagManager } from "@/components/analytics/GoogleTagManager";
 
 const CONSENT_VERSION = "1.0.0";
 
 interface CookieConsentWrapperProps {
   children: React.ReactNode;
   locale: string;
+  /** Resolved GTM-XXXX from CMS / env; when set, direct GA snippet is skipped to avoid double counting. */
+  gtmContainerId?: string | null;
 }
 
-export function CookieConsentWrapper({ children, locale }: CookieConsentWrapperProps) {
+export function CookieConsentWrapper({
+  children,
+  locale,
+  gtmContainerId = null,
+}: CookieConsentWrapperProps) {
   const privacyPolicyUrl = `/${locale}/policies/privacy`;
 
   return (
@@ -32,7 +39,8 @@ export function CookieConsentWrapper({ children, locale }: CookieConsentWrapperP
       {/* Set Google Consent Mode v2 default (denied) before any gtag loads */}
       <GoogleConsentMode />
       <PostHogProvider>
-        <GoogleAnalytics />
+        <GoogleTagManager containerId={gtmContainerId ?? null} />
+        {!gtmContainerId ? <GoogleAnalytics /> : null}
         {children}
       </PostHogProvider>
       <CookieBanner />

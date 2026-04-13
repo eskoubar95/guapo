@@ -52,13 +52,13 @@ Use it as the project’s **ship gate** during planning and validation.
 - **Privacy/Compliance**: Consent banner with necessary/analytics/marketing; PostHog behind analytics consent; pixels behind marketing consent.
 
 ## Quality gates (must pass to ship MVP)
-- [ ] Core journeys verified end-to-end:
-  - [ ] Browse → PDP → add to cart → checkout → order confirmation
-  - [ ] Subscription purchase → account shows subscription → skip/pause/resume → cancel after commitment
-- [ ] Payment methods validated in staging at least once: cards + one wallet + one alt method (MobilePay/Klarna) (full matrix can follow post-launch)
-- [ ] Stripe subscription recurring is validated in staging (tokenization/mandates + at least one successful renewal simulation)
-- [ ] Supabase schema separation is validated in staging (Medusa + Payload migrations run cleanly). Fallback: separate DB if needed.
-- [ ] Subscription compliance (DK) reviewed and copy/policies updated (renewal notices, cancellation rights, required disclosures).
+- [x] Core journeys verified end-to-end:
+  - [x] Browse → PDP → add to cart → checkout → order confirmation
+  - [x] Subscription purchase → account shows subscription → skip/pause/resume → cancel after commitment
+- [x] Payment methods validated in staging at least once: cards + one wallet + one alt method (MobilePay/Klarna) (full matrix can follow post-launch)
+- [x] Stripe subscription recurring is validated in staging (tokenization/mandates + at least one successful renewal simulation)
+- [x] Supabase schema separation is validated in staging (Medusa + Payload migrations run cleanly). Fallback: separate DB if needed.
+- [x] Subscription compliance (DK) reviewed and copy/policies updated (renewal notices, cancellation rights, required disclosures).
 - [ ] Email deliverability basics configured (SPF/DKIM/DMARC) and key emails render correctly
 - [ ] Consent gating works (no analytics/pixels before consent; correct behavior after)
 - [ ] Error/empty/loading states implemented for primary flows (search empty, cart empty, checkout errors, payment failed, subscription on hold)

@@ -9,6 +9,7 @@ import * as migration_20260308_content_block_text_only_left from './20260308_con
 import * as migration_20260411_image_text_breakout_visual_video from './20260411_image_text_breakout_visual_video';
 import * as migration_20260411_brands_medusa_id_and_meta_image from './20260411_brands_medusa_id_and_meta_image';
 import * as migration_20260412_products_locales_seo_meta from './20260412_products_locales_seo_meta';
+import * as migration_20260413_tracking_global from './20260413_tracking_global';
 
 export const migrations = [
   {
@@ -65,5 +66,10 @@ export const migrations = [
     up: migration_20260412_products_locales_seo_meta.up,
     down: migration_20260412_products_locales_seo_meta.down,
     name: '20260412_products_locales_seo_meta',
+  },
+  {
+    up: migration_20260413_tracking_global.up,
+    down: migration_20260413_tracking_global.down,
+    name: '20260413_tracking_global',
   },
 ];

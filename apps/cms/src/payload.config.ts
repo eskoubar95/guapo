@@ -22,6 +22,7 @@ import { seoPlugin } from '@payloadcms/plugin-seo'
 import { Navigation } from './globals/Navigation'
 import { Footer } from './globals/Footer'
 import { Homepage } from './globals/Homepage'
+import { Tracking } from './globals/Tracking'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -90,7 +91,7 @@ export default buildConfig({
     Ingredients,
   ],
 
-  globals: [Navigation, Footer, Homepage],
+  globals: [Navigation, Footer, Homepage, Tracking],
 
   plugins: [
     s3Storage({

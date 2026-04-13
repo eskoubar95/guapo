@@ -20,3 +20,6 @@ dist/
 # Logs
 *.log
 npm-debug.log*
+
+# Local email preview output (pnpm preview:transactional-emails)
+tmp/
