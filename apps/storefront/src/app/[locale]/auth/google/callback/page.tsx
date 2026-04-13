@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { medusa } from "@/lib/medusa";
 import { getSafeReturnUrl } from "@/lib/auth-utils";
+import { trackUserLoggedIn } from "@/lib/analytics/posthog-ecommerce";
 
 /**
  * Decode JWT payload without verification (Medusa already validated the token).
@@ -58,6 +59,10 @@ export default function GoogleCallbackPage() {
 
         if (!cancelled) {
           setPhase("redirecting");
+          trackUserLoggedIn({
+            method: "google",
+            created_profile: shouldCreateCustomer,
+          });
           window.location.href = destination;
         }
       } catch (err) {

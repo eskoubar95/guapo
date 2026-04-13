@@ -16,6 +16,7 @@ import {
   getCartDiscountTotal,
 } from "@/lib/cart-display";
 import { fetchFreeShippingConfig } from "@/lib/free-shipping-config.server";
+import { TrackCartPageView } from "@/components/analytics/TrackCartPageView";
 
 interface CartPageProps {
   params: Promise<{ locale: string }>;
@@ -64,6 +65,7 @@ export default async function CartPage({ params }: CartPageProps) {
 
         {items.length > 0 ? (
           <>
+            <TrackCartPageView itemCount={itemCount} cartValue={displayTotal} />
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
               <div className="lg:col-span-7 xl:col-span-8">
                 <div className="bg-card rounded-lg border border-border">
@@ -173,6 +175,7 @@ export default async function CartPage({ params }: CartPageProps) {
             <CartMobileDrawer
               locale={locale}
               total={displayTotal}
+              lineItemCount={itemCount}
               itemTotalInclTax={displayItemOriginalTotal}
               discountTotal={displayDiscount}
               shippingTotal={0}

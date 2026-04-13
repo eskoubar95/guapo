@@ -16,6 +16,7 @@ import { useFreeShippingStatus } from "@/hooks/useFreeShippingStatus";
 import { getCartItemsTotal } from "@/lib/cart-display";
 import { HeaderBackButton } from "@/components/checkout/HeaderBackButton";
 import { DEFAULT_CHECKOUT_FORM_DATA } from "@/components/checkout/steps/checkout-form-defaults";
+import { trackCheckoutStarted } from "@/lib/analytics/posthog-ecommerce";
 
 export type { ShippingOption } from "@/components/checkout/checkout-shipping.types";
 
@@ -45,6 +46,7 @@ export function CheckoutWithStripe({
   const goToStepRef = useRef<((s: CheckoutStepNum) => void) | null>(null);
   const currentStepRef = useRef<CheckoutStepNum>(1);
   const prefillDoneRef = useRef(false);
+  const checkoutStartedTrackedRef = useRef(false);
 
   useEffect(() => {
     currentStepRef.current = currentStep;
@@ -55,6 +57,10 @@ export function CheckoutWithStripe({
   const { setLiveCart, setSelectedShippingAmount, cart: checkoutCart } = useCheckoutCart();
 
   const cartItemsTotal = getCartItemsTotal(checkoutCart);
+  const checkoutItemCount = (checkoutCart?.items ?? []).reduce(
+    (s, i) => s + (i.quantity ?? 1),
+    0
+  );
   const fsStatus = useFreeShippingStatus(cartId ?? undefined, cartItemsTotal);
   const qualifiesForFreeShipping = fsStatus?.qualifies ?? false;
 
@@ -154,6 +160,24 @@ export function CheckoutWithStripe({
     if (pp?.id) setInitialPickupPointId(String(pp.id));
   }, [customer]);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (
+      !cartId ||
+      !checkoutCart?.items?.length ||
+      checkoutStartedTrackedRef.current
+    ) {
+      return;
+    }
+    checkoutStartedTrackedRef.current = true;
+    trackCheckoutStarted({
+      cart_id: cartId,
+      value: cartItemsTotal,
+      currency: "DKK",
+      item_count: checkoutItemCount,
+      has_subscription_items: hasSubscriptionItems,
+    });
+  }, [cartId, checkoutCart?.items, cartItemsTotal, checkoutItemCount, hasSubscriptionItems]);
 
   useEffect(() => {
     const hasPickup =

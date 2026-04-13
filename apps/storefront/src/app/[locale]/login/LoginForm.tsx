@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { medusa } from "@/lib/medusa";
 import { getCurrentReturnUrl, getSafeReturnUrl } from "@/lib/auth-utils";
+import { trackUserLoggedIn } from "@/lib/analytics/posthog-ecommerce";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,6 +58,7 @@ export function LoginForm({ locale, labels, onSuccess, returnUrl }: LoginFormPro
         setError(labels.errorLogin);
         return;
       }
+      trackUserLoggedIn({ method: "emailpass" });
       if (onSuccess) {
         setStatusMessage(locale === "da" ? "Opdaterer..." : "Updating...");
         onSuccess();
@@ -91,6 +93,7 @@ export function LoginForm({ locale, labels, onSuccess, returnUrl }: LoginFormPro
         return;
       }
       if (typeof result === "string") {
+        trackUserLoggedIn({ method: "google" });
         if (onSuccess) {
           onSuccess();
           router.refresh();

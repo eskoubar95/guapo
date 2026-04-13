@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { trackCartViewed } from "@/lib/analytics/posthog-ecommerce";
 import { ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/format";
@@ -10,6 +11,8 @@ import type { AuthModalLabels } from "@/components/auth/AuthModal";
 interface CartMobileDrawerProps {
   locale: string;
   total: number;
+  /** Line-item quantity sum (for analytics when drawer opens) */
+  lineItemCount?: number;
   itemTotalInclTax: number;
   discountTotal: number;
   shippingTotal: number;
@@ -35,6 +38,7 @@ interface CartMobileDrawerProps {
 export function CartMobileDrawer({
   locale,
   total,
+  lineItemCount = 0,
   itemTotalInclTax,
   discountTotal,
   shippingTotal,
@@ -48,15 +52,29 @@ export function CartMobileDrawer({
   labels,
 }: CartMobileDrawerProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const drawerOpenTrackedRef = useRef(false);
 
   const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
   const close = useCallback(() => setIsOpen(false), []);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      drawerOpenTrackedRef.current = false;
+      return;
+    }
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
-  }, [isOpen]);
+    if (lineItemCount >= 1 && !drawerOpenTrackedRef.current) {
+      drawerOpenTrackedRef.current = true;
+      trackCartViewed({
+        surface: "mobile_drawer",
+        item_count: lineItemCount,
+        cart_value: total,
+      });
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, lineItemCount, total]);
 
   return (
     <div className="lg:hidden">

@@ -20,6 +20,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           api_host: POSTHOG_HOST,
           person_profiles: "identified_only",
           cookieless_mode: "on_reject",
+          /** Manual $pageview via PostHogPageView for correct App Router navigations */
+          capture_pageview: false,
         });
         initialized.current = true;
       }

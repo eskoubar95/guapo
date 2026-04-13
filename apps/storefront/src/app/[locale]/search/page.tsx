@@ -6,6 +6,8 @@ import { fetchProductsByQuery } from "@/lib/medusa-products";
 import { fetchArticlesByQuery } from "@/lib/payload-articles";
 import { ProductCard } from "@/components/ProductCard";
 import { productCardA11yFromDict } from "@/components/product-card-a11y";
+import { TrackSearchResultsView } from "@/components/analytics/TrackSearchResultsView";
+import { SearchPageForm } from "@/components/search/SearchPageForm";
 
 interface SearchPageProps {
   params: Promise<{ locale: string }>;
@@ -44,37 +46,22 @@ export default async function SearchPage({ params, searchParams }: SearchPagePro
   return (
     <div className="min-h-full">
       <main className="container mx-auto px-4 py-8">
-        <form action={`${base}/search`} method="GET" className="mb-8">
-          <div className="relative">
-            <input
-              type="search"
-              name="q"
-              defaultValue={query}
-              placeholder={s.placeholder}
-              className="w-full rounded-lg border border-border bg-background px-4 py-3 pl-11 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-              aria-label={dict.common.search}
-            />
-            <svg
-              className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </div>
-        </form>
+        <SearchPageForm
+          locale={locale}
+          defaultQuery={query}
+          placeholder={s.placeholder}
+          ariaLabel={dict.common.search}
+        />
 
         {!trimmed ? (
           <p className="text-muted-foreground">{s.minChars}</p>
         ) : (
           <>
+            <TrackSearchResultsView
+              query={trimmed}
+              productCount={products.length}
+              articleCount={articles.length}
+            />
             <div className="mb-6">
               <h1 className="text-xl font-bold text-foreground">
                 {locale === "da" ? "Søgeresultater for" : "Search results for"} &quot;{query}&quot;

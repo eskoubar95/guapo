@@ -21,9 +21,12 @@ import {
 } from "@/components/product-card-a11y";
 import { formatLowStockLabel } from "@/lib/product-inventory";
 import { toast } from "sonner";
+import { trackProductAddedToCart } from "@/lib/analytics/posthog-ecommerce";
 
 export interface Product {
   id: string;
+  /** Medusa product id (for analytics); `id` stays handle-first for URLs */
+  medusaProductId?: string;
   name: string;
   brand: string;
   /** Brand handle for link to /[locale]/brands/[handle] */
@@ -89,19 +92,34 @@ export function ProductCard({ product, locale, className, labels }: ProductCardP
         await refreshCart();
         const cart = (await fetchClientStoreCart()) ?? addCart;
         const last = resolveAddedLineItem(cart, addCart, vid);
-        if (cart?.items?.length && last) {
+        if (last) {
           const unit = getLineUnitPrice(last);
-          openModal({
-            productTitle: last.product_title ?? last.title ?? product.name,
-            variantTitle: last.variant_title ?? product.variant,
-            thumbnail: last.thumbnail ?? product.image,
+          const meta = last.metadata as { subscription_cycle?: number } | undefined;
+          trackProductAddedToCart({
+            product_id: product.medusaProductId ?? product.id,
+            product_handle: product.id,
+            product_name: product.name,
+            variant_id: vid,
             quantity: last.quantity ?? 1,
-            unitPrice: unit ?? product.price,
-            cartTotal: getCartItemsTotal(cart),
-            itemCount: cart.items.length,
-            lineItemId: last.id,
-            metadata: last.metadata,
+            price: unit ?? product.price,
+            currency: "DKK",
+            is_subscription: typeof meta?.subscription_cycle === "number" && meta.subscription_cycle > 0,
+            subscription_cycle_weeks:
+              typeof meta?.subscription_cycle === "number" ? meta.subscription_cycle : null,
           });
+          if (cart?.items?.length) {
+            openModal({
+              productTitle: last.product_title ?? last.title ?? product.name,
+              variantTitle: last.variant_title ?? product.variant,
+              thumbnail: last.thumbnail ?? product.image,
+              quantity: last.quantity ?? 1,
+              unitPrice: unit ?? product.price,
+              cartTotal: getCartItemsTotal(cart),
+              itemCount: cart.items.length,
+              lineItemId: last.id,
+              metadata: last.metadata,
+            });
+          }
         }
       } catch (err) {
         console.error("[ProductCard] cart sync after add failed", err);

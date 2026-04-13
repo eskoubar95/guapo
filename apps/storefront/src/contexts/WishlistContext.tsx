@@ -9,6 +9,8 @@ import {
   useState,
 } from "react";
 
+import { trackWishlistUpdated } from "@/lib/analytics/posthog-ecommerce";
+
 const STORAGE_KEY = "guapo_wishlist";
 
 type WishlistContextValue = {
@@ -61,18 +63,30 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 
   const add = useCallback((productId: string) => {
     setWishlistIds((prev) => {
+      if (prev.has(productId)) return prev;
       const next = new Set(prev);
       next.add(productId);
       writeToStorage(next);
+      trackWishlistUpdated({
+        action: "add",
+        product_handle: productId,
+        wishlist_size: next.size,
+      });
       return next;
     });
   }, []);
 
   const remove = useCallback((productId: string) => {
     setWishlistIds((prev) => {
+      if (!prev.has(productId)) return prev;
       const next = new Set(prev);
       next.delete(productId);
       writeToStorage(next);
+      trackWishlistUpdated({
+        action: "remove",
+        product_handle: productId,
+        wishlist_size: next.size,
+      });
       return next;
     });
   }, []);
@@ -80,9 +94,15 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const toggle = useCallback((productId: string) => {
     setWishlistIds((prev) => {
       const next = new Set(prev);
-      if (next.has(productId)) next.delete(productId);
+      const wasIn = next.has(productId);
+      if (wasIn) next.delete(productId);
       else next.add(productId);
       writeToStorage(next);
+      trackWishlistUpdated({
+        action: wasIn ? "remove" : "add",
+        product_handle: productId,
+        wishlist_size: next.size,
+      });
       return next;
     });
   }, []);

@@ -230,6 +230,7 @@ async function mapMedusaToProduct(p: MedusaProductResponse): Promise<Product> {
   );
   return {
     id: p.handle ?? p.id,
+    medusaProductId: p.id,
     name: p.title ?? p.handle ?? p.id,
     brand: brandName,
     brandHandle: brandHandle || undefined,

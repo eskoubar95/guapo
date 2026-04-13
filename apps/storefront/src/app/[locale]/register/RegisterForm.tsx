@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { medusa } from "@/lib/medusa";
 import { getSafeReturnUrl } from "@/lib/auth-utils";
+import { trackUserRegistered } from "@/lib/analytics/posthog-ecommerce";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -75,6 +76,10 @@ export function RegisterForm({ locale, labels, onSuccess, returnUrl }: RegisterF
           email,
         });
       }
+      trackUserRegistered({
+        method: "emailpass",
+        is_new_customer: shouldCreateCustomer,
+      });
       if (onSuccess) {
         setStatusMessage(locale === "da" ? "Opdaterer..." : "Updating...");
         onSuccess();

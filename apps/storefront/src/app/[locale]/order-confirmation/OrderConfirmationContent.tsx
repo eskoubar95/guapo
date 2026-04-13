@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { StoreOrderDetail, StoreOrderDetailItem } from "@/lib/orders";
 import { formatCurrencyAmount, formatLongDate } from "@/lib/format";
 import { formatShippingAddress, normalizeOrder } from "@/lib/order-utils";
 import type { Dictionary } from "@/i18n/dictionaries";
+import { trackOrderCompleted } from "@/lib/analytics/posthog-ecommerce";
 
 const ORDER_STORAGE_KEY = "guapo_order_";
 
@@ -24,6 +25,7 @@ export function OrderConfirmationContent({
 }: OrderConfirmationContentProps) {
   const [order, setOrder] = useState<StoreOrderDetail | null>(initialOrder);
   const [loading, setLoading] = useState(!initialOrder);
+  const orderCompletedTrackedRef = useRef(false);
 
   // SessionStorage + optional fetch: sync reads/writes; deferring would change UX (spinner timing).
   /* eslint-disable react-hooks/set-state-in-effect -- client-only order hydration from session/API */
@@ -68,6 +70,25 @@ export function OrderConfirmationContent({
     setLoading(false);
   }, [orderId, initialOrder]);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (!order?.items?.length || orderCompletedTrackedRef.current) return;
+    orderCompletedTrackedRef.current = true;
+    const subtotal = order.items.reduce(
+      (sum, i) => sum + (i.total ?? (i.unit_price ?? 0) * (i.quantity ?? 1)),
+      0
+    );
+    const hasSub =
+      order.items.some((i) => i.is_subscription_line) || order.is_renewal === true;
+    trackOrderCompleted({
+      order_id: order.id,
+      display_id: order.display_id,
+      value: order.total ?? subtotal,
+      currency: order.currency_code ?? "dkk",
+      item_count: order.items.length,
+      has_subscription: hasSub,
+    });
+  }, [order]);
 
   const oc = dict.orderConfirmation;
   const hasOrder = !!order && (order.items?.length ?? 0) > 0;

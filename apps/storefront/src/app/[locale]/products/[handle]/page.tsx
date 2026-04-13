@@ -17,6 +17,7 @@ import { getStorefrontSiteUrl, normalizeImageUrlForSharing } from "@/lib/site-ur
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
 import { productCardA11yFromDict } from "@/components/product-card-a11y";
 import { ProductReviewsSection } from "@/components/ProductReviewsSection";
+import { TrackProductView } from "@/components/analytics/TrackProductView";
 
 interface ProductPageProps {
   params: Promise<{ locale: string; handle: string }>;
@@ -139,6 +140,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <div className="min-h-full min-w-0 overflow-x-clip">
+      <TrackProductView
+        productId={medusaProduct.id}
+        handle={handle}
+        name={title}
+        price={basePrice}
+        currency="DKK"
+        categoryName={categoryName}
+      />
       <main className="section-container py-8">
         {/* Breadcrumb: Guapo > Category (if any) > Product */}
         <nav className="mb-6" aria-label="Breadcrumb">
@@ -225,6 +234,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
               outOfStockLabel={dict.products.outOfStock}
               lowStockWithCountLabel={dict.products.lowStockWithCount}
               subscriptionConfig={{ basePrice, currency: "DKK", locale }}
+              analyticsContext={{
+                medusaProductId: medusaProduct.id,
+                handle,
+                title,
+                currency: "DKK",
+                ...(categoryName ? { categoryName } : {}),
+              }}
             />
 
             <PDPTrustStrip labels={{

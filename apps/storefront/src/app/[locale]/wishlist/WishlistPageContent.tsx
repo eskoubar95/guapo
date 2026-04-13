@@ -8,6 +8,7 @@ import { medusa } from "@/lib/medusa";
 import { ProductCard, type Product } from "@/components/ProductCard";
 import { productCardA11yFromDict } from "@/components/product-card-a11y";
 import type { Dictionary } from "@/i18n/dictionaries";
+import { trackWishlistPageViewed } from "@/lib/analytics/posthog-ecommerce";
 
 const WISHLIST_METADATA_KEY = "wishlist_handles";
 
@@ -25,6 +26,7 @@ export function WishlistPageContent({ locale, dict }: WishlistPageContentProps) 
   const [saving, setSaving] = useState(false);
   const [saveDone, setSaveDone] = useState(false);
   const saveDoneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wishlistPageTrackedRef = useRef(false);
 
   const handlesKey = useMemo(
     () => [...wishlistIds].sort().join(","),
@@ -99,6 +101,15 @@ export function WishlistPageContent({ locale, dict }: WishlistPageContentProps) 
       });
     return () => { cancelled = true; };
   }, [handlesKey]);
+
+  useEffect(() => {
+    if (loading || wishlistPageTrackedRef.current) return;
+    wishlistPageTrackedRef.current = true;
+    trackWishlistPageViewed({
+      wishlist_size: wishlistIds.size,
+      products_shown: products.length,
+    });
+  }, [loading, wishlistIds.size, products.length]);
 
   return (
     <div className="min-h-full bg-muted/40">

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useState } from "react";
+import { trackCartViewed } from "@/lib/analytics/posthog-ecommerce";
 import { AddToCartModal } from "@/components/cart/AddToCartModal";
 import type { Dictionary } from "@/i18n/dictionaries";
 
@@ -36,6 +37,11 @@ export function AddToCartModalProvider({ children, locale, dict }: AddToCartModa
   const [data, setData] = useState<AddToCartModalData | null>(null);
 
   const openModal = useCallback((d: AddToCartModalData) => {
+    trackCartViewed({
+      surface: "add_to_cart_modal",
+      item_count: d.itemCount,
+      cart_value: d.cartTotal,
+    });
     setData(d);
   }, []);
 

@@ -19,6 +19,7 @@ import {
   getVariantStockInfo,
 } from "@/lib/product-inventory";
 import { cn } from "@/lib/utils";
+import { trackProductAddedToCart } from "@/lib/analytics/posthog-ecommerce";
 
 interface Variant {
   id: string;
@@ -34,6 +35,14 @@ interface SubscriptionConfig {
   locale: string;
 }
 
+export interface ProductPurchaseAnalyticsContext {
+  medusaProductId: string;
+  handle: string;
+  title: string;
+  currency: string;
+  categoryName?: string;
+}
+
 interface ProductPurchaseSectionProps {
   variants: Variant[];
   sizeLabel: string;
@@ -46,6 +55,8 @@ interface ProductPurchaseSectionProps {
   subscriptionConfig?: SubscriptionConfig;
   outOfStockLabel: string;
   lowStockWithCountLabel: string;
+  /** PostHog / analytics — product context for add-to-cart events */
+  analyticsContext?: ProductPurchaseAnalyticsContext;
 }
 
 function firstInStockVariantId(vs: Variant[]): string {
@@ -68,6 +79,7 @@ export function ProductPurchaseSection({
   subscriptionConfig,
   outOfStockLabel,
   lowStockWithCountLabel,
+  analyticsContext,
 }: ProductPurchaseSectionProps) {
   const [selectedVariantId, setSelectedVariantId] = useState(() =>
     firstInStockVariantId(variants)
@@ -157,6 +169,24 @@ export function ProductPurchaseSection({
 
         const cart = (await fetchClientStoreCart()) ?? addCart;
         const last = resolveAddedLineItem(cart, addCart, selectedVariantId);
+        if (analyticsContext && last) {
+          const subWeeks =
+            purchaseType === "subscription" && subscriptionConfig ? selectedCycle : null;
+          trackProductAddedToCart({
+            product_id: analyticsContext.medusaProductId,
+            product_handle: analyticsContext.handle,
+            product_name: analyticsContext.title,
+            variant_id: selectedVariantId,
+            quantity,
+            price: getLineUnitPrice(last) || selectedVariantPrice,
+            currency: analyticsContext.currency,
+            is_subscription: purchaseType === "subscription",
+            subscription_cycle_weeks: subWeeks,
+            ...(analyticsContext.categoryName
+              ? { category_name: analyticsContext.categoryName }
+              : {}),
+          });
+        }
         if (cart?.items?.length && last) {
           openModal({
             productTitle: last.product_title ?? last.title ?? "",

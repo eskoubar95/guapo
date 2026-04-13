@@ -3,6 +3,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { medusa } from "@/lib/medusa";
 import { getSafeReturnUrl } from "@/lib/auth-utils";
+import { identifyPosthogUser, resetPosthogIdentity } from "@/lib/analytics/posthog-ecommerce";
 
 type Customer = { id: string; email?: string | null; first_name?: string | null; last_name?: string | null; [k: string]: unknown };
 
@@ -25,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
   const requestVersionRef = useRef(0);
+  const hadAuthenticatedCustomerRef = useRef(false);
 
   const refetch = useCallback(async () => {
     const requestVersion = ++requestVersionRef.current;
@@ -62,6 +64,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     refetch();
   }, [refetch]);
+
+  useEffect(() => {
+    if (customer) {
+      hadAuthenticatedCustomerRef.current = true;
+      identifyPosthogUser(customer.id, {
+        email: customer.email,
+        first_name: customer.first_name,
+        last_name: customer.last_name,
+      });
+      return;
+    }
+    if (hadAuthenticatedCustomerRef.current) {
+      hadAuthenticatedCustomerRef.current = false;
+      resetPosthogIdentity();
+    }
+  }, [customer]);
 
   const value: AuthState = {
     customer,

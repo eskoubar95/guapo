@@ -8,6 +8,10 @@ import type { Dictionary } from "@/i18n/dictionaries";
 import { getRecentSearches, pushRecentSearch, clearRecentSearches } from "@/components/search/search-storage";
 import { SearchSuggestions } from "@/components/search/SearchSuggestions";
 import { SearchResultsList, type SearchArticle } from "@/components/search/SearchResultsList";
+import {
+  trackSearchResultsViewed,
+  trackSearchSubmitted,
+} from "@/lib/analytics/posthog-ecommerce";
 
 const DEBOUNCE_MS = 280;
 
@@ -59,8 +63,16 @@ export function SearchModal({ isOpen, onClose, locale, dict }: SearchModalProps)
           products?: Product[];
           articles?: SearchArticle[];
         };
-        setProducts(data.products ?? []);
-        setArticles(data.articles ?? []);
+        const prod = data.products ?? [];
+        const arts = data.articles ?? [];
+        setProducts(prod);
+        setArticles(arts);
+        trackSearchResultsViewed({
+          query: trimmed,
+          product_count: prod.length,
+          article_count: arts.length,
+          source: "modal",
+        });
       } catch {
         setProducts([]);
         setArticles([]);
@@ -93,6 +105,7 @@ export function SearchModal({ isOpen, onClose, locale, dict }: SearchModalProps)
     e.preventDefault();
     const q = query.trim();
     if (q) {
+      trackSearchSubmitted({ query: q, source: "modal" });
       pushRecentSearch(q);
       setRecent(getRecentSearches());
       router.push(`${base}/search?q=${encodeURIComponent(q)}`);
