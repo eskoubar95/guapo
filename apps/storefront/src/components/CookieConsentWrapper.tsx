@@ -40,7 +40,7 @@ export function CookieConsentWrapper({
     >
       {/* Set Google Consent Mode v2 default (denied) before any gtag loads */}
       <GoogleConsentMode />
-      <PostHogProvider>
+      <PostHogProvider locale={locale}>
         <Suspense fallback={null}>
           <PostHogPageView />
         </Suspense>

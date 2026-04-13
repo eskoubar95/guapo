@@ -7,7 +7,14 @@ import { useConsentValue } from "@/components/cookie-consent";
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://eu.i.posthog.com";
 
-export function PostHogProvider({ children }: { children: React.ReactNode }) {
+export function PostHogProvider({
+  children,
+  locale,
+}: {
+  children: React.ReactNode;
+  /** Sent as a super property on all events after consent (filters, cohorts, breakdowns). */
+  locale?: string;
+}) {
   const hasAnalyticsConsent = useConsentValue("analytics");
   const initialized = useRef(false);
 
@@ -26,12 +33,19 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         initialized.current = true;
       }
       posthog.opt_in_capturing();
+      if (locale) {
+        try {
+          posthog.register({ locale });
+        } catch {
+          /* ignore */
+        }
+      }
     } else {
       if (initialized.current) {
         posthog.opt_out_capturing();
       }
     }
-  }, [hasAnalyticsConsent]);
+  }, [hasAnalyticsConsent, locale]);
 
   return <>{children}</>;
 }
