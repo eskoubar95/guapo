@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, X, Eraser } from "lucide-react";
 import type { Product } from "@/components/ProductCard";
@@ -185,12 +186,10 @@ export function SearchModal({ isOpen, onClose, locale, dict }: SearchModalProps)
           <div className="max-h-[60vh] md:max-h-[500px] overflow-y-auto">
             {showSuggestions ? (
               <SearchSuggestions
-                base={base}
                 recent={recent}
                 searchLabels={s}
                 onSuggestionClick={handleSuggestionClick}
                 onClearRecent={clearRecent}
-                onClose={onClose}
               />
             ) : (
               <div className="px-5 py-4">
@@ -209,9 +208,30 @@ export function SearchModal({ isOpen, onClose, locale, dict }: SearchModalProps)
             )}
           </div>
 
-          <div className="flex items-center justify-between px-5 py-3 border-t border-border bg-surface/30 text-xs text-muted-foreground">
-            <span>↑↓ {s.selectHint}</span>
-            <span>{s.closeHint}</span>
+          <div className="px-5 py-3 border-t border-border bg-surface/30 space-y-2">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+              <Link
+                href={`${base}/categories`}
+                onClick={onClose}
+                className="text-foreground/80 hover:text-foreground underline-offset-4 hover:underline"
+              >
+                {s.bestsellers}
+              </Link>
+              <span className="text-border select-none" aria-hidden>
+                ·
+              </span>
+              <Link
+                href={base}
+                onClick={onClose}
+                className="text-foreground/80 hover:text-foreground underline-offset-4 hover:underline"
+              >
+                {s.newArrivals}
+              </Link>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+              <span>↑↓ {s.selectHint}</span>
+              <span>{s.closeHint}</span>
+            </div>
           </div>
         </div>
       </div>
