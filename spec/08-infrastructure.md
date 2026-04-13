@@ -122,7 +122,7 @@ DECIDED: Supabase Storage.
   - Runs on push/PR to `staging` and `main`
   - Validates `.sdd/git-config.json` (JSON syntax + required fields)
   - Validates helper metadata (`.cursor/scripts/validate-helpers.cjs`)
-  - Checks required spec files exist
+  - Checks required spec files exist: `spec/00-root-spec.md`, `spec/08-infrastructure.md` (`work/backlog/` is gitignored and not part of CI)
 - **PR Policy workflow** (`.github/workflows/pr-policy.yml`):
   - Enforces branch policy: PRs to `main` must come from `staging`
   - Blocks direct feature → `main` PRs
