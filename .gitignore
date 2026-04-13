@@ -12,4 +12,8 @@ supabase/.temp/
 
 # OpenMemory - IDE/Assistant specific rules
 .cursor/rules/openmemory.mdc
+
+# Local backlog / milestone notes (not for production branch)
+work/backlog/
+
 node_modules
