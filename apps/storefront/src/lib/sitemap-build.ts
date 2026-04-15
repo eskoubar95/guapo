@@ -2,7 +2,7 @@
  * Collects URL rows for Next.js MetadataRoute.Sitemap (Medusa + Payload + static routes).
  */
 import type { MetadataRoute } from "next";
-import { sitemapLocales, type Locale } from "@/i18n/config";
+import { isValidLocale, sitemapLocales, type Locale } from "@/i18n/config";
 import { getStorefrontSiteUrl } from "@/lib/site-url";
 import { fetchTopLevelCategories, type MedusaCategory } from "@/lib/medusa-categories";
 import { CONCERN_PLP_HANDLES } from "@/lib/concern-handles";
@@ -180,7 +180,8 @@ export async function buildStorefrontSitemap(): Promise<MetadataRoute.Sitemap> {
   const sitemapLocaleSet = new Set<string>(sitemapLocales);
 
   for (const row of payloadRows.pages ?? []) {
-    const loc = row.locale === "en" ? "en" : "da";
+    if (!isValidLocale(row.locale)) continue;
+    const loc = row.locale;
     if (!sitemapLocaleSet.has(loc)) continue;
     const path = row.path.trim();
     if (path === "home") {
@@ -202,7 +203,8 @@ export async function buildStorefrontSitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   for (const row of payloadRows.articles ?? []) {
-    const loc = row.locale === "en" ? "en" : "da";
+    if (!isValidLocale(row.locale)) continue;
+    const loc = row.locale;
     if (!sitemapLocaleSet.has(loc)) continue;
     const u = `${base}/${loc}/blog/${encodeURIComponent(row.slug.trim())}`;
     pushEntry(entries, seenUrls, {

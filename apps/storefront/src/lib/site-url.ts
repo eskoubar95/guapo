@@ -5,7 +5,7 @@
  * then Vercel/Railway host inference, then localhost for local dev.
  */
 export function getStorefrontSiteUrl(): string {
-  const stripTrailingSlash = (u: string) => u.replace(/\/$/, "");
+  const stripTrailingSlash = (u: string) => u.replace(/\/+$/, "");
   const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (explicit) return stripTrailingSlash(explicit);
   const storefront = process.env.STOREFRONT_URL?.trim();
@@ -13,12 +13,12 @@ export function getStorefrontSiteUrl(): string {
   const vercel = process.env.VERCEL_URL?.trim();
   if (vercel) {
     const host = vercel.replace(/^https?:\/\//, "");
-    return `https://${host}`;
+    return stripTrailingSlash(`https://${host}`);
   }
   const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN?.trim();
   if (railwayDomain) {
     const host = railwayDomain.replace(/^https?:\/\//, "");
-    return `https://${host}`;
+    return stripTrailingSlash(`https://${host}`);
   }
   return "http://localhost:3000";
 }
