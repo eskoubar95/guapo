@@ -80,7 +80,7 @@ This document prevents “missing pages” by making the UI surface area explici
 - **Page**: Checkout
   - **Goal**: complete purchase
   - **Primary actions**: enter shipping details; choose parcel shop; pay
-  - **Data**: shipping options (Shipmondo), payment methods (Adyen)
+  - **Data**: shipping options (Shipmondo), payment methods (Stripe)
   - **States required**: loading / error
 
 - **Page**: Order confirmation

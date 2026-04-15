@@ -16,7 +16,7 @@ This project uses Spec-Driven Development (SDD) with the Project Operating Syste
 3. Follow the SDD workflow: spec → plan → task → validate
 
 **Before starting a new milestone:**
-- Review the [Milestone Ready Checklist](work/backlog/MILESTONE-READY-CHECKLIST.md) (applies to all milestones)
+- If you keep local planning files under `work/backlog/` (gitignored), review `MILESTONE-READY-CHECKLIST.md` there
 - Ensure git configuration and branch status are correct
 
 ## Workflow

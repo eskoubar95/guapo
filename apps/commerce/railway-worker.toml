@@ -1,0 +1,17 @@
+# Railway config for Medusa worker (beauty-shop / CORE-21 pattern).
+# This service handles background jobs, subscribers, workflows.
+# In Railway: create a second service, set Root Directory = apps/commerce,
+# and set config path to this file (e.g. railway-worker.toml) if your plan supports it.
+
+[build]
+builder = "NIXPACKS"
+buildCommand = "rm -rf .medusa && npm run build"
+
+[deploy]
+startCommand = "npm run start"
+# No healthcheck – worker has no HTTP server
+
+[deploy.environmentVariables]
+NODE_ENV = "production"
+MEDUSA_WORKER_MODE = "worker"
+DISABLE_MEDUSA_ADMIN = "true"

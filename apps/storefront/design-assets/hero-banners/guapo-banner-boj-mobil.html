@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<title>Guapo — Beauty of Joseon Mobil 800×800</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --border:    #e8ecf2;
+    --boj-dark:  #2a1a08;
+    --boj-mid:   #8b5e3c;
+    --boj-gold:  #c49060;
+    --boj-light: #f5ede0;
+    --boj-cream: #faf4ec;
+    --boj-amber: #e8b870;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #eee8df;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 120px;
+  }
+
+  .banner-mobile {
+    position: relative;
+    width: 800px;
+    height: 800px;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(196, 144, 96, 0.35);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  /* Striber kun i mørk topzone (samme idé som Anua-mobil) */
+  .banner-mobile::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      -52deg,
+      transparent 0px,
+      transparent 37px,
+      rgba(255, 255, 255, 0.04) 37px,
+      rgba(255, 255, 255, 0.04) 39px
+    );
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 44.5%, transparent 45%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 44.5%, transparent 45%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .mob-top {
+    position: relative;
+    flex: 0 0 44%;
+    background: var(--boj-dark);
+    padding: 37px 45px 29px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    z-index: 2;
+  }
+
+  .mob-top::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      -52deg,
+      transparent 0px,
+      transparent 37px,
+      rgba(255, 255, 255, 0.03) 37px,
+      rgba(255, 255, 255, 0.03) 39px
+    );
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .mob-boj-logo {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: auto;
+    height: 49px;
+    max-width: 452px;
+    object-fit: contain;
+    object-position: left center;
+    margin-bottom: 21px;
+    filter: invert(1) brightness(1.12);
+    opacity: 0.94;
+  }
+
+  .mob-eyebrow {
+    position: relative;
+    z-index: 1;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: none;
+    color: var(--boj-gold);
+    margin-bottom: 12px;
+  }
+
+  .mob-tagline {
+    position: relative;
+    z-index: 1;
+    font-family: 'Noto Serif', serif;
+    font-style: italic;
+    font-size: 21px;
+    line-height: 1.4;
+    color: rgba(245, 237, 224, 0.52);
+    letter-spacing: 0.02em;
+    max-width: 36ch;
+    margin-bottom: 21px;
+  }
+
+  .mob-pills {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .mob-pill {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--boj-gold);
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(196, 144, 96, 0.4);
+  }
+
+  /* Bund: lys zone — fladt skille (ingen bølge), som færdig Anua-mobil */
+  .mob-bottom {
+    position: relative;
+    flex: 1;
+    z-index: 2;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    padding: 16px 0 21px;
+    background: var(--boj-cream);
+  }
+
+  .mob-bottom::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      -52deg,
+      transparent 0px,
+      transparent 37px,
+      rgba(139, 94, 60, 0.05) 37px,
+      rgba(139, 94, 60, 0.05) 39px
+    );
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .mob-bottom::after {
+    content: '';
+    position: absolute;
+    bottom: -33px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 452px;
+    height: 369px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(196, 144, 96, 0.18) 0%, transparent 68%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .mob-product-stage {
+    position: relative;
+    z-index: 5;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    padding: 0 21px 21px;
+    width: 100%;
+  }
+
+  .mob-prods {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 21px;
+    width: 100%;
+  }
+
+  .mob-prod {
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .mob-prod--relief {
+    width: 28%;
+  }
+
+  .mob-prod--essence {
+    width: 36%;
+  }
+
+  .mob-prod--cream {
+    width: 28%;
+  }
+
+  .mob-prod-inner {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* Samme bundhøjde for alle tre — midten skaleres op */
+  .mob-prod-inner--relief,
+  .mob-prod-inner--essence,
+  .mob-prod-inner--cream {
+    height: 308px;
+  }
+
+  .mob-prod-img--relief {
+    transform: translateY(2px);
+  }
+
+  .mob-prod-img--essence {
+    transform: translateY(2px) scale(1.14);
+    transform-origin: bottom center;
+  }
+
+  .mob-prod-img--cream {
+    transform: translateY(4px);
+  }
+
+  .mob-prod-img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    object-position: bottom center;
+    filter:
+      drop-shadow(6px 8px 0 rgba(42, 26, 8, 0.35))
+      drop-shadow(12px 16px 0 rgba(196, 144, 96, 0.12));
+  }
+</style>
+</head>
+<body>
+
+<div class="banner-mobile">
+
+  <div class="mob-top">
+    <div class="mob-eyebrow">Udvalgte produkter fra</div>
+    <img
+      class="mob-boj-logo"
+      src="./boj-logo.png"
+      alt="Beauty of Joseon"
+      width="520"
+      height="49"
+    />
+    <div class="mob-tagline">Hanbang-hudpleje inspireret af Joseon-traditionen.</div>
+    <div class="mob-pills">
+      <span class="mob-pill">Essence</span>
+      <span class="mob-pill">SPF</span>
+      <span class="mob-pill">Creme</span>
+    </div>
+  </div>
+
+  <div class="mob-bottom">
+    <div class="mob-product-stage">
+      <div class="mob-prods">
+        <div class="mob-prod mob-prod--relief">
+          <div class="mob-prod-inner mob-prod-inner--relief">
+            <img class="mob-prod-img mob-prod-img--relief" src="./boj-relief-sun.png" alt="Relief Sun SPF50+" width="500" height="500" />
+          </div>
+        </div>
+        <div class="mob-prod mob-prod--essence">
+          <div class="mob-prod-inner mob-prod-inner--essence">
+            <img class="mob-prod-img mob-prod-img--essence" src="./boj-ginseng-essence-water.png" alt="Ginseng Essence Water" width="1000" height="1000" />
+          </div>
+        </div>
+        <div class="mob-prod mob-prod--cream">
+          <div class="mob-prod-inner mob-prod-inner--cream">
+            <img class="mob-prod-img mob-prod-img--cream" src="./boj-dynasty-cream.png" alt="Dynasty Cream" width="1024" height="1024" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

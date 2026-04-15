@@ -62,11 +62,13 @@ jobs:
 
       - name: Check Spec Files Exist
         run: |
+          # work/backlog/ is gitignored (local-only); do not require it in CI.
+
           REQUIRED_SPECS=(
             "spec/00-root-spec.md"
             "spec/08-infrastructure.md"
           )
-          
+
           MISSING=0
           for spec in "${REQUIRED_SPECS[@]}"; do
             if [ ! -f "$spec" ]; then
@@ -80,4 +82,45 @@ jobs:
           fi
           
           echo "✅ All required spec files present"
-          echo "ℹ️  Note: work/backlog/ files are development-only and not required in main branch"
+
+  test-commerce:
+    name: Test Commerce Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Commerce unit tests
+        working-directory: apps/commerce
+        run: pnpm test:unit
+
+  typecheck-storefront:
+    name: Typecheck Storefront
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck Storefront
+        working-directory: apps/storefront
+        run: pnpm typecheck

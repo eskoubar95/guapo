@@ -1,0 +1,4 @@
+# Payload stores migration files here. Run from apps/cms:
+#   pnpm migrate:create [name]  - generate migration
+#   pnpm migrate                - apply migrations
+#   pnpm migrate:status         - show migration status

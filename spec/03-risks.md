@@ -26,9 +26,17 @@ This document lists risks that are already visible at the /spec/init stage. It i
 - **Multi-service deployment complexity**: Railway project with multiple services (storefront, Medusa server, Medusa worker, Payload, Redis) increases operational coordination (env vars, networking, deploy order).
 - **Redis dependency risk**: Medusa relies on Redis-backed capabilities in production; misconfiguration can break background jobs, eventing, or workflows.
 - **Shared Postgres schema separation risk**: Running Medusa + Payload on the same Supabase Postgres instance requires careful schema separation; schema misconfig can cause migration failures or cross-service coupling.
+- **Payload admin stability**: Errors when opening or running Payload admin can block CMS work until DATABASE_URL, schema `payload`, and migrations are validated; M7 task t7.1 addresses this.
 - **Media storage risk**: Using Supabase Storage requires correct bucket policies/URLs; misconfig can cause broken images or accidental exposure.
 - **Observability gaps**: Without Sentry + alerting, payment/subscription issues can go unnoticed and hurt revenue and trust.
 
 ## Delivery risks
-- **Time-to-market**: 1–2 months leaves limited slack for unknowns (Adyen subscription setup, CMS modeling, SEO rules, Qogita investigation).
+- **Time-to-market**: 1–2 months leaves limited slack for unknowns (Stripe subscription setup, CMS modeling, SEO rules, Qogita investigation).
 - **Integration surface area**: Multiple systems (commerce backend + CMS + payment provider) increases integration failure modes early.
+- **Figma export code quality**: Figma-generated code often has redundancy, weak modularization, and hardcoded values. Mitigation: dedicated refactoring toward `spec/07-design-system.md` (tokens, component rules) and reuse of existing storefront data flows (Medusa/CMS).
+
+## Auth, payment & shipping risks (M8, M9, M10)
+- **Google OAuth credentials**: Google Cloud Console setup required; callback URL must match deployed storefront URL (staging/production).
+- **Stripe DK payment methods**: MobilePay via Stripe requires separate setup/approval; Klarna via Stripe is available but must be enabled. Card payments are primary for MVP.
+- **Shipmondo API availability**: Custom fulfillment provider requires robust error handling; parcel-shop data can be unstable or rate-limited.
+- **Payment provider (Stripe)**: Subscription recurring billing and method availability (MobilePay, Klarna when enabled) must be confirmed for DK; Stripe subscription lifecycle vs Medusa-managed subscriptions must be aligned.

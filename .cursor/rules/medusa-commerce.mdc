@@ -1,0 +1,29 @@
+---
+description: Medusa backend — workflows, API routes, modules, validation
+globs: apps/commerce/**
+alwaysApply: false
+---
+
+# Medusa (apps/commerce)
+
+## Layering
+
+Follow: **Module (models + service) → Workflow (steps + compensation) → API route → clients.**
+
+- **Mutations** (create/update/delete business state): implement as **workflow steps**, expose via route with `workflow(req.scope).run({ input })`. Do not put multi-step or rollback-needing logic only in a route handler calling services ad hoc.
+- **Simple reads** (list/get): resolving module or core services in a GET route is acceptable.
+
+## HTTP
+
+- Use **GET, POST, DELETE** only (not PUT/PATCH) unless aligning with an existing Medusa convention that already uses PATCH.
+- Validate bodies with **Zod** (`@medusajs/framework/zod`); type routes with inferred types (e.g. `MedusaRequest` + validated body).
+- Protected store/admin routes: use authenticated request types and enforce customer/admin scope.
+
+## Data access
+
+- Cross-module reads: **module links** and `query.graph()` / index patterns per Medusa docs.
+- Module names: **camelCase** (no dashes in module registration).
+
+## When unsure
+
+Prefer official Medusa docs or Medusa MCP (`ask_medusa_question`) over inventing patterns.

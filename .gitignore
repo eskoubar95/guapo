@@ -1,3 +1,6 @@
+# macOS
+.DS_Store
+
 # Supabase CLI local temp/state
 supabase/.temp/
 
@@ -6,3 +9,11 @@ supabase/.temp/
 
 # Git worktrees for parallel batch execution
 .sdd/worktrees/
+
+# OpenMemory - IDE/Assistant specific rules
+.cursor/rules/openmemory.mdc
+
+# Local backlog / milestone notes (not for production branch)
+work/backlog/
+
+node_modules

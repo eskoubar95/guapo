@@ -28,7 +28,7 @@ The system is Denmark-first and supports `/da/...` and `/en/...` URL prefixes.
     - SEO fields and structured data inputs
 
 - **External Services**:
-  - Payments: Adyen (cards, Apple Pay, Google Pay, MobilePay, Klarna) + recurring for subscriptions
+  - Payments: Stripe (cards, Apple Pay, Google Pay; MobilePay/Klarna when enabled) + recurring for subscriptions
   - Shipping: Shipmondo (parcel shop only in MVP)
   - Transactional email: Plunk
   - Analytics: PostHog (behind analytics consent)
@@ -59,7 +59,7 @@ flowchart TD
   medusaServer --> redis[RailwayRedis]
   medusaWorker[MedusaWorker] --> redis
   medusaWorker --> supabaseDb
-  medusaServer --> adyen[Adyen]
+  medusaServer --> stripe[Stripe]
   medusaServer --> shipmondo[Shipmondo]
   medusaServer --> plunk[Plunk]
   storefront --> consent[ConsentManager]
@@ -73,18 +73,18 @@ flowchart TD
 - User browses PLP/PDP (Next.js)
 - Storefront fetches product + pricing from Medusa; guidance content from Payload
 - User adds items to cart → begins checkout
-- Payment authorized/captured via Adyen
+- Payment authorized/captured via Stripe
 - Order created in Medusa
 - Transactional emails via Plunk (order confirmation; shipping/tracking when available)
 
 ### Subscription purchase
 - User selects subscription on PDP (cycle 4/8/12 weeks; 5% discount)
-- Checkout processes initial order + recurring authorization (Adyen recurring)
+- Checkout processes initial order + recurring authorization (Stripe recurring)
 - Medusa stores subscription schedule and customer controls (skip/pause/resume/cancel after 2 deliveries)
 
 ### Subscription renewal
 - Upcoming renewal reminder (3 days before) via Plunk
-- Renewal attempt via Adyen recurring
+- Renewal attempt via Stripe recurring
   - On failure: 2 retries over 3 days; notify failed and recovered states
   - If still failing: subscription placed on hold until payment method update
 - On success: new order created; shipping/tracking emails when dispatched
@@ -114,6 +114,9 @@ See `spec/08-infrastructure.md` for the source of truth.
 - Cache/Queue: Redis (Railway)
 - Language: TypeScript
 
+## CMS–Commerce synergy
+- **Data ownership, canonical keys, and storefront data flow:** See `spec/10-cms-commerce-synergy.md` (product.handle, Payload vs Medusa, who decides what).
+
 ## API Design (if applicable)
 - Storefront consumes Medusa APIs for commerce and Payload APIs for content.
 - Subscription/customer-control APIs must be deterministic and auditable (skip/pause/resume/cancel gating).
@@ -121,7 +124,7 @@ See `spec/08-infrastructure.md` for the source of truth.
 ## Security Architecture (minimum)
 - Secrets are stored as environment variables (no secrets in git)
 - Consent-aware tracking (GDPR)
-- Payment handled through Adyen; no storing of raw card data in Guapo systems
+- Payment handled through Stripe; no storing of raw card data in Guapo systems
 
 ## Scalability Considerations
 - Start with Denmark-first assumptions (currency/shipping)

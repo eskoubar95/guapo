@@ -1,0 +1,22 @@
+{
+  "name": "guapo",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "subscription-demo:dev": "pnpm --filter @guapo/remotion-subscription-demo dev",
+    "subscription-demo:render": "pnpm --filter @guapo/remotion-subscription-demo render",
+    "hero-banner:export": "pnpm --filter @guapo/storefront hero-banner:export",
+    "dev:cms": "pnpm --filter @guapo/cms dev",
+    "build:cms": "pnpm --filter @guapo/cms build",
+    "lint:cms": "pnpm --filter @guapo/cms lint"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@lambdacurry/medusa-product-reviews@1.3.0": "patches/@lambdacurry__medusa-product-reviews@1.3.0.patch"
+    }
+  }
+}

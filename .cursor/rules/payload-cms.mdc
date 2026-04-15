@@ -1,0 +1,30 @@
+---
+description: Payload CMS — collections, access control, localization
+globs: apps/cms/**
+alwaysApply: false
+---
+
+# Payload CMS (apps/cms)
+
+## Localization
+
+- Locales **`da`** (default) and **`en`** with fallback match `payload.config.ts`. Localized fields belong in collection/global configs; API consumers use `?locale=` as documented.
+
+## Access control
+
+- **Collections:** define `access` for `read`, `create`, `update`, `delete`. Public or API-facing content should restrict **read** so unauthenticated users only see **published** (or equivalent) where applicable — use boolean or query constraints.
+- **Field-level `access`:** returns boolean only; use for sensitive fields (e.g. internal notes, sync-only fields).
+- Match editorial workflow: draft → review → publish; restrict who can publish.
+
+## Content vs commerce
+
+- CMS stores **content and references** (e.g. Medusa product IDs, handles). Do not store authoritative **price, stock, or order** data in Payload.
+
+## Patterns
+
+- Prefer **hooks** (`beforeChange`, `afterChange`) for validation and side effects; keep collection configs readable.
+- New uploads: use configured **S3/storage** plugin patterns already in the project.
+
+## When unsure
+
+Use Payload skill or Context7 Payload docs for access hooks and field patterns.

@@ -2,6 +2,24 @@
 
 This log captures **actual decisions** made during specification and delivery. Keep entries short and unambiguous.
 
+## 2026-03-21 — Remove `design/` submodule; hero HTML under storefront
+- **Decision**: Remove the git submodule `design/Ecommercestorefrontdesign` from this monorepo. Static hero banner sources live at `apps/storefront/design-assets/hero-banners/` (HTML/CSS for screenshot → image → Payload). `.gitmodules` removed when the last submodule was dropped.
+- **Why**: Fewer moving parts; no `git submodule update` on clone; hero workflow does not need the full Vite design app in-tree.
+- **Consequences**: Historical docs that reference `design/Ecommercestorefrontdesign` describe an old layout; the Figma export repo may still exist at `github.com/eskoubar95/Ecommercestorefrontdesign` outside this tree.
+- **Where**: This file; `openmemory.md`; `apps/storefront/design-assets/hero-banners/README.md`
+
+## 2026-01-31 — Design repo placement: submodule at `design/Ecommercestorefrontdesign`
+- **Decision**: The design repo `eskoubar95/Ecommercestorefrontdesign` was included in the monorepo as a **git submodule** at path `design/Ecommercestorefrontdesign`. **Superseded 2026-03-21:** submodule removed; see entry above.
+- **Why (historical)**: Submodule kept design source traceable and updatable; avoids copying large export history into the main repo.
+- **Consequences (obsolete)**: ~~After clone, run `git submodule update --init`~~ — submodule removed 2026-03-21.
+- **Where**: This file; `spec/07-design-system.md`
+
+## 2026-01-31 — Design source: Figma export in separate repo
+- **Decision**: Storefront UI is sourced from Figma design exported to code and maintained in the repository `eskoubar95/Ecommercestorefrontdesign`. Design is implemented in Guapo by pulling/merging from that repo and refactoring to the project’s design system and architecture.
+- **Why**: Design was built in Figma (~90–95% complete); implementation is done in Guapo storefront with refactoring for tokens, modularity, and dynamic data.
+- **Consequences**: When Figma is updated, export flows to the design repo; Guapo storefront is updated via pull/merge followed by refactor and mapping to tokens and data.
+- **Where**: `spec/07-design-system.md`, `spec/03-risks.md`
+
 ## 2026-01-26 — Repo layout: monorepo with `apps/*`
 - **Decision**: Use a monorepo with workspaces:
   - `apps/storefront` (Next.js customer storefront)
@@ -88,9 +106,9 @@ This log captures **actual decisions** made during specification and delivery. K
 - **Where**: `spec/04-open-questions.md`, `spec/08-infrastructure.md`
 
 ## 2026-01-26 — Payment methods required in MVP (DK)
-- **Decision**: MVP must support cards, Apple Pay, Google Pay, MobilePay, and Klarna (via Adyen).
+- **Decision**: MVP must support cards, Apple Pay, Google Pay, MobilePay, and Klarna (via Stripe).
 - **Why**: Reduce checkout friction in Denmark and cover expected payment preferences.
-- **Consequences**: Must confirm Adyen configuration/contract supports each method; may impact delivery timeline.
+- **Consequences**: Must confirm Stripe configuration supports each method when enabled; may impact delivery timeline.
 - **Where**: `spec/00-root-spec.md`, `spec/04-open-questions.md`, `spec/08-infrastructure.md`
 
 ## 2026-01-26 — Guest checkout allowed
@@ -242,7 +260,7 @@ This log captures **actual decisions** made during specification and delivery. K
 
 ## 2026-01-26 — Environment strategy (MVP)
 - **Decision**: Use staging + production environments (plus local development).
-- **Why**: Safely validate Adyen, subscriptions, and shipping integrations before release.
+- **Why**: Safely validate Stripe, subscriptions, and shipping integrations before release.
 - **Consequences**: Requires separate Railway services/env vars (or separate Railway environments) and separate Supabase projects or schema strategy for staging.
 - **Where**: `spec/08-infrastructure.md`, `spec/06-acceptance.md`
 
@@ -258,7 +276,7 @@ This log captures **actual decisions** made during specification and delivery. K
 - **Consequences**: Carrier/service availability must be configured correctly in Shipmondo.
 - **Where**: `spec/00-root-spec.md`, `spec/04-open-questions.md`
 
-## 2026-01-26 — Adyen risk/3DS and refund operations (MVP)
+## 2026-01-26 — Payment provider risk/3DS and refund operations (MVP)
 - **Decision**:
   - 3DS: risk-based (default) to optimize conversion.
   - Refunds: performed by customer support in Medusa admin/backoffice (partial refunds supported).
@@ -360,8 +378,8 @@ This log captures **actual decisions** made during specification and delivery. K
 - **Consequences**: Requires consent-aware capture and safe storage in order metadata.
 - **Where**: `spec/04-open-questions.md`, `spec/08-infrastructure.md`
 
-## 2026-01-26 — Adyen capability checks as staging gate
-- **Decision**: Adyen recurring capability confirmation and payment method availability confirmation are treated as **staging acceptance gates**, not /spec/plan blockers.
+## 2026-01-26 — Stripe capability checks as staging gate
+- **Decision**: Stripe recurring capability confirmation and payment method availability confirmation are treated as **staging acceptance gates**, not /spec/plan blockers.
 - **Why**: Allows planning to proceed while still enforcing validation before release.
 - **Consequences**: Must be explicitly tested in staging before shipping.
 - **Where**: `spec/04-open-questions.md`, `spec/06-acceptance.md`
