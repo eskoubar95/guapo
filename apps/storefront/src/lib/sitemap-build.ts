@@ -2,7 +2,7 @@
  * Collects URL rows for Next.js MetadataRoute.Sitemap (Medusa + Payload + static routes).
  */
 import type { MetadataRoute } from "next";
-import { locales, type Locale } from "@/i18n/config";
+import { isValidLocale, sitemapLocales, type Locale } from "@/i18n/config";
 import { getStorefrontSiteUrl } from "@/lib/site-url";
 import { fetchTopLevelCategories, type MedusaCategory } from "@/lib/medusa-categories";
 import { CONCERN_PLP_HANDLES } from "@/lib/concern-handles";
@@ -151,7 +151,7 @@ function toLastMod(iso: string | null | undefined): Date | undefined {
 }
 
 /**
- * Builds the full sitemap for the storefront (both locales).
+ * Builds the full sitemap for the storefront (locales in `sitemapLocales` from i18n config).
  */
 function pushEntry(
   entries: MetadataRoute.Sitemap,
@@ -177,8 +177,12 @@ export async function buildStorefrontSitemap(): Promise<MetadataRoute.Sitemap> {
 
   const categoryHandles = flattenCategoryHandles(categories);
 
+  const sitemapLocaleSet = new Set<string>(sitemapLocales);
+
   for (const row of payloadRows.pages ?? []) {
-    const loc = row.locale === "en" ? "en" : "da";
+    if (!isValidLocale(row.locale)) continue;
+    const loc = row.locale;
+    if (!sitemapLocaleSet.has(loc)) continue;
     const path = row.path.trim();
     if (path === "home") {
       pushEntry(entries, seenUrls, {
@@ -199,7 +203,9 @@ export async function buildStorefrontSitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   for (const row of payloadRows.articles ?? []) {
-    const loc = row.locale === "en" ? "en" : "da";
+    if (!isValidLocale(row.locale)) continue;
+    const loc = row.locale;
+    if (!sitemapLocaleSet.has(loc)) continue;
     const u = `${base}/${loc}/blog/${encodeURIComponent(row.slug.trim())}`;
     pushEntry(entries, seenUrls, {
       url: u,
@@ -209,7 +215,7 @@ export async function buildStorefrontSitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  for (const locale of locales) {
+  for (const locale of sitemapLocales) {
     const loc = locale as Locale;
     const prefix = `/${loc}`;
 
