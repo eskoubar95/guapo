@@ -10,6 +10,8 @@ import * as migration_20260411_image_text_breakout_visual_video from './20260411
 import * as migration_20260411_brands_medusa_id_and_meta_image from './20260411_brands_medusa_id_and_meta_image';
 import * as migration_20260412_products_locales_seo_meta from './20260412_products_locales_seo_meta';
 import * as migration_20260413_tracking_global from './20260413_tracking_global';
+import * as migration_20260415_site_settings_global from './20260415_site_settings_global';
+import * as migration_20260416_support_faq_and_concern_seo from './20260416_support_faq_and_concern_seo';
 
 export const migrations = [
   {
@@ -71,5 +73,15 @@ export const migrations = [
     up: migration_20260413_tracking_global.up,
     down: migration_20260413_tracking_global.down,
     name: '20260413_tracking_global',
+  },
+  {
+    up: migration_20260415_site_settings_global.up,
+    down: migration_20260415_site_settings_global.down,
+    name: '20260415_site_settings_global',
+  },
+  {
+    up: migration_20260416_support_faq_and_concern_seo.up,
+    down: migration_20260416_support_faq_and_concern_seo.down,
+    name: '20260416_support_faq_and_concern_seo',
   },
 ];

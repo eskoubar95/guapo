@@ -1,5 +1,9 @@
+import type { Metadata } from "next";
 import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
+import { getStorefrontSiteUrl, normalizeImageUrlForSharing } from "@/lib/site-url";
+import { resolvePayloadMediaUrl } from "@/lib/payload-media-url";
+import { buildLocaleAlternates } from "@/lib/seo-locale-alternates";
 import {
   HomePromoBars,
   CategoryStrip,
@@ -30,6 +34,58 @@ import { preload } from "react-dom";
 interface HomePageProps {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ draft?: string }>;
+}
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: HomePageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const { draft: draftParam } = await searchParams;
+  const validLocale = locale as Locale;
+  const draft = draftParam === "1" || draftParam === "true";
+
+  const homePage = await fetchPageByPath("home", validLocale, { draft });
+  const homepageGlobal =
+    homePage?.pageType === "homepage" && homePage?.sections?.length
+      ? null
+      : await fetchHomepage(validLocale, { draft });
+
+  const meta = homePage?.meta ?? homepageGlobal?.meta;
+  const displayTitle = typeof homePage?.title === "string" ? homePage.title.trim() : "";
+  const metaTitle = typeof meta?.title === "string" ? meta.title.trim() : "";
+  const description = typeof meta?.description === "string" ? meta.description.trim() : undefined;
+  const title = metaTitle
+    ? { absolute: metaTitle }
+    : displayTitle || "Guapo - Premium Skincare";
+
+  const ogRaw = resolvePayloadMediaUrl(
+    meta?.image as Parameters<typeof resolvePayloadMediaUrl>[0],
+  );
+  const ogImage = normalizeImageUrlForSharing(ogRaw);
+  const siteUrl = getStorefrontSiteUrl();
+  const pageUrl = `${siteUrl}/${validLocale}`;
+  const ogTitle =
+    metaTitle || displayTitle || (validLocale === "da" ? "Guapo - Premium Skincare" : "Guapo - Premium Skincare");
+
+  return {
+    title,
+    description: description || undefined,
+    alternates: buildLocaleAlternates(validLocale, ""),
+    openGraph: {
+      type: "website",
+      siteName: "Guapo",
+      url: pageUrl,
+      locale: validLocale,
+      title: ogTitle,
+      description: description || undefined,
+      ...(ogImage ? { images: [{ url: ogImage }] } : {}),
+    },
+    ...(ogImage
+      ? { twitter: { card: "summary_large_image" as const, images: [ogImage] } }
+      : {}),
+    robots: draft ? { index: false, follow: false } : { index: true, follow: true },
+  };
 }
 
 export default async function HomePage({ params, searchParams }: HomePageProps) {

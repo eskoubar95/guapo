@@ -2,6 +2,10 @@ import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { getStorefrontSiteUrl } from "@/lib/site-url";
+import { buildLocaleAlternates } from "@/lib/seo-locale-alternates";
+import { BreadcrumbJsonLd } from "@/components/seo/BreadcrumbJsonLd";
+import { fetchPayloadConcernByValue } from "@/lib/payload-concern";
 
 interface ConcernPageProps {
   params: Promise<{ locale: string; handle: string }>;
@@ -24,12 +28,28 @@ const placeholderProducts = [
 
 export async function generateMetadata({ params }: ConcernPageProps): Promise<Metadata> {
   const { locale, handle } = await params;
-  const name = concernNames[handle]?.[locale as "da" | "en"] || handle;
-  
+  const localeKey = locale === "en" ? "en" : "da";
+  const cmsConcern = await fetchPayloadConcernByValue(handle, locale);
+  const fallbackLabel = concernNames[handle]?.[localeKey] ?? handle;
+  const label = cmsConcern?.label?.trim() || fallbackLabel;
+  const metaTitle = cmsConcern?.meta?.title?.trim();
+  const metaDescription = cmsConcern?.meta?.description?.trim();
+  const title =
+    metaTitle ||
+    `${localeKey === "da" ? "Produkter til" : "Products for"} ${label}`;
+  const pathSuffix = `/concerns/${encodeURIComponent(handle)}`;
+  const siteUrl = getStorefrontSiteUrl();
+
   return {
-    title: `${locale === "da" ? "Produkter til" : "Products for"} ${name}`,
-    alternates: {
-      canonical: `/${locale}/concerns/${handle}`,
+    title,
+    description: metaDescription || undefined,
+    alternates: buildLocaleAlternates(locale, pathSuffix),
+    openGraph: {
+      type: "website",
+      siteName: "Guapo",
+      title,
+      url: `${siteUrl}/${locale}${pathSuffix}`,
+      locale,
     },
   };
 }
@@ -37,12 +57,22 @@ export async function generateMetadata({ params }: ConcernPageProps): Promise<Me
 export default async function ConcernPage({ params }: ConcernPageProps) {
   const { locale, handle } = await params;
   const dict = await getDictionary(locale as Locale);
-  const localeKey = locale as "da" | "en";
-  const concernName = concernNames[handle]?.[localeKey] || handle;
+  const localeKey = locale === "en" ? "en" : "da";
+  const cmsConcern = await fetchPayloadConcernByValue(handle, locale);
+  const fallbackLabel = concernNames[handle]?.[localeKey] ?? handle;
+  const concernName = cmsConcern?.label?.trim() || fallbackLabel;
+  const siteUrl = getStorefrontSiteUrl();
+  const concernUrl = `${siteUrl}/${locale}/concerns/${encodeURIComponent(handle)}`;
 
   return (
     <div className="min-h-full">
       <main className="container mx-auto px-4 py-8">
+        <BreadcrumbJsonLd
+          items={[
+            { name: dict.common.breadcrumbRoot, url: `${siteUrl}/${locale}` },
+            { name: concernName, url: concernUrl },
+          ]}
+        />
         {/* Breadcrumb */}
         <nav className="mb-6">
           <ol className="flex items-center gap-2 text-sm text-muted-foreground">

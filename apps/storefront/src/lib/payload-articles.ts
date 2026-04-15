@@ -3,6 +3,7 @@
  * Category labels must match apps/cms/src/collections/Articles.ts select options.
  */
 import { cache } from "react";
+import { withNormalizedSeoMeta } from "@/lib/payload-seo-meta";
 
 const PAYLOAD_URL = process.env.NEXT_PUBLIC_PAYLOAD_API_URL ?? process.env.PAYLOAD_API_URL?.replace(/\/$/, "");
 
@@ -145,7 +146,8 @@ export async function fetchArticleBySlug(
     });
     if (res.status === 404) return null;
     if (!res.ok) return null;
-    return (await res.json()) as PayloadArticleDetail;
+    const raw = (await res.json()) as PayloadArticleDetail;
+    return withNormalizedSeoMeta(raw, locale);
   } catch {
     return null;
   }
