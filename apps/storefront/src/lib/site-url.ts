@@ -1,13 +1,23 @@
 /**
  * Canonical storefront origin for metadata, OG tags, and absolute URLs.
  * Prefer NEXT_PUBLIC_SITE_URL in all deployed environments.
+ * Falls back to STOREFRONT_URL (often set on Railway while NEXT_PUBLIC_* was missed at build),
+ * then Vercel/Railway host inference, then localhost for local dev.
  */
 export function getStorefrontSiteUrl(): string {
+  const stripTrailingSlash = (u: string) => u.replace(/\/$/, "");
   const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (explicit) return explicit.replace(/\/$/, "");
+  if (explicit) return stripTrailingSlash(explicit);
+  const storefront = process.env.STOREFRONT_URL?.trim();
+  if (storefront) return stripTrailingSlash(storefront);
   const vercel = process.env.VERCEL_URL?.trim();
   if (vercel) {
     const host = vercel.replace(/^https?:\/\//, "");
+    return `https://${host}`;
+  }
+  const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN?.trim();
+  if (railwayDomain) {
+    const host = railwayDomain.replace(/^https?:\/\//, "");
     return `https://${host}`;
   }
   return "http://localhost:3000";
