@@ -23,6 +23,7 @@ import { Navigation } from './globals/Navigation'
 import { Footer } from './globals/Footer'
 import { Homepage } from './globals/Homepage'
 import { Tracking } from './globals/Tracking'
+import { SiteSettings } from './globals/SiteSettings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -70,9 +71,12 @@ export default buildConfig({
           const pathSegment = data.path === 'home' ? '' : `/${data.path}`
           return `${storefrontUrl}/${loc}${pathSegment}?draft=1`
         }
+        if (collectionConfig?.slug === 'articles' && data?.slug) {
+          return `${storefrontUrl}/${loc}/blog/${data.slug}?draft=1`
+        }
         return `${storefrontUrl}/${loc}?draft=1`
       },
-      collections: ['pages', 'categories', 'products'],
+      collections: ['pages', 'categories', 'products', 'articles'],
       globals: ['homepage'],
     },
   },
@@ -91,7 +95,7 @@ export default buildConfig({
     Ingredients,
   ],
 
-  globals: [Navigation, Footer, Homepage, Tracking],
+  globals: [Navigation, Footer, Homepage, Tracking, SiteSettings],
 
   plugins: [
     s3Storage({
@@ -108,20 +112,23 @@ export default buildConfig({
       },
     }),
     seoPlugin({
-      collections: [], // categories (and others) use Meta* fields from plugin in collection tabs
+      // Commerce collections + Pages/Articles use Meta* fields from `@payloadcms/plugin-seo/fields` in tabs; this plugin supplies generate helpers + preview UI wiring.
+      collections: [],
       uploadsCollection: 'media',
       tabbedUI: false,
       generateTitle: ({ doc, locale }) => {
         const loc = seoLocaleCode(locale)
         const name = pickLocalizedText(doc?.name, loc)
         if (name) return `${name} | Guapo`
-        const productTitle = pickLocalizedText((doc as { title?: unknown })?.title, loc)
-        if (productTitle) return `${productTitle} | Guapo`
+        const pageOrArticleTitle = pickLocalizedText((doc as { title?: unknown })?.title, loc)
+        if (pageOrArticleTitle) return `${pageOrArticleTitle} | Guapo`
         const title = (doc as { title?: string })?.title
         return typeof title === 'string' ? title : ''
       },
       generateDescription: ({ doc, locale }) => {
         const loc = seoLocaleCode(locale)
+        const excerpt = pickLocalizedText((doc as { excerpt?: unknown })?.excerpt, loc)
+        if (excerpt) return excerpt.slice(0, 300)
         const name =
           pickLocalizedText(doc?.name, loc) ||
           pickLocalizedText((doc as { title?: unknown })?.title, loc)

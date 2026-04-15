@@ -2,6 +2,9 @@ import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { getStorefrontSiteUrl } from "@/lib/site-url";
+import { buildLocaleAlternates } from "@/lib/seo-locale-alternates";
+import { BreadcrumbJsonLd } from "@/components/seo/BreadcrumbJsonLd";
 
 interface ConcernPageProps {
   params: Promise<{ locale: string; handle: string }>;
@@ -25,11 +28,19 @@ const placeholderProducts = [
 export async function generateMetadata({ params }: ConcernPageProps): Promise<Metadata> {
   const { locale, handle } = await params;
   const name = concernNames[handle]?.[locale as "da" | "en"] || handle;
-  
+  const title = `${locale === "da" ? "Produkter til" : "Products for"} ${name}`;
+  const pathSuffix = `/concerns/${encodeURIComponent(handle)}`;
+  const siteUrl = getStorefrontSiteUrl();
+
   return {
-    title: `${locale === "da" ? "Produkter til" : "Products for"} ${name}`,
-    alternates: {
-      canonical: `/${locale}/concerns/${handle}`,
+    title,
+    alternates: buildLocaleAlternates(locale, pathSuffix),
+    openGraph: {
+      type: "website",
+      siteName: "Guapo",
+      title,
+      url: `${siteUrl}/${locale}${pathSuffix}`,
+      locale,
     },
   };
 }
@@ -39,10 +50,18 @@ export default async function ConcernPage({ params }: ConcernPageProps) {
   const dict = await getDictionary(locale as Locale);
   const localeKey = locale as "da" | "en";
   const concernName = concernNames[handle]?.[localeKey] || handle;
+  const siteUrl = getStorefrontSiteUrl();
+  const concernUrl = `${siteUrl}/${locale}/concerns/${encodeURIComponent(handle)}`;
 
   return (
     <div className="min-h-full">
       <main className="container mx-auto px-4 py-8">
+        <BreadcrumbJsonLd
+          items={[
+            { name: dict.common.breadcrumbRoot, url: `${siteUrl}/${locale}` },
+            { name: concernName, url: concernUrl },
+          ]}
+        />
         {/* Breadcrumb */}
         <nav className="mb-6">
           <ol className="flex items-center gap-2 text-sm text-muted-foreground">

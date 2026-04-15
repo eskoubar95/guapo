@@ -3,6 +3,9 @@ import { Inter, Lexend } from "next/font/google";
 import { notFound } from "next/navigation";
 import { getDictionary } from "@/i18n/dictionaries";
 import { locales, type Locale } from "@/i18n/config";
+import { getStorefrontSiteUrl } from "@/lib/site-url";
+import { fetchSiteSettings } from "@/lib/payload-site-settings";
+import { resolvePayloadMediaUrl } from "@/lib/payload-media-url";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartAndModalProviders } from "@/components/providers/CartAndModalProviders";
 import { fetchNavigation, normalizeMenuSections } from "@/lib/payload-navigation";
@@ -12,6 +15,7 @@ import { fetchTrackingGlobal, resolveGtmContainerId } from "@/lib/payload-tracki
 import { Toaster } from "sonner";
 import { CookieConsentWrapper } from "@/components/CookieConsentWrapper";
 import { AuthAwareShell } from "@/components/AuthAwareShell";
+import { SiteWideJsonLd } from "@/components/seo/SiteWideJsonLd";
 import "../globals.css";
 
 const inter = Inter({
@@ -24,13 +28,35 @@ const lexend = Lexend({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: {
-    template: "%s | Guapo",
-    default: "Guapo - Premium Skincare",
-  },
-  description: "Curated premium skincare for all skin types. Shop the best face care products with fast delivery in Denmark.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const site = await fetchSiteSettings(locale);
+  const faviconUrl = resolvePayloadMediaUrl(site?.favicon);
+  const appleUrl = resolvePayloadMediaUrl(site?.appleTouchIcon);
+
+  const icons: Metadata["icons"] =
+    faviconUrl || appleUrl
+      ? {
+          ...(faviconUrl ? { icon: [{ url: faviconUrl }] } : {}),
+          ...(appleUrl ? { apple: [{ url: appleUrl }] } : {}),
+        }
+      : undefined;
+
+  return {
+    metadataBase: new URL(getStorefrontSiteUrl()),
+    title: {
+      template: "%s | Guapo",
+      default: "Guapo - Premium Skincare",
+    },
+    description:
+      "Curated premium skincare for all skin types. Shop the best face care products with fast delivery in Denmark.",
+    ...(icons ? { icons } : {}),
+  };
+}
 
 interface LocaleLayoutProps {
   children: React.ReactNode;
@@ -85,6 +111,7 @@ export default async function LocaleLayout({
         className={`${inter.variable} ${lexend.variable} font-sans antialiased bg-white text-foreground flex min-h-screen flex-col`}
         suppressHydrationWarning
       >
+        <SiteWideJsonLd locale={locale} />
         <CookieConsentWrapper locale={locale} gtmContainerId={gtmContainerId}>
           <AuthProvider>
             <CartAndModalProviders locale={locale} dict={dict}>

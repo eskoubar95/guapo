@@ -7,6 +7,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { fetchPageByPath } from "@/lib/payload-homepage";
+import { getStorefrontSiteUrl, normalizeImageUrlForSharing } from "@/lib/site-url";
+import { resolvePayloadMediaUrl } from "@/lib/payload-media-url";
+import { buildLocaleAlternates } from "@/lib/seo-locale-alternates";
+import { BreadcrumbJsonLd } from "@/components/seo/BreadcrumbJsonLd";
 import { resolveHomepageData } from "@/lib/resolve-homepage-data";
 import { HomePageSections } from "@/components/home/HomePageSections";
 import { lexicalToHtml } from "@/lib/lexical-to-html";
@@ -29,12 +33,37 @@ export async function generateMetadata({ params }: PayloadPageProps): Promise<Me
   const page = await fetchPageByPath(pathString, locale as Locale);
   if (!page) return { title: "Page" };
 
-  const title = (page.meta?.title as string) ?? page.title ?? "Page";
-  const description = page.meta?.description as string | undefined;
+  const metaTitle = typeof page.meta?.title === "string" ? page.meta.title.trim() : "";
+  const rawTitle = typeof page.title === "string" ? page.title.trim() : "";
+  const title = metaTitle ? { absolute: metaTitle } : rawTitle || "Page";
+  const description =
+    typeof page.meta?.description === "string" ? page.meta.description.trim() : undefined;
+  const siteUrl = getStorefrontSiteUrl();
+  const pathSuffix = `/${pathString.split("/").map(encodeURIComponent).join("/")}`;
+  const pageUrl = `${siteUrl}/${locale}${pathSuffix}`;
+  const ogRaw = resolvePayloadMediaUrl(
+    page.meta?.image as Parameters<typeof resolvePayloadMediaUrl>[0],
+  );
+  const ogImage = normalizeImageUrlForSharing(ogRaw);
+  const ogTitle = metaTitle || rawTitle || "Page";
+
   return {
     title,
-    description: description ?? undefined,
-    robots: { index: true },
+    description: description || undefined,
+    alternates: buildLocaleAlternates(locale, pathSuffix),
+    openGraph: {
+      type: "website",
+      siteName: "Guapo",
+      url: pageUrl,
+      locale,
+      title: ogTitle,
+      description: description || undefined,
+      ...(ogImage ? { images: [{ url: ogImage }] } : {}),
+    },
+    ...(ogImage
+      ? { twitter: { card: "summary_large_image" as const, images: [ogImage] } }
+      : {}),
+    robots: { index: true, follow: true },
   };
 }
 
@@ -63,9 +92,17 @@ export default async function PayloadPageRoute({ params, searchParams }: Payload
   if (page.pageType === "default") {
     const title = (page.title as string) ?? "Page";
     const contentHtml = lexicalToHtml(page.content);
+    const siteUrl = getStorefrontSiteUrl();
+    const pageUrl = `${siteUrl}/${validLocale}/${pathString.split("/").map(encodeURIComponent).join("/")}`;
     return (
       <div className="min-h-full">
         <main className="container mx-auto max-w-3xl px-4 py-12">
+          <BreadcrumbJsonLd
+            items={[
+              { name: dict.common.breadcrumbRoot, url: `${siteUrl}/${validLocale}` },
+              { name: title, url: pageUrl },
+            ]}
+          />
           <nav className="mb-8" aria-label="Breadcrumb">
             <ol className="flex items-center gap-2 text-sm text-muted-foreground">
               <li>

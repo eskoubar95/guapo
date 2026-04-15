@@ -14,6 +14,10 @@ import { fetchFreeShippingConfig } from "@/lib/free-shipping-config.server";
 import { fetchPayloadProductByHandle } from "@/lib/payload-products";
 import { resolvePayloadMediaUrl } from "@/lib/payload-media-url";
 import { getStorefrontSiteUrl, normalizeImageUrlForSharing } from "@/lib/site-url";
+import { buildLocaleAlternates } from "@/lib/seo-locale-alternates";
+import { stripHtmlToPlainText } from "@/lib/seo-text";
+import { ProductJsonLd } from "@/components/seo/ProductJsonLd";
+import { BreadcrumbJsonLd } from "@/components/seo/BreadcrumbJsonLd";
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
 import { productCardA11yFromDict } from "@/components/product-card-a11y";
 import { ProductReviewsSection } from "@/components/ProductReviewsSection";
@@ -40,6 +44,7 @@ export async function generateMetadata({
   const metaDesc = payloadProduct?.meta?.description?.trim();
   const siteUrl = getStorefrontSiteUrl();
   const pageUrl = `${siteUrl}/${locale}/products/${handle}`;
+  const pathWithoutLocale = `/products/${encodeURIComponent(handle)}`;
 
   const payloadOgRaw = resolvePayloadMediaUrl(
     payloadProduct?.meta?.image as Parameters<typeof resolvePayloadMediaUrl>[0],
@@ -54,10 +59,9 @@ export async function generateMetadata({
     (medusaFallback ? normalizeImageUrlForSharing(medusaFallback) : "");
 
   return {
-    metadataBase: new URL(siteUrl),
     title: metaTitle ? { absolute: metaTitle } : displayTitle,
     description: metaDesc || undefined,
-    alternates: { canonical: pageUrl },
+    alternates: buildLocaleAlternates(locale, pathWithoutLocale),
     openGraph: {
       type: "website",
       siteName: "Guapo",
@@ -138,8 +142,47 @@ export default async function ProductPage({ params }: ProductPageProps) {
     medusaProduct.id
   );
 
+  const siteUrl = getStorefrontSiteUrl();
+  const pdpUrl = `${siteUrl}/${locale}/products/${encodeURIComponent(handle)}`;
+  const imagesForLd = images.map((u) => normalizeImageUrlForSharing(u)).filter(Boolean);
+  const firstMedusaVariant = medusaProduct.variants?.[0];
+  const availability: "https://schema.org/InStock" | "https://schema.org/OutOfStock" =
+    firstMedusaVariant?.manage_inventory === false || (firstMedusaVariant?.inventory_quantity ?? 0) > 0
+      ? "https://schema.org/InStock"
+      : "https://schema.org/OutOfStock";
+  const brandNameLd =
+    medusaProduct.brand?.name ??
+    (typeof medusaProduct.metadata?.brand === "string" ? medusaProduct.metadata.brand : undefined) ??
+    payloadProduct?.brandName ??
+    undefined;
+
   return (
     <div className="min-h-full min-w-0 overflow-x-clip">
+      <ProductJsonLd
+        name={title}
+        description={stripHtmlToPlainText(description)}
+        images={imagesForLd}
+        brandName={brandNameLd}
+        sku={medusaProduct.id}
+        productUrl={pdpUrl}
+        price={basePrice}
+        priceCurrency="DKK"
+        availability={availability}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: dict.common.breadcrumbRoot, url: `${siteUrl}/${locale}` },
+          ...(categoryHandle && categoryName
+            ? [
+                {
+                  name: categoryName,
+                  url: `${siteUrl}/${locale}/categories/${encodeURIComponent(categoryHandle)}`,
+                },
+              ]
+            : []),
+          { name: title, url: pdpUrl },
+        ]}
+      />
       <TrackProductView
         productId={medusaProduct.id}
         handle={handle}

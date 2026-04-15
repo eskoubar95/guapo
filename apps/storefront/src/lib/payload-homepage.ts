@@ -4,6 +4,7 @@
  */
 
 import { getCached, setCache } from "@/lib/server-cache";
+import { withNormalizedSeoMeta } from "@/lib/payload-seo-meta";
 
 const PAYLOAD_URL = process.env.PAYLOAD_API_URL?.replace(/\/$/, "");
 
@@ -301,7 +302,8 @@ export async function fetchPageByPath(
     );
     if (!res.ok) return null;
 
-    const data = (await res.json()) as PayloadPage;
+    const raw = (await res.json()) as PayloadPage;
+    const data = withNormalizedSeoMeta(raw, locale);
     setCache(key, data);
     return data;
   } catch {
@@ -342,7 +344,8 @@ export async function fetchHomepage(
     );
     if (!res.ok) return null;
 
-    const data = (await res.json()) as PayloadHomepage;
+    const raw = (await res.json()) as PayloadHomepage;
+    const data = withNormalizedSeoMeta(raw, locale);
     setCache(key, data);
     return data;
   } catch {

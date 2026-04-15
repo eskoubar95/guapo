@@ -3,6 +3,7 @@ import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { FAQAccordion } from "@/components/FAQAccordion";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 interface SupportPageProps {
   params: Promise<{ locale: string }>;
@@ -164,6 +165,25 @@ const faqData = {
   },
 };
 
+function faqPageJsonLd(locale: string): Record<string, unknown> {
+  const content = faqData[locale as "da" | "en"] ?? faqData.da;
+  const mainEntity = content.categories.flatMap((cat) =>
+    cat.faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  );
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity,
+  };
+}
+
 export default async function FAQPage({ params }: SupportPageProps) {
   const { locale } = await params;
   const dict = await getDictionary(locale as Locale);
@@ -172,6 +192,7 @@ export default async function FAQPage({ params }: SupportPageProps) {
   return (
     <div className="min-h-full">
       <main className="container mx-auto max-w-3xl px-4 py-12">
+        <JsonLd data={faqPageJsonLd(locale)} />
         <h1 className="text-3xl font-bold text-foreground">{content.title}</h1>
         <FAQAccordion categories={content.categories} />
         <div className="mt-16 border-t border-border pt-8">

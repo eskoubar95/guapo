@@ -16,6 +16,9 @@ import {
 import { fetchProductsByCategory } from "@/lib/medusa-products";
 import { lexicalToHtml } from "@/lib/lexical-to-html";
 import { resolvePayloadMediaUrl } from "@/lib/payload-media-url";
+import { getStorefrontSiteUrl, normalizeImageUrlForSharing } from "@/lib/site-url";
+import { buildLocaleAlternates } from "@/lib/seo-locale-alternates";
+import { BreadcrumbJsonLd } from "@/components/seo/BreadcrumbJsonLd";
 import { categoryPlpFiltersEnabled } from "@/lib/feature-flags";
 import { PLPSortSelect } from "@/components/plp/PLPSortSelect";
 
@@ -102,21 +105,25 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const displayName = resolveCategoryDisplayTitle(payloadCat, medusaCat.name, medusaCat.handle);
   const metaTitle = payloadCat?.meta?.title?.trim();
   const metaDesc = payloadCat?.meta?.description?.trim();
-  const ogImage = resolvePayloadMediaUrl(
+  const ogImageRaw = resolvePayloadMediaUrl(
     payloadCat?.meta?.image as Parameters<typeof resolvePayloadMediaUrl>[0],
   );
+  const ogImage = normalizeImageUrlForSharing(ogImageRaw);
+  const pathSuffix = `/categories/${encodeURIComponent(handle)}`;
+  const siteUrl = getStorefrontSiteUrl();
 
   return {
     // Use absolute when SEO title is set so root layout template "%s | Guapo" does not double the suffix.
     title: metaTitle ? { absolute: metaTitle } : displayName,
     description: metaDesc || undefined,
-    alternates: {
-      canonical: `/${locale}/categories/${handle}`,
-    },
+    alternates: buildLocaleAlternates(locale, pathSuffix),
     openGraph: {
+      type: "website",
+      siteName: "Guapo",
       title: metaTitle || displayName,
       description: metaDesc || undefined,
-      url: `/${locale}/categories/${handle}`,
+      url: `${siteUrl}/${locale}${pathSuffix}`,
+      locale,
       ...(ogImage ? { images: [{ url: ogImage }] } : {}),
     },
     ...(ogImage
@@ -143,9 +150,18 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
   const subcategories = medusaCat.category_children ?? [];
 
+  const siteUrl = getStorefrontSiteUrl();
+  const categoryUrl = `${siteUrl}/${locale}/categories/${encodeURIComponent(handle)}`;
+
   return (
     <div className="min-h-full bg-white">
       <main className="container mx-auto px-4 py-6 lg:py-8">
+        <BreadcrumbJsonLd
+          items={[
+            { name: dict.common.brand, url: `${siteUrl}/${locale}` },
+            { name: categoryName, url: categoryUrl },
+          ]}
+        />
         {/* Breadcrumbs: Guapo / Skincare (uden "Kategorier" da vi kun har én topkategori) */}
         <nav className="mb-4 text-sm text-muted-foreground" aria-label="Breadcrumb">
           <ol className="flex items-center gap-2">

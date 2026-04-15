@@ -16,6 +16,9 @@ import {
 import { fetchProductsByBrand } from "@/lib/medusa-products";
 import { lexicalToHtml } from "@/lib/lexical-to-html";
 import { resolvePayloadMediaUrl } from "@/lib/payload-media-url";
+import { getStorefrontSiteUrl, normalizeImageUrlForSharing } from "@/lib/site-url";
+import { buildLocaleAlternates } from "@/lib/seo-locale-alternates";
+import { BreadcrumbJsonLd } from "@/components/seo/BreadcrumbJsonLd";
 import { categoryPlpFiltersEnabled } from "@/lib/feature-flags";
 import { PLPSortSelect } from "@/components/plp/PLPSortSelect";
 
@@ -98,20 +101,24 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
   const displayName = resolveBrandDisplayTitle(payloadBrand, medusaBrand.name, medusaBrand.handle);
   const metaTitle = payloadBrand?.meta?.title?.trim();
   const metaDesc = payloadBrand?.meta?.description?.trim();
-  const ogImage = resolvePayloadMediaUrl(
+  const ogImageRaw = resolvePayloadMediaUrl(
     payloadBrand?.meta?.image as Parameters<typeof resolvePayloadMediaUrl>[0],
   );
+  const ogImage = normalizeImageUrlForSharing(ogImageRaw);
+  const pathSuffix = `/brands/${encodeURIComponent(handle)}`;
+  const siteUrl = getStorefrontSiteUrl();
 
   return {
     title: metaTitle ? { absolute: metaTitle } : displayName,
     description: metaDesc || undefined,
-    alternates: {
-      canonical: `/${locale}/brands/${handle}`,
-    },
+    alternates: buildLocaleAlternates(locale, pathSuffix),
     openGraph: {
+      type: "website",
+      siteName: "Guapo",
       title: metaTitle || displayName,
       description: metaDesc || undefined,
-      url: `/${locale}/brands/${handle}`,
+      url: `${siteUrl}/${locale}${pathSuffix}`,
+      locale,
       ...(ogImage ? { images: [{ url: ogImage }] } : {}),
     },
     ...(ogImage
@@ -136,9 +143,18 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
 
   const { products, count: total, fetchError } = await fetchProductsByBrand(handle, sort);
 
+  const siteUrl = getStorefrontSiteUrl();
+  const brandUrl = `${siteUrl}/${locale}/brands/${encodeURIComponent(handle)}`;
+
   return (
     <div className="min-h-full bg-white">
       <main className="container mx-auto px-4 py-6 lg:py-8">
+        <BreadcrumbJsonLd
+          items={[
+            { name: dict.common.brand, url: `${siteUrl}/${locale}` },
+            { name: brandName, url: brandUrl },
+          ]}
+        />
         <nav className="mb-4 text-sm text-muted-foreground" aria-label="Breadcrumb">
           <ol className="flex items-center gap-2">
             <li>

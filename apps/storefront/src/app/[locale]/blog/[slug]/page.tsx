@@ -8,6 +8,9 @@ import {
   articleThumbnailUrl,
   getArticleBySlugCached,
 } from "@/lib/payload-articles";
+import { getStorefrontSiteUrl } from "@/lib/site-url";
+import { buildLocaleAlternates } from "@/lib/seo-locale-alternates";
+import { BreadcrumbJsonLd } from "@/components/seo/BreadcrumbJsonLd";
 import { lexicalToHtml } from "@/lib/lexical-to-html";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { blogCategoryLabel } from "@/components/blog/blog-helpers";
@@ -28,15 +31,21 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
     article.meta?.description?.trim() || article.excerpt?.trim() || undefined;
   const imageUrl = articleOgImageUrl(article);
   const images = imageUrl ? [{ url: imageUrl }] : undefined;
+  const siteUrl = getStorefrontSiteUrl();
+  const blogPath = `/blog/${encodeURIComponent(slug)}`;
+  const pageUrl = `${siteUrl}/${locale}${blogPath}`;
 
   return {
     title,
     description,
+    alternates: buildLocaleAlternates(locale, blogPath),
     openGraph: {
       title,
       description,
       images,
       type: "article",
+      url: pageUrl,
+      locale,
       publishedTime: article.publishedAt ?? undefined,
     },
     twitter: {
@@ -65,11 +74,20 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     (typeof featured === "object" && featured?.alt?.trim()) || article.title || "";
 
   const contentHtml = lexicalToHtml(article.content);
+  const siteUrl = getStorefrontSiteUrl();
+  const articleUrl = `${siteUrl}/${validLocale}/blog/${encodeURIComponent(slug)}`;
 
   return (
     <div className="min-h-full w-full bg-background min-w-0 overflow-x-clip">
       <main className="container mx-auto max-w-3xl px-4 py-8 sm:py-10 lg:py-12">
         <article className="w-full">
+          <BreadcrumbJsonLd
+            items={[
+              { name: dict.common.breadcrumbRoot, url: `${siteUrl}/${validLocale}` },
+              { name: dict.blog.title, url: `${siteUrl}/${validLocale}/blog` },
+              { name: article.title ?? slug, url: articleUrl },
+            ]}
+          />
           <nav className="mb-6" aria-label="Breadcrumb">
             <ol className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               <li>
