@@ -2,13 +2,22 @@ import type { Metadata } from "next";
 import { locales } from "@/i18n/config";
 import { getStorefrontSiteUrl } from "@/lib/site-url";
 
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 /**
- * Full URL for a storefront path **without** locale prefix, e.g. `/products/foo` or `` for home.
+ * Normalizes a storefront path and strips a leading locale segment (`/da`, `/en`) if present,
+ * so alternates/canonicals do not double-prefix locales.
  */
 export function storefrontPathWithoutLocale(path: string): string {
   const t = path.trim();
   if (!t || t === "/") return "";
-  return t.startsWith("/") ? t : `/${t}`;
+  const normalized = t.startsWith("/") ? t : `/${t}`;
+  const localePattern = new RegExp(`^/(?:${locales.map(escapeRegExp).join("|")})(?=/|$)`);
+  const withoutLocale = normalized.replace(localePattern, "");
+  if (!withoutLocale || withoutLocale === "/") return "";
+  return withoutLocale.startsWith("/") ? withoutLocale : `/${withoutLocale}`;
 }
 
 /**

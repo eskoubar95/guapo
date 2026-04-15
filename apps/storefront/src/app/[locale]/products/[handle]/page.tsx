@@ -145,11 +145,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const siteUrl = getStorefrontSiteUrl();
   const pdpUrl = `${siteUrl}/${locale}/products/${encodeURIComponent(handle)}`;
   const imagesForLd = images.map((u) => normalizeImageUrlForSharing(u)).filter(Boolean);
-  const firstMedusaVariant = medusaProduct.variants?.[0];
-  const availability: "https://schema.org/InStock" | "https://schema.org/OutOfStock" =
-    firstMedusaVariant?.manage_inventory === false || (firstMedusaVariant?.inventory_quantity ?? 0) > 0
-      ? "https://schema.org/InStock"
-      : "https://schema.org/OutOfStock";
+  const availability: "https://schema.org/InStock" | "https://schema.org/OutOfStock" = (
+    medusaProduct.variants ?? []
+  ).some(
+    (variant) =>
+      variant.manage_inventory === false || (variant.inventory_quantity ?? 0) > 0,
+  )
+    ? "https://schema.org/InStock"
+    : "https://schema.org/OutOfStock";
   const brandNameLd =
     medusaProduct.brand?.name ??
     (typeof medusaProduct.metadata?.brand === "string" ? medusaProduct.metadata.brand : undefined) ??

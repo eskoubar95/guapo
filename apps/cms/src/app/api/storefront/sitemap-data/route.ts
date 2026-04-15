@@ -35,7 +35,6 @@ export async function GET() {
           collection: 'pages',
           where: { _status: { equals: 'published' } },
           locale,
-          fallbackLocale: 'da',
           limit: pageLimit,
           page: pageNum,
           depth: 0,
@@ -69,7 +68,6 @@ export async function GET() {
           collection: 'articles',
           where: { status: { equals: 'published' } },
           locale,
-          fallbackLocale: 'da',
           limit: articleLimit,
           page: pageNum,
           depth: 0,
@@ -106,7 +104,7 @@ export async function GET() {
       },
     )
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to build sitemap data'
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error('[sitemap-data] GET failed', err)
+    return NextResponse.json({ error: 'Failed to build sitemap data' }, { status: 500 })
   }
 }

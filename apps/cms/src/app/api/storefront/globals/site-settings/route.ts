@@ -1,7 +1,7 @@
 /**
  * GET /api/storefront/globals/site-settings
  *
- * Returns Site settings global (favicon, Apple touch icon) for storefront metadata.
+ * Returns public favicon / Apple touch icon fields for storefront metadata.
  */
 import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
@@ -25,17 +25,21 @@ export async function GET(req: Request) {
       locale,
       fallbackLocale,
       depth: 1,
-      overrideAccess: true,
     })
 
-    return NextResponse.json(result, {
+    const publicResult = {
+      favicon: result.favicon ?? null,
+      appleTouchIcon: result.appleTouchIcon ?? null,
+    }
+
+    return NextResponse.json(publicResult, {
       status: 200,
       headers: {
         'Cache-Control': 'public, max-age=60, s-maxage=3600, stale-while-revalidate=60',
       },
     })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to fetch site settings'
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error('[site-settings] GET failed', err)
+    return NextResponse.json({ error: 'Failed to fetch site settings' }, { status: 500 })
   }
 }

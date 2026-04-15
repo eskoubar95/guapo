@@ -7,6 +7,10 @@ import type { GlobalConfig } from 'payload'
 export const SiteSettings: GlobalConfig = {
   slug: 'site-settings',
   label: 'Site settings',
+  access: {
+    /** Public storefront reads favicon / touch icon via /api/storefront/globals/site-settings */
+    read: () => true,
+  },
   admin: {
     group: 'Site Settings',
     description: 'Favicon and Apple touch icon for the storefront (replaces default app icon when set).',

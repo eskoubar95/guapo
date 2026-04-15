@@ -24,6 +24,7 @@ import { Footer } from './globals/Footer'
 import { Homepage } from './globals/Homepage'
 import { Tracking } from './globals/Tracking'
 import { SiteSettings } from './globals/SiteSettings'
+import { SupportFaq } from './globals/SupportFaq'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -95,7 +96,7 @@ export default buildConfig({
     Ingredients,
   ],
 
-  globals: [Navigation, Footer, Homepage, Tracking, SiteSettings],
+  globals: [Navigation, Footer, Homepage, Tracking, SiteSettings, SupportFaq],
 
   plugins: [
     s3Storage({

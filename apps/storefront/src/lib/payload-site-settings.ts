@@ -3,7 +3,10 @@
  */
 import type { PayloadMedia } from "@/lib/payload-homepage";
 
-const PAYLOAD_URL = process.env.NEXT_PUBLIC_PAYLOAD_API_URL?.replace(/\/$/, "");
+const PAYLOAD_URL = (process.env.NEXT_PUBLIC_PAYLOAD_API_URL ?? process.env.PAYLOAD_API_URL ?? "").replace(
+  /\/$/,
+  "",
+);
 
 export interface SiteSettingsPayload {
   favicon?: PayloadMedia | number | null;

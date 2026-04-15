@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { getStorefrontSiteUrl } from "@/lib/site-url";
 import { buildLocaleAlternates } from "@/lib/seo-locale-alternates";
 import { BreadcrumbJsonLd } from "@/components/seo/BreadcrumbJsonLd";
+import { fetchPayloadConcernByValue } from "@/lib/payload-concern";
 
 interface ConcernPageProps {
   params: Promise<{ locale: string; handle: string }>;
@@ -27,13 +28,21 @@ const placeholderProducts = [
 
 export async function generateMetadata({ params }: ConcernPageProps): Promise<Metadata> {
   const { locale, handle } = await params;
-  const name = concernNames[handle]?.[locale as "da" | "en"] || handle;
-  const title = `${locale === "da" ? "Produkter til" : "Products for"} ${name}`;
+  const localeKey = locale === "en" ? "en" : "da";
+  const cmsConcern = await fetchPayloadConcernByValue(handle, locale);
+  const fallbackLabel = concernNames[handle]?.[localeKey] ?? handle;
+  const label = cmsConcern?.label?.trim() || fallbackLabel;
+  const metaTitle = cmsConcern?.meta?.title?.trim();
+  const metaDescription = cmsConcern?.meta?.description?.trim();
+  const title =
+    metaTitle ||
+    `${localeKey === "da" ? "Produkter til" : "Products for"} ${label}`;
   const pathSuffix = `/concerns/${encodeURIComponent(handle)}`;
   const siteUrl = getStorefrontSiteUrl();
 
   return {
     title,
+    description: metaDescription || undefined,
     alternates: buildLocaleAlternates(locale, pathSuffix),
     openGraph: {
       type: "website",
@@ -48,8 +57,10 @@ export async function generateMetadata({ params }: ConcernPageProps): Promise<Me
 export default async function ConcernPage({ params }: ConcernPageProps) {
   const { locale, handle } = await params;
   const dict = await getDictionary(locale as Locale);
-  const localeKey = locale as "da" | "en";
-  const concernName = concernNames[handle]?.[localeKey] || handle;
+  const localeKey = locale === "en" ? "en" : "da";
+  const cmsConcern = await fetchPayloadConcernByValue(handle, locale);
+  const fallbackLabel = concernNames[handle]?.[localeKey] ?? handle;
+  const concernName = cmsConcern?.label?.trim() || fallbackLabel;
   const siteUrl = getStorefrontSiteUrl();
   const concernUrl = `${siteUrl}/${locale}/concerns/${encodeURIComponent(handle)}`;
 

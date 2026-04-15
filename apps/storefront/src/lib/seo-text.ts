@@ -1,6 +1,7 @@
 /** Plain text for JSON-LD descriptions (strip simple HTML tags). */
 export function stripHtmlToPlainText(html: string, maxLen = 8000): string {
   if (!html) return "";
+  if (maxLen <= 0) return "";
   const plain = html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
