@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { medusa, withMedusaBackendUrl } from "@/lib/medusa";
+import { medusa } from "@/lib/medusa";
 import { OrderDocumentDownloadLink } from "@/components/account/OrderDocumentDownloadLink";
 import type { StoreOrderDetail, StoreOrderDetailItem } from "@/lib/orders";
 import {
@@ -227,11 +227,7 @@ export function OrderDetailPanel({
         if (cancelled) return;
         const normalized = data?.order != null ? normalizeOrder(data.order, false) : null;
         if (normalized) {
-          setOrder({
-            ...normalized,
-            order_confirmation_pdf_url: withMedusaBackendUrl(normalized.order_confirmation_pdf_url),
-            invoice_pdf_url: withMedusaBackendUrl(normalized.invoice_pdf_url),
-          });
+          setOrder(normalized);
         } else {
           setOrder(null);
           setError(isDa ? "Kunne ikke indlæse ordren." : "Could not load order.");

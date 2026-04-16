@@ -31,7 +31,7 @@ export function OrderDocumentDownloadLink({
 }: OrderDocumentDownloadLinkProps) {
   const [busy, setBusy] = useState(false);
 
-  const onClick = useCallback(
+  const handleClick = useCallback(
     async (e: React.MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();
       if (busy) return;
@@ -47,17 +47,17 @@ export function OrderDocumentDownloadLink({
         })) as Response;
         const blob = await res.blob();
         const blobUrl = URL.createObjectURL(blob);
-        const win = window.open(blobUrl, "_blank", "noopener,noreferrer");
-        if (!win) {
-          const a = document.createElement("a");
-          a.href = blobUrl;
-          a.download =
-            docType === "invoice" ? `invoice-${orderId.slice(0, 8)}.pdf` : `order-${orderId.slice(0, 8)}.pdf`;
-          a.rel = "noopener";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        }
+        // Programmatic <a download> stays within the user-gesture chain; window.open(blob) after await is often blocked.
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download =
+          docType === "invoice"
+            ? `invoice-${orderId.slice(0, 8)}.pdf`
+            : `order-confirmation-${orderId.slice(0, 8)}.pdf`;
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
         window.setTimeout(() => URL.revokeObjectURL(blobUrl), 120_000);
       } catch {
         toast.error(
@@ -78,8 +78,8 @@ export function OrderDocumentDownloadLink({
       role="button"
       className={className}
       aria-busy={busy}
-      onClick={onClick}
       {...anchorRest}
+      onClick={handleClick}
     >
       {children}
     </a>
