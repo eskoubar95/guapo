@@ -7,6 +7,7 @@ import { formatCurrencyAmount, formatLongDate } from "@/lib/format";
 import { formatShippingAddress, normalizeOrder } from "@/lib/order-utils";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { trackOrderCompleted } from "@/lib/analytics/posthog-ecommerce";
+import { storefrontOrderDocumentHref } from "@/lib/medusa";
 
 const ORDER_STORAGE_KEY = "guapo_order_";
 
@@ -114,13 +115,6 @@ export function OrderConfirmationContent({
     formatCurrencyAmount(amount, locale, currencyCode ?? "dkk");
 
   const formatDate = (dateStr: string | undefined) => formatLongDate(dateStr, locale);
-  const backendBase = (process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "").replace(/\/$/, "");
-  const toAbsoluteOrderUrl = (url: string | null | undefined) => {
-    if (!url) return null;
-    if (/^https?:\/\//.test(url)) return url;
-    if (!backendBase) return url;
-    return `${backendBase}${url.startsWith("/") ? "" : "/"}${url}`;
-  };
 
   if (loading) {
     return (
@@ -347,7 +341,7 @@ export function OrderConfirmationContent({
               <div className="flex flex-col gap-2 text-sm">
                 {order.order_confirmation_pdf_url && (
                   <a
-                    href={toAbsoluteOrderUrl(order.order_confirmation_pdf_url) ?? "#"}
+                    href={storefrontOrderDocumentHref(order.id, "order-confirmation")}
                     className="inline-flex text-primary hover:underline"
                   >
                     {locale === "da"
@@ -357,7 +351,7 @@ export function OrderConfirmationContent({
                 )}
                 {order.invoice_pdf_url && (
                   <a
-                    href={toAbsoluteOrderUrl(order.invoice_pdf_url) ?? "#"}
+                    href={storefrontOrderDocumentHref(order.id, "invoice")}
                     className="inline-flex text-primary hover:underline"
                   >
                     {locale === "da" ? "Download faktura (PDF)" : "Download invoice (PDF)"}
