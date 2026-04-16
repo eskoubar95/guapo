@@ -172,7 +172,9 @@ export async function buildStorefrontSitemap(): Promise<MetadataRoute.Sitemap> {
     if (!isValidLocale(row.locale)) continue;
     const loc = row.locale;
     if (!sitemapLocaleSet.has(loc)) continue;
-    const path = row.path.trim();
+    const path = row.path.trim().replace(/^\/+/, "");
+    // Concern PLPs come from Medusa (`CONCERN_PLP_HANDLES` below); skip CMS duplicate paths.
+    if (path === "concerns" || path.startsWith("concerns/")) continue;
     if (path === "home") {
       pushEntry(entries, seenUrls, {
         url: `${base}/${loc}`,
