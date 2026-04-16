@@ -128,20 +128,9 @@ async function fetchPayloadSitemapRows(): Promise<SitemapPayloadResponse> {
   }
 }
 
+/** Paths under /[locale]/… that are not covered by Payload sitemap-data (homepage uses path `home` in CMS). */
 function staticPublicPaths(): string[] {
-  return [
-    "",
-    "/categories",
-    "/brands",
-    "/concerns",
-    "/blog",
-    "/support/faq",
-    "/support/contact",
-    "/policies/terms",
-    "/policies/privacy",
-    "/policies/cookies",
-    "/policies/returns",
-  ];
+  return ["/categories", "/brands", "/concerns", "/blog"];
 }
 
 function toLastMod(iso: string | null | undefined): Date | undefined {
@@ -220,12 +209,10 @@ export async function buildStorefrontSitemap(): Promise<MetadataRoute.Sitemap> {
     const prefix = `/${loc}`;
 
     for (const p of staticPublicPaths()) {
-      const url = `${base}${prefix}${p || ""}`;
-      if (p === "" && seenUrls.has(url)) continue;
       pushEntry(entries, seenUrls, {
-        url,
-        changeFrequency: p === "" ? "daily" : "weekly",
-        priority: p === "" ? 1 : 0.7,
+        url: `${base}${prefix}${p}`,
+        changeFrequency: "weekly",
+        priority: 0.7,
       });
     }
 
