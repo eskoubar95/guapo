@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { medusa, withMedusaBackendUrl } from "@/lib/medusa";
+import { medusa, storefrontOrderDocumentHref, withMedusaBackendUrl } from "@/lib/medusa";
 import type { StoreOrderDetail, StoreOrderDetailItem } from "@/lib/orders";
 import {
   lineItemTotalMajor,
@@ -154,7 +154,7 @@ export function OrderDetailBody({
         <div className="flex flex-wrap gap-3">
           {order.order_confirmation_pdf_url ? (
             <a
-              href={withMedusaBackendUrl(order.order_confirmation_pdf_url) ?? "#"}
+              href={storefrontOrderDocumentHref(order.id, "order-confirmation")}
               target="_blank"
               rel="noopener noreferrer"
               className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
@@ -164,7 +164,7 @@ export function OrderDetailBody({
           ) : null}
           {order.invoice_pdf_url ? (
             <a
-              href={withMedusaBackendUrl(order.invoice_pdf_url) ?? "#"}
+              href={storefrontOrderDocumentHref(order.id, "invoice")}
               target="_blank"
               rel="noopener noreferrer"
               className={cn(buttonVariants({ variant: "outline", size: "sm" }))}

@@ -19,6 +19,19 @@ export function withMedusaBackendUrl(path: string | null | undefined): string | 
   return `${base}${path}`;
 }
 
+export type StorefrontOrderDocumentType = "order-confirmation" | "invoice";
+
+/**
+ * Same-origin URL for order PDFs. Use instead of direct Medusa document URLs:
+ * store routes require `x-publishable-api-key`, which browsers do not send on plain navigation.
+ */
+export function storefrontOrderDocumentHref(
+  orderId: string,
+  docType: StorefrontOrderDocumentType
+): string {
+  return `/api/order-documents/${encodeURIComponent(orderId)}/${docType}`;
+}
+
 export const medusa = new Medusa({
   baseUrl: MEDUSA_BACKEND_URL,
   debug: process.env.NODE_ENV === "development",
