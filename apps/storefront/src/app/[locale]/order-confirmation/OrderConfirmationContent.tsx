@@ -7,7 +7,7 @@ import { formatCurrencyAmount, formatLongDate } from "@/lib/format";
 import { formatShippingAddress, normalizeOrder } from "@/lib/order-utils";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { trackOrderCompleted } from "@/lib/analytics/posthog-ecommerce";
-import { storefrontOrderDocumentHref } from "@/lib/medusa";
+import { OrderDocumentDownloadLink } from "@/components/account/OrderDocumentDownloadLink";
 
 const ORDER_STORAGE_KEY = "guapo_order_";
 
@@ -340,22 +340,26 @@ export function OrderConfirmationContent({
               </h3>
               <div className="flex flex-col gap-2 text-sm">
                 {order.order_confirmation_pdf_url && (
-                  <a
-                    href={storefrontOrderDocumentHref(order.id, "order-confirmation")}
+                  <OrderDocumentDownloadLink
+                    orderId={order.id}
+                    docType="order-confirmation"
+                    locale={locale}
                     className="inline-flex text-primary hover:underline"
                   >
                     {locale === "da"
                       ? "Download ordrebekræftelse (PDF)"
                       : "Download order confirmation (PDF)"}
-                  </a>
+                  </OrderDocumentDownloadLink>
                 )}
                 {order.invoice_pdf_url && (
-                  <a
-                    href={storefrontOrderDocumentHref(order.id, "invoice")}
+                  <OrderDocumentDownloadLink
+                    orderId={order.id}
+                    docType="invoice"
+                    locale={locale}
                     className="inline-flex text-primary hover:underline"
                   >
                     {locale === "da" ? "Download faktura (PDF)" : "Download invoice (PDF)"}
-                  </a>
+                  </OrderDocumentDownloadLink>
                 )}
               </div>
             </div>

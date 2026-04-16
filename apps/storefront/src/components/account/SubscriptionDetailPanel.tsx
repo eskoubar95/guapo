@@ -489,11 +489,7 @@ export function SubscriptionDetailPanel({
         if (cancelled) return;
         const normalized = data?.order != null ? normalizeOrder(data.order, false) : null;
         if (normalized) {
-          setOrderDetail({
-            ...normalized,
-            order_confirmation_pdf_url: withMedusaBackendUrl(normalized.order_confirmation_pdf_url),
-            invoice_pdf_url: withMedusaBackendUrl(normalized.invoice_pdf_url),
-          });
+          setOrderDetail(normalized);
         } else {
           setOrderDetail(null);
           setOrderError(isDa ? "Kunne ikke indlæse ordren." : "Could not load order.");
