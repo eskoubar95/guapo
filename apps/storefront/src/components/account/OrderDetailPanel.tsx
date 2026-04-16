@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { medusa, storefrontOrderDocumentHref, withMedusaBackendUrl } from "@/lib/medusa";
+import { medusa, withMedusaBackendUrl } from "@/lib/medusa";
+import { OrderDocumentDownloadLink } from "@/components/account/OrderDocumentDownloadLink";
 import type { StoreOrderDetail, StoreOrderDetailItem } from "@/lib/orders";
 import {
   lineItemTotalMajor,
@@ -153,24 +154,24 @@ export function OrderDetailBody({
       {(order.order_confirmation_pdf_url || order.invoice_pdf_url) && (
         <div className="flex flex-wrap gap-3">
           {order.order_confirmation_pdf_url ? (
-            <a
-              href={storefrontOrderDocumentHref(order.id, "order-confirmation")}
-              target="_blank"
-              rel="noopener noreferrer"
+            <OrderDocumentDownloadLink
+              orderId={order.id}
+              docType="order-confirmation"
+              locale={locale}
               className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
             >
               {isDa ? "Ordrebekræftelse (PDF)" : "Order confirmation (PDF)"}
-            </a>
+            </OrderDocumentDownloadLink>
           ) : null}
           {order.invoice_pdf_url ? (
-            <a
-              href={storefrontOrderDocumentHref(order.id, "invoice")}
-              target="_blank"
-              rel="noopener noreferrer"
+            <OrderDocumentDownloadLink
+              orderId={order.id}
+              docType="invoice"
+              locale={locale}
               className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
             >
               {isDa ? "Faktura (PDF)" : "Invoice (PDF)"}
-            </a>
+            </OrderDocumentDownloadLink>
           ) : null}
         </div>
       )}

@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Package } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { medusa, storefrontOrderDocumentHref } from "@/lib/medusa";
+import { medusa } from "@/lib/medusa";
+import { OrderDocumentDownloadLink } from "@/components/account/OrderDocumentDownloadLink";
 import { formatCurrencyAmount } from "@/lib/format";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -215,24 +216,24 @@ export function AccountOrdersClient({
                       order.tracking_url) && (
                       <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
                         {order.order_confirmation_pdf_url ? (
-                          <a
-                            href={storefrontOrderDocumentHref(order.id, "order-confirmation")}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <OrderDocumentDownloadLink
+                            orderId={order.id}
+                            docType="order-confirmation"
+                            locale={locale}
                             className="text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:text-primary"
                           >
                             {isDa ? "Ordrebekræftelse (PDF)" : "Order confirmation (PDF)"}
-                          </a>
+                          </OrderDocumentDownloadLink>
                         ) : null}
                         {order.invoice_pdf_url ? (
-                          <a
-                            href={storefrontOrderDocumentHref(order.id, "invoice")}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <OrderDocumentDownloadLink
+                            orderId={order.id}
+                            docType="invoice"
+                            locale={locale}
                             className="text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:text-primary"
                           >
                             {isDa ? "Faktura (PDF)" : "Invoice (PDF)"}
-                          </a>
+                          </OrderDocumentDownloadLink>
                         ) : null}
                         {order.tracking_url ? (
                           <a
