@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { resolveStorefrontLinkHref } from "@/lib/storefront-href";
 
 const AUTOPLAY_MS = 7000;
 const SWIPE_THRESHOLD_RATIO = 0.12;
@@ -29,16 +30,6 @@ interface PromotionSliderProps {
   locale: string;
   /** A11y / UI copy from i18n */
   labels?: PromotionSliderLabels;
-}
-
-function resolveHref(slideHref: string | undefined, locale: string): string | undefined {
-  if (!slideHref) return undefined;
-  const t = slideHref.trim();
-  if (t.startsWith("http://") || t.startsWith("https://")) return t;
-  const localePrefix = `/${locale}`;
-  let path = t.startsWith("/") ? t : `/${t}`;
-  if (path === localePrefix || path.startsWith(`${localePrefix}/`)) return path;
-  return `${localePrefix}${path === "/" ? "" : path}`;
 }
 
 export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps) {
@@ -213,7 +204,7 @@ export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps
                 const desktopUrl = slide.imageDesktopUrl;
                 const tabletUrl = slide.imageTabletUrl ?? desktopUrl;
                 const mobileUrl = slide.imageMobileUrl ?? tabletUrl ?? desktopUrl;
-                const href = resolveHref(slide.href, locale);
+                const href = resolveStorefrontLinkHref(slide.href, locale);
                 const slideLabel =
                   slide.accessibleLabel?.trim() || `${l.goToSlide} ${index + 1}`;
                 const eagerLoad =

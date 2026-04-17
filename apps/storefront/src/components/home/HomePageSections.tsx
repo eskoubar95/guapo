@@ -5,6 +5,7 @@
 
 import type { HomepageSection, PayloadMedia } from "@/lib/payload-homepage";
 import { resolvePayloadMediaUrl } from "@/lib/payload-media-url";
+import { resolveStorefrontLinkHref } from "@/lib/storefront-href";
 import type { Product } from "@/components/ProductCard";
 import type { ProductCardA11yLabels } from "@/components/product-card-a11y";
 import { FeaturedProducts } from "@/components/sections/FeaturedProducts";
@@ -62,6 +63,7 @@ export function HomePageSections({
           case "hero": {
             const hero = block as import("@/lib/payload-homepage").HeroBlock;
             const bgUrl = resolvePayloadMediaUrl(hero.backgroundImage);
+            const heroLinkHref = resolveStorefrontLinkHref(hero.cta?.url, locale);
             const isFirstHero = sections.findIndex((b) => b.blockType === "hero") === index;
             return (
               <HeroSection
@@ -69,13 +71,12 @@ export function HomePageSections({
                 heading={hero.heading}
                 subheading={hero.subheading ?? undefined}
                 backgroundImageUrl={bgUrl}
-                cta={hero.cta}
+                linkHref={heroLinkHref}
                 variant={hero.variant ?? "full"}
                 textPosition={hero.textPosition ?? "center"}
                 textColor={hero.textColor ?? "light"}
                 headingLevel={isFirstHero ? 1 : 2}
                 prioritizeAboveFold={index === 0}
-                locale={locale}
               />
             );
           }
