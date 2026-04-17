@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { resolveStorefrontLinkHref } from "@/lib/storefront-href";
 
 const AUTOPLAY_MS = 7000;
 const SWIPE_THRESHOLD_RATIO = 0.12;
 const CLICK_TOLERANCE_PX = 14;
+/** Only capture pointer & treat as drag after this movement — immediate capture breaks Link clicks. */
+const DRAG_LOCK_PX = 10;
 
 export interface PromotionSliderSlideData {
   id: string;
@@ -31,16 +34,6 @@ interface PromotionSliderProps {
   labels?: PromotionSliderLabels;
 }
 
-function resolveHref(slideHref: string | undefined, locale: string): string | undefined {
-  if (!slideHref) return undefined;
-  const t = slideHref.trim();
-  if (t.startsWith("http://") || t.startsWith("https://")) return t;
-  const localePrefix = `/${locale}`;
-  let path = t.startsWith("/") ? t : `/${t}`;
-  if (path === localePrefix || path.startsWith(`${localePrefix}/`)) return path;
-  return `${localePrefix}${path === "/" ? "" : path}`;
-}
-
 export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps) {
   const [current, setCurrent] = useState(0);
   const [hoverPaused, setHoverPaused] = useState(false);
@@ -52,6 +45,8 @@ export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps
   const dragStartXRef = useRef<number | null>(null);
   const activePointerIdRef = useRef<number | null>(null);
   const suppressLinkClickRef = useRef(false);
+  /** True once user moved past DRAG_LOCK_PX and we called setPointerCapture. */
+  const dragLockedRef = useRef(false);
 
   const l = labels ?? {
     previousSlide: "Previous slide",
@@ -93,15 +88,29 @@ export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps
   const onTrackPointerDownCapture = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!multi) return;
     if (e.pointerType === "mouse" && e.button !== 0) return;
+    suppressLinkClickRef.current = false;
+    dragLockedRef.current = false;
     dragStartXRef.current = e.clientX;
     activePointerIdRef.current = e.pointerId;
-    setIsDragging(true);
-    e.currentTarget.setPointerCapture(e.pointerId);
   };
 
   const onTrackPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (activePointerIdRef.current !== e.pointerId || dragStartXRef.current == null) return;
-    setDragOffset(e.clientX - dragStartXRef.current);
+    const dx = e.clientX - dragStartXRef.current;
+
+    if (!dragLockedRef.current && Math.abs(dx) >= DRAG_LOCK_PX) {
+      dragLockedRef.current = true;
+      setIsDragging(true);
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        /* element detached */
+      }
+    }
+
+    if (dragLockedRef.current) {
+      setDragOffset(dx);
+    }
   };
 
   const finishPointerGesture = (e: React.PointerEvent<HTMLDivElement>, clientX: number) => {
@@ -109,27 +118,31 @@ export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps
 
     const startX = dragStartXRef.current;
     const dx = startX != null ? clientX - startX : 0;
+    const wasDrag = dragLockedRef.current;
 
     dragStartXRef.current = null;
     activePointerIdRef.current = null;
+    dragLockedRef.current = false;
     setIsDragging(false);
     setDragOffset(0);
 
-    if (Math.abs(dx) > CLICK_TOLERANCE_PX) {
+    if (wasDrag && Math.abs(dx) > CLICK_TOLERANCE_PX) {
       suppressLinkClickRef.current = true;
     }
 
     const w = trackRef.current?.offsetWidth ?? 300;
     const threshold = w * SWIPE_THRESHOLD_RATIO;
-    if (Math.abs(dx) > threshold) {
+    if (wasDrag && Math.abs(dx) > threshold) {
       if (dx > 0) goPrev();
       else goNext();
     }
 
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {
-      /* already released */
+    if (wasDrag) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        /* already released */
+      }
     }
   };
 
@@ -139,14 +152,18 @@ export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps
 
   const onTrackPointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
     if (activePointerIdRef.current !== e.pointerId) return;
+    const hadCapture = dragLockedRef.current;
     dragStartXRef.current = null;
     activePointerIdRef.current = null;
+    dragLockedRef.current = false;
     setIsDragging(false);
     setDragOffset(0);
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {
-      /* already released */
+    if (hadCapture) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        /* already released */
+      }
     }
   };
 
@@ -154,6 +171,7 @@ export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps
     if (activePointerIdRef.current !== e.pointerId) return;
     dragStartXRef.current = null;
     activePointerIdRef.current = null;
+    dragLockedRef.current = false;
     setIsDragging(false);
     setDragOffset(0);
   };
@@ -213,7 +231,7 @@ export function PromotionSlider({ slides, locale, labels }: PromotionSliderProps
                 const desktopUrl = slide.imageDesktopUrl;
                 const tabletUrl = slide.imageTabletUrl ?? desktopUrl;
                 const mobileUrl = slide.imageMobileUrl ?? tabletUrl ?? desktopUrl;
-                const href = resolveHref(slide.href, locale);
+                const href = resolveStorefrontLinkHref(slide.href, locale);
                 const slideLabel =
                   slide.accessibleLabel?.trim() || `${l.goToSlide} ${index + 1}`;
                 const eagerLoad =

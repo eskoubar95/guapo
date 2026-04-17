@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { ImageWithFallback } from "@/components/ui/ImageWithFallback";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,7 +10,8 @@ interface HeroSectionProps {
   heading: string;
   subheading?: string;
   backgroundImageUrl?: string;
-  cta?: { text?: string | null; url?: string | null };
+  /** From Payload hero CTA URL — full-bleed tap target on the image (no visible button). */
+  linkHref?: string;
   variant?: "full" | "split" | "video";
   textPosition?: "left" | "center" | "right";
   textColor?: "light" | "dark";
@@ -19,20 +19,18 @@ interface HeroSectionProps {
   headingLevel?: 1 | 2;
   /** First CMS section: skeleton, fetch priority, homepage load gate integration */
   prioritizeAboveFold?: boolean;
-  locale: string;
 }
 
 export function HeroSection({
   heading,
   subheading,
   backgroundImageUrl,
-  cta,
+  linkHref,
   variant = "full",
   textPosition = "center",
   textColor = "light",
   headingLevel = 1,
   prioritizeAboveFold = false,
-  locale,
 }: HeroSectionProps) {
   const isLight = textColor === "light";
   const textCls = isLight ? "text-primary-foreground" : "text-text-primary";
@@ -56,6 +54,17 @@ export function HeroSection({
     }
   }, [backgroundImageUrl, isPrimaryLcpHero, signalHeroMediaReady]);
 
+  const imageLinkOverlay =
+    linkHref != null && linkHref !== "" ? (
+      <Link
+        href={linkHref}
+        className="absolute inset-0 z-[4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        aria-label={heading}
+      >
+        <span className="sr-only">{heading}</span>
+      </Link>
+    ) : null;
+
   if (variant === "full" && backgroundImageUrl) {
     return (
       <section className="relative py-12 lg:py-20 min-h-[320px] lg:min-h-[420px] flex items-center bg-background overflow-hidden">
@@ -74,6 +83,7 @@ export function HeroSection({
           src={backgroundImageUrl}
           alt=""
           fetchPriority={isPrimaryLcpHero ? "high" : undefined}
+          loading={isPrimaryLcpHero ? "eager" : undefined}
           className={`absolute inset-0 z-0 w-full h-full object-cover transition-opacity duration-500 ${
             isPrimaryLcpHero && !heroBgReady ? "opacity-0" : "opacity-100"
           }`}
@@ -81,7 +91,7 @@ export function HeroSection({
           onError={isPrimaryLcpHero ? signalHeroMediaReady : undefined}
         />
         <div className={`absolute inset-0 z-[2] ${overlayCls}`} />
-        <div className="section-container relative z-[3]">
+        <div className={`section-container relative z-[3] ${linkHref ? "pointer-events-none" : ""}`}>
           <div
             className={`max-w-2xl ${
               textPosition === "center" ? "text-center mx-auto" : textPosition === "right" ? "text-right ml-auto" : ""
@@ -92,22 +102,10 @@ export function HeroSection({
             >
               {heading}
             </HeadingTag>
-            {subheading && <p className={`text-lg md:text-xl mb-6 ${isLight ? "text-primary-foreground/90" : "text-text-muted"}`}>{subheading}</p>}
-            {cta?.text && (
-              <Link
-                href={`/${locale}${cta.url ?? "/categories"}`}
-                className={`inline-flex items-center gap-2 h-12 px-8 text-base font-medium rounded-lg border-2 focus-visible:outline-none focus-visible:border-primary ${
-                  isLight
-                    ? "bg-primary-foreground text-primary hover:opacity-90 border-transparent"
-                    : "bg-primary text-primary-foreground hover:opacity-90 border-transparent"
-                }`}
-              >
-                {cta.text}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            )}
+            {subheading && <p className={`text-lg md:text-xl ${isLight ? "text-primary-foreground/90" : "text-text-muted"}`}>{subheading}</p>}
           </div>
         </div>
+        {imageLinkOverlay}
       </section>
     );
   }
@@ -133,29 +131,28 @@ export function HeroSection({
                 src={backgroundImageUrl}
                 alt=""
                 fetchPriority={isPrimaryLcpHero ? "high" : undefined}
+                loading={isPrimaryLcpHero ? "eager" : undefined}
                 className={`relative z-0 h-full w-full object-cover transition-opacity duration-500 ${
                   isPrimaryLcpHero && !heroBgReady ? "opacity-0" : "opacity-100"
                 }`}
                 onLoad={isPrimaryLcpHero ? signalHeroMediaReady : undefined}
                 onError={isPrimaryLcpHero ? signalHeroMediaReady : undefined}
               />
+              {linkHref ? (
+                <Link
+                  href={linkHref}
+                  className="absolute inset-0 z-[4] rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  aria-label={heading}
+                >
+                  <span className="sr-only">{heading}</span>
+                </Link>
+              ) : null}
             </div>
             <div className="flex flex-col justify-center order-1 lg:order-2 text-left">
               <HeadingTag className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
                 {heading}
               </HeadingTag>
-              {subheading && (
-                <p className="text-lg text-text-muted mb-6">{subheading}</p>
-              )}
-              {cta?.text && (
-                <Link
-                  href={cta.url?.startsWith("http") ? cta.url : `/${locale}/${(cta.url ?? "categories").replace(/^\//, "")}`}
-                  className="inline-flex items-center gap-2 h-12 px-8 text-base font-medium rounded-lg bg-primary text-primary-foreground hover:opacity-90 border-2 border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                >
-                  {cta.text}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              )}
+              {subheading && <p className="text-lg text-text-muted">{subheading}</p>}
             </div>
           </div>
         </div>
@@ -164,24 +161,16 @@ export function HeroSection({
   }
 
   return (
-    <section className="py-12 lg:py-16 bg-surface-muted/50">
-      <div className="section-container">
+    <section className="relative py-12 lg:py-16 bg-surface-muted/50">
+      <div className={`section-container relative z-[1] ${linkHref ? "pointer-events-none" : ""}`}>
         <div className={`max-w-3xl ${textPosition === "center" ? "text-center mx-auto" : ""}`}>
           <HeadingTag className="mb-4 text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-5xl">
             {heading}
           </HeadingTag>
-          {subheading && <p className="text-text-muted mb-6">{subheading}</p>}
-          {cta?.text && (
-            <Link
-              href={`/${locale}${cta.url ?? "/categories"}`}
-              className="inline-flex items-center gap-2 h-12 px-8 text-base font-medium rounded-lg bg-primary text-primary-foreground hover:opacity-90 border-2 border-transparent focus-visible:border-primary focus-visible:outline-none"
-            >
-              {cta.text}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          )}
+          {subheading && <p className="text-text-muted">{subheading}</p>}
         </div>
       </div>
+      {imageLinkOverlay}
     </section>
   );
 }
