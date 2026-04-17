@@ -9,6 +9,7 @@ import {
 } from "../lib/documents/order-document-generation";
 import { flattenOrderItemFromGraph } from "../lib/store-order-graph-item";
 import { resolvePdfSellerForOrder } from "../lib/documents/resolve-pdf-seller";
+import type { OrderMetadataState } from "../lib/documents/document-storage";
 import {
   readOrderMetadata,
   writeDocumentPayloads,
@@ -64,7 +65,9 @@ export default async function orderPlacedTransactionalDocuments({
     logger?.error?.(
       `[order-placed-transactional-documents] FAILED orderId=${orderId} error=${message}${stack ? ` stack=${stack}` : ""}`
     );
-    throw err;
+    // Do not rethrow: Redis/job retries would re-run the subscriber and can duplicate emails
+    // after Plunk already accepted a send. Errors are logged; idempotent markers + early
+    // persists below reduce duplicate risk on partial failures.
   }
 }
 
@@ -148,6 +151,9 @@ async function runOrderPlacedTransactionalDocuments({
   const invoiceLabel =
     order.display_id != null ? String(order.display_id) : orderId.replace(/[^a-zA-Z0-9_-]/g, "").slice(-12) || "order";
 
+  /** True after any successful persistOrderMetadata (order mail, subscription mail, or final PDF-only). */
+  let metadataPersisted = false;
+
   if (!metadata.transactional?.order_confirmation_sent_at && order.email) {
     const money = buildOrderEmailMoneySummary(order);
     const emailResult = await sendTransactionalEmail(
@@ -178,6 +184,8 @@ async function runOrderPlacedTransactionalDocuments({
         order_confirmation_sent_at: new Date().toISOString(),
         locale,
       });
+      await persistOrderMetadata(container, orderId, order.customer_id, mergedMetadata);
+      metadataPersisted = true;
     } else {
       logger?.error?.(
         `[order-placed-transactional-documents] Order confirmation email not sent orderId=${orderId} err=${emailResult.error ?? "unknown"}`
@@ -268,6 +276,8 @@ async function runOrderPlacedTransactionalDocuments({
         subscription_created_sent_at: new Date().toISOString(),
         locale,
       });
+      await persistOrderMetadata(container, orderId, order.customer_id, mergedMetadata);
+      metadataPersisted = true;
     } else {
       logger?.error?.(
         `[order-placed-transactional-documents] subscription_created email not sent orderId=${orderId} err=${emailResult.error ?? "unknown"}`
@@ -275,15 +285,30 @@ async function runOrderPlacedTransactionalDocuments({
     }
   }
 
+  const hasPdfPayloads =
+    Boolean(mergedMetadata.documents?.order_confirmation_pdf_base64) &&
+    Boolean(mergedMetadata.documents?.invoice_pdf_base64);
+
+  if (!metadataPersisted && hasPdfPayloads) {
+    await persistOrderMetadata(container, orderId, order.customer_id, mergedMetadata);
+  }
+
+  logger?.info?.(`[order-placed-transactional-documents] Generated PDFs and processed emails for order ${orderId}`);
+}
+
+async function persistOrderMetadata(
+  container: SubscriberArgs<{ id: string }>["container"],
+  orderId: string,
+  customerId: string | null | undefined,
+  mergedMetadata: OrderMetadataState
+): Promise<void> {
   await updateOrderWorkflow(container).run({
     input: {
       id: orderId,
-      user_id: order.customer_id ?? orderId,
-      metadata: mergedMetadata,
+      user_id: customerId ?? orderId,
+      metadata: mergedMetadata as Record<string, unknown>,
     },
   });
-
-  logger?.info?.(`[order-placed-transactional-documents] Generated PDFs and processed emails for order ${orderId}`);
 }
 
 export const config: SubscriberConfig = {

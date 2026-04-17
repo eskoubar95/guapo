@@ -9,6 +9,9 @@ export function resolveStorefrontLinkHref(
   if (!raw?.trim()) return undefined;
   const t = raw.trim();
   if (t.startsWith("http://") || t.startsWith("https://")) return t;
+  // Anchors, protocol-relative URLs, and non-http(s) schemes (mailto:, tel:, …)
+  if (t.startsWith("#") || t.startsWith("//")) return t;
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(t)) return t;
   const localePrefix = `/${locale}`;
   let path = t.startsWith("/") ? t : `/${t}`;
   if (path === localePrefix || path.startsWith(`${localePrefix}/`)) return path;
