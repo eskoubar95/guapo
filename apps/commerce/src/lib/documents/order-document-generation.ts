@@ -215,15 +215,13 @@ function computeOrderPdfLinesAndEmailLines(
       unitPriceMinor,
       lineTotalMinor,
     });
-    const resolvedUnit =
-      unitPriceMajor != null && Number.isFinite(unitPriceMajor)
-        ? unitPriceMajor
-        : lineTotalMajor / Math.max(1, quantity);
+    // Same basis as PDF: unit from line total. Raw `unit_price` can be ex-VAT while line total is gross.
+    const displayUnitMajor = unitPriceMinor / 100;
     emailLines.push({
       title,
       subtitle,
       quantity,
-      unitPriceMajor: resolvedUnit,
+      unitPriceMajor: displayUnitMajor,
       lineTotalMajor,
       ...(thumbnailUrl ? { thumbnailUrl } : {}),
     });
