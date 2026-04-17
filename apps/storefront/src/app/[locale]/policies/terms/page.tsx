@@ -2,6 +2,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import type { Locale } from "@/i18n/config";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { isCheckoutKlarnaEnabled } from "@/lib/checkout-klarna-flag";
 
 interface PolicyPageProps {
   params: Promise<{ locale: string }>;
@@ -17,6 +18,7 @@ export async function generateMetadata({ params }: PolicyPageProps): Promise<Met
 export default async function TermsPage({ params }: PolicyPageProps) {
   const { locale } = await params;
   const dict = await getDictionary(locale as Locale);
+  const klarnaEnabled = isCheckoutKlarnaEnabled();
 
   const content = locale === "da" ? {
     title: "Handelsbetingelser",
@@ -32,7 +34,9 @@ export default async function TermsPage({ params }: PolicyPageProps) {
       },
       {
         title: "3. Betaling",
-        content: "Vi accepterer betaling med kreditkort (Visa, Mastercard), MobilePay, Apple Pay, Google Pay og Klarna.",
+        content: klarnaEnabled
+          ? "Vi accepterer betaling med kreditkort (Visa, Mastercard), MobilePay, Apple Pay, Google Pay og Klarna."
+          : "Vi accepterer betaling med kreditkort (Visa, Mastercard), MobilePay, Apple Pay og Google Pay.",
       },
       {
         title: "4. Levering",
@@ -65,7 +69,9 @@ export default async function TermsPage({ params }: PolicyPageProps) {
       },
       {
         title: "3. Payment",
-        content: "We accept payment by credit card (Visa, Mastercard), MobilePay, Apple Pay, Google Pay, and Klarna.",
+        content: klarnaEnabled
+          ? "We accept payment by credit card (Visa, Mastercard), MobilePay, Apple Pay, Google Pay, and Klarna."
+          : "We accept payment by credit card (Visa, Mastercard), MobilePay, Apple Pay, and Google Pay.",
       },
       {
         title: "4. Delivery",

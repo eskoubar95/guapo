@@ -42,6 +42,8 @@ interface CheckoutStepsProps {
   onRegisterGoToStep?: (fn: (step: CheckoutStepNum) => void) => void;
   selectedPaymentMethod?: CheckoutPaymentMethodChoice;
   onPaymentMethodChange?: (method: CheckoutPaymentMethodChoice) => void;
+  /** When false, Klarna is not shown in review step (default). */
+  klarnaEnabled?: boolean;
   qualifiesForFreeShipping?: boolean;
 }
 
@@ -67,6 +69,7 @@ export function CheckoutSteps({
   onRegisterGoToStep,
   selectedPaymentMethod = "card",
   onPaymentMethodChange,
+  klarnaEnabled = false,
   qualifiesForFreeShipping = false,
 }: CheckoutStepsProps) {
   const [step, setStep] = useState<CheckoutStepNum>(1);
@@ -162,6 +165,7 @@ export function CheckoutSteps({
           subscriptionTermsAccepted={subscriptionTermsAccepted}
           onSubscriptionTermsChange={onSubscriptionTermsChange}
           onConfirm={() => handleStepChange(3)}
+          klarnaEnabled={klarnaEnabled}
         />
       )}
 

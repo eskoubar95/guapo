@@ -12,6 +12,7 @@ import {
 } from "@icons-pack/react-simple-icons";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import type { ResolvedFooter, ResolvedFooterColumn } from "@/lib/payload-footer";
+import { isCheckoutKlarnaEnabled } from "@/lib/checkout-klarna-flag";
 
 /** Lucide/simple-icons SVGs accept `size` as number or string in their propTypes; widen for assignability. */
 type SocialIconComponent = React.ComponentType<{
@@ -190,11 +191,13 @@ export function Footer({ locale, footer }: FooterProps) {
               alt="MobilePay"
               className="h-4 w-auto object-contain opacity-80"
             />
-            <img
-              src="/payment_icons/Klarna/Klarna_Logo_0.svg"
-              alt="Klarna"
-              className="h-4 w-auto object-contain opacity-80"
-            />
+            {isCheckoutKlarnaEnabled() ? (
+              <img
+                src="/payment_icons/Klarna/Klarna_Logo_0.svg"
+                alt="Klarna"
+                className="h-4 w-auto object-contain opacity-80"
+              />
+            ) : null}
           </div>
         </div>
       </div>
