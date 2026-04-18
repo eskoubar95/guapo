@@ -72,8 +72,8 @@ export function Footer({ locale, footer }: FooterProps) {
   return (
     <footer className="bg-surface border-t border-border mt-auto">
       <div className="section-container py-10 sm:py-12">
-        {/* 8-col grid: newsletter first (3 cols), then link columns (2 cols each). */}
-        <div className="grid grid-cols-2 md:grid-cols-8 gap-6 sm:gap-8 mb-8">
+        {/* Mobile: single column; md+: 8-col — newsletter 3, link columns 2 each. */}
+        <div className="grid grid-cols-1 md:grid-cols-8 gap-8 md:gap-8 mb-8">
           {/* Newsletter: 3/8 width, first. */}
           {showNewsletter && (
             <div className="min-w-0 md:col-span-3 order-first md:order-first">
