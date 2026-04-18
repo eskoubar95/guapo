@@ -13,8 +13,8 @@ export const supportFaqFallback: Record<"da" | "en", FaqPageContent> = {
           {
             question: "Hvilke betalingsmetoder accepterer I?",
             answer: klarnaEnabled
-              ? "Vi accepterer Visa, Mastercard, MobilePay, Apple Pay, Google Pay og Klarna."
-              : "Vi accepterer Visa, Mastercard, MobilePay, Apple Pay og Google Pay.",
+              ? "Vi accepterer Visa, Mastercard, MobilePay og Klarna."
+              : "Vi accepterer Visa, Mastercard og MobilePay.",
           },
           {
             question: "Kan jeg ændre min ordre efter jeg har betalt?",
@@ -88,8 +88,8 @@ export const supportFaqFallback: Record<"da" | "en", FaqPageContent> = {
           {
             question: "What payment methods do you accept?",
             answer: klarnaEnabled
-              ? "We accept Visa, Mastercard, MobilePay, Apple Pay, Google Pay, and Klarna."
-              : "We accept Visa, Mastercard, MobilePay, Apple Pay, and Google Pay.",
+              ? "We accept Visa, Mastercard, MobilePay, and Klarna."
+              : "We accept Visa, Mastercard, and MobilePay.",
           },
           {
             question: "Can I change my order after payment?",

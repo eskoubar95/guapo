@@ -35,8 +35,8 @@ export default async function TermsPage({ params }: PolicyPageProps) {
       {
         title: "3. Betaling",
         content: klarnaEnabled
-          ? "Vi accepterer betaling med kreditkort (Visa, Mastercard), MobilePay, Apple Pay, Google Pay og Klarna."
-          : "Vi accepterer betaling med kreditkort (Visa, Mastercard), MobilePay, Apple Pay og Google Pay.",
+          ? "Vi accepterer betaling med kreditkort (Visa, Mastercard), MobilePay og Klarna."
+          : "Vi accepterer betaling med kreditkort (Visa, Mastercard) og MobilePay.",
       },
       {
         title: "4. Levering",
@@ -70,8 +70,8 @@ export default async function TermsPage({ params }: PolicyPageProps) {
       {
         title: "3. Payment",
         content: klarnaEnabled
-          ? "We accept payment by credit card (Visa, Mastercard), MobilePay, Apple Pay, Google Pay, and Klarna."
-          : "We accept payment by credit card (Visa, Mastercard), MobilePay, Apple Pay, and Google Pay.",
+          ? "We accept payment by credit card (Visa, Mastercard), MobilePay, and Klarna."
+          : "We accept payment by credit card (Visa, Mastercard) and MobilePay.",
       },
       {
         title: "4. Delivery",
