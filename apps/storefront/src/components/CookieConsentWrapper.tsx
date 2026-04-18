@@ -5,7 +5,6 @@ import {
   CookieConsentProvider,
   CookieBanner,
   CookieSettings,
-  CookieTrigger,
   GoogleConsentMode,
 } from "@/components/cookie-consent";
 import { PostHogProvider } from "@/components/analytics/PostHogProvider";
@@ -50,7 +49,6 @@ export function CookieConsentWrapper({
       </PostHogProvider>
       <CookieBanner />
       <CookieSettings />
-      <CookieTrigger />
     </CookieConsentProvider>
   );
 }

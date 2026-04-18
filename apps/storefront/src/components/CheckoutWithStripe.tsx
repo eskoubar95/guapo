@@ -17,6 +17,7 @@ import { getCartItemsTotal } from "@/lib/cart-display";
 import { HeaderBackButton } from "@/components/checkout/HeaderBackButton";
 import { DEFAULT_CHECKOUT_FORM_DATA } from "@/components/checkout/steps/checkout-form-defaults";
 import { trackCheckoutStarted } from "@/lib/analytics/posthog-ecommerce";
+import { isCheckoutKlarnaEnabled } from "@/lib/checkout-klarna-flag";
 
 export type { ShippingOption } from "@/components/checkout/checkout-shipping.types";
 
@@ -43,6 +44,7 @@ export function CheckoutWithStripe({
   const [currentStep, setCurrentStep] = useState<CheckoutStepNum>(1);
   const [paymentMethodChoice, setPaymentMethodChoice] =
     useState<CheckoutPaymentMethodChoice>("card");
+  const klarnaEnabled = isCheckoutKlarnaEnabled();
   const goToStepRef = useRef<((s: CheckoutStepNum) => void) | null>(null);
   const currentStepRef = useRef<CheckoutStepNum>(1);
   const prefillDoneRef = useRef(false);
@@ -51,6 +53,12 @@ export function CheckoutWithStripe({
   useEffect(() => {
     currentStepRef.current = currentStep;
   }, [currentStep]);
+
+  useEffect(() => {
+    if (!klarnaEnabled && paymentMethodChoice === "klarna") {
+      setPaymentMethodChoice("card");
+    }
+  }, [klarnaEnabled, paymentMethodChoice]);
   const [formData, setFormData] = useState(DEFAULT_CHECKOUT_FORM_DATA);
 
   const { customer } = useAuth();
@@ -303,6 +311,7 @@ export function CheckoutWithStripe({
           if (!hasSubscriptionItems) setPaymentMethodChoice(m);
         }}
         qualifiesForFreeShipping={qualifiesForFreeShipping}
+        klarnaEnabled={klarnaEnabled}
       />
     </>
   );

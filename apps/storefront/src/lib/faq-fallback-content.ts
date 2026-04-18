@@ -1,5 +1,7 @@
 import type { FaqPageContent } from "@/lib/faq-content-types";
 
+const klarnaEnabled = process.env.NEXT_PUBLIC_CHECKOUT_ENABLE_KLARNA === "true";
+
 /** Used when Payload `support-faq` has no categories for the locale yet. */
 export const supportFaqFallback: Record<"da" | "en", FaqPageContent> = {
   da: {
@@ -10,7 +12,9 @@ export const supportFaqFallback: Record<"da" | "en", FaqPageContent> = {
         faqs: [
           {
             question: "Hvilke betalingsmetoder accepterer I?",
-            answer: "Vi accepterer Visa, Mastercard, MobilePay, Apple Pay, Google Pay og Klarna.",
+            answer: klarnaEnabled
+              ? "Vi accepterer Visa, Mastercard, MobilePay og Klarna."
+              : "Vi accepterer Visa, Mastercard og MobilePay.",
           },
           {
             question: "Kan jeg ændre min ordre efter jeg har betalt?",
@@ -83,7 +87,9 @@ export const supportFaqFallback: Record<"da" | "en", FaqPageContent> = {
         faqs: [
           {
             question: "What payment methods do you accept?",
-            answer: "We accept Visa, Mastercard, MobilePay, Apple Pay, Google Pay, and Klarna.",
+            answer: klarnaEnabled
+              ? "We accept Visa, Mastercard, MobilePay, and Klarna."
+              : "We accept Visa, Mastercard, and MobilePay.",
           },
           {
             question: "Can I change my order after payment?",

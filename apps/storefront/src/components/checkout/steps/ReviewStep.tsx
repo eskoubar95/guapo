@@ -21,6 +21,8 @@ interface ReviewStepProps {
   onEditToStep: (step: CheckoutStepNum) => void;
   selectedPaymentMethod: CheckoutPaymentMethodChoice;
   onPaymentMethodChange?: (method: CheckoutPaymentMethodChoice) => void;
+  /** When false, Klarna is not listed (launch default). */
+  klarnaEnabled?: boolean;
   hasSubscriptionItems: boolean;
   termsAccepted: boolean;
   onTermsChange?: (accepted: boolean) => void;
@@ -38,6 +40,7 @@ export function ReviewStep({
   onEditToStep,
   selectedPaymentMethod,
   onPaymentMethodChange,
+  klarnaEnabled = false,
   hasSubscriptionItems,
   termsAccepted,
   onTermsChange,
@@ -52,29 +55,40 @@ export function ReviewStep({
     icon: ReactNode;
     disabled?: boolean;
   }> = useMemo(
-    () => [
-      {
-        id: "card",
-        label: checkout.cardPaymentLabel,
-        sub: checkout.cardPaymentNetworks,
-        icon: <CreditCard className="h-5 w-5" />,
-      },
-      {
-        id: "mobilepay",
-        label: checkout.mobilePayLabel,
-        sub: checkout.mobilePayPaymentSub,
-        icon: <Smartphone className="h-5 w-5" />,
-        disabled: hasSubscriptionItems,
-      },
-      {
-        id: "klarna",
-        label: checkout.klarnaLabel,
-        sub: checkout.klarnaPaymentSub,
-        icon: <span className="text-sm font-bold leading-none">K.</span>,
-        disabled: hasSubscriptionItems,
-      },
-    ],
-    [checkout, hasSubscriptionItems]
+    () => {
+      const base: Array<{
+        id: CheckoutPaymentMethodChoice;
+        label: string;
+        sub: string;
+        icon: ReactNode;
+        disabled?: boolean;
+      }> = [
+        {
+          id: "card",
+          label: checkout.cardPaymentLabel,
+          sub: checkout.cardPaymentNetworks,
+          icon: <CreditCard className="h-5 w-5" />,
+        },
+        {
+          id: "mobilepay",
+          label: checkout.mobilePayLabel,
+          sub: checkout.mobilePayPaymentSub,
+          icon: <Smartphone className="h-5 w-5" />,
+          disabled: hasSubscriptionItems,
+        },
+      ];
+      if (klarnaEnabled) {
+        base.push({
+          id: "klarna",
+          label: checkout.klarnaLabel,
+          sub: checkout.klarnaPaymentSub,
+          icon: <span className="text-sm font-bold leading-none">K.</span>,
+          disabled: hasSubscriptionItems,
+        });
+      }
+      return base;
+    },
+    [checkout, hasSubscriptionItems, klarnaEnabled]
   );
 
   return (
