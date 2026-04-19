@@ -5,6 +5,7 @@ import { SUBSCRIPTION_MODULE } from "../../modules/subscription";
 import type SubscriptionModuleService from "../../modules/subscription/service";
 import { resolveCustomerEmailAndLocale, subscriptionsUrlForLocale } from "./customer-context";
 import { sendTransactionalEmail } from "./service";
+import { sendSlackNotify } from "../slack-notify/send-slack-notify";
 
 type LoggerLike = {
   info?: (m: string) => void;
@@ -45,6 +46,15 @@ export async function notifyAfterRenewalPaymentFailure(input: {
       },
       logger
     );
+    void sendSlackNotify(container, {
+      type: "subscription.alert",
+      channel: "alerts",
+      payload: {
+        subscriptionId,
+        reason: "authentication_required",
+        detail: chargeResult.error,
+      },
+    });
     return;
   }
 
@@ -62,6 +72,15 @@ export async function notifyAfterRenewalPaymentFailure(input: {
       },
       logger
     );
+    void sendSlackNotify(container, {
+      type: "subscription.alert",
+      channel: "alerts",
+      payload: {
+        subscriptionId,
+        reason: "payment_exhausted",
+        detail: String(updated.last_failure_reason ?? ""),
+      },
+    });
     return;
   }
 

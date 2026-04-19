@@ -19,6 +19,8 @@ import {
   notifyAfterRenewalPaymentFailure,
   notifySubscriptionPaymentRecovered,
 } from "../../lib/transactional-email/subscription-renewal-notifications";
+import { sendSlackNotify } from "../../lib/slack-notify/send-slack-notify";
+import { toAmountMajor } from "../../lib/store-order-money";
 import { SUBSCRIPTION_MODULE } from "../../modules/subscription";
 import type SubscriptionModuleService from "../../modules/subscription/service";
 
@@ -303,6 +305,32 @@ export const runSubscriptionRenewalStep = createStep(
           logger: logger as { info?: (m: string) => void; warn?: (m: string) => void; error?: (m: string) => void },
         });
       }
+
+      const query = resolveQuery(container);
+      const { data: ordRows } = await query.graph({
+        entity: "order",
+        fields: ["id", "display_id", "currency_code", "raw_total", "total"],
+        filters: { id: order.id },
+      });
+      const ord0 = ordRows?.[0] as
+        | {
+            id?: string;
+            display_id?: number;
+            currency_code?: string;
+            raw_total?: unknown;
+            total?: unknown;
+          }
+        | undefined;
+      void sendSlackNotify(container, {
+        type: "subscription.renewal_order",
+        payload: {
+          orderId: order.id,
+          subscriptionId,
+          displayId: ord0?.display_id,
+          currencyCode: ord0?.currency_code ?? "dkk",
+          total: toAmountMajor(ord0?.raw_total ?? ord0?.total) ?? "—",
+        },
+      });
 
       return new StepResponse({
         renewed: true,

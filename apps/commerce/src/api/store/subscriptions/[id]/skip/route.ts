@@ -1,6 +1,7 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { SUBSCRIPTION_MODULE } from "../../../../../modules/subscription";
 import type SubscriptionModuleService from "../../../../../modules/subscription/service";
+import { notifySubscriptionLifecycleSlack } from "../../../../../lib/slack-notify/notify-subscription-lifecycle";
 
 /** POST /store/subscriptions/:id/skip - set skip_next to true */
 export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
@@ -35,5 +36,10 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   }
 
   const updated = await subscriptionService.setSkipNext(id, true);
+  void notifySubscriptionLifecycleSlack(req.scope, {
+    subscriptionId: updated.id,
+    action: "skipped",
+    status: updated.status,
+  });
   res.json({ subscription: updated });
 };

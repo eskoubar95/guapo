@@ -17,3 +17,6 @@ supabase/.temp/
 work/backlog/
 
 node_modules
+
+# slack-notify build output
+apps/slack-notify/dist/

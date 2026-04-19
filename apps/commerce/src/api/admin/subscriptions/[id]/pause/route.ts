@@ -3,6 +3,7 @@ import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
 import { sendSubscriptionLifecycleMail } from "../../../../../lib/transactional-email/send-subscription-lifecycle-mail";
 import { SUBSCRIPTION_MODULE } from "../../../../../modules/subscription";
 import type SubscriptionModuleService from "../../../../../modules/subscription/service";
+import { notifySubscriptionLifecycleSlack } from "../../../../../lib/slack-notify/notify-subscription-lifecycle";
 
 /** POST /admin/subscriptions/:id/pause */
 export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
@@ -24,6 +25,11 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
     subscriptionId: updated.id,
     template: "subscription_paused",
     logger: logger as { info?: (m: string) => void; warn?: (m: string) => void },
+  });
+  void notifySubscriptionLifecycleSlack(req.scope, {
+    subscriptionId: updated.id,
+    action: "paused",
+    status: updated.status,
   });
   res.json({ subscription: updated });
 };
