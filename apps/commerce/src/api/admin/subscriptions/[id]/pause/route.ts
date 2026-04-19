@@ -30,6 +30,12 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
     subscriptionId: updated.id,
     action: "paused",
     status: updated.status,
+  }).catch((err: unknown) => {
+    (logger as { warn?: (m: string) => void }).warn?.(
+      `[slack-notify] Failed lifecycle paused for ${updated.id}: ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
   });
   res.json({ subscription: updated });
 };

@@ -1,4 +1,5 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
+import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
 import { SUBSCRIPTION_MODULE } from "../../../../../modules/subscription";
 import type SubscriptionModuleService from "../../../../../modules/subscription/service";
 import { notifySubscriptionLifecycleSlack } from "../../../../../lib/slack-notify/notify-subscription-lifecycle";
@@ -36,10 +37,17 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   }
 
   const updated = await subscriptionService.setSkipNext(id, true);
+  const logger = req.scope.resolve(ContainerRegistrationKeys.LOGGER);
   void notifySubscriptionLifecycleSlack(req.scope, {
     subscriptionId: updated.id,
     action: "skipped",
     status: updated.status,
+  }).catch((err: unknown) => {
+    (logger as { warn?: (m: string) => void }).warn?.(
+      `[slack-notify] Failed lifecycle skipped for ${updated.id}: ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
   });
   res.json({ subscription: updated });
 };
