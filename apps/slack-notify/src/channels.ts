@@ -8,7 +8,9 @@ export function resolveSlackChannelId(hint: SlackNotifyChannelHint): string | un
       const key =
         hint === "shop" ? "shop" : hint === "alerts" ? "alerts" : "inventory";
       const id = m[key];
-      if (typeof id === "string" && id.startsWith("C")) return id;
+      if (typeof id === "string" && /^[CGDU][A-Z0-9]+$/i.test(id.trim())) {
+        return id.trim();
+      }
     } catch {
       /* fall through */
     }

@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import type { SlackNotifyEnvelope } from "./types.js";
-import type { ReplayRequestBody } from "./types.js";
 import { verifyNotifySignature } from "./verify.js";
 import { postEnvelopeToSlack } from "./post-to-slack.js";
+import { parseReplayRequestBody, parseSlackNotifyEnvelope } from "./validate-payload.js";
 
 export function createApp() {
   const app = new Hono();
@@ -12,16 +12,18 @@ export function createApp() {
   app.post("/v1/events", async (c) => {
     const rawBody = await c.req.text();
     const sig = c.req.header("x-notify-signature");
-    if (!verifyNotifySignature(rawBody, sig)) {
+    const ts = c.req.header("x-notify-timestamp");
+    if (!verifyNotifySignature(rawBody, sig, ts)) {
       return c.json({ message: "Unauthorized" }, 401);
     }
-    let envelope: SlackNotifyEnvelope;
+    let parsed: unknown;
     try {
-      envelope = JSON.parse(rawBody) as SlackNotifyEnvelope;
+      parsed = JSON.parse(rawBody);
     } catch {
       return c.json({ message: "Invalid JSON" }, 400);
     }
-    if (!envelope?.type || typeof envelope.payload !== "object" || envelope.payload === null) {
+    const envelope = parseSlackNotifyEnvelope(parsed);
+    if (!envelope) {
       return c.json({ message: "Invalid envelope" }, 400);
     }
     try {
@@ -36,22 +38,19 @@ export function createApp() {
   app.post("/v1/test/replay", async (c) => {
     const rawBody = await c.req.text();
     const sig = c.req.header("x-notify-signature");
-    if (!verifyNotifySignature(rawBody, sig)) {
+    const ts = c.req.header("x-notify-timestamp");
+    if (!verifyNotifySignature(rawBody, sig, ts)) {
       return c.json({ message: "Unauthorized" }, 401);
     }
-    let body: ReplayRequestBody;
+    let parsed: unknown;
     try {
-      body = JSON.parse(rawBody) as ReplayRequestBody;
+      parsed = JSON.parse(rawBody);
     } catch {
       return c.json({ message: "Invalid JSON" }, 400);
     }
-    if (body.strategy !== "latest") {
-      return c.json({ message: "Only strategy=latest is supported" }, 400);
-    }
-
-    const commerceBase = process.env.GUAPO_COMMERCE_INTERNAL_URL?.replace(/\/$/, "");
-    if (!commerceBase) {
-      return c.json({ message: "GUAPO_COMMERCE_INTERNAL_URL is not set" }, 500);
+    const body = parseReplayRequestBody(parsed);
+    if (!body) {
+      return c.json({ message: "Invalid replay body" }, 400);
     }
 
     const secret = process.env.NOTIFY_SHARED_SECRET;
@@ -76,14 +75,30 @@ export function createApp() {
       return c.json({ ok: true, replayed: envelope });
     }
 
+    const commerceBase = process.env.GUAPO_COMMERCE_INTERNAL_URL?.replace(/\/$/, "");
+    if (!commerceBase) {
+      return c.json({ message: "GUAPO_COMMERCE_INTERNAL_URL is not set" }, 500);
+    }
+
     const kindParam = body.kind === "order" ? "order" : "subscription";
     const sampleUrl = `${commerceBase}/internal/notifications/slack/sample?kind=${encodeURIComponent(kindParam)}`;
-    const sampleRes = await fetch(sampleUrl, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${secret}`,
-      },
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15_000);
+    let sampleRes: Response;
+    try {
+      sampleRes = await fetch(sampleUrl, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${secret}`,
+        },
+        signal: controller.signal,
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return c.json({ message: "Commerce sample request failed", detail: msg }, 502);
+    } finally {
+      clearTimeout(timeout);
+    }
     if (!sampleRes.ok) {
       const t = await sampleRes.text();
       return c.json(

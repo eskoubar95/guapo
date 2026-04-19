@@ -1,7 +1,8 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework";
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
 import { getOrdersListWorkflow } from "@medusajs/medusa/core-flows";
-import { listSubscriptionsForOrder } from "../lib/create-subscriptions-from-placed-order";
+import { SUBSCRIPTION_MODULE } from "../modules/subscription";
+import type SubscriptionModuleService from "../modules/subscription/service";
 import { sendSlackNotify } from "../lib/slack-notify/send-slack-notify";
 import { toAmountMajor } from "../lib/store-order-money";
 
@@ -62,7 +63,10 @@ export default async function slackNotifyOrderPlaced({
     }
 
     const total = toAmountMajor(order.raw_total ?? order.total);
-    const subs = await listSubscriptionsForOrder(container, order.id);
+    const subscriptionService = container.resolve<SubscriptionModuleService>(
+      SUBSCRIPTION_MODULE
+    );
+    const subscriptionIds = await subscriptionService.listSubscriptionIdsByOrderId(order.id);
 
     await sendSlackNotify(container, {
       type: "order.placed",
@@ -71,7 +75,7 @@ export default async function slackNotifyOrderPlaced({
         displayId: order.display_id,
         currencyCode: order.currency_code ?? "dkk",
         total: total ?? "—",
-        subscriptionIds: subs.map((s) => s.id),
+        subscriptionIds,
       },
     });
   } catch (e) {

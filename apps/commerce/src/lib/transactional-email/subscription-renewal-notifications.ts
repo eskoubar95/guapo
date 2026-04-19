@@ -52,7 +52,10 @@ export async function notifyAfterRenewalPaymentFailure(input: {
       payload: {
         subscriptionId,
         reason: "authentication_required",
-        detail: chargeResult.error,
+        detail:
+          typeof chargeResult.error === "string"
+            ? chargeResult.error
+            : String(chargeResult.error ?? ""),
       },
     });
     return;

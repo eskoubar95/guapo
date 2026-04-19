@@ -6,7 +6,7 @@ Based on lessons from CORE-21 (Medusa server + worker on Railway).
 
 - **medusa-server:** HTTP API (+ optional admin if build includes `.medusa`). Set `MEDUSA_WORKER_MODE=server` (or leave unset).
 - **medusa-worker:** Background jobs. Set `MEDUSA_WORKER_MODE=worker` and `DISABLE_MEDUSA_ADMIN=true`.
-- **slack-notify (optional):** Small HTTP service for Slack Block Kit notifications (`apps/slack-notify`). Railway **Root Directory:** `apps/slack-notify`. Build: `pnpm install && pnpm run build`; Start: `pnpm start`. Env: see `apps/slack-notify/env.template`. Medusa **server + worker** need `SLACK_NOTIFY_URL` + `NOTIFY_SHARED_SECRET` (same secret on both Medusa and slack-notify). Replay test: `POST /v1/test/replay` on slack-notify with signed body `{ "kind": "order"|"subscription"|"inventory", "strategy": "latest" }`.
+- **slack-notify (optional):** Small HTTP service for Slack Block Kit notifications (`apps/slack-notify`). Railway **Root Directory:** `apps/slack-notify`. Build: `pnpm install && pnpm run build`; Start: `pnpm start`. Env: see `apps/slack-notify/env.template`. Medusa **server + worker** need `SLACK_NOTIFY_URL` + `NOTIFY_SHARED_SECRET` (same secret on both Medusa and slack-notify). **Signing:** send header `X-Notify-Timestamp` (Unix ms) and `X-Notify-Signature` = `sha256=` + HMAC-SHA256 hex over the string `timestamp + "." + raw JSON body` (matches `send-slack-notify` in commerce). Replay test: `POST /v1/test/replay` with body `{ "kind": "order"|"subscription"|"inventory", "strategy": "latest" }` and the same headers.
 
 **Medusa server + worker** use the same repo (Root Directory: `apps/commerce`), same build, same start command. Only env vars differ.
 

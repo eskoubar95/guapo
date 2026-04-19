@@ -306,31 +306,39 @@ export const runSubscriptionRenewalStep = createStep(
         });
       }
 
-      const query = resolveQuery(container);
-      const { data: ordRows } = await query.graph({
-        entity: "order",
-        fields: ["id", "display_id", "currency_code", "raw_total", "total"],
-        filters: { id: order.id },
-      });
-      const ord0 = ordRows?.[0] as
-        | {
-            id?: string;
-            display_id?: number;
-            currency_code?: string;
-            raw_total?: unknown;
-            total?: unknown;
-          }
-        | undefined;
-      void sendSlackNotify(container, {
-        type: "subscription.renewal_order",
-        payload: {
-          orderId: order.id,
-          subscriptionId,
-          displayId: ord0?.display_id,
-          currencyCode: ord0?.currency_code ?? "dkk",
-          total: toAmountMajor(ord0?.raw_total ?? ord0?.total) ?? "—",
-        },
-      });
+      try {
+        const query = resolveQuery(container);
+        const { data: ordRows } = await query.graph({
+          entity: "order",
+          fields: ["id", "display_id", "currency_code", "raw_total", "total"],
+          filters: { id: order.id },
+        });
+        const ord0 = ordRows?.[0] as
+          | {
+              id?: string;
+              display_id?: number;
+              currency_code?: string;
+              raw_total?: unknown;
+              total?: unknown;
+            }
+          | undefined;
+        void sendSlackNotify(container, {
+          type: "subscription.renewal_order",
+          payload: {
+            orderId: order.id,
+            subscriptionIds: [subscriptionId],
+            displayId: ord0?.display_id,
+            currencyCode: ord0?.currency_code ?? "dkk",
+            total: toAmountMajor(ord0?.raw_total ?? ord0?.total) ?? "—",
+          },
+        });
+      } catch (slackErr) {
+        logger?.warn?.(
+          `[subscription-renewal] Slack notification failed for renewal order ${order.id}: ${
+            slackErr instanceof Error ? slackErr.message : String(slackErr)
+          }`
+        );
+      }
 
       return new StepResponse({
         renewed: true,

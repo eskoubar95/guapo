@@ -46,9 +46,13 @@ function buildOrderPlaced(
   const displayId = payload.displayId != null ? String(payload.displayId) : "—";
   const total = payload.total != null ? String(payload.total) : "—";
   const currency = String(payload.currencyCode ?? "dkk").toUpperCase();
+  const singleSub =
+    typeof payload.subscriptionId === "string" ? payload.subscriptionId : undefined;
   const subscriptionIds = Array.isArray(payload.subscriptionIds)
-    ? (payload.subscriptionIds as string[])
-    : [];
+    ? (payload.subscriptionIds as unknown[]).filter((id): id is string => typeof id === "string")
+    : singleSub
+      ? [singleSub]
+      : [];
   const title = isRenewal ? "Subscription renewal order" : "New order";
   const text = `${title}: #${displayId} (${total} ${currency})`;
   const blocks: KnownBlock[] = [
