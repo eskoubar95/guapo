@@ -210,6 +210,26 @@ class SubscriptionModuleService extends MedusaService({
 
     return this.retrieveSubscription(id);
   }
+
+  /**
+   * Subscriptions linked to an order (initial via metadata.order_id, renewals via last_renewal_order_id).
+   * Indexed SQL — avoids scanning all subscriptions for Slack / notifications.
+   */
+  async listSubscriptionIdsByOrderId(orderId: string): Promise<string[]> {
+    const pool = getSubscriptionPool();
+    const table = getSubscriptionTableFqn();
+    const { rows } = await pool.query<{ id: string }>(
+      `select id from ${table}
+       where deleted_at is null
+         and (
+           last_renewal_order_id = $1
+           or (metadata::jsonb->>'order_id') = $1
+         )
+       limit 50`,
+      [orderId]
+    );
+    return (rows ?? []).map((r) => r.id);
+  }
 }
 
 export default SubscriptionModuleService;

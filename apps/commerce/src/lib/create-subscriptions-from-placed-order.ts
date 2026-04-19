@@ -5,6 +5,7 @@ import { resolveStripeCustomerAndPaymentMethodFromOrder } from "./stripe-helpers
 import { SUBSCRIPTION_MODULE } from "../modules/subscription";
 import type SubscriptionModuleService from "../modules/subscription/service";
 import { getSubscriptionDiscountPercentWithProductOverride } from "./subscription-discount";
+import { sendSlackNotify } from "./slack-notify/send-slack-notify";
 import { extractDeliveryDataFromShippingMethodData } from "./subscription-delivery-data";
 import { getSubscriptionCycleWeeksFromMetadata } from "./subscription-cycle-metadata";
 
@@ -233,6 +234,14 @@ export async function createSubscriptionsForPlacedOrder(
         log(
           `Created subscription ${created.id} for order ${orderId} line item ${item.id} (cycle ${cycleWeeks} weeks)`
         );
+        void sendSlackNotify(container, {
+          type: "subscription.created",
+          payload: {
+            subscriptionId: created.id,
+            orderId,
+            cycleWeeks,
+          },
+        });
       }
     } catch (err) {
       if (isAtomicIdempotencyConflict(err)) {

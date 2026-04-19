@@ -3,6 +3,7 @@ import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
 import { sendSubscriptionLifecycleMail } from "../../../../../lib/transactional-email/send-subscription-lifecycle-mail";
 import { SUBSCRIPTION_MODULE } from "../../../../../modules/subscription";
 import type SubscriptionModuleService from "../../../../../modules/subscription/service";
+import { notifySubscriptionLifecycleSlack } from "../../../../../lib/slack-notify/notify-subscription-lifecycle";
 
 /** POST /store/subscriptions/:id/resume */
 export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
@@ -44,6 +45,17 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
     subscriptionId: updated.id,
     template: "subscription_resumed",
     logger: logger as { info?: (m: string) => void; warn?: (m: string) => void },
+  });
+  void notifySubscriptionLifecycleSlack(req.scope, {
+    subscriptionId: updated.id,
+    action: "resumed",
+    status: updated.status,
+  }).catch((err: unknown) => {
+    (logger as { warn?: (m: string) => void }).warn?.(
+      `[slack-notify] Failed lifecycle resumed for ${updated.id}: ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
   });
   res.json({ subscription: updated });
 };
