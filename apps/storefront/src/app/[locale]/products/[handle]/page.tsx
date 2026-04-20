@@ -61,7 +61,7 @@ export async function generateMetadata({
   return {
     title: metaTitle ? { absolute: metaTitle } : displayTitle,
     description: metaDesc || undefined,
-    alternates: buildLocaleAlternates(locale, pathWithoutLocale),
+    alternates: await buildLocaleAlternates(locale, pathWithoutLocale),
     openGraph: {
       type: "website",
       siteName: "Guapo",

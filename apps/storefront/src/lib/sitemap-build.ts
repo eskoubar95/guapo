@@ -2,7 +2,8 @@
  * Collects URL rows for Next.js MetadataRoute.Sitemap (Medusa + Payload + static routes).
  */
 import type { MetadataRoute } from "next";
-import { isValidLocale, sitemapLocales, type Locale } from "@/i18n/config";
+import { isValidLocale, type Locale } from "@/i18n/config";
+import { resolvePublishedLocales } from "@/i18n/published-locales";
 import { getStorefrontSiteUrl } from "@/lib/site-url";
 import { fetchTopLevelCategories, type MedusaCategory } from "@/lib/medusa-categories";
 import { CONCERN_PLP_HANDLES } from "@/lib/concern-handles";
@@ -140,7 +141,7 @@ function toLastMod(iso: string | null | undefined): Date | undefined {
 }
 
 /**
- * Builds the full sitemap for the storefront (locales in `sitemapLocales` from i18n config).
+ * Builds the full sitemap for the storefront (locales from `resolvePublishedLocales()`).
  */
 function pushEntry(
   entries: MetadataRoute.Sitemap,
@@ -157,7 +158,8 @@ export async function buildStorefrontSitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [];
   const seenUrls = new Set<string>();
 
-  const [categories, productHandles, brandHandles, payloadRows] = await Promise.all([
+  const [publishedLocales, categories, productHandles, brandHandles, payloadRows] = await Promise.all([
+    resolvePublishedLocales(),
     fetchTopLevelCategories(),
     fetchAllProductHandles(),
     fetchBrandHandles(),
@@ -166,7 +168,7 @@ export async function buildStorefrontSitemap(): Promise<MetadataRoute.Sitemap> {
 
   const categoryHandles = flattenCategoryHandles(categories);
 
-  const sitemapLocaleSet = new Set<string>(sitemapLocales);
+  const sitemapLocaleSet = new Set<string>(publishedLocales);
 
   for (const row of payloadRows.pages ?? []) {
     if (!isValidLocale(row.locale)) continue;
@@ -206,7 +208,7 @@ export async function buildStorefrontSitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  for (const locale of sitemapLocales) {
+  for (const locale of publishedLocales) {
     const loc = locale as Locale;
     const prefix = `/${loc}`;
 

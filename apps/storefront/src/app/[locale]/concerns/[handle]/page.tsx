@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: ConcernPageProps): Promise<Me
   return {
     title,
     description: metaDescription || undefined,
-    alternates: buildLocaleAlternates(locale, pathSuffix),
+    alternates: await buildLocaleAlternates(locale, pathSuffix),
     openGraph: {
       type: "website",
       siteName: "Guapo",

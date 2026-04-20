@@ -11,6 +11,8 @@ const PAYLOAD_URL = (process.env.NEXT_PUBLIC_PAYLOAD_API_URL ?? process.env.PAYL
 export interface SiteSettingsPayload {
   favicon?: PayloadMedia | number | null;
   appleTouchIcon?: PayloadMedia | number | null;
+  /** Locales live on the storefront; always includes `da` when returned from CMS API. */
+  enabledStorefrontLocales?: ("da" | "en")[];
 }
 
 export async function fetchSiteSettings(locale: string): Promise<SiteSettingsPayload | null> {

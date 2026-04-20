@@ -1,7 +1,7 @@
 /**
  * GET /api/storefront/globals/site-settings
  *
- * Returns public favicon / Apple touch icon fields for storefront metadata.
+ * Returns public site settings for the storefront (favicon, touch icon, enabled locales).
  */
 import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
@@ -27,9 +27,19 @@ export async function GET(req: Request) {
       depth: 1,
     })
 
+    const rawLocales = result.enabledStorefrontLocales
+    const enabledStorefrontLocales = Array.isArray(rawLocales)
+      ? (rawLocales as string[]).filter((c): c is 'da' | 'en' =>
+          c === 'da' || c === 'en',
+        )
+      : ['da']
+    const normalizedLocales =
+      enabledStorefrontLocales.includes('da') ? enabledStorefrontLocales : ['da', ...enabledStorefrontLocales]
+
     const publicResult = {
       favicon: result.favicon ?? null,
       appleTouchIcon: result.appleTouchIcon ?? null,
+      enabledStorefrontLocales: normalizedLocales,
     }
 
     return NextResponse.json(publicResult, {

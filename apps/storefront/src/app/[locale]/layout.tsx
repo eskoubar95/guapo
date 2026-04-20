@@ -3,6 +3,7 @@ import { Inter, Lexend } from "next/font/google";
 import { notFound } from "next/navigation";
 import { getDictionary } from "@/i18n/dictionaries";
 import { locales, type Locale } from "@/i18n/config";
+import { resolvePublishedLocales } from "@/i18n/published-locales";
 import { getStorefrontSiteUrl } from "@/lib/site-url";
 import { fetchSiteSettings } from "@/lib/payload-site-settings";
 import { resolvePayloadMediaUrl } from "@/lib/payload-media-url";
@@ -63,8 +64,9 @@ interface LocaleLayoutProps {
   params: Promise<{ locale: string }>;
 }
 
-export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
+export async function generateStaticParams() {
+  const published = await resolvePublishedLocales();
+  return published.map((locale) => ({ locale }));
 }
 
 function getFallbackSections(locale: string): NavSection[] {
