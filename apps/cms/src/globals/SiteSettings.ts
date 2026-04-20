@@ -13,9 +13,33 @@ export const SiteSettings: GlobalConfig = {
   },
   admin: {
     group: 'Site Settings',
-    description: 'Favicon and Apple touch icon for the storefront (replaces default app icon when set).',
+    description:
+      'Favicon, touch icon, and which storefront languages are live (replaces default app icon when set).',
   },
   fields: [
+    {
+      name: 'enabledStorefrontLocales',
+      type: 'select',
+      hasMany: true,
+      localized: false,
+      defaultValue: ['da'],
+      label: 'Enabled storefront locales',
+      options: [
+        { label: 'Danish (da)', value: 'da' },
+        { label: 'English (en)', value: 'en' },
+      ],
+      admin: {
+        description:
+          'Same list for all CMS locales. Keep English off until the /en storefront is ready; emergency override is possible with PUBLISHED_LOCALES on the storefront.',
+      },
+      validate: (value: unknown) => {
+        const arr = Array.isArray(value) ? (value as string[]) : []
+        if (!arr.includes('da')) {
+          return 'Danish (da) must remain enabled.'
+        }
+        return true
+      },
+    },
     {
       name: 'favicon',
       type: 'upload',

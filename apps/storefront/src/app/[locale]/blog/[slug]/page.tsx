@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
   return {
     title,
     description,
-    alternates: buildLocaleAlternates(locale, blogPath),
+    alternates: await buildLocaleAlternates(locale, blogPath),
     openGraph: {
       title,
       description,

@@ -8,12 +8,7 @@
 export const locales = ["da", "en"] as const;
 export type Locale = (typeof locales)[number];
 
-/**
- * Locales included in sitemap.xml (and other bulk SEO URL lists). Middleware/routing may still
- * accept other entries in `locales`; expand this when /en is ready for indexing.
- */
-export const sitemapLocales: readonly Locale[] = ["da"];
-
+/** Default path prefix and x-default hreflang target. */
 export const defaultLocale: Locale = "da";
 
 export const localeNames: Record<Locale, string> = {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { locales } from "@/i18n/config";
+import { defaultLocale, locales, type Locale } from "@/i18n/config";
+import { resolvePublishedLocales } from "@/i18n/published-locales";
 import { getStorefrontSiteUrl } from "@/lib/site-url";
 
 function escapeRegExp(s: string): string {
@@ -21,21 +22,24 @@ export function storefrontPathWithoutLocale(path: string): string {
 }
 
 /**
- * `alternates.canonical` + `alternates.languages` for da/en + x-default → da.
+ * `alternates.canonical` + `alternates.languages` for published locales + x-default → da.
  */
-export function buildLocaleAlternates(
+export async function buildLocaleAlternates(
   locale: string,
   pathWithoutLocale: string,
-): NonNullable<Metadata["alternates"]> {
+): Promise<NonNullable<Metadata["alternates"]>> {
+  const published = await resolvePublishedLocales();
   const base = getStorefrontSiteUrl();
   const suffix = storefrontPathWithoutLocale(pathWithoutLocale);
-  const loc = locale === "en" ? "en" : "da";
-  const canonical = `${base}/${loc}${suffix}`;
+  const canonicalLocale = published.includes(locale as Locale)
+    ? (locale as Locale)
+    : defaultLocale;
+  const canonical = `${base}/${canonicalLocale}${suffix}`;
 
   const languages: Record<string, string> = {
     "x-default": `${base}/da${suffix}`,
   };
-  for (const l of locales) {
+  for (const l of published) {
     languages[l] = `${base}/${l}${suffix}`;
   }
 

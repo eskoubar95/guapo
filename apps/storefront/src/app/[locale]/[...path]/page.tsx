@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: PayloadPageProps): Promise<Me
   return {
     title,
     description: description || undefined,
-    alternates: buildLocaleAlternates(locale, pathSuffix),
+    alternates: await buildLocaleAlternates(locale, pathSuffix),
     openGraph: {
       type: "website",
       siteName: "Guapo",

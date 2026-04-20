@@ -111,7 +111,7 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
   return {
     title: metaTitle ? { absolute: metaTitle } : displayName,
     description: metaDesc || undefined,
-    alternates: buildLocaleAlternates(locale, pathSuffix),
+    alternates: await buildLocaleAlternates(locale, pathSuffix),
     openGraph: {
       type: "website",
       siteName: "Guapo",

@@ -116,7 +116,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     // Use absolute when SEO title is set so root layout template "%s | Guapo" does not double the suffix.
     title: metaTitle ? { absolute: metaTitle } : displayName,
     description: metaDesc || undefined,
-    alternates: buildLocaleAlternates(locale, pathSuffix),
+    alternates: await buildLocaleAlternates(locale, pathSuffix),
     openGraph: {
       type: "website",
       siteName: "Guapo",

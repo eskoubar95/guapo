@@ -12,6 +12,7 @@ import * as migration_20260412_products_locales_seo_meta from './20260412_produc
 import * as migration_20260413_tracking_global from './20260413_tracking_global';
 import * as migration_20260415_site_settings_global from './20260415_site_settings_global';
 import * as migration_20260416_support_faq_and_concern_seo from './20260416_support_faq_and_concern_seo';
+import * as migration_20260420_site_settings_enabled_storefront_locales from './20260420_site_settings_enabled_storefront_locales';
 
 export const migrations = [
   {
@@ -83,5 +84,10 @@ export const migrations = [
     up: migration_20260416_support_faq_and_concern_seo.up,
     down: migration_20260416_support_faq_and_concern_seo.down,
     name: '20260416_support_faq_and_concern_seo',
+  },
+  {
+    up: migration_20260420_site_settings_enabled_storefront_locales.up,
+    down: migration_20260420_site_settings_enabled_storefront_locales.down,
+    name: '20260420_site_settings_enabled_storefront_locales',
   },
 ];
