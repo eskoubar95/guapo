@@ -13,7 +13,7 @@ export function resolveStorefrontLinkHref(
   if (t.startsWith("#") || t.startsWith("//")) return t;
   if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(t)) return t;
   const localePrefix = `/${locale}`;
-  let path = t.startsWith("/") ? t : `/${t}`;
+  const path = t.startsWith("/") ? t : `/${t}`;
   if (path === localePrefix || path.startsWith(`${localePrefix}/`)) return path;
   return `${localePrefix}${path === "/" ? "" : path}`;
 }

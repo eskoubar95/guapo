@@ -6,7 +6,7 @@
     "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "hero-banner:export": "node design-assets/hero-banners/export-hero-banners.mjs",
     "hero-banner:process-boj-images": "node design-assets/hero-banners/process-boj-product-images.mjs",
