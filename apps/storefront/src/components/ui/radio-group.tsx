@@ -37,7 +37,8 @@ export function RadioGroup({
   const [uncontrolledValue, setUncontrolledValue] = React.useState(defaultValue);
   const isControlled = controlledValue !== undefined;
   const value = isControlled ? controlledValue : uncontrolledValue;
-  const name = nameProp ?? React.useId();
+  const generatedName = React.useId();
+  const name = nameProp ?? generatedName;
 
   const handleChange = React.useCallback(
     (next: string) => {
@@ -74,7 +75,8 @@ interface RadioGroupItemProps {
 
 export function RadioGroupItem({ value, id: idProp, children, className }: RadioGroupItemProps) {
   const { name, value: selectedValue, onValueChange } = useRadioGroup();
-  const id = idProp ?? React.useId();
+  const generatedId = React.useId();
+  const id = idProp ?? generatedId;
   const isChecked = selectedValue === value;
 
   return (

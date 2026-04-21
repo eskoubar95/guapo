@@ -29,7 +29,6 @@ export function OrderConfirmationContent({
   const orderCompletedTrackedRef = useRef(false);
 
   // SessionStorage + optional fetch: sync reads/writes; deferring would change UX (spinner timing).
-  /* eslint-disable react-hooks/set-state-in-effect -- client-only order hydration from session/API */
   useEffect(() => {
     if (initialOrder) return;
     let done = false;
@@ -70,7 +69,6 @@ export function OrderConfirmationContent({
     }
     setLoading(false);
   }, [orderId, initialOrder]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (!order?.items?.length || orderCompletedTrackedRef.current) return;

@@ -105,7 +105,7 @@ jobs:
         run: pnpm test:unit
 
   typecheck-storefront:
-    name: Typecheck Storefront
+    name: Storefront typecheck and lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -124,3 +124,7 @@ jobs:
       - name: Typecheck Storefront
         working-directory: apps/storefront
         run: pnpm typecheck
+
+      - name: Lint Storefront
+        working-directory: apps/storefront
+        run: pnpm lint

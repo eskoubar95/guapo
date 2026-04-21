@@ -100,7 +100,6 @@ export function CheckoutWithStripe({
     setLiveCart,
   });
 
-  /* eslint-disable react-hooks/set-state-in-effect -- hydrate checkout form + pickup prefs once when customer loads */
   useEffect(() => {
     if (!customer || prefillDoneRef.current) return;
     prefillDoneRef.current = true;
@@ -167,7 +166,6 @@ export function CheckoutWithStripe({
     if (pp?.zipcode) setInitialPickupZipcode(pp.zipcode);
     if (pp?.id) setInitialPickupPointId(String(pp.id));
   }, [customer]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (

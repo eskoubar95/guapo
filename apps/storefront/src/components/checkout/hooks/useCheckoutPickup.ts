@@ -99,7 +99,6 @@ export function useCheckoutPickup({
   useEffect(() => {
     if (pickupPrefillDoneRef.current || !initialPickupZipcode) return;
     pickupPrefillDoneRef.current = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time prefill from URL/session
     setSearchAddress(initialPickupZipcode);
     setPickupLoading(true);
     void fetchAllPickupPoints({ zipcode: initialPickupZipcode, country_code: "DK" })
